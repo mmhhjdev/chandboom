@@ -1,0 +1,55 @@
+[33meb7070e[m[33m ([m[1;36mHEAD[m[33m -> [m[1;32mmain[m[33m, [m[1;31morigin/main[m[33m)[m Fix static asset paths for deployment
+[33m93e3e38[m Update logo to PNG, configure favicon, and set landing page as default
+[33m816a778[m Hardened strict CSP policy
+[33ma42a355[m Add security meta headers
+[33m2d21587[m Add security meta headers
+[33m9144f1d[m edit html for debug
+[33ma40ce9d[m Initial commit - Secured Kefyar App
+[33m7c2d38e[m Initial commit - Secured Kefyar App
+[33ma6214c3[m Initial commit for Kifyar SEO and project structure
+[33ma9fe68d[m First commit: Add Persian date picker and browser notifications
+[33me410f8b[m First commit: Add Persian date picker and browser notifications
+[33mf847d82[m First commit: Add Persian date picker and browser notifications
+[33m5dc77fb[m First commit: Add Persian date picker and browser notifications
+[33m7ad0e89[m Add write permissions to GitHub Actions  try 2
+[33m0d33202[m Add write permissions to GitHub Actions
+[33m7949d41[m Configure GitHub Actions for automatic deployment
+[33mf44a528[m Fix directional display in settlement view and update Supabase integration
+[33ma15d0ed[m Initial commit with fixed header and logo , and edit font
+[33md2ea797[m Initial commit with fixed header and logo
+[33mec671e0[m Initial commit - project setup
+[33m433debd[m fix: restrict ticket visibility for non-admin users based on current user
+[33m416f783[m Initial commit with fixed AppProvider and Supabase sync
+[33m1a1b6f1[m Add GitHub Actions workflow for auto-deployment
+[33m2415f2d[m Migrate AppContext to fully sync transactions, tickets and user data with Supabase
+[33m56b492e[m Add admin email and update vite config
+[33m422b968[m Fix vite config base path for github pages
+[33m07a2de3[m Fix supabase url configuration
+[33m2bea8b1[m edit : analysticview 2
+[33m084ff98[m fix: set base to relative path in vite config
+[33m0571a90[m edit : analysticview
+[33m4330121[m fix: add base path to vite config for github pages
+[33m4ec3fbb[m fix: restore package-lock.json for github actions
+[33m885b2d7[m feat: update Supabase configuration, schema and components
+[33m2c8ae93[m Update AppContext with Supabase auth and ticket synchronization
+[33m2754a6d[m Fix relative path in index.html for github pages
+[33m0bc291b[m Use official github pages deployment actions
+[33m08edc8b[m Configure auto deploy and fix path
+[33mddc6623[m Update build files
+[33m9c89227[m Trigger deployment workflow
+[33mc16668f[m Fix admin access check in SupportView component
+[33mb09432f[m Fix trendData to use dynamic real transactions in AnalyticsView
+[33mc3c4440[m Fix package.json JSON syntax
+[33ma30e64b[m Merge branch 'main' of https://github.com/mmhhjdev/wallet-yar
+[33me999734[m Prepare project for GitHub Pages deployment
+[33m35085f3[m Update .env.example
+[33m9f82a68[m Create static.yml
+[33m76eadcd[m chande the env file
+[33m1b0b99e[m Replace site with updated version
+[33mc2726a4[m Fix workflow to use bun
+[33m13c9f17[m feat: complete project build with GitHub Actions deployment
+[33m5893033[m Switch to Bun in GitHub Actions workflow
+[33m6655867[m Fix base path for GitHub Pages deployment
+[33ma1d35e7[m feat: complete project update with GitHub Actions
+[33m25922a1[m Build and prepare for deployment
+[33m98bf2e2[m Initial commit
