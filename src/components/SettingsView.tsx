@@ -45,6 +45,8 @@ export const SettingsView: React.FC<SettingsViewProps> = ({ onOpenAvatarModal })
 
   const [fullName, setFullName] = useState(user.full_name);
   const [budgetCap, setBudgetCap] = useState(user.monthly_budget_cap.toString());
+  const [age, setAge] = useState<string>(user.age !== undefined ? user.age.toString() : '');
+  const [gender, setGender] = useState<'مرد' | 'زن' | 'سایر'>(user.gender || 'مرد');
   const [isSaved, setIsSaved] = useState(false);
   const [copiedCode, setCopiedCode] = useState<string | null>(null);
   const [selectedReceiptForPreview, setSelectedReceiptForPreview] = useState<string | null>(null);
@@ -65,9 +67,12 @@ export const SettingsView: React.FC<SettingsViewProps> = ({ onOpenAvatarModal })
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     const numCap = parseInt(budgetCap.replace(/,/g, ''), 10);
+    const numAge = age ? parseInt(age, 10) : undefined;
     updateUserProfile({
       full_name: fullName.trim() || user.full_name,
       monthly_budget_cap: isNaN(numCap) ? user.monthly_budget_cap : numCap,
+      age: numAge !== undefined && !isNaN(numAge) ? numAge : user.age,
+      gender,
     });
 
     setIsSaved(true);
@@ -370,6 +375,63 @@ export const SettingsView: React.FC<SettingsViewProps> = ({ onOpenAvatarModal })
           </div>
 
           <div>
+            <div className="flex items-center justify-between mb-1.5">
+              <label className="block text-xs font-cairo font-bold text-zinc-700 dark:text-zinc-300">
+                آدرس ایمیل (غیرقابل تغییر)
+              </label>
+              <span className="text-[10px] text-amber-600 dark:text-amber-400 flex items-center gap-1 font-bold">
+                <Lock className="w-3 h-3" />
+                قفل امنیتی
+              </span>
+            </div>
+            <div className="relative">
+              <input
+                type="email"
+                value={user.email || 'ثبت نشده'}
+                disabled
+                readOnly
+                title="تغییر آدرس ایمیل به دلیل امنیت حساب و تایید هویت مسدود است."
+                className="w-full px-4 py-2.5 bg-zinc-100/80 dark:bg-[#111915] border border-zinc-200 dark:border-[#1F2E27] rounded-xl text-xs sm:text-sm text-zinc-500 dark:text-zinc-400 font-mono text-left cursor-not-allowed select-none opacity-80"
+                dir="ltr"
+              />
+              <Lock className="w-3.5 h-3.5 text-zinc-400 absolute right-3 top-1/2 -translate-y-1/2" />
+            </div>
+            <p className="text-[10px] text-zinc-400 mt-1">
+              تغییر آدرس ایمیل به دلیل امنیت حساب و حفظ یکپارچگی هویتی مسدود است.
+            </p>
+          </div>
+
+          <div>
+            <label className="block text-xs font-cairo font-bold text-zinc-700 dark:text-zinc-300 mb-1.5">
+              سن (سال)
+            </label>
+            <input
+              type="number"
+              min={10}
+              max={110}
+              value={age}
+              onChange={(e) => setAge(e.target.value)}
+              placeholder="مثلاً ۲۸"
+              className="w-full px-4 py-2.5 bg-zinc-50 dark:bg-[#141E1A] border border-[#E2E8E4] dark:border-[#1F2E27] rounded-xl text-xs sm:text-sm text-zinc-900 dark:text-white outline-none focus:ring-2 focus:ring-emerald-600 font-cairo"
+            />
+          </div>
+
+          <div>
+            <label className="block text-xs font-cairo font-bold text-zinc-700 dark:text-zinc-300 mb-1.5">
+              جنسیت
+            </label>
+            <select
+              value={gender}
+              onChange={(e) => setGender(e.target.value as any)}
+              className="w-full px-4 py-2.5 bg-zinc-50 dark:bg-[#141E1A] border border-[#E2E8E4] dark:border-[#1F2E27] rounded-xl text-xs sm:text-sm text-zinc-900 dark:text-white outline-none focus:ring-2 focus:ring-emerald-600 font-cairo"
+            >
+              <option value="مرد">مرد</option>
+              <option value="زن">زن</option>
+              <option value="سایر">سایر</option>
+            </select>
+          </div>
+
+          <div className="sm:col-span-2">
             <label className="block text-xs font-cairo font-bold text-zinc-700 dark:text-zinc-300 mb-1.5">
               سقف بودجه ماهانه (تومان)
             </label>

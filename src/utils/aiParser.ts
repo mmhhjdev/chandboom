@@ -52,28 +52,162 @@ export function autoCategorize(text: string): TransactionCategory {
   return 'سایر';
 }
 
+export function isGreetingOrSmallTalk(text: string): boolean {
+  const q = text.toLowerCase().trim();
+  const greetingPhrases = [
+    'سلام',
+    'درود',
+    'چطوری',
+    'چطورید',
+    'خوبی',
+    'خوبید',
+    'مرسی',
+    'ممنون',
+    'تشکر',
+    'سپاس',
+    'صبح بخیر',
+    'عصر بخیر',
+    'شب بخیر',
+    'روز بخیر',
+    'سلامتی',
+    'خسته نباشید',
+    'خسته نباشی',
+    'سلام علیکم',
+    'احوال شما',
+    'حالت چطوره',
+    'چخبر',
+    'چه خبر',
+  ];
+
+  return greetingPhrases.some((phrase) => q === phrase || q.startsWith(phrase + ' ') || q.endsWith(' ' + phrase));
+}
+
+export function generateGreetingResponse(text: string, userName?: string): string {
+  const nameStr = userName ? `${userName} عزیز` : 'همراه گرامی';
+  return `سلام و درود، ${nameStr}! روزتون بخیر و شادی 🌸
+من دستیار هوشمند مالی و بودجه‌بندی سامانه «چندبوم» هستم و همیشه آماده‌ام تا با مدل‌های تخصصی GapGPT به مدیریت بی‌نقص دارایی‌های شما کمک کنم.
+
+می‌توانید برای شروع یکی از کارهای زیر را انجام دهید:
+• ثبت سریع تراکنش به زبان محاوره (مثلاً بنویسید: «خرید ۲۵۰۰ هزار تومان ساندویچ» یا «واریز ۵۰ میلیون تومان حقوق»)
+• تحلیل وضعیت بودجه: بپرسید «برام تحلیل کن که تا چند ماه آینده میتونم چیکار بکنم»
+• بررسی خریدهای جدید: از من بپرسید «فلان کالا رو بخرم یا نه؟» تا با سپر ضد خرید تکانه‌ای ارزش زمانی‌اش را بسنجیم.
+
+امروز چه کمکی از دست من برای شما برمی‌آید؟ 😊`;
+}
+
 export function parsePersianAmount(text: string): number {
   const normalized = toEnglishDigits(text).toLowerCase();
 
-  // Pattern: X میلیون یا X ملیون
+  // Pattern 1: X میلیون یا X ملیون (e.g. 50 میلیون -> 50,000,000 | 3.5 میلیون -> 3,500,000)
   const millionMatch = normalized.match(/(\d+(?:\.\d+)?)\s*(?:میلیون|ملیون)/);
   if (millionMatch) {
-    return Math.round(parseFloat(millionMatch[1]) * 1000000);
+    const val = parseFloat(millionMatch[1]);
+    return Math.round(val * 1000000);
   }
 
-  // Pattern: X هزار
+  // Pattern 2: X هزار (e.g. 2500 هزار تومان -> 2,500,000 | 450 هزار -> 450,000)
   const thousandMatch = normalized.match(/(\d+(?:\.\d+)?)\s*(?:هزار|ک|k)/);
   if (thousandMatch) {
-    return Math.round(parseFloat(thousandMatch[1]) * 1000);
+    const val = parseFloat(thousandMatch[1]);
+    return Math.round(val * 1000);
   }
 
-  // Pattern: Raw numbers with thousand separators
+  // Pattern 3: Explicit Rial amounts (convert to Toman by dividing by 10)
+  const rialMatch = normalized.match(/(\d{1,3}(?:,\d{3})+|\d{4,12})\s*ریال/);
+  if (rialMatch) {
+    const rawRial = parseInt(rialMatch[1].replace(/,/g, ''), 10);
+    return Math.round(rawRial / 10);
+  }
+
+  // Pattern 4: Raw numbers with thousand separators (e.g. 2,500,000 or 500000)
   const digitsMatch = normalized.replace(/,/g, '').match(/\b(\d{4,12})\b/);
   if (digitsMatch) {
     return parseInt(digitsMatch[1], 10);
   }
 
   return 0;
+}
+
+/**
+ * Smart NLU Parser: Extracts clean title, accurate amount, and type
+ */
+export function parsePersianSmartNLU(input: string): {
+  cleanTitle: string;
+  amount: number;
+  type: TransactionType;
+  bank?: string | null;
+} {
+  const clean = sanitizeAIPrompt(input).safePrompt;
+  const lower = clean.toLowerCase();
+
+  // 1. Detect Type
+  let type: TransactionType = 'expense';
+  if (
+    lower.includes('واریز') ||
+    lower.includes('حقوق') ||
+    lower.includes('دستمزد') ||
+    lower.includes('پاداش') ||
+    lower.includes('سود') ||
+    lower.includes('دریافت') ||
+    lower.includes('درآمد') ||
+    lower.includes('شارژ شد')
+  ) {
+    type = 'income';
+  } else if (
+    lower.includes('خرید') ||
+    lower.includes('خرج') ||
+    lower.includes('پرداخت') ||
+    lower.includes('برداشت') ||
+    lower.includes('کرایه') ||
+    lower.includes('بنزین')
+  ) {
+    type = 'expense';
+  }
+
+  // 2. Detect Amount accurately
+  const amount = parsePersianAmount(clean);
+
+  // 3. Extract Clean Title (Core item/source name)
+  let cleanTitle = clean;
+
+  // Remove common prefix verbs
+  cleanTitle = cleanTitle.replace(/^(?:ثبت\s*کن|بنویس|لطفاً\s*ثبت\s*کن|ثبت|خرید|خریدم|پرداخت|واریز\s*شد|واریز|خرج|هزینه|بابت)\s+/i, '');
+
+  // Remove amount patterns and units from the string
+  cleanTitle = cleanTitle
+    .replace(/[۰-۹0-9]+(?:\.[۰-۹0-9]+)?\s*(?:میلیون|ملیون|هزار|تومان|تومن|ریال)/gi, ' ')
+    .replace(/[۰-۹0-9,،]+\s*(?:تومان|تومن|ریال)?/gi, ' ')
+    .replace(/\b(?:تومان|تومن|ریال|هزار|میلیون|ملیون|مبلغ|برای|یک|یه|عدد|عدد|بابت)\b/gi, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
+
+  // If title was completely stripped, fallback gracefully to contextual default
+  if (!cleanTitle || cleanTitle.length < 2) {
+    if (lower.includes('ساندویچ')) cleanTitle = 'ساندویچ';
+    else if (lower.includes('حقوق')) cleanTitle = 'حقوق ماهانه';
+    else if (lower.includes('پیتزا')) cleanTitle = 'پیتزا';
+    else if (lower.includes('بنزین')) cleanTitle = 'بنزین';
+    else if (lower.includes('اسنپ')) cleanTitle = 'اسنپ';
+    else if (lower.includes('قهوه')) cleanTitle = 'قهوه';
+    else cleanTitle = type === 'income' ? 'واریزی درآمد' : 'خرید روزمره';
+  }
+
+  // 4. Detect Bank if present
+  let bank: string | null = null;
+  const banks = ['سامان', 'ملت', 'ملی', 'بلو', 'رسالت', 'پاسارگاد', 'صادرات', 'تجارت', 'سپه', 'آینده', 'پارسیان', 'شهر'];
+  for (const b of banks) {
+    if (clean.includes(b)) {
+      bank = `بانک ${b}`;
+      break;
+    }
+  }
+
+  return {
+    cleanTitle,
+    amount,
+    type,
+    bank,
+  };
 }
 
 export function parseTransactionLocally(input: string): ParsedAITransaction {
@@ -330,7 +464,32 @@ ${
     };
   }
 
-  // 3. Savings & Investments
+  // 3.5. Impulse Buy Shield Evaluation (خریدهای تکانه‌ای و ارزیابی خرید گجت/کالا)
+  if (
+    q.includes('بخرم') ||
+    q.includes('خرید گجت') ||
+    q.includes('خرید گوشی') ||
+    q.includes('خرید ساعت') ||
+    q.includes('خرید لپتاپ') ||
+    q.includes('خرید لباس') ||
+    q.includes('کالا') ||
+    (q.includes('خرید') && (q.includes('ارزش') || q.includes('صلاح') || q.includes('نظر')))
+  ) {
+    const hourlyWage = Math.round(Math.max((metrics.totalIncome || monthlyCap) / 160, 100000));
+    return {
+      text: `🛡️ سپر ضد خرید تکانه‌ای (Impulse Buy Shield چندبوم):
+ارزیابی هوشمند تصمیم خرید شما:
+• ارزش تقریبی هر ساعت کار شما: ${hourlyWage.toLocaleString('fa-IR')} تومان
+• تراز خالص ماهانه شما: ${metrics.balance.toLocaleString('fa-IR')} تومان
+
+توصیه اختصاصی چندبوم:
+۱. ارزش زمانی: قیمت این خرید را تقسیم بر ${hourlyWage.toLocaleString('fa-IR')} تومان کنید تا ببینید برای تأمین آن دقیقاً چند ساعت از عمر کاری‌تان صرف می‌شود.
+۲. قانون ۴۸ ساعت: اگر این کالا یک نیاز حیاتی نیست، تصمیم‌گیری را ۴۸ ساعت به تعویق بیندازید؛ در ۷۰٪ موارد اشتیاق اولیه خرید فروکش می‌کند.
+۳. در صورتی که پس‌انداز صندوق اضطراری‌تان تکمیل است، با خیال راحت‌تر هزینه نمایید.`,
+    };
+  }
+
+  // 4. Savings & Investments
   if (q.includes('پس‌انداز') || q.includes('سود') || q.includes('سرمایه') || q.includes('صرفه‌جویی')) {
     const savings = metrics.totalIncome - metrics.totalExpense;
     const rate = metrics.totalIncome > 0 ? Math.round((savings / metrics.totalIncome) * 100) : 0;

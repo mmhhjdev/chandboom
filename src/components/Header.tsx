@@ -54,12 +54,12 @@ export const Header: React.FC<HeaderProps> = ({
             className="flex items-center gap-2.5 cursor-pointer group text-right"
             title="مشاهده داشبورد چندبوم"
           >
-            <div className="w-10 h-10 flex items-center justify-center shrink-0 group-hover:scale-105 transition">
+            <div className="w-10 h-10 rounded-2xl overflow-hidden shadow-md group-hover:scale-105 transition flex items-center justify-center bg-white dark:bg-[#0E1512] border border-emerald-500/40 p-1 shrink-0">
               <img
-                src="/assets/logo.png"
+                src="/logo.png"
                 alt="لوگوی رسمی چندبوم"
                 onError={(e) => {
-                  (e.currentTarget as HTMLElement).style.display = 'none';
+                  (e.currentTarget as HTMLImageElement).src = '/assets/logo.png';
                 }}
                 className="w-full h-full object-contain"
               />
@@ -233,8 +233,5 @@ export const Header: React.FC<HeaderProps> = ({
         </div>
       </div>
     </header>
-
-
-
   );
 };

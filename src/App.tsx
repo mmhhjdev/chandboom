@@ -20,6 +20,8 @@ import { SubscriptionModal } from './components/SubscriptionModal';
 import { FloatingAIAssistant } from './components/FloatingAIAssistant';
 import { LandingPage } from './components/LandingPage';
 import { AuthGuardModal } from './components/AuthGuardModal';
+import { BankSmsModal } from './components/BankSmsModal';
+import { DailyQuestsModal } from './components/DailyQuestsModal';
 import { Transaction } from './types';
 import { ShieldCheck, Heart, Sparkles, ShieldAlert } from 'lucide-react';
 import { initSecurityProtection } from './utils/devtoolsProtection';
@@ -35,6 +37,7 @@ const AppContent: React.FC = () => {
     authGuardMessage,
     closeAuthGuard,
     addTicket,
+    addTransaction,
   } = useApp();
 
   // Modals state
@@ -44,14 +47,9 @@ const AppContent: React.FC = () => {
   const [isTicketModalOpen, setIsTicketModalOpen] = useState(false);
   const [isAdminModalOpen, setIsAdminModalOpen] = useState(false);
   const [isAvatarModalOpen, setIsAvatarModalOpen] = useState(false);
+  const [isBankSmsModalOpen, setIsBankSmsModalOpen] = useState(false);
+  const [isDailyQuestsModalOpen, setIsDailyQuestsModalOpen] = useState(false);
   const [showSecurityNotice, setShowSecurityNotice] = useState(false);
-
-  // اطمینان از اینکه در اولین بارگذاری اگر تب مشخص نشده بود، لندینگ بیود
-  useEffect(() => {
-    if (!activeTab) {
-      setActiveTab('landing');
-    }
-  }, [activeTab, setActiveTab]);
 
   useEffect(() => {
     const cleanup = initSecurityProtection(() => {
@@ -75,7 +73,7 @@ const AppContent: React.FC = () => {
     addTicket(data.subject, data.department, data.priority, data.initialMessage);
   };
 
-  if (activeTab === 'landing' || !activeTab) {
+  if (activeTab === 'landing') {
     return (
       <>
         {/* Security Shield Toast for Inspector/DevTools Attempts */}
@@ -131,10 +129,17 @@ const AppContent: React.FC = () => {
       {/* Main View Container */}
       <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 py-6 pb-24 md:pb-12">
         {activeTab === 'dashboard' && (
-          <DashboardView onOpenTransactionModal={() => handleOpenTransactionModal()} />
+          <DashboardView
+            onOpenTransactionModal={() => handleOpenTransactionModal()}
+            onOpenBankSmsModal={() => setIsBankSmsModalOpen(true)}
+            onOpenDailyQuestsModal={() => setIsDailyQuestsModalOpen(true)}
+          />
         )}
         {activeTab === 'transactions' && (
-          <TransactionsView onOpenTransactionModal={handleOpenTransactionModal} />
+          <TransactionsView
+            onOpenTransactionModal={handleOpenTransactionModal}
+            onOpenBankSmsModal={() => setIsBankSmsModalOpen(true)}
+          />
         )}
         {activeTab === 'goals' && <GoalsView />}
         {activeTab === 'analytics' && <AnalyticsView />}
@@ -153,6 +158,7 @@ const AppContent: React.FC = () => {
       <footer className="border-t border-[#E2E8E4] dark:border-[#1A2621] py-6 mb-18 md:mb-0 text-xs text-zinc-500 dark:text-zinc-400 bg-white/50 dark:bg-[#0A100D]/50 font-cairo">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 flex flex-col sm:flex-row items-center justify-between gap-3">
           <div className="flex items-center gap-2">
+            <img src="/logo.png" alt="لوگوی چندبوم" className="w-5 h-5 object-contain" onError={(e) => { (e.currentTarget as HTMLImageElement).src = '/assets/logo.png'; }} />
             <span className="font-brand font-bold text-sm text-zinc-800 dark:text-zinc-200">
               چندبوم (Chandboom)
             </span>
@@ -168,6 +174,18 @@ const AppContent: React.FC = () => {
       <FloatingAIAssistant />
 
       {/* Global Modals */}
+      <BankSmsModal
+        isOpen={isBankSmsModalOpen}
+        onClose={() => setIsBankSmsModalOpen(false)}
+        onSaveTransaction={(tx) => addTransaction(tx)}
+      />
+
+      <DailyQuestsModal
+        isOpen={isDailyQuestsModalOpen}
+        onClose={() => setIsDailyQuestsModalOpen(false)}
+        currentDayOfMonth={new Date().getDate()}
+      />
+
       <TransactionModal
         isOpen={isTxModalOpen}
         onClose={() => {

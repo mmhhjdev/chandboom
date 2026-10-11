@@ -16,8 +16,9 @@ import {
 import { useApp } from '../context/AppContext';
 import { formatToman } from '../utils/formatters';
 import { parsePersianFinancialText, generateFinancialAdvice } from '../utils/aiParser';
-import { parseTransactionWithDeepSeek, generateDeepSeekAdvice } from '../utils/deepseekService';
+import { parseTransactionWithSystemOne, getConversationalAdvice } from '../services/aiService';
 import { TransactionCategory } from '../types';
+import { getCachedAIChat, setCachedAIChat } from '../utils/aiCache';
 
 interface ChatMessage {
   id: string;
@@ -42,15 +43,23 @@ export const FloatingAIAssistant: React.FC = () => {
   const [input, setInput] = useState('');
   const [isTyping, setIsTyping] = useState(false);
   const [notice, setNotice] = useState<string | null>(null);
-  const [messages, setMessages] = useState<ChatMessage[]>([
-    {
-      id: 'welcome-1',
-      sender: 'assistant',
-      text: `سلام! من «هوش مصنوعی چندبوم» هستم، دستیار اختصاصی مدیریت مالی و تحلیل بودجه شما.
+  const [messages, setMessages] = useState<ChatMessage[]>(() => {
+    const cached = getCachedAIChat();
+    if (cached && cached.length > 0) return cached;
+    return [
+      {
+        id: 'welcome-1',
+        sender: 'assistant',
+        text: `سلام! من «هوش مصنوعی چندبوم» هستم، دستیار اختصاصی مدیریت مالی و تحلیل بودجه شما.
 می‌توانید پیام دهید تا تراکنش‌هایتان را ثبت کنم (مثلاً: «۵۰ هزار تومن قهوه») یا بپرسید «برام تحلیل کن که تا چند ماه آینده میتونم چیکار بکنم».`,
-      time: 'لحظاتی پیش',
-    },
-  ]);
+        time: 'لحظاتی پیش',
+      },
+    ];
+  });
+
+  React.useEffect(() => {
+    setCachedAIChat(messages);
+  }, [messages]);
 
   const presetQuestions = [
     'ثبت کن ۵۰ هزار تومن قهوه',
@@ -91,7 +100,7 @@ export const FloatingAIAssistant: React.FC = () => {
     setIsTyping(true);
     setNotice(null);
 
-    parseTransactionWithDeepSeek(userText)
+    parseTransactionWithSystemOne(userText)
       .then(async (parsed) => {
         let replyText = '';
 
@@ -100,19 +109,19 @@ export const FloatingAIAssistant: React.FC = () => {
             type: parsed.type,
             amount: parsed.amount,
             category: (parsed.category as TransactionCategory) || 'خوراک و غذا',
-            description: parsed.description || userText,
+            description: parsed.clean_title || userText,
             date: new Date().toISOString(),
           });
 
-          replyText = `✅ تراکنش توسط «هوش مصنوعی» ثبت شد:
+          replyText = `✅ تراکنش توسط «دستیار هوشمند چندبوم» ثبت شد:
 • نوع: ${parsed.type === 'expense' ? 'هزینه' : 'درآمد'}
 • مبلغ: ${formatToman(parsed.amount)}
 • دسته‌بندی: ${parsed.category || 'عمومی'}
-• شرح: ${parsed.description || userText}
+• شرح: ${parsed.clean_title || userText}
 
 این رکورد به جدول تراکنش‌های شما اضافه شد و تراز کل فوراً به‌روزرسانی گردید.`;
         } else {
-          replyText = await generateDeepSeekAdvice(userText, metrics, user.monthly_budget_cap, {
+          replyText = await getConversationalAdvice(userText, metrics, user.monthly_budget_cap, {
             age: user.age,
             gender: user.gender,
             fullName: user.full_name,

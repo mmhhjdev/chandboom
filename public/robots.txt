@@ -3,4 +3,4 @@ Allow: /
 Disallow: /admin
 Disallow: /api/
 
-Sitemap: https://kif-yar.ir/sitemap.xml
+Sitemap: https://chandboom.ir/sitemap.xml

@@ -17,12 +17,20 @@ import {
   AlertTriangle,
   Crown,
   Calendar,
+  MessageSquare,
+  Send,
+  Bell,
+  Filter,
+  Check,
+  Loader2,
+  Sparkles,
 } from 'lucide-react';
 import { useApp } from '../context/AppContext';
 import { generateAdmin2FACode } from '../utils/admin2fa';
 import { formatToman, formatShamsiDateTime, formatShamsiDate, toPersianDigits } from '../utils/formatters';
 import { calculateRemainingProDays } from '../utils/security';
-import { UserRole, SubscriptionTier } from '../types';
+import { UserRole, SubscriptionTier, UserProfile } from '../types';
+import { MALE_AVATAR_SVG, FEMALE_AVATAR_SVG } from '../utils/avatars';
 
 interface AdminDashboardModalProps {
   isOpen: boolean;
@@ -41,6 +49,8 @@ export const AdminDashboardModal: React.FC<AdminDashboardModalProps> = ({ isOpen
     rejectManualPayment,
     allUsers,
     updateUserRoleAndTier,
+    updateUserSubscriptionDays,
+    sendDirectUserMessage,
     transactions,
     tickets,
   } = useApp();
@@ -48,13 +58,84 @@ export const AdminDashboardModal: React.FC<AdminDashboardModalProps> = ({ isOpen
   const [activeTab, setActiveTab] = useState<'payments' | 'users' | 'security' | 'stats'>('payments');
   const [twoFaInput, setTwoFaInput] = useState('');
   const [twoFaError, setTwoFaError] = useState<string | null>(null);
-  const [demoCodeSent, setDemoCodeSent] = useState<string | null>(null);
+  const [statusMessageSent, setStatusMessageSent] = useState<string | null>(null);
   const [isOtpLoading, setIsOtpLoading] = useState(false);
   const [adminNotes, setAdminNotes] = useState<Record<string, string>>({});
   const [userSearch, setUserSearch] = useState('');
   const [selectedReceiptForPreview, setSelectedReceiptForPreview] = useState<string | null>(null);
 
+  // User Directory filter & Direct Messaging state
+  const [subscriptionFilter, setSubscriptionFilter] = useState<'all' | 'pro' | 'free' | 'active' | 'expired'>('all');
+  const [selectedUserForMessage, setSelectedUserForMessage] = useState<UserProfile | null>(null);
+  const [messageSubject, setMessageSubject] = useState('');
+  const [messageContent, setMessageContent] = useState('');
+  const [sendAsNotification, setSendAsNotification] = useState(true);
+  const [sendAsTicket, setSendAsTicket] = useState(true);
+  const [messagePriority, setMessagePriority] = useState<'urgent' | 'normal' | 'low'>('urgent');
+  const [isSendingMessage, setIsSendingMessage] = useState(false);
+  const [messageSentSuccess, setMessageSentSuccess] = useState<string | null>(null);
+
   if (!isOpen) return null;
+
+  const quickTemplates = [
+    {
+      title: 'فعال‌سازی پرو',
+      subject: 'اشتراک پرو برای شما فعال شد',
+      body: 'کاربر گرامی، اشتراک طلایی (پرو) حساب کاربری شما با موفقیت فعال شد. اکنون به تمامی امکانات هوش مصنوعی، بودجه‌بندی هوشمند و تحلیل‌های پیشرفته چندبوم دسترسی نامحدود دارید.',
+    },
+    {
+      title: 'تأیید فیش واریز',
+      subject: 'تأیید فیش واریزی کارت‌به‌کارت',
+      body: 'فیش واریزی کارت‌به‌کارت شما توسط مدیریت چندبوم بررسی و تأیید شد. اعتبار اشتراک به حساب شما افزوده گردید.',
+    },
+    {
+      title: 'یادآوری تمدید',
+      subject: 'یادآوری موعد پایان اشتراک طلایی',
+      body: 'کاربر گرامی، مدت اعتبار اشتراک طلایی شما رو به پایان است. لطفاً جهت استمرار بهره‌مندی از خدمات اختصاصی، نسبت به تمدید اشتراک اقدام نمایید.',
+    },
+    {
+      title: 'پشتیبانی عمومی',
+      subject: 'پیام از طرف تیم مدیریت چندبوم',
+      body: 'کاربر گرامی، در صورت وجود هرگونه سوال، ابهام یا نیاز به راهنمایی در بخش‌های مختلف سامانه چندبوم، می‌توانید از بخش پشتیبانی با ما در ارتباط باشید.',
+    },
+  ];
+
+  const handleOpenMessageDialog = (targetUser: UserProfile) => {
+    setSelectedUserForMessage(targetUser);
+    setMessageSubject(`پیام مدیریت سامانه چندبوم به ${targetUser.full_name || 'کاربر'}`);
+    setMessageContent('');
+    setMessageSentSuccess(null);
+  };
+
+  const handleSendMessage = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!selectedUserForMessage || !messageContent.trim()) return;
+    setIsSendingMessage(true);
+    setMessageSentSuccess(null);
+    try {
+      const ok = await sendDirectUserMessage(
+        selectedUserForMessage.id,
+        selectedUserForMessage.full_name || 'کاربر گرامی',
+        selectedUserForMessage.email,
+        messageSubject.trim() || 'اطلاعیه مدیریت چندبوم',
+        messageContent.trim(),
+        sendAsNotification,
+        sendAsTicket
+      );
+      if (ok) {
+        setMessageSentSuccess(`پیام شما با موفقیت برای کاربر ${selectedUserForMessage.full_name || selectedUserForMessage.email} ارسال شد.`);
+        setTimeout(() => {
+          setSelectedUserForMessage(null);
+          setMessageSentSuccess(null);
+          setMessageContent('');
+        }, 1800);
+      }
+    } catch (err: any) {
+      alert(err?.message || 'خطا در ارسال پیام');
+    } finally {
+      setIsSendingMessage(false);
+    }
+  };
 
   const handleRequestCode = async () => {
     setIsOtpLoading(true);
@@ -62,7 +143,7 @@ export const AdminDashboardModal: React.FC<AdminDashboardModalProps> = ({ isOpen
     try {
       const res = await requestAdminOtp();
       if (res.success) {
-        setDemoCodeSent(res.code || 'کد تایید OTP با موفقیت صادر شد');
+        setStatusMessageSent('کد تایید امنیتی به ایمیل مدیریت ارسال شد. لطفاً صندوق ورودی خود را بررسی نمایید.');
       } else {
         setTwoFaError(res.error || 'خطا در ارسال کد تایید');
       }
@@ -83,7 +164,7 @@ export const AdminDashboardModal: React.FC<AdminDashboardModalProps> = ({ isOpen
         setTwoFaError(res.error || 'کد تایید اشتباه است.');
       } else {
         setTwoFaError(null);
-        setDemoCodeSent(null);
+        setStatusMessageSent(null);
       }
     } catch (err: any) {
       setTwoFaError(err?.message || 'خطا در تایید کد امنیتی');
@@ -92,11 +173,22 @@ export const AdminDashboardModal: React.FC<AdminDashboardModalProps> = ({ isOpen
     }
   };
 
-  const filteredUsers = allUsers.filter(
-    (u) =>
-      u.email.toLowerCase().includes(userSearch.toLowerCase()) ||
-      u.full_name.toLowerCase().includes(userSearch.toLowerCase())
-  );
+  const filteredUsers = allUsers.filter((u) => {
+    const search = userSearch.toLowerCase().trim();
+    const matchesSearch =
+      !search ||
+      u.email.toLowerCase().includes(search) ||
+      (u.full_name && u.full_name.toLowerCase().includes(search));
+    if (!matchesSearch) return false;
+
+    if (subscriptionFilter === 'all') return true;
+    const proStatus = calculateRemainingProDays(u.subscription_expires_at);
+    if (subscriptionFilter === 'pro') return u.tier === 'pro' || u.tier === 'vip';
+    if (subscriptionFilter === 'free') return u.tier === 'free';
+    if (subscriptionFilter === 'active') return proStatus.isActive;
+    if (subscriptionFilter === 'expired') return !proStatus.isActive && (u.tier === 'pro' || u.tier === 'vip');
+    return true;
+  });
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-6 bg-black/80 backdrop-blur-xs font-cairo">
@@ -163,13 +255,15 @@ export const AdminDashboardModal: React.FC<AdminDashboardModalProps> = ({ isOpen
               </p>
             </div>
 
-            {demoCodeSent && (
-              <div className="p-3 rounded-xl bg-emerald-50 dark:bg-emerald-950/50 border border-emerald-200 dark:border-emerald-800 text-xs text-emerald-800 dark:text-emerald-300 w-full text-right space-y-1">
-                <span className="font-bold block">کد تایید امنیتی به ایمیل مدیریت ارسال شد:</span>
-                <span className="font-mono text-base font-black tracking-widest text-emerald-700 dark:text-emerald-400 block text-center py-1">
-                  {demoCodeSent}
+            {statusMessageSent && (
+              <div className="p-3 rounded-xl bg-emerald-50 dark:bg-emerald-950/50 border border-emerald-200 dark:border-emerald-800 text-xs text-emerald-800 dark:text-emerald-300 w-full text-center space-y-1">
+                <span className="font-bold block flex items-center justify-center gap-1.5">
+                  <CheckCircle2 className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
+                  {statusMessageSent}
                 </span>
-                <span className="text-[10px] text-zinc-500 block text-center">(یا می‌توانید از مستر کد ۱۲۳۴۵۶ استفاده نمایید)</span>
+                <span className="text-[11px] text-zinc-500 dark:text-zinc-400 block">
+                  کد ۶ رقمی یکبار مصرف به صندوق ایمیل شما ارسال شده و تا ۵ دقیقه معتبر است.
+                </span>
               </div>
             )}
 
@@ -389,16 +483,21 @@ export const AdminDashboardModal: React.FC<AdminDashboardModalProps> = ({ isOpen
                 </div>
               )}
 
-              {/* Tab 2: Users Management with exact Pro remaining days */}
+              {/* Tab 2: Users Management with exact Pro remaining days & Direct Messaging */}
               {activeTab === 'users' && (
                 <div className="space-y-4">
                   <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                     <div>
-                      <h4 className="font-cairo text-base font-bold text-zinc-900 dark:text-zinc-100">
-                        کاربران ثبت‌نام شده در سیستم
-                      </h4>
+                      <div className="flex items-center gap-2">
+                        <h4 className="font-cairo text-base font-bold text-zinc-900 dark:text-zinc-100">
+                          مدیریت کاربران و ارسال پیام مستقیم
+                        </h4>
+                        <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300">
+                          {toPersianDigits(allUsers.length)} کاربر کل
+                        </span>
+                      </div>
                       <p className="text-xs text-zinc-500">
-                        بررسی مانده اشتراک پرو، تغییر سطح دسترسی و سقف بودجه
+                        جستجوی کاربران بر اساس نام نمایشی، ایمیل و وضعیت اشتراک با امکان ارسال پیام به صندوق اعلان و تیکت‌ها
                       </p>
                     </div>
 
@@ -408,101 +507,204 @@ export const AdminDashboardModal: React.FC<AdminDashboardModalProps> = ({ isOpen
                         type="text"
                         value={userSearch}
                         onChange={(e) => setUserSearch(e.target.value)}
-                        placeholder="جستجوی ایمیل یا نام..."
+                        placeholder="جستجوی نام نمایشی (مثلاً سبحان) یا ایمیل..."
                         className="w-full pr-9 pl-3 py-1.5 bg-zinc-50 dark:bg-[#141E1A] border border-[#E2E8E4] dark:border-[#1F2E27] rounded-xl text-xs outline-none focus:ring-1 focus:ring-emerald-600 font-cairo"
                       />
                     </div>
+                  </div>
+
+                  {/* Subscription Filter Chips */}
+                  <div className="flex flex-wrap items-center gap-1.5 text-xs font-cairo">
+                    <span className="text-[11px] text-zinc-500 ml-1 flex items-center gap-1">
+                      <Filter className="w-3 h-3" />
+                      فیلتر وضعیت:
+                    </span>
+                    {(
+                      [
+                        { id: 'all', label: `همه (${toPersianDigits(allUsers.length)})` },
+                        { id: 'pro', label: 'اشتراک طلایی (پرو)' },
+                        { id: 'free', label: 'طرح پایه (رایگان)' },
+                        { id: 'active', label: 'اشتراک‌های فعال' },
+                        { id: 'expired', label: 'منقضی شده' },
+                      ] as const
+                    ).map((filter) => (
+                      <button
+                        key={filter.id}
+                        type="button"
+                        onClick={() => setSubscriptionFilter(filter.id)}
+                        className={`px-2.5 py-1 rounded-xl font-bold transition text-[11px] cursor-pointer ${
+                          subscriptionFilter === filter.id
+                            ? 'bg-emerald-700 text-white shadow-xs'
+                            : 'bg-zinc-100 dark:bg-[#121B16] text-zinc-600 dark:text-zinc-400 hover:bg-zinc-200 dark:hover:bg-[#1A2620]'
+                        }`}
+                      >
+                        {filter.label}
+                      </button>
+                    ))}
                   </div>
 
                   <div className="overflow-x-auto rounded-2xl border border-[#E2E8E4] dark:border-[#1F2E26]">
                     <table className="w-full text-xs text-right">
                       <thead className="bg-zinc-100 dark:bg-[#121B17] text-zinc-600 dark:text-zinc-300 font-cairo font-bold">
                         <tr>
-                          <th className="p-3">کاربر</th>
+                          <th className="p-3">کاربر (نام نمایشی و ایمیل)</th>
+                          <th className="p-3">مشخصات</th>
                           <th className="p-3">نقش کاربری</th>
                           <th className="p-3">پلن اشتراک</th>
                           <th className="p-3">مانده اشتراک پرو</th>
-                          <th className="p-3">سقف بودجه ماهانه</th>
-                          <th className="p-3">عملیات مدیریت</th>
+                          <th className="p-3">سقف بودجه</th>
+                          <th className="p-3">ارسال پیام و عملیات مدیریت</th>
                         </tr>
                       </thead>
                       <tbody className="divide-y divide-[#E2E8E4] dark:divide-[#1F2E26]">
-                        {filteredUsers.map((u) => {
-                          const proStatus = calculateRemainingProDays(u.subscription_expires_at);
+                        {filteredUsers.length === 0 ? (
+                          <tr>
+                            <td colSpan={7} className="p-8 text-center text-zinc-400">
+                              کاربری با مشخصات جستجو شده یافت نشد.
+                            </td>
+                          </tr>
+                        ) : (
+                          filteredUsers.map((u) => {
+                            const proStatus = calculateRemainingProDays(u.subscription_expires_at);
+                            const avatarSrc = u.avatar_url || (u.gender === 'زن' ? FEMALE_AVATAR_SVG : MALE_AVATAR_SVG);
 
-                          return (
-                            <tr key={u.id} className="hover:bg-zinc-50/50 dark:hover:bg-[#141E19] transition">
-                              <td className="p-3">
-                                <div className="font-bold text-zinc-900 dark:text-zinc-100">{u.full_name}</div>
-                                <div className="text-[11px] text-zinc-400 font-mono">{u.email}</div>
-                              </td>
-                              <td className="p-3">
-                                <span
-                                  className={`px-2 py-0.5 rounded-full font-bold text-[10px] ${
-                                    u.role === 'admin'
-                                      ? 'bg-purple-100 text-purple-800 dark:bg-purple-950 dark:text-purple-300'
-                                      : 'bg-zinc-100 text-zinc-700 dark:bg-zinc-800 dark:text-zinc-300'
-                                  }`}
-                                >
-                                  {u.role === 'admin' ? 'مدیر سیستم' : 'کاربر عادی'}
-                                </span>
-                              </td>
-                              <td className="p-3">
-                                <span
-                                  className={`px-2 py-0.5 rounded-full font-bold text-[10px] ${
-                                    u.tier === 'pro' || u.tier === 'vip'
-                                      ? 'bg-amber-100 text-amber-800 dark:bg-amber-950 dark:text-amber-300 border border-amber-300'
-                                      : 'bg-zinc-100 text-zinc-600 dark:bg-zinc-800 dark:text-zinc-400'
-                                  }`}
-                                >
-                                  {u.tier === 'pro' ? 'طلایی (پرو)' : u.tier === 'vip' ? 'VIP' : 'پایه (رایگان)'}
-                                </span>
-                              </td>
-                              <td className="p-3">
-                                {u.tier === 'pro' || u.tier === 'vip' ? (
-                                  <div className="space-y-0.5">
-                                    <span
-                                      className={`px-2 py-0.5 rounded-full font-bold text-[10px] inline-flex items-center gap-1 ${
-                                        proStatus.isActive
-                                          ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300'
-                                          : 'bg-rose-100 text-rose-800 dark:bg-rose-950 dark:text-rose-300'
-                                      }`}
-                                    >
-                                      <Clock className="w-3 h-3" />
-                                      {proStatus.humanText}
-                                    </span>
-                                    {u.subscription_expires_at && (
-                                      <div className="text-[10px] text-zinc-400 font-mono">
-                                        تا {formatShamsiDate(u.subscription_expires_at)}
+                            return (
+                              <tr key={u.id} className="hover:bg-zinc-50/50 dark:hover:bg-[#141E19] transition">
+                                <td className="p-3">
+                                  <div className="flex items-center gap-2.5">
+                                    <img
+                                      src={avatarSrc}
+                                      alt={u.full_name || 'کاربر'}
+                                      className="w-8 h-8 rounded-full border border-emerald-500/40 object-cover shrink-0 bg-zinc-100 dark:bg-zinc-800"
+                                    />
+                                    <div>
+                                      <div className="font-bold text-zinc-900 dark:text-zinc-100 text-sm">
+                                        {u.full_name || 'کاربر بدون نام'}
                                       </div>
-                                    )}
+                                      <div className="text-[11px] text-zinc-400 font-mono select-all">
+                                        {u.email}
+                                      </div>
+                                    </div>
                                   </div>
-                                ) : (
-                                  <span className="text-zinc-400 text-[11px]">-</span>
-                                )}
-                              </td>
-                              <td className="p-3 font-mono">
-                                {formatToman(u.monthly_budget_cap)}
-                              </td>
-                              <td className="p-3">
-                                <div className="flex items-center gap-1.5 font-cairo">
-                                  <button
-                                    onClick={() =>
-                                      updateUserRoleAndTier(
-                                        u.id,
-                                        u.role,
-                                        u.tier === 'pro' ? 'free' : 'pro'
-                                      )
-                                    }
-                                    className="px-2.5 py-1 rounded-lg border border-amber-400/80 dark:border-amber-700 text-amber-800 dark:text-amber-300 hover:bg-amber-50 text-[11px] font-bold cursor-pointer"
+                                </td>
+                                <td className="p-3 text-[11px] text-zinc-600 dark:text-zinc-300">
+                                  <div>
+                                    {u.gender ? (u.gender === 'مرد' ? 'آقا' : 'خانم') : 'نامشخص'}
+                                  </div>
+                                  {u.age ? (
+                                    <div className="text-[10px] text-zinc-400">
+                                      {toPersianDigits(u.age)} ساله
+                                    </div>
+                                  ) : null}
+                                </td>
+                                <td className="p-3">
+                                  <span
+                                    className={`px-2 py-0.5 rounded-full font-bold text-[10px] ${
+                                      u.role === 'admin'
+                                        ? 'bg-purple-100 text-purple-800 dark:bg-purple-950 dark:text-purple-300'
+                                        : 'bg-zinc-100 text-zinc-700 dark:bg-zinc-800 dark:text-zinc-300'
+                                    }`}
                                   >
-                                    {u.tier === 'pro' ? 'تنزیل به رایگان' : 'ارتقا به پرو'}
-                                  </button>
-                                </div>
-                              </td>
-                            </tr>
-                          );
-                        })}
+                                    {u.role === 'admin' ? 'مدیر سیستم' : 'کاربر عادی'}
+                                  </span>
+                                </td>
+                                <td className="p-3">
+                                  <span
+                                    className={`px-2 py-0.5 rounded-full font-bold text-[10px] ${
+                                      u.tier === 'pro' || u.tier === 'vip'
+                                        ? 'bg-amber-100 text-amber-800 dark:bg-amber-950 dark:text-amber-300 border border-amber-300'
+                                        : 'bg-zinc-100 text-zinc-600 dark:bg-zinc-800 dark:text-zinc-400'
+                                    }`}
+                                  >
+                                    {u.tier === 'pro' ? 'طلایی (پرو)' : u.tier === 'vip' ? 'VIP' : 'پایه (رایگان)'}
+                                  </span>
+                                </td>
+                                <td className="p-3">
+                                  {u.tier === 'pro' || u.tier === 'vip' ? (
+                                    <div className="space-y-0.5">
+                                      <span
+                                        className={`px-2 py-0.5 rounded-full font-bold text-[10px] inline-flex items-center gap-1 ${
+                                          proStatus.isActive
+                                            ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300'
+                                            : 'bg-rose-100 text-rose-800 dark:bg-rose-950 dark:text-rose-300'
+                                        }`}
+                                      >
+                                        <Clock className="w-3 h-3" />
+                                        {proStatus.humanText}
+                                      </span>
+                                      {u.subscription_expires_at && (
+                                        <div className="text-[10px] text-zinc-400 font-mono">
+                                          تا {formatShamsiDate(u.subscription_expires_at)}
+                                        </div>
+                                      )}
+                                    </div>
+                                  ) : (
+                                    <span className="text-zinc-400 text-[11px]">-</span>
+                                  )}
+                                </td>
+                                <td className="p-3 font-mono">
+                                  {formatToman(u.monthly_budget_cap)}
+                                </td>
+                                <td className="p-3">
+                                  <div className="flex flex-wrap items-center gap-1.5 font-cairo">
+                                    <button
+                                      type="button"
+                                      onClick={() => handleOpenMessageDialog(u)}
+                                      title="ارسال پیام مستقیم به صندوق اعلان و تیکت پشتیبانی کاربر"
+                                      className="px-2.5 py-1.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold text-[10px] flex items-center gap-1.5 shadow-xs transition cursor-pointer"
+                                    >
+                                      <MessageSquare className="w-3.5 h-3.5" />
+                                      <span>ارسال پیام و اعلان</span>
+                                    </button>
+
+                                    <button
+                                      onClick={() => updateUserSubscriptionDays(u.id, 30, 'تمدید ۳۰ روزه توسط مدیر ارشد')}
+                                      title="افزودن ۳۰ روز به اعتبار اشتراک طلایی"
+                                      className="px-2 py-1 rounded-lg bg-emerald-50 dark:bg-emerald-950/40 text-emerald-800 dark:text-emerald-300 hover:bg-emerald-100 text-[10px] font-bold border border-emerald-300 dark:border-emerald-800 cursor-pointer"
+                                    >
+                                      +۳۰ روز
+                                    </button>
+                                    <button
+                                      onClick={() => updateUserSubscriptionDays(u.id, 90, 'تمدید ۹۰ روزه توسط مدیر ارشد')}
+                                      title="افزودن ۹۰ روز به اعتبار اشتراک طلایی"
+                                      className="px-2 py-1 rounded-lg bg-amber-50 dark:bg-amber-950/40 text-amber-800 dark:text-amber-300 hover:bg-amber-100 text-[10px] font-bold border border-amber-300 dark:border-amber-800 cursor-pointer"
+                                    >
+                                      +۹۰ روز
+                                    </button>
+                                    <button
+                                      onClick={() => {
+                                        const daysStr = prompt('تعداد روزهای مورد نظر برای تغییر اعتبار اشتراک را وارد نمایید (مثلاً ۳۰ یا ۶۰):', '30');
+                                        if (daysStr) {
+                                          const days = parseInt(daysStr, 10);
+                                          if (!isNaN(days) && days !== 0) {
+                                            const reason = prompt('توضیحات مدیر برای ثبت در تیکت کاربر (اختیاری):', 'تمدید اعتبار اشتراک طلایی توسط مدیریت چندبوم') || '';
+                                            updateUserSubscriptionDays(u.id, days, reason);
+                                          }
+                                        }
+                                      }}
+                                      title="تنظیم دستی روزهای اشتراک"
+                                      className="px-2 py-1 rounded-lg border border-zinc-300 dark:border-zinc-700 text-zinc-700 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-[#16221D] text-[10px] font-bold cursor-pointer"
+                                    >
+                                      تنظیم روزها
+                                    </button>
+                                    <button
+                                      onClick={() =>
+                                        updateUserRoleAndTier(
+                                          u.id,
+                                          u.role,
+                                          u.tier === 'pro' ? 'free' : 'pro'
+                                        )
+                                      }
+                                      className="px-2 py-1 rounded-lg border border-amber-400/80 dark:border-amber-700 text-amber-800 dark:text-amber-300 hover:bg-amber-50 dark:hover:bg-amber-950/40 text-[10px] font-bold cursor-pointer"
+                                    >
+                                      {u.tier === 'pro' ? 'تنزیل به رایگان' : 'ارتقا به پرو'}
+                                    </button>
+                                  </div>
+                                </td>
+                              </tr>
+                            );
+                          })
+                        )}
                       </tbody>
                     </table>
                   </div>
@@ -613,6 +815,191 @@ export const AdminDashboardModal: React.FC<AdminDashboardModalProps> = ({ isOpen
                 className="max-h-[70vh] w-auto rounded-xl object-contain shadow-2xl"
               />
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* Admin Direct User Notification & Messaging Modal */}
+      {selectedUserForMessage && (
+        <div className="fixed inset-0 z-70 flex items-center justify-center p-4 bg-black/80 backdrop-blur-xs animate-in fade-in duration-150">
+          <div className="relative max-w-xl w-full bg-white dark:bg-[#0D1511] rounded-3xl overflow-hidden border border-[#E2E8E4] dark:border-[#1F2E26] shadow-2xl p-6 space-y-4">
+            <div className="flex items-center justify-between pb-3 border-b border-[#E2E8E4] dark:border-[#1F2E26]">
+              <div className="flex items-center gap-2.5">
+                <div className="p-2 rounded-xl bg-blue-100 text-blue-700 dark:bg-blue-950/60 dark:text-blue-300">
+                  <MessageSquare className="w-5 h-5" />
+                </div>
+                <div>
+                  <h4 className="font-cairo font-bold text-base text-zinc-900 dark:text-white">
+                    ارسال اعلان و پیام مستقیم به کاربر
+                  </h4>
+                  <p className="text-xs text-zinc-400">
+                    ارسال آنی پیام به صندوق اعلان‌های داشبورد و ایجاد تیکت رسمی
+                  </p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setSelectedUserForMessage(null)}
+                className="p-1 rounded-xl text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-200 transition cursor-pointer"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            {/* Target User Banner */}
+            <div className="p-3 rounded-2xl bg-zinc-50 dark:bg-[#121B17] border border-[#E2E8E4] dark:border-[#1F2E26] flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <img
+                  src={
+                    selectedUserForMessage.avatar_url ||
+                    (selectedUserForMessage.gender === 'زن' ? FEMALE_AVATAR_SVG : MALE_AVATAR_SVG)
+                  }
+                  alt={selectedUserForMessage.full_name}
+                  className="w-10 h-10 rounded-full border border-emerald-500/40 object-cover"
+                />
+                <div>
+                  <div className="font-bold text-sm text-zinc-900 dark:text-white">
+                    {selectedUserForMessage.full_name || 'کاربر بدون نام'}
+                  </div>
+                  <div className="text-xs text-zinc-400 font-mono" dir="ltr">
+                    {selectedUserForMessage.email}
+                  </div>
+                </div>
+              </div>
+              <span
+                className={`px-2.5 py-0.5 rounded-full text-[10px] font-bold ${
+                  selectedUserForMessage.tier === 'pro' || selectedUserForMessage.tier === 'vip'
+                    ? 'bg-amber-100 text-amber-800 dark:bg-amber-950 dark:text-amber-300 border border-amber-300'
+                    : 'bg-zinc-200 text-zinc-700 dark:bg-zinc-800 dark:text-zinc-300'
+                }`}
+              >
+                {selectedUserForMessage.tier === 'pro'
+                  ? 'اشتراک طلایی'
+                  : selectedUserForMessage.tier === 'vip'
+                  ? 'VIP'
+                  : 'طرح پایه'}
+              </span>
+            </div>
+
+            {messageSentSuccess ? (
+              <div className="p-4 rounded-2xl bg-emerald-50 text-emerald-800 dark:bg-emerald-950/60 dark:text-emerald-300 border border-emerald-300 dark:border-emerald-800 text-xs flex items-center gap-2 animate-in fade-in">
+                <CheckCircle2 className="w-5 h-5 shrink-0" />
+                <span>{messageSentSuccess}</span>
+              </div>
+            ) : (
+              <form onSubmit={handleSendMessage} className="space-y-4">
+                {/* Quick Templates */}
+                <div className="space-y-1.5">
+                  <label className="text-[11px] font-bold text-zinc-600 dark:text-zinc-400 block">
+                    قالب‌های آماده پیام (کلیک برای جایگذاری سریع):
+                  </label>
+                  <div className="flex flex-wrap gap-1.5">
+                    {quickTemplates.map((tmpl, idx) => (
+                      <button
+                        key={idx}
+                        type="button"
+                        onClick={() => {
+                          setMessageSubject(tmpl.subject);
+                          setMessageContent(tmpl.body);
+                        }}
+                        className="px-2.5 py-1 rounded-xl bg-zinc-100 hover:bg-zinc-200 dark:bg-[#15221C] dark:hover:bg-[#1E2E27] text-zinc-700 dark:text-zinc-300 text-[10px] font-bold transition cursor-pointer border border-transparent hover:border-emerald-500/30 flex items-center gap-1"
+                      >
+                        <Sparkles className="w-3 h-3 text-amber-500" />
+                        <span>{tmpl.title}</span>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Subject */}
+                <div>
+                  <label className="block text-xs font-bold text-zinc-700 dark:text-zinc-300 mb-1">
+                    عنوان پیام / اعلان:
+                  </label>
+                  <input
+                    type="text"
+                    required
+                    value={messageSubject}
+                    onChange={(e) => setMessageSubject(e.target.value)}
+                    placeholder="مثلاً: اشتراک طلایی برای شما فعال شد"
+                    className="w-full px-3.5 py-2 bg-zinc-50 dark:bg-[#141E1A] border border-[#E2E8E4] dark:border-[#1F2E27] rounded-xl text-xs text-zinc-900 dark:text-white outline-none focus:ring-1 focus:ring-emerald-600 font-cairo"
+                  />
+                </div>
+
+                {/* Content */}
+                <div>
+                  <label className="block text-xs font-bold text-zinc-700 dark:text-zinc-300 mb-1">
+                    متن کامل پیام:
+                  </label>
+                  <textarea
+                    required
+                    rows={4}
+                    value={messageContent}
+                    onChange={(e) => setMessageContent(e.target.value)}
+                    placeholder="متن پیام اختصاصی جهت نمایش به کاربر..."
+                    className="w-full px-3.5 py-2.5 bg-zinc-50 dark:bg-[#141E1A] border border-[#E2E8E4] dark:border-[#1F2E27] rounded-xl text-xs text-zinc-900 dark:text-white outline-none focus:ring-1 focus:ring-emerald-600 font-cairo resize-none leading-relaxed"
+                  />
+                </div>
+
+                {/* Delivery Options */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs pt-1">
+                  <label className="flex items-center gap-2 p-2.5 rounded-xl bg-zinc-50 dark:bg-[#141E1A] border border-[#E2E8E4] dark:border-[#1F2E27] cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={sendAsNotification}
+                      onChange={(e) => setSendAsNotification(e.target.checked)}
+                      className="rounded accent-emerald-600"
+                    />
+                    <div className="flex items-center gap-1.5">
+                      <Bell className="w-3.5 h-3.5 text-emerald-600" />
+                      <span className="font-bold">ارسال به اعلان‌های داشبورد</span>
+                    </div>
+                  </label>
+
+                  <label className="flex items-center gap-2 p-2.5 rounded-xl bg-zinc-50 dark:bg-[#141E1A] border border-[#E2E8E4] dark:border-[#1F2E27] cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={sendAsTicket}
+                      onChange={(e) => setSendAsTicket(e.target.checked)}
+                      className="rounded accent-emerald-600"
+                    />
+                    <div className="flex items-center gap-1.5">
+                      <MessageSquare className="w-3.5 h-3.5 text-blue-600" />
+                      <span className="font-bold">ثبت در تیکت‌های پشتیبانی</span>
+                    </div>
+                  </label>
+                </div>
+
+                {/* Actions */}
+                <div className="flex items-center justify-end gap-2.5 pt-3 border-t border-[#E2E8E4] dark:border-[#1F2E26]">
+                  <button
+                    type="button"
+                    onClick={() => setSelectedUserForMessage(null)}
+                    disabled={isSendingMessage}
+                    className="px-4 py-2 rounded-xl text-xs font-bold text-zinc-600 dark:text-zinc-400 hover:bg-zinc-100 dark:hover:bg-[#16221D] transition cursor-pointer"
+                  >
+                    انصراف
+                  </button>
+                  <button
+                    type="submit"
+                    disabled={isSendingMessage || !messageContent.trim()}
+                    className="px-5 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold shadow-xs transition cursor-pointer disabled:opacity-50 flex items-center gap-1.5"
+                  >
+                    {isSendingMessage ? (
+                      <>
+                        <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                        <span>در حال ارسال...</span>
+                      </>
+                    ) : (
+                      <>
+                        <Send className="w-3.5 h-3.5 rotate-180" />
+                        <span>ارسال پیام به کاربر</span>
+                      </>
+                    )}
+                  </button>
+                </div>
+              </form>
+            )}
           </div>
         </div>
       )}

@@ -4,44 +4,57 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0" />
     
-    <!-- 1. Security Meta Headers -->
+    <!-- 1. Security Meta Headers & SPA Redirect Decoder -->
     <meta http-equiv="X-Content-Type-Options" content="nosniff" />
     <meta name="referrer" content="strict-origin-when-cross-origin" />
+    <script type="text/javascript">
+      // SPA redirect decoder for GitHub Pages custom domain (chandboon.ir)
+      (function(l) {
+        if (l.search && l.search[1] === '/') {
+          var decoded = l.search.slice(1).split('&').map(function(s) { 
+            return s.replace(/~and~/g, '&');
+          }).join('?');
+          window.history.replaceState(null, null,
+              l.pathname.slice(0, -1) + decoded + l.hash
+          );
+        }
+      }(window.location));
+    </script>
 
-    <!-- 2. Primary SEO Meta Tags -->
-    <title>چندبوم (Chandboom) - سامانه هوشمند مدیریت مالی، بودجه‌بندی و دنگ | Smart AI Finance</title>
-    <meta name="title" content="چندبوم (Chandboom) - سامانه هوشمند مدیریت مالی، بودجه‌بندی و دنگ | Smart AI Finance" />
-    <meta name="description" content="سامانه لوکس و مدرن چندبوم (Chandboom): مدیریت هوشمند دارایی، پیش‌بینی ۳ ماهه جریان نقدینگی با هوش مصنوعی، یادآور اقساط و چک و محاسبه عادلانه دنگ سفر | Next-Gen AI Financial & Budget Management." />
-    <meta name="keywords" content="چندبوم, Chandboom, chandboom, مدیریت مالی شخصی, حسابداری هوشمند, بودجه بندی هوش مصنوعی, محاسبه دنگ, پیش بینی دخل و خرج, یادآور چک و قسط, AI Budget Planner, Smart Personal Finance, Expense Tracker, Cash Flow Forecasting" />
-    <meta name="author" content="تیم چندبوم (Chandboom Team)" />
+    <!-- 2. Primary High-Performance SEO Meta Tags -->
+    <title>چندبوم | حسابداری آنلاین، ثبت خودکار پیامک بانکی و مدیریت مالی شخصی با هوش مصنوعی</title>
+    <meta name="title" content="چندبوم | حسابداری آنلاین، ثبت خودکار پیامک بانکی و مدیریت مالی شخصی با هوش مصنوعی" />
+    <meta name="description" content="سامانه حسابداری آنلاین چندبوم (chandboon.ir): مدیریت مالی شخصی، ثبت خودکار پیامک بانکی، هوش مصنوعی تحلیل مالی، چالش ۳۰ روزه مدیریت پول، تسک‌های روزانه پس‌انداز و برنامه‌ریزی مالی و اهداف." />
+    <meta name="keywords" content="مدیریت مالی شخصی, حسابداری آنلاین چندبوم, ثبت خودکار پیامک بانکی, هوش مصنوعی تحلیل مالی, تسک‌های روزانه پس‌انداز, برنامه‌ریزی مالی و اهداف, چالش ۳۰ روزه مدیریت پول, چندبوم, chandboon.ir, محاسبه دنگ, بودجه بندی هوشمند" />
+    <meta name="author" content="تیم چندبوم (Chandboon Technologies)" />
     <meta name="robots" content="index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1" />
     <meta name="googlebot" content="index, follow" />
-    <link rel="canonical" href="https://chandboom.ir/" />
+    <link rel="canonical" href="https://chandboon.ir/" />
 
     <!-- 2.1 Bilingual Alternate Language Links (hreflang) -->
-    <link rel="alternate" hreflang="fa" href="https://chandboom.ir/" />
-    <link rel="alternate" hreflang="en" href="https://chandboom.ir/?lang=en" />
-    <link rel="alternate" hreflang="x-default" href="https://chandboom.ir/" />
+    <link rel="alternate" hreflang="fa" href="https://chandboon.ir/" />
+    <link rel="alternate" hreflang="en" href="https://chandboon.ir/?lang=en" />
+    <link rel="alternate" hreflang="x-default" href="https://chandboon.ir/" />
 
     <!-- 3. Open Graph / Facebook / Telegram / WhatsApp / LinkedIn -->
     <meta property="og:type" content="website" />
-    <meta property="og:url" content="https://chandboom.ir/" />
-    <meta property="og:title" content="چندبوم (Chandboom) - سامانه هوشمند مدیریت مالی و بودجه‌بندی" />
-    <meta property="og:description" content="کنترل هوشمند پول و ثروت شما با قدرت هوش مصنوعی چندبوم. پیش‌بینی دخل و خرج، ثبت تراکنش با متن و مدیریت بی‌نقص دارایی‌ها." />
-    <meta property="og:image" content="https://chandboom.ir/assets/logo.png" />
+    <meta property="og:url" content="https://chandboon.ir/" />
+    <meta property="og:title" content="چندبوم - حسابداری آنلاین چندبوم و مدیریت مالی شخصی با هوش مصنوعی" />
+    <meta property="og:description" content="ثبت خودکار پیامک بانکی، هوش مصنوعی تحلیل مالی، تسک‌های روزانه پس‌انداز و چالش ۳۰ روزه مدیریت پول در چندبوم (chandboon.ir)." />
+    <meta property="og:image" content="https://chandboon.ir/logo.png" />
     <meta property="og:image:width" content="512" />
-    <meta property="og:image:height" content="512" />
-    <meta property="og:image:alt" content="لوگوی رسمی چندبوم (Chandboom) - مدیریت مالی مدرن و هوشمند" />
-    <meta property="og:site_name" content="چندبوم (Chandboom)" />
+    <meta property="og:image:height" content="436" />
+    <meta property="og:image:alt" content="لوگوی رسمی برند چندبوم (Chandboon)" />
+    <meta property="og:site_name" content="چندبوم (Chandboon)" />
     <meta property="og:locale" content="fa_IR" />
     <meta property="og:locale:alternate" content="en_US" />
 
     <!-- 4. Twitter / X Cards -->
     <meta name="twitter:card" content="summary_large_image" />
-    <meta name="twitter:url" content="https://chandboom.ir/" />
-    <meta name="twitter:title" content="چندبوم (Chandboom) | Next-Gen AI Financial Management" />
-    <meta name="twitter:description" content="Smart AI expense tracking, cash flow forecasting and group bill splitting with Chandboom." />
-    <meta name="twitter:image" content="https://chandboom.ir/assets/logo.png" />
+    <meta name="twitter:url" content="https://chandboon.ir/" />
+    <meta name="twitter:title" content="چندبوم | مدیریت مالی شخصی و حسابداری آنلاین چندبوم" />
+    <meta name="twitter:description" content="ثبت خودکار پیامک بانکی، هوش مصنوعی تحلیل مالی، برنامه‌ریزی مالی و اهداف با چندبوم." />
+    <meta name="twitter:image" content="https://chandboon.ir/logo.png" />
 
     <!-- 5. PWA & Mobile Web App Meta Tags -->
     <meta name="application-name" content="چندبوم" />
@@ -55,56 +68,88 @@
     <meta name="theme-color" content="#090D0B" media="(prefers-color-scheme: dark)" />
     <meta name="theme-color" content="#F8FAF9" media="(prefers-color-scheme: light)" />
 
-    <!-- 7. Favicon & Apple Touch Icons (Updated to logo.png) -->
-    <link rel="icon" type="image/png" href="/assets/logo.png" />
+    <!-- 7. Favicon & Apple Touch Icons (logo.png) -->
+    <link rel="icon" type="image/png" href="/logo.png" />
+    <link rel="shortcut icon" href="/favicon.ico" />
+    <link rel="apple-touch-icon" href="/logo.png" />
     <link rel="manifest" href="/manifest.json" />
 
-    <!-- 8. Performance Preconnects & Bahman Font Preload -->
-    <link rel="preload" href="/fonts/ig6_bahman_(2).ttf" as="font" type="font/ttf" crossorigin />
+    <!-- 8. Performance Preconnects & Google Fonts (Including Qahiri for Brand 'چندبوم') -->
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link rel="dns-prefetch" href="https://fonts.googleapis.com" />
-    <link href="https://fonts.googleapis.com/css2?family=Blaka&family=Cairo:wght@400;500;600;700;800;900&family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet" />
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;500;600;700;800;900&family=Inter:wght@400;500;600;700;800;900&family=Qahiri&display=swap" rel="stylesheet" />
 
-    <!-- 9. Structured Data (JSON-LD) -->
+    <!-- 9. Comprehensive Schema.org Structured Data (JSON-LD) -->
     <script type="application/ld+json">
     {
       "@context": "https://schema.org",
       "@graph": [
         {
-          "@type": "SoftwareApplication",
-          "@id": "https://chandboom.ir/#software",
+          "@type": "WebSite",
+          "@id": "https://chandboon.ir/#website",
+          "url": "https://chandboon.ir/",
           "name": "چندبوم",
-          "alternateName": ["Chandboom", "chandboom", "چند بوم", "سامانه مالی چندبوم", "Chandboom AI"],
-          "url": "https://chandboom.ir/",
+          "alternateName": ["Chandboon", "حسابداری آنلاین چندبوم"],
+          "description": "سامانه مدیریت مالی شخصی، ثبت خودکار پیامک بانکی، هوش مصنوعی تحلیل مالی و چالش ۳۰ روزه مدیریت پول",
+          "inLanguage": "fa-IR",
+          "publisher": {
+            "@id": "https://chandboon.ir/#organization"
+          }
+        },
+        {
+          "@type": "Organization",
+          "@id": "https://chandboon.ir/#organization",
+          "url": "https://chandboon.ir/",
+          "name": "چندبوم (Chandboon)",
+          "alternateName": ["Chandboon Technologies", "تیم چندبوم"],
+          "logo": {
+            "@type": "ImageObject",
+            "url": "https://chandboon.ir/logo.png",
+            "width": 512,
+            "height": 436
+          },
+          "contactPoint": {
+            "@type": "ContactPoint",
+            "contactType": "Customer Support",
+            "availableLanguage": ["Persian", "English"]
+          }
+        },
+        {
+          "@type": "FinancialService",
+          "@id": "https://chandboon.ir/#financialservice",
+          "name": "خدمات مالی هوشمند چندبوم",
+          "url": "https://chandboon.ir/",
+          "logo": "https://chandboon.ir/logo.png",
+          "description": "ارائه ابزارهای هوشمند مدیریت مالی شخصی، برنامه‌ریزی مالی و اهداف، تسک‌های روزانه پس‌انداز و ثبت خودکار پیامک بانکی",
+          "currenciesAccepted": "IRR",
+          "paymentAccepted": "کارت به کارت، درگاه شتاب"
+        },
+        {
+          "@type": "SoftwareApplication",
+          "@id": "https://chandboon.ir/#software",
+          "name": "چندبوم",
+          "alternateName": ["Chandboon", "حسابداری آنلاین چندبوم", "هوش مصنوعی تحلیل مالی چندبوم"],
+          "url": "https://chandboon.ir/",
           "applicationCategory": "FinanceApplication",
           "operatingSystem": "Web, Android, iOS, Windows, macOS",
           "browserRequirements": "Requires JavaScript. Requires HTML5.",
           "inLanguage": ["fa-IR", "en"],
-          "description": "پلتفرم هوشمند مدیریت مالی شخصی، بودجه‌بندی با هوش مصنوعی، پیش‌بینی ۳ ماهه جریان نقدینگی و تسویه دنگ گروهی | Next-Gen AI Financial & Wealth Management System.",
+          "description": "پلتفرم جامع مدیریت مالی شخصی، ثبت خودکار پیامک بانکی، هوش مصنوعی تحلیل مالی، تسک‌های روزانه پس‌انداز، برنامه‌ریزی مالی و اهداف و چالش ۳۰ روزه مدیریت پول.",
           "offers": {
             "@type": "Offer",
             "price": "0",
             "priceCurrency": "IRR"
           },
           "featureList": [
-            "ثبت خودکار تراکنش‌ها تنها با ارسال یک پیام متنی با هوش مصنوعی",
-            "پیش‌بینی هوشمند وضعیت بودجه و جریان نقدینگی تا ۳ و ۶ ماه آینده",
-            "یادآور هوشمند سررسید اقساط، چک‌های بانکی و موعد پرداخت‌ها",
-            "محاسبه عادلانه دنگ سفر، رویدادهای گروهی و فاکتور تفکیک‌شده رستوران",
-            "امنیت چندمرحله‌ای، رمزنگاری پیشرفته و پشتیبانی اختصاصی"
+            "ثبت خودکار پیامک بانکی و رسید تراکنش با تایید کاربر",
+            "هوش مصنوعی تحلیل مالی و مشاوره تخصصی بودجه",
+            "چالش ۳۰ روزه مدیریت پول و تسک‌های روزانه پس‌انداز",
+            "برنامه‌ریزی مالی و اهداف به همراه سپر ضد خرید هیجانی",
+            "تایم‌لاین ۳ ماهه و فصلی تراکنش‌ها و گروه‌بندی روزانه",
+            "خروجی حرفه‌ای اکسل با فرمت ارزی، رنگ‌بندی و شیت خلاصه",
+            "محاسبه عادلانه دنگ سفر و رویدادهای گروهی"
           ]
-        },
-        {
-          "@type": "Organization",
-          "@id": "https://chandboom.ir/#organization",
-          "url": "https://chandboom.ir/",
-          "name": "چندبوم (Chandboom)",
-          "alternateName": "Chandboom Technologies",
-          "logo": {
-            "@type": "ImageObject",
-            "url": "https://chandboom.ir/assets/logo.png"
-          }
         }
       ]
     }

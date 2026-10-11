@@ -1,5 +1,5 @@
+@import url('https://fonts.googleapis.com/css2?family=Cairo:wght@400;500;600;700;800;900&family=Inter:wght@400;500;600;700;800;900&family=Qahiri&display=swap');
 @import "tailwindcss";
-@import url('https://fonts.googleapis.com/css2?family=Blaka&family=Cairo:wght@400;500;600;700;800;900&family=Inter:wght@400;500;600;700;800;900&display=swap');
 
 @custom-variant dark (&:where(.dark, .dark *));
 
@@ -19,9 +19,9 @@
   }
 }
 
-/* Specific Font Families - Strict Blaka ONLY for Brand / Logo & Cairo for all other elements */
-.font-brand {
-  font-family: 'Blaka', 'Cairo', sans-serif !important;
+/* Specific Font Families - Qahiri for Brand / Logo 'چندبوم' & Cairo for all other elements */
+.font-brand, .font-qahiri {
+  font-family: 'Qahiri', 'Cairo', cursive, sans-serif !important;
 }
 
 .font-cairo {

@@ -17,16 +17,31 @@ import {
   HelpCircle,
   Crown,
   Lock,
+  Trophy,
+  Flame,
+  CheckSquare,
+  Square,
+  CreditCard,
+  Calendar,
 } from 'lucide-react';
 import { useApp } from '../context/AppContext';
 import { formatToman, formatShamsiDate, toPersianDigits } from '../utils/formatters';
 import { parsePersianFinancialText, generateFinancialAdvice } from '../utils/aiParser';
-import { parseTransactionWithDeepSeek, generateDeepSeekAdvice } from '../utils/deepseekService';
+import { parseTransactionWithSystemOne, getConversationalAdvice } from '../services/aiService';
 import { TransactionCategory } from '../types';
+import { getCachedDashboardChat, setCachedDashboardChat } from '../utils/aiCache';
+import {
+  MONTHLY_QUESTS,
+  getCompletedQuests,
+  toggleQuestCompletion,
+  calculateStreak,
+} from '../utils/dailyQuests';
 
 interface DashboardViewProps {
   onOpenTransactionModal: () => void;
   onOpenDongModal?: () => void;
+  onOpenDailyQuestsModal?: () => void;
+  onOpenBankSmsModal?: () => void;
 }
 
 interface ChatMessage {
@@ -38,6 +53,8 @@ interface ChatMessage {
 
 export const DashboardView: React.FC<DashboardViewProps> = ({
   onOpenTransactionModal,
+  onOpenDailyQuestsModal,
+  onOpenBankSmsModal,
 }) => {
   const {
     metrics,
@@ -54,14 +71,50 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
 
   const [aiInput, setAiInput] = useState('');
   const [isTyping, setIsTyping] = useState(false);
-  const [chatMessages, setChatMessages] = useState<ChatMessage[]>([
-    {
-      id: '1',
-      sender: 'assistant',
-      text: 'سلام! من «هوش مصنوعی چندبوم» هستم. می‌توانید هزینه‌ها و درآمدهایتان را به زبان ساده بنویسید تا ثبت کنم (مثلاً: «خرید سوپرمارکت ۸۰ هزار تومن») یا بپرسید: «برام تحلیل کن که تا چند ماه آینده میتونم چیکار بکنم».',
-      time: 'هم‌اکنون',
-    },
-  ]);
+
+  // 30-Day Financial Quests State
+  const [completedQuests, setCompletedQuests] = useState<number[]>(() => getCompletedQuests());
+  const [questCelebration, setQuestCelebration] = useState(false);
+
+  // Get current Shamsi day of month (1 to 31)
+  const todayDay = React.useMemo(() => {
+    try {
+      const formatter = new Intl.DateTimeFormat('fa-IR-u-nu-latn', { day: 'numeric' });
+      const d = parseInt(formatter.format(new Date()), 10);
+      return isNaN(d) ? new Date().getDate() : Math.min(Math.max(d, 1), 31);
+    } catch {
+      return new Date().getDate();
+    }
+  }, []);
+
+  const todayQuest = MONTHLY_QUESTS[todayDay - 1] || MONTHLY_QUESTS[0];
+  const isTodayCompleted = completedQuests.includes(todayDay);
+  const activeStreak = calculateStreak(completedQuests, todayDay);
+
+  const handleToggleTodayQuest = () => {
+    const res = toggleQuestCompletion(todayDay);
+    setCompletedQuests(res.allDays);
+    if (res.completed) {
+      setQuestCelebration(true);
+      setTimeout(() => setQuestCelebration(false), 3000);
+    }
+  };
+  const [chatMessages, setChatMessages] = useState<ChatMessage[]>(() => {
+    const cached = getCachedDashboardChat();
+    if (cached && cached.length > 0) return cached;
+    return [
+      {
+        id: '1',
+        sender: 'assistant',
+        text: 'سلام! من «هوش مصنوعی چندبوم» هستم. می‌توانید هزینه‌ها و درآمدهایتان را به زبان ساده بنویسید تا ثبت کنم (مثلاً: «خرید سوپرمارکت ۸۰ هزار تومن») یا بپرسید: «برام تحلیل کن که تا چند ماه آینده میتونم چیکار بکنم».',
+        time: 'هم‌اکنون',
+      },
+    ];
+  });
+
+  React.useEffect(() => {
+    setCachedDashboardChat(chatMessages);
+  }, [chatMessages]);
 
   const recentTransactions = transactions.slice(0, 5);
 
@@ -103,7 +156,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
     setAiInput('');
     setIsTyping(true);
 
-    parseTransactionWithDeepSeek(userText)
+    parseTransactionWithSystemOne(userText)
       .then(async (parsed) => {
         let replyText = '';
 
@@ -112,19 +165,19 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
             type: parsed.type,
             amount: parsed.amount,
             category: (parsed.category as TransactionCategory) || 'خوراک و غذا',
-            description: parsed.description || userText,
+            description: parsed.clean_title || userText,
             date: new Date().toISOString(),
           });
 
-          replyText = `✅ تراکنش توسط «هوش مصنوعی» ثبت شد:
+          replyText = `✅ تراکنش توسط «دستیار هوشمند چندبوم» ثبت شد:
 • نوع: ${parsed.type === 'expense' ? 'هزینه' : 'درآمد'}
 • مبلغ: ${formatToman(parsed.amount)}
 • دسته‌بندی: ${parsed.category || 'عمومی'}
-• شرح: ${parsed.description || userText}
+• شرح: ${parsed.clean_title || userText}
 
 این رکورد به جدول تراکنش‌های شما اضافه شد و تراز کل فوراً به‌روزرسانی گردید.`;
         } else {
-          replyText = await generateDeepSeekAdvice(userText, metrics, user.monthly_budget_cap, {
+          replyText = await getConversationalAdvice(userText, metrics, user.monthly_budget_cap, {
             age: user.age,
             gender: user.gender,
             fullName: user.full_name,
@@ -176,13 +229,35 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
           </p>
         </div>
 
-        <div className="flex items-center gap-2">
+        <div className="flex flex-wrap items-center gap-2">
+          {onOpenBankSmsModal && (
+            <button
+              onClick={onOpenBankSmsModal}
+              title="ثبت خودکار تراکنش با پیست کردن پیامک بانکی یا فیش"
+              className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-blue-50 dark:bg-[#131F2A] text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-blue-900/60 hover:bg-blue-100 font-cairo font-bold text-xs transition cursor-pointer shadow-xs"
+            >
+              <CreditCard className="w-4 h-4 text-blue-600 dark:text-blue-400" />
+              <span>پردازش پیامک بانکی</span>
+            </button>
+          )}
+
+          {onOpenDailyQuestsModal && (
+            <button
+              onClick={onOpenDailyQuestsModal}
+              title="مشاهده تقویم و چالش ۳۰ روزه مدیریت پول"
+              className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-amber-50 dark:bg-[#221B0F] text-amber-800 dark:text-amber-300 border border-amber-300/80 dark:border-amber-800 hover:bg-amber-100 font-cairo font-bold text-xs transition cursor-pointer shadow-xs"
+            >
+              <Trophy className="w-4 h-4 text-amber-500" />
+              <span>چالش ۳۰ روزه</span>
+            </button>
+          )}
+
           <button
             onClick={() => setActiveTab('dong')}
-            className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-white dark:bg-[#0F1512] text-zinc-700 dark:text-zinc-300 border border-[#E2E8E4] dark:border-[#1A2621] hover:bg-zinc-50 dark:hover:bg-[#16221D] font-cairo font-bold text-xs transition cursor-pointer shadow-xs"
+            className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-white dark:bg-[#0F1512] text-zinc-700 dark:text-zinc-300 border border-[#E2E8E4] dark:border-[#1A2621] hover:bg-zinc-50 dark:hover:bg-[#16221D] font-cairo font-bold text-xs transition cursor-pointer shadow-xs"
           >
             <Users className="w-4 h-4 text-emerald-700 dark:text-emerald-400" />
-            <span>محاسبه دنگ گروهی</span>
+            <span>محاسبه دنگ</span>
           </button>
 
           <button
@@ -193,6 +268,108 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
             <span>ثبت تراکنش سریع</span>
           </button>
         </div>
+      </div>
+
+      {/* Prominent "تسک امروز" (Today's Quest) Widget */}
+      <div
+        id="todays-quest-widget"
+        className={`p-4 sm:p-5 rounded-3xl border transition-all duration-300 relative overflow-hidden shadow-xs ${
+          isTodayCompleted
+            ? 'bg-gradient-to-r from-emerald-50 via-teal-50/50 to-white dark:from-[#11221A] dark:via-[#0F1C16] dark:to-[#0C1511] border-emerald-300 dark:border-emerald-800/80'
+            : 'bg-gradient-to-r from-amber-50/90 via-orange-50/40 to-white dark:from-[#1C160B] dark:via-[#161208] dark:to-[#0F1512] border-amber-200 dark:border-amber-900/60'
+        }`}
+      >
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+          <div className="flex items-start sm:items-center gap-3.5">
+            <div
+              className={`p-3 rounded-2xl shrink-0 transition-transform duration-300 ${
+                isTodayCompleted
+                  ? 'bg-emerald-600 text-white shadow-md shadow-emerald-500/20'
+                  : 'bg-amber-500 text-zinc-950 shadow-md shadow-amber-500/20'
+              }`}
+            >
+              {isTodayCompleted ? (
+                <CheckCircle2 className="w-6 h-6 animate-in zoom-in" />
+              ) : (
+                <Trophy className="w-6 h-6" />
+              )}
+            </div>
+
+            <div className="space-y-1">
+              <div className="flex flex-wrap items-center gap-2">
+                <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-amber-200 text-amber-900 dark:bg-amber-950 dark:text-amber-200 border border-amber-300 dark:border-amber-800 flex items-center gap-1">
+                  <span>تسک امروز</span>
+                  <span>(روز {toPersianDigits(todayDay)} از ۳۰)</span>
+                </span>
+
+                <span className="text-[11px] font-bold text-zinc-500 dark:text-zinc-400">
+                  {todayQuest.badge}
+                </span>
+
+                {activeStreak > 0 && (
+                  <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-orange-100 text-orange-700 dark:bg-orange-950/80 dark:text-orange-300 flex items-center gap-1">
+                    <Flame className="w-3 h-3 text-orange-500" />
+                    <span>{toPersianDigits(activeStreak)} روز استریک پیوسته</span>
+                  </span>
+                )}
+              </div>
+
+              <h4 className="font-cairo text-sm sm:text-base font-black text-zinc-900 dark:text-white">
+                {todayQuest.title}
+              </h4>
+
+              <p className="text-xs text-zinc-600 dark:text-zinc-400 leading-relaxed max-w-2xl">
+                {todayQuest.description}
+              </p>
+            </div>
+          </div>
+
+          <div className="flex items-center gap-2.5 shrink-0 self-end md:self-center">
+            <button
+              onClick={handleToggleTodayQuest}
+              className={`px-4 py-2.5 rounded-2xl font-cairo font-bold text-xs transition cursor-pointer flex items-center gap-2 shadow-xs ${
+                isTodayCompleted
+                  ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300 border border-emerald-300 dark:border-emerald-700 hover:bg-emerald-200'
+                  : 'bg-gradient-to-r from-amber-500 to-yellow-500 hover:from-amber-600 hover:to-yellow-600 text-zinc-950 shadow-md shadow-amber-500/20 active:scale-95'
+              }`}
+            >
+              {isTodayCompleted ? (
+                <>
+                  <CheckCircle2 className="w-4 h-4 text-emerald-700 dark:text-emerald-400" />
+                  <span>انجام شد ✓</span>
+                </>
+              ) : (
+                <>
+                  <Sparkles className="w-4 h-4 text-zinc-950" />
+                  <span>انجام دادم!</span>
+                </>
+              )}
+            </button>
+
+            {onOpenDailyQuestsModal && (
+              <button
+                onClick={onOpenDailyQuestsModal}
+                className="px-3.5 py-2.5 rounded-2xl bg-white dark:bg-[#15231C] border border-[#E2E8E4] dark:border-[#1F2E27] text-zinc-700 dark:text-zinc-300 hover:bg-zinc-50 text-xs font-bold font-cairo transition cursor-pointer"
+                title="مشاهده تقویم کامل چالش ۳۰ روزه"
+              >
+                تقویم ۳۰ روزه
+              </button>
+            )}
+          </div>
+        </div>
+
+        {/* Celebratory Animation Banner */}
+        {questCelebration && (
+          <div className="mt-3 p-2.5 rounded-xl bg-emerald-600 text-white text-xs font-cairo font-bold flex items-center justify-between animate-in fade-in zoom-in-95">
+            <div className="flex items-center gap-2">
+              <Sparkles className="w-4 h-4 text-yellow-300" />
+              <span>آفرین! تسک امروز شما با موفقیت ثبت شد و زنجیره تداوم تمدید گردید! 🎉</span>
+            </div>
+            <span className="text-[10px] bg-white/20 px-2 py-0.5 rounded-full font-mono">
+              + امتیاز مثبت
+            </span>
+          </div>
+        )}
       </div>
 
       {/* Predictive Budget Alert (Pro Feature) */}

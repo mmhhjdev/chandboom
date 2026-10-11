@@ -111,11 +111,11 @@ export const LandingPage: React.FC<LandingPageProps> = ({
             <div className="w-11 h-11 rounded-2xl bg-gradient-to-br from-emerald-500 to-teal-800 p-0.5 shadow-lg shadow-emerald-950/50 flex items-center justify-center">
               <div className="w-full h-full bg-[#090F0C] rounded-[14px] flex items-center justify-center overflow-hidden">
                 <img
-                  src="/assets/logo.svg"
+                  src="/logo.png"
                   alt={isRtl ? 'لوگوی رسمی چندبوم' : 'Chandboom Official Logo'}
-                  className="w-7 h-7 object-contain"
+                  className="w-8 h-8 object-contain"
                   onError={(e) => {
-                    (e.currentTarget as HTMLElement).style.display = 'none';
+                    (e.currentTarget as HTMLImageElement).src = '/assets/logo.png';
                   }}
                 />
               </div>
@@ -235,8 +235,8 @@ export const LandingPage: React.FC<LandingPageProps> = ({
           {/* Subheadline */}
           <p className="text-zinc-400 text-base sm:text-lg lg:text-xl max-w-3xl mx-auto leading-relaxed mb-10 font-medium">
             {isRtl
-              ? 'ثبت خودکار مخارج تنها با نوشتن یک جمله ساده، پیش‌بینی ۳ ماهه جریان نقدینگی، تسویه عادلانه دنگ گروهی و یادآور هوشمند چک و اقساط با انضباطی بی‌نظیر.'
-              : 'Log expenses by simply typing natural sentences, forecast 3-month cash flow with AI, split group bills fairly, and eliminate budget surprises.'}
+              ? 'ثبت خودکار پیامک بانکی بدون دسترسی مستقیم، چالش ۳۰ روزه مدیریت پول، سپر ضد خرید تکانه‌ای، پیش‌بینی ۳ ماهه جریان نقدینگی و محاسبه عادلانه دنگ گروهی.'
+              : 'Instant bank SMS receipt parsing, 30-day financial quests, impulse buy shield, 3-month cash flow forecasting, and fair group bill splitting.'}
           </p>
 
           {/* Primary CTA Buttons */}
@@ -246,7 +246,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({
               className="w-full sm:w-auto flex items-center justify-center gap-2.5 px-7 py-4 rounded-2xl bg-gradient-to-r from-emerald-500 via-teal-500 to-emerald-600 hover:from-emerald-400 hover:to-teal-400 text-zinc-950 font-black text-base shadow-xl shadow-emerald-500/25 hover:shadow-emerald-500/40 transition-all transform hover:-translate-y-1 active:translate-y-0 cursor-pointer"
             >
               <Zap className="w-5 h-5 fill-current" />
-              <span>{isRtl ? 'شروع رایگان در ۱ دقیقه' : 'Start Free in 1 Minute'}</span>
+              <span>{isRtl ? 'شروع رایگان و ثبت پیامک بانکی' : 'Start Free in 1 Minute'}</span>
               <ArrowIcon className="w-4 h-4 shrink-0" />
             </button>
 
@@ -263,7 +263,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({
           <div className="flex flex-wrap items-center justify-center gap-6 sm:gap-10 text-xs text-zinc-400 pb-4 border-b border-emerald-950/40 max-w-3xl mx-auto">
             <div className="flex items-center gap-2">
               <ShieldCheck className="w-4 h-4 text-emerald-400" />
-              <span>{isRtl ? 'پایگاه داده Supabase و امنیت بانکی' : 'Supabase Cloud & Bank-Grade Security'}</span>
+              <span>{isRtl ? 'امنیت ابری پیشرفته و رمزنگاری بانکی' : 'Bank-Grade Encryption & Cloud Security'}</span>
             </div>
             <div className="flex items-center gap-2">
               <Star className="w-4 h-4 text-amber-400 fill-amber-400" />
@@ -449,7 +449,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({
                     onClick={onEnterApp}
                     className="w-full mt-3 py-2 rounded-xl bg-zinc-900 hover:bg-zinc-800 text-zinc-300 text-xs font-semibold border border-zinc-800 transition cursor-pointer"
                   >
-                    {isRtl ? 'ورود به پنل و همگام‌سازی ابری' : 'Sync with Supabase Cloud'}
+                    {isRtl ? 'ورود به پنل و همگام‌سازی ابری' : 'Sync with Secure Cloud'}
                   </button>
                 </div>
               </div>
@@ -477,93 +477,93 @@ export const LandingPage: React.FC<LandingPageProps> = ({
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {/* Feature 1 */}
-            <div className="rounded-3xl p-7 bg-zinc-950/70 border border-emerald-900/30 hover:border-emerald-500/50 transition-all group backdrop-blur-sm hover:-translate-y-1">
-              <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-emerald-500/20 to-teal-500/10 border border-emerald-500/30 flex items-center justify-center mb-6 group-hover:scale-110 transition shadow-lg">
-                <Sparkles className="w-7 h-7 text-emerald-400" />
-              </div>
-              <h3 className="font-bahman text-xl font-bold text-white mb-3">
-                {isRtl ? 'ثبت هوشمند با هوش مصنوعی چندبوم' : 'AI Natural Language Expense Logging'}
-              </h3>
-              <p className="text-zinc-400 text-sm leading-relaxed">
-                {isRtl
-                  ? 'دیگر نیازی به پر کردن دستی فرم‌ها نیست؛ کافیست یک جمله ساده بنویسید تا مبلغ، دسته‌بندی و تاریخ بلافاصله استخراج و ثبت شوند.'
-                  : 'Simply type what you bought in plain words. Our neural parser extracts the amount, assigns the right category, and logs it in milliseconds.'}
-              </p>
-            </div>
-
-            {/* Feature 2 */}
-            <div className="rounded-3xl p-7 bg-zinc-950/70 border border-emerald-900/30 hover:border-emerald-500/50 transition-all group backdrop-blur-sm hover:-translate-y-1">
-              <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-amber-500/20 to-yellow-500/10 border border-amber-500/30 flex items-center justify-center mb-6 group-hover:scale-110 transition shadow-lg">
-                <TrendingUp className="w-7 h-7 text-amber-400" />
-              </div>
-              <h3 className="font-bahman text-xl font-bold text-white mb-3">
-                {isRtl ? 'پیش‌بینی مالی ۳ ماه آینده و سقف بودجه' : '3-Month Cash Flow & Budget Forecasting'}
-              </h3>
-              <p className="text-zinc-400 text-sm leading-relaxed">
-                {isRtl
-                  ? 'سامانه رفتار مالی شما را تحلیل کرده و دقیقاً پیش‌بینی می‌کند در چه روزی بودجه شما به پایان می‌رسد و راهکارهای هوشمند کاهش هزینه ارائه می‌دهد.'
-                  : 'Analyze spending trajectory and cash runway up to 90 days ahead, getting early alerts before you breach custom monthly limits.'}
-              </p>
-            </div>
-
-            {/* Feature 3 */}
-            <div className="rounded-3xl p-7 bg-zinc-950/70 border border-emerald-900/30 hover:border-emerald-500/50 transition-all group backdrop-blur-sm hover:-translate-y-1">
-              <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-teal-500/20 to-emerald-500/10 border border-teal-500/30 flex items-center justify-center mb-6 group-hover:scale-110 transition shadow-lg">
-                <Bell className="w-7 h-7 text-teal-400" />
-              </div>
-              <h3 className="font-bahman text-xl font-bold text-white mb-3">
-                {isRtl ? 'یادآور هوشمند چک، اقساط و سررسیدها' : 'Smart Check & Loan Due Date Reminders'}
-              </h3>
-              <p className="text-zinc-400 text-sm leading-relaxed">
-                {isRtl
-                  ? 'سررسید چک‌های صیادی، اقساط وام‌های بانکی و شارژ ساختمان را با یک کلیک ثبت کنید تا قبل از موعد سررسید هشدارهای موثر دریافت نمایید.'
-                  : 'Track upcoming loans, bank checks, recurring utilities, and rent. Receive proactive reminders so you never incur late penalties.'}
-              </p>
-            </div>
-
-            {/* Feature 4 */}
+            {/* Feature 1: Bank SMS & Receipt Parser */}
             <div className="rounded-3xl p-7 bg-zinc-950/70 border border-emerald-900/30 hover:border-emerald-500/50 transition-all group backdrop-blur-sm hover:-translate-y-1">
               <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-blue-500/20 to-teal-500/10 border border-blue-500/30 flex items-center justify-center mb-6 group-hover:scale-110 transition shadow-lg">
-                <Users className="w-7 h-7 text-blue-400" />
+                <CreditCard className="w-7 h-7 text-blue-400" />
+              </div>
+              <h3 className="font-bahman text-xl font-bold text-white mb-3">
+                {isRtl ? 'پردازش هوشمند پیامک بانکی و فیش' : 'Instant Bank SMS & Receipt Parser'}
+              </h3>
+              <p className="text-zinc-400 text-sm leading-relaxed">
+                {isRtl
+                  ? 'پیامک واریز یا برداشت هر بانکی را پیست کنید؛ سامانه مبلغ، نوع، بانک و تاریخ را استخراج کرده و دسته‌بندی را با تأیید دستی شما نهایی می‌کند.'
+                  : 'Paste any banking notification or receipt. Our parser deterministically extracts amount, type, bank, and date with zero intrusive phone permissions.'}
+              </p>
+            </div>
+
+            {/* Feature 2: 30-Day Daily Quests */}
+            <div className="rounded-3xl p-7 bg-zinc-950/70 border border-emerald-900/30 hover:border-emerald-500/50 transition-all group backdrop-blur-sm hover:-translate-y-1">
+              <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-amber-500/20 to-yellow-500/10 border border-amber-500/30 flex items-center justify-center mb-6 group-hover:scale-110 transition shadow-lg">
+                <Star className="w-7 h-7 text-amber-400" />
+              </div>
+              <h3 className="font-bahman text-xl font-bold text-white mb-3">
+                {isRtl ? 'چالش ۳۰ روزه مدیریت پول و تسک‌های روزانه' : '30-Day Daily Financial Quests & Streaks'}
+              </h3>
+              <p className="text-zinc-400 text-sm leading-relaxed">
+                {isRtl
+                  ? 'تقویم گیمیفای شده ماهانه با ریزاهداف کاربردی روزانه (مثل روز بدون هزینه غیرضروری)، ویجت تسک امروز در داشبورد و شمارنده زنجیره تداوم (Streak).'
+                  : 'An interactive 30-day quest calendar with micro-habits, dashboard Today’s Quest widget, celebratory animations, and active streak counters.'}
+              </p>
+            </div>
+
+            {/* Feature 3: Impulse Buy Shield */}
+            <div className="rounded-3xl p-7 bg-zinc-950/70 border border-emerald-900/30 hover:border-emerald-500/50 transition-all group backdrop-blur-sm hover:-translate-y-1">
+              <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-rose-500/20 to-amber-500/10 border border-rose-500/30 flex items-center justify-center mb-6 group-hover:scale-110 transition shadow-lg">
+                <ShieldCheck className="w-7 h-7 text-rose-400" />
+              </div>
+              <h3 className="font-bahman text-xl font-bold text-white mb-3">
+                {isRtl ? 'سپر ضد خرید تکانه‌ای (Impulse Buy Shield)' : 'Subtle Impulse Buy Shield'}
+              </h3>
+              <p className="text-zinc-400 text-sm leading-relaxed">
+                {isRtl
+                  ? 'محاسبه خودکار ساعت کار معادل برای هر هدف خرید بر اساس درآمد ساعتی شما، و مشاوره‌های هوشمندانه تامل ۴۸ ساعته پیش از خریدهای هیجانی.'
+                  : 'Translates any purchase target into equivalent working hours based on your hourly wage, preventing emotional gadget purchases.'}
+              </p>
+            </div>
+
+            {/* Feature 4: Smart Timeline & 3-Month View */}
+            <div className="rounded-3xl p-7 bg-zinc-950/70 border border-emerald-900/30 hover:border-emerald-500/50 transition-all group backdrop-blur-sm hover:-translate-y-1">
+              <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-emerald-500/20 to-teal-500/10 border border-emerald-500/30 flex items-center justify-center mb-6 group-hover:scale-110 transition shadow-lg">
+                <TrendingUp className="w-7 h-7 text-emerald-400" />
+              </div>
+              <h3 className="font-bahman text-xl font-bold text-white mb-3">
+                {isRtl ? 'تایم‌لاین ۳ ماهه و گروه‌بندی روزانه' : 'Smart Timeline & Quarterly Views'}
+              </h3>
+              <p className="text-zinc-400 text-sm leading-relaxed">
+                {isRtl
+                  ? 'نمایش پیش‌فرض تمیز ماه جاری با تب‌های سریع ماه گذشته و ۳ ماه اخیر، به همراه گروه‌بندی روزانه و سرجمع سود و زیان هر روز.'
+                  : 'Clean monthly default view with 1-click quarterly filters, grouped by exact dates with daily subtotal headers and totals.'}
+              </p>
+            </div>
+
+            {/* Feature 5: AI Advisor */}
+            <div className="rounded-3xl p-7 bg-zinc-950/70 border border-emerald-900/30 hover:border-emerald-500/50 transition-all group backdrop-blur-sm hover:-translate-y-1">
+              <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-teal-500/20 to-emerald-500/10 border border-teal-500/30 flex items-center justify-center mb-6 group-hover:scale-110 transition shadow-lg">
+                <Sparkles className="w-7 h-7 text-teal-400" />
+              </div>
+              <h3 className="font-bahman text-xl font-bold text-white mb-3">
+                {isRtl ? 'تحلیل و مشاوره مالی با دستیار هوشمند چندبوم' : 'Chandboom AI Financial Advisor'}
+              </h3>
+              <p className="text-zinc-400 text-sm leading-relaxed">
+                {isRtl
+                  ? 'تحلیل عمیق دخل و خرج، پیش‌بینی روز اتمام بودجه، ارائه راهکارهای افزایش پس‌انداز و پاسخ به سوالات مالی شما با هوش مصنوعی.'
+                  : 'AI-powered budgeting insights, cash flow runway calculations, and custom financial advice tailored to your goals.'}
+              </p>
+            </div>
+
+            {/* Feature 6: Group Dong & Bill Splitting */}
+            <div className="rounded-3xl p-7 bg-zinc-950/70 border border-emerald-900/30 hover:border-emerald-500/50 transition-all group backdrop-blur-sm hover:-translate-y-1">
+              <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-purple-500/20 to-teal-500/10 border border-purple-500/30 flex items-center justify-center mb-6 group-hover:scale-110 transition shadow-lg">
+                <Users className="w-7 h-7 text-purple-400" />
               </div>
               <h3 className="font-bahman text-xl font-bold text-white mb-3">
                 {isRtl ? 'محاسبه عادلانه دنگ سفر و رستوران' : 'Group Bill & Travel Expense Splitting'}
               </h3>
               <p className="text-zinc-400 text-sm leading-relaxed">
                 {isRtl
-                  ? 'محاسبه بی‌دردسر دنگ دورهمی‌ها، سفر و شام بدون دلخوری و با فرمول‌های ریاضی کمترین تراکنش برای تسویه آسان بین دوستان.'
-                  : 'Split group trips, dinner bills, and shared flats effortlessly with minimal net transactions and crystal-clear individual balances.'}
-              </p>
-            </div>
-
-            {/* Feature 5 */}
-            <div className="rounded-3xl p-7 bg-zinc-950/70 border border-emerald-900/30 hover:border-emerald-500/50 transition-all group backdrop-blur-sm hover:-translate-y-1">
-              <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-purple-500/20 to-pink-500/10 border border-purple-500/30 flex items-center justify-center mb-6 group-hover:scale-110 transition shadow-lg">
-                <CreditCard className="w-7 h-7 text-purple-400" />
-              </div>
-              <h3 className="font-bahman text-xl font-bold text-white mb-3">
-                {isRtl ? 'همگام‌سازی ابری و دیتابیس Supabase' : 'Real-Time Supabase Cloud Sync'}
-              </h3>
-              <p className="text-zinc-400 text-sm leading-relaxed">
-                {isRtl
-                  ? 'تمامی اطلاعات شما به صورت بی‌درنگ و امن در دیتابیس ابری Supabase همگام شده و روی هر دستگاهی در دسترس است.'
-                  : 'All your accounts, profiles, transactions, and reminders are securely synced in real time across devices.'}
-              </p>
-            </div>
-
-            {/* Feature 6 */}
-            <div className="rounded-3xl p-7 bg-zinc-950/70 border border-emerald-900/30 hover:border-emerald-500/50 transition-all group backdrop-blur-sm hover:-translate-y-1">
-              <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-rose-500/20 to-amber-500/10 border border-rose-500/30 flex items-center justify-center mb-6 group-hover:scale-110 transition shadow-lg">
-                <Shield className="w-7 h-7 text-rose-400" />
-              </div>
-              <h3 className="font-bahman text-xl font-bold text-white mb-3">
-                {isRtl ? 'امنیت نفوذناپذیر و حفاظت کد' : 'Zero-Knowledge Privacy & Protection'}
-              </h3>
-              <p className="text-zinc-400 text-sm leading-relaxed">
-                {isRtl
-                  ? 'مجهز به لایه‌های حفاظتی ضد نفوذ، عدم فروش و افشای اطلاعات و رمزنگاری پیشرفته در ذخیره‌سازی داده‌های مالی.'
-                  : 'Protected by anti-inspection defenses, local encryption, and strict zero-telemetry policies. Your data belongs only to you.'}
+                  ? 'محاسبه بدون دلخوری دنگ دورهمی‌ها و سفر با فرمول بهینه حداقل تراکنش، بدون نیاز به کاغذ و ماشین‌حساب.'
+                  : 'Split group trips and dining bills fairly with minimized transactions and clear individual balances.'}
               </p>
             </div>
           </div>
@@ -766,7 +766,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({
                 +۵۰,۰۰۰
               </span>
               <span className="text-xs text-zinc-400 font-semibold">
-                {isRtl ? 'تراکنش ثبت‌شده در سوپابیس' : 'Transactions Logged in Supabase'}
+                {isRtl ? 'تراکنش امن ثبت‌شده' : 'Transactions Securely Logged'}
               </span>
             </div>
             <div className="p-6 rounded-2xl bg-zinc-950/60 border border-emerald-950/60">
@@ -910,8 +910,8 @@ export const LandingPage: React.FC<LandingPageProps> = ({
               {
                 q: isRtl ? 'آیا می‌توانم روی چند دستگاه همزمان استفاده کنم؟' : 'Can I use Chandboom across multiple devices?',
                 a: isRtl
-                  ? 'بله، چندبوم متصل به پایگاه داده ابری Supabase است و به عنوان یک وب‌اپلیکیشن فوق‌العاده مدرن (PWA) روی گوشی‌های اندروید، آیفون، تبلت و کامپیوتر بدون نیاز به نصب هیچ برنامه جانبی همگام می‌شود.'
-                  : 'Yes! Chandboom is backed by Supabase and runs as a high-speed progressive web app (PWA) syncing across iOS, Android, macOS, and Windows.',
+                  ? 'بله، چندبوم متصل به پایگاه داده ابری امن و مقیاس‌پذیر است و به عنوان یک وب‌اپلیکیشن فوق‌العاده مدرن (PWA) روی گوشی‌های اندروید، آیفون، تبلت و کامپیوتر بدون نیاز به نصب هیچ برنامه جانبی همگام می‌شود.'
+                  : 'Yes! Chandboom is backed by high-speed secure cloud architecture and runs as a progressive web app (PWA) syncing across iOS, Android, macOS, and Windows.',
               },
             ].map((faq, idx) => (
               <div
@@ -983,11 +983,11 @@ export const LandingPage: React.FC<LandingPageProps> = ({
             <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-emerald-600 to-teal-800 p-0.5 flex items-center justify-center">
               <div className="w-full h-full bg-[#0A100D] rounded-[10px] flex items-center justify-center">
                 <img
-                  src="/assets/logo.svg"
+                  src="/logo.png"
                   alt="Chandboom"
-                  className="w-5 h-5 object-contain"
+                  className="w-6 h-6 object-contain"
                   onError={(e) => {
-                    (e.currentTarget as HTMLElement).style.display = 'none';
+                    (e.currentTarget as HTMLImageElement).src = '/assets/logo.png';
                   }}
                 />
               </div>
@@ -1028,7 +1028,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({
           </div>
 
           <div className="text-center md:text-left text-[11px] text-zinc-500 font-mono" dir="ltr">
-            Chandboom © {new Date().getFullYear()} • Powered by Supabase & Chandboom AI
+            Chandboom © {new Date().getFullYear()} • AI Wealth & Finance System
           </div>
         </div>
       </footer>

@@ -40,12 +40,21 @@ import {
   revokeAdmin2FA,
 } from '../utils/admin2fa';
 import { updatePageSeo } from '../utils/seo';
-import { getSupabaseClient, createUserOtp, verifyUserOtp } from '../lib/supabase';
+import {
+  getSupabaseClient,
+  createUserOtp,
+  verifyUserOtp,
+  checkEmailExists,
+  sendLoginOtp,
+  sendPasswordResetOtp,
+  resetUserPassword,
+} from '../lib/supabase';
 import { MALE_AVATAR_SVG } from '../utils/avatars';
 
 export interface AuthResult {
   success: boolean;
   error?: string;
+  isDuplicate?: boolean;
   requiresEmailConfirmation?: boolean;
 }
 
@@ -87,7 +96,7 @@ interface AppContextType {
     age?: number,
     gender?: 'مرد' | 'زن' | 'سایر'
   ) => Promise<AuthResult>;
-  requestSignupOtp: (email: string) => Promise<{ success: boolean; code?: string; error?: string }>;
+  requestSignupOtp: (email: string) => Promise<{ success: boolean; code?: string; error?: string; isDuplicate?: boolean }>;
   verifySignupOtpAndRegister: (
     email: string,
     code: string,
@@ -96,6 +105,11 @@ interface AppContextType {
     age?: number,
     gender?: 'مرد' | 'زن' | 'سایر'
   ) => Promise<AuthResult>;
+  requestLoginOtp: (email: string) => Promise<{ success: boolean; error?: string }>;
+  loginWithOtp: (email: string, code: string) => Promise<AuthResult>;
+  requestPasswordResetOtp: (email: string) => Promise<{ success: boolean; error?: string }>;
+  resetPasswordWithOtp: (email: string, code: string, newPassword: string) => Promise<{ success: boolean; error?: string }>;
+  checkEmailRegistered: (email: string) => Promise<boolean>;
   loginAsRole: (role: UserRole) => void;
   logout: () => Promise<void>;
 
@@ -127,6 +141,16 @@ interface AppContextType {
   // Users management for Admin
   allUsers: UserProfile[];
   updateUserRoleAndTier: (userId: string, role: UserRole, tier: SubscriptionTier) => Promise<void>;
+  updateUserSubscriptionDays: (userId: string, daysToAdd: number, reason?: string) => Promise<void>;
+  sendDirectUserMessage: (
+    targetUserId: string,
+    targetUserName: string,
+    targetUserEmail: string,
+    title: string,
+    message: string,
+    sendAsNotification?: boolean,
+    sendAsTicket?: boolean
+  ) => Promise<boolean>;
 
   // Manual Card-to-Card Payment System
   manualPayments: ManualPaymentSubmission[];
@@ -246,7 +270,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
   const toggleDarkMode = () => setIsDarkMode((prev) => !prev);
 
-  const [activeTab, setActiveTabState] = useState<ActiveTab>('dashboard');
+  const [activeTab, setActiveTabState] = useState<ActiveTab>('landing');
   const [adminMode, setAdminModeState] = useState<boolean>(false);
   const [activeSupportTicketId, setActiveSupportTicketId] = useState<string | null>(null);
 
@@ -262,7 +286,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const [selectedTicket, setSelectedTicket] = useState<Ticket | null>(null);
   const [reminders, setReminders] = useState<Reminder[]>(INITIAL_REMINDERS);
   const [manualPayments, setManualPayments] = useState<ManualPaymentSubmission[]>(INITIAL_MANUAL_PAYMENTS);
-  const [allUsers, setAllUsers] = useState<UserProfile[]>([INITIAL_USER]);
+  const [allUsers, setAllUsers] = useState<UserProfile[]>([]);
   const [goals, setGoals] = useState<FinancialGoal[]>(INITIAL_GOALS);
 
   const [isSubscriptionModalOpen, setIsSubscriptionModalOpen] = useState(false);
@@ -455,6 +479,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
         if (session?.user) {
           setIsAuthenticated(true);
+          setActiveTabState('dashboard');
           const email = session.user.email || '';
           await fetchUserDataFromSupabase(session.user.id, email);
         }
@@ -468,6 +493,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     const { data: authListener } = supabase.auth.onAuthStateChange(async (event: string, session: any) => {
       if (event === 'SIGNED_IN' && session?.user) {
         setIsAuthenticated(true);
+        setActiveTabState('dashboard');
         const email = session.user.email || '';
         await fetchUserDataFromSupabase(session.user.id, email);
       } else if (event === 'SIGNED_OUT') {
@@ -475,6 +501,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         setUser(GUEST_USER);
         setAdminModeState(false);
         setAdmin2FAVerified(false);
+        setActiveTabState('landing');
       }
     });
 
@@ -558,6 +585,69 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     }
   };
 
+  const updateUserSubscriptionDays = async (userId: string, daysToAdd: number, reason?: string) => {
+    if (!isAdmin) return;
+    const target = allUsers.find((u) => u.id === userId) || (user.id === userId ? user : null);
+    if (!target) return;
+
+    const currentExpiry = target.subscription_expires_at ? new Date(target.subscription_expires_at).getTime() : 0;
+    const baseTime = currentExpiry > Date.now() ? currentExpiry : Date.now();
+    const newExpiry = new Date(baseTime + daysToAdd * 24 * 60 * 60 * 1000).toISOString();
+    const newTier: SubscriptionTier = daysToAdd > 0 ? (target.tier === 'vip' ? 'vip' : 'pro') : (new Date(newExpiry).getTime() > Date.now() ? target.tier : 'free');
+    const newStatus = newTier !== 'free' ? 'active' : 'none';
+
+    setAllUsers((prev) =>
+      prev.map((u) =>
+        u.id === userId
+          ? {
+              ...u,
+              tier: newTier,
+              subscription_status: newStatus,
+              subscription_expires_at: newExpiry,
+              updated_at: new Date().toISOString(),
+            }
+          : u
+      )
+    );
+
+    if (user.id === userId) {
+      setUser((prev) => ({
+        ...prev,
+        tier: newTier,
+        subscription_status: newStatus,
+        subscription_expires_at: newExpiry,
+      }));
+    }
+
+    const supabase = getSupabaseClient();
+    if (supabase) {
+      try {
+        await supabase
+          .from('users')
+          .update({
+            tier: newTier,
+            subscription_status: newStatus,
+            subscription_expires_at: newExpiry,
+            updated_at: new Date().toISOString(),
+          })
+          .eq('id', userId);
+      } catch (err) {
+        console.error('Supabase updateUserSubscriptionDays error:', err);
+      }
+    }
+
+    // Automatically forward admin comment / days update into Support Ticketing system
+    const daysLabel = daysToAdd > 0 ? `افزایش ${daysToAdd} روزه` : `${daysToAdd} روز`;
+    const noteText = reason?.trim() ? `\nتوضیحات مدیر ارشد: ${reason}` : '';
+    await forwardAdminNotificationToTicket(
+      userId,
+      target.full_name,
+      target.email,
+      'تمدید اعتبار اشتراک طلایی توسط مدیریت چندبوم',
+      `کاربر گرامی، مدت اعتبار حساب کاربری شما به میزان ${daysLabel} اعمال گردید.${noteText}\nتاریخ انقضای جدید: ${new Date(newExpiry).toLocaleDateString('fa-IR')}`
+    );
+  };
+
   // Forward administrative comments / subscription status into Support Ticketing system
   const forwardAdminNotificationToTicket = async (
     targetUserId: string,
@@ -631,6 +721,64 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         }
       }
     }
+  };
+
+  // Direct User Notification and Support Messaging System for Admin
+  const sendDirectUserMessage = async (
+    targetUserId: string,
+    targetUserName: string,
+    targetUserEmail: string,
+    title: string,
+    message: string,
+    sendAsNotification: boolean = true,
+    sendAsTicket: boolean = true
+  ): Promise<boolean> => {
+    const supabase = getSupabaseClient();
+    let success = false;
+
+    // 1. Direct Platform Notification in user's dashboard notification inbox
+    if (sendAsNotification) {
+      const notifItem: NotificationItem = {
+        id: `notif-${Date.now()}-${Math.random().toString(36).substr(2, 4)}`,
+        user_id: targetUserId,
+        type: 'system',
+        title: title.trim(),
+        message: message.trim(),
+        priority: 'urgent',
+        status: 'pending',
+        is_read: false,
+        created_at: new Date().toISOString(),
+      };
+
+      if (user.id === targetUserId) {
+        setNotifications((prev) => [notifItem, ...prev]);
+      }
+
+      if (supabase) {
+        try {
+          await supabase.from('notifications').insert([notifItem]);
+          success = true;
+        } catch (err) {
+          console.warn('Direct notification supabase insert error:', err);
+        }
+      } else {
+        success = true;
+      }
+    }
+
+    // 2. Direct Support Ticket Messaging in user's ticketing inbox
+    if (sendAsTicket) {
+      await forwardAdminNotificationToTicket(
+        targetUserId,
+        targetUserName,
+        targetUserEmail,
+        title.trim(),
+        message.trim()
+      );
+      success = true;
+    }
+
+    return success;
   };
 
   // Manual Card-to-Card Payment Actions
@@ -1256,8 +1404,61 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     return registerWithEmail(email, fullName, password, undefined, age, gender);
   };
 
+  const checkEmailRegistered = async (email: string): Promise<boolean> => {
+    return await checkEmailExists(email);
+  };
+
   const requestSignupOtp = async (email: string) => {
-    return await createUserOtp(email);
+    const cleanEmail = email.trim().toLowerCase();
+    const isRegistered = await checkEmailExists(cleanEmail);
+    if (isRegistered) {
+      return {
+        success: false,
+        error: 'این ایمیل قبلاً ثبت شده است. لطفاً وارد شوید.',
+        isDuplicate: true,
+      };
+    }
+    return await createUserOtp(cleanEmail);
+  };
+
+  const requestLoginOtp = async (email: string) => {
+    const cleanEmail = email.trim().toLowerCase();
+    return await sendLoginOtp(cleanEmail);
+  };
+
+  const loginWithOtp = async (email: string, code: string): Promise<AuthResult> => {
+    const cleanEmail = email.trim().toLowerCase();
+    const verifyRes = await verifyUserOtp(cleanEmail, code);
+    if (!verifyRes.success) {
+      return { success: false, error: verifyRes.error || 'کد تایید اشتباه یا منقضی شده است.' };
+    }
+
+    const supabase = getSupabaseClient();
+    if (supabase) {
+      const { data: userRow } = await supabase
+        .from('users')
+        .select('*')
+        .eq('email', cleanEmail)
+        .maybeSingle();
+
+      if (userRow) {
+        setIsAuthenticated(true);
+        await fetchUserDataFromSupabase(userRow.id, cleanEmail);
+        return { success: true };
+      }
+    }
+    setIsAuthenticated(true);
+    return { success: true };
+  };
+
+  const requestPasswordResetOtp = async (email: string) => {
+    const cleanEmail = email.trim().toLowerCase();
+    return await sendPasswordResetOtp(cleanEmail);
+  };
+
+  const resetPasswordWithOtp = async (email: string, code: string, newPassword: string) => {
+    const cleanEmail = email.trim().toLowerCase();
+    return await resetUserPassword(cleanEmail, code, newPassword);
   };
 
   const verifySignupOtpAndRegister = async (
@@ -1391,7 +1592,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     setUser(GUEST_USER);
     setAdminModeState(false);
     setAdmin2FAVerified(false);
-    setActiveTab('dashboard');
+    setActiveTab('landing');
   };
 
   const addReminder = async (rem: Omit<Reminder, 'id' | 'user_id' | 'created_at'>) => {
@@ -1542,12 +1743,13 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   }, [predictiveAlerts, totalExpense]);
 
   const resetToInitialData = () => {
-    setUser(INITIAL_USER);
-    setTransactions(INITIAL_TRANSACTIONS);
-    setReminders(INITIAL_REMINDERS);
-    setNotifications(INITIAL_NOTIFICATIONS);
-    setTickets(INITIAL_TICKETS);
-    setManualPayments(INITIAL_MANUAL_PAYMENTS);
+    setUser(GUEST_USER);
+    setTransactions([]);
+    setReminders([]);
+    setNotifications([]);
+    setTickets([]);
+    setManualPayments([]);
+    setGoals([]);
     setSelectedTicket(null);
   };
 
@@ -1576,6 +1778,11 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         register,
         requestSignupOtp,
         verifySignupOtpAndRegister,
+        requestLoginOtp,
+        loginWithOtp,
+        requestPasswordResetOtp,
+        resetPasswordWithOtp,
+        checkEmailRegistered,
         loginAsRole,
         logout,
         user,
@@ -1598,6 +1805,8 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         requestSubscription,
         allUsers,
         updateUserRoleAndTier,
+        updateUserSubscriptionDays,
+        sendDirectUserMessage,
         manualPayments,
         submitManualPayment,
         approveManualPayment,

@@ -1,5 +1,5 @@
 /**
- * Security and Anti-Inspection Protection Utility for Financial App «چی؟ چند؟»
+ * Security and Anti-Inspection Protection Utility for Financial Platform «چندبوم»
  * Prevents DevTools inspection, hides source code from Sources tab,
  * disables context menu, shortcuts, and sets debugger traps.
  */
@@ -9,7 +9,7 @@ export function initSecurityProtection(onDevToolsDetected?: () => void): () => v
   if (typeof window !== 'undefined') {
     const bannerStyle = 'color: #ef4444; font-size: 20px; font-weight: bold; font-family: sans-serif;';
     const subStyle = 'color: #10b981; font-size: 13px; font-family: sans-serif;';
-    console.log('%c⚠️ اخطار امنیتی سامانه مالی چی؟ چند؟', bannerStyle);
+    console.log('%c⚠️ اخطار امنیتی سامانه مدیریت مالی چندبوم (Chandboom)', bannerStyle);
     console.log(
       '%cهرگونه دسترسی غیرمجاز یا تزریق کدهای مخرب پیگرد قانونی دارد. کدهای منبع جهت حفاظت از حریم داده‌های مالی کاربران به صورت کاملاً ایزوله و رمزنگاری‌شده محافظت می‌شوند.',
       subStyle

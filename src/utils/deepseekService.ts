@@ -140,11 +140,13 @@ export async function generateDeepSeekAdvice(
           } | جنسیت: ${demographics.gender || 'مشخص‌نشده'}`
         : '';
 
+      const hourlyWage = Math.round(Math.max((metrics.totalIncome || monthlyCap) / 160, 100000));
       const promptContext = `وضعیت مالی کاربر:${demographicInfo}
 - مجموع درآمد ماه: ${metrics.totalIncome.toLocaleString('fa-IR')} تومان
 - مجموع هزینه‌ها: ${metrics.totalExpense.toLocaleString('fa-IR')} تومان
 - تراز موجودی: ${metrics.balance.toLocaleString('fa-IR')} تومان
 - سقف بودجه مصوب: ${monthlyCap.toLocaleString('fa-IR')} تومان
+- ارزش تقریبی هر ساعت کار کاربر: ${hourlyWage.toLocaleString('fa-IR')} تومان
 
 سوال کاربر: ${safePrompt}`;
 
@@ -160,7 +162,8 @@ export async function generateDeepSeekAdvice(
             {
               role: 'system',
               content:
-                'شما دستیار هوش مصنوعی سامانه مدیریت مالی «چندبوم» (Chandboom) هستید. توصیه‌های اختصاصی، دقیق، دلسوزانه و متناسب با سن و رده سنی کاربر حداکثر در ۳ تا ۴ بند فارسی درباره مدیریت پس‌انداز و بودجه ارائه دهید.',
+                'شما مشاور و تحلیل‌گر ارشد هوش مصنوعی سامانه مدیریت مالی «چندبوم» (chandboon.ir) هستید. توصیه‌های شما باید دقیق، کاربردی و هوشمندانه باشد.\n' +
+                'مهم: شما مجهز به سپر ضد خرید هیجانی و تکانه‌ای (Impulse Buy Shield) هستید. اگر کاربر درباره قصد خرید کالای غیرضروری، گجت جدید، گوشی، ساعت یا هزینه‌های هوسی پرسید، با لحنی دوستانه و غیرمستقیم ارزش زمانی آن خرید را (بر اساس درآمد ساعتی محاسبه‌شده کاربر) یادآوری کنید و پیشنهاد دهید از قانون ۲۴ یا ۴۸ ساعت تامل استفاده کند.',
             },
             { role: 'user', content: promptContext },
           ],

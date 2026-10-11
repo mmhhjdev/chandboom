@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import {
   Plus,
   Search,
@@ -12,25 +12,41 @@ import {
   ArrowUpDown,
   Tag,
   Calendar,
+  CreditCard,
+  FileSpreadsheet,
 } from 'lucide-react';
 import { useApp } from '../context/AppContext';
 import { Transaction, TransactionCategory, TransactionType } from '../types';
 import { formatToman, formatShamsiDate, toPersianDigits } from '../utils/formatters';
 import { parsePersianFinancialText } from '../utils/aiParser';
 import { EXPENSE_CATEGORIES, INCOME_CATEGORIES } from '../data/initialData';
+import { exportTransactionsToExcel } from '../utils/excelExporter';
 
 interface TransactionsViewProps {
   onOpenTransactionModal: (tx?: Transaction) => void;
+  onOpenBankSmsModal?: () => void;
+}
+
+type PeriodFilter = 'current_month' | 'last_month' | 'quarter' | 'all';
+
+interface DayGroup {
+  dateKey: string;
+  displayDate: string;
+  totalIncome: number;
+  totalExpense: number;
+  items: Transaction[];
 }
 
 export const TransactionsView: React.FC<TransactionsViewProps> = ({
   onOpenTransactionModal,
+  onOpenBankSmsModal,
 }) => {
   const { transactions, deleteTransaction, addTransaction } = useApp();
 
   const [searchQuery, setSearchQuery] = useState('');
   const [typeFilter, setTypeFilter] = useState<'all' | 'income' | 'expense'>('all');
   const [categoryFilter, setCategoryFilter] = useState<string>('all');
+  const [periodFilter, setPeriodFilter] = useState<PeriodFilter>('current_month');
   const [quickAiText, setQuickAiText] = useState('');
 
   // Quick Natural Language Add
@@ -53,43 +69,100 @@ export const TransactionsView: React.FC<TransactionsViewProps> = ({
     }
   };
 
-  // Filter transactions
-  const filtered = transactions.filter((tx) => {
-    if (typeFilter !== 'all' && tx.type !== typeFilter) return false;
-    if (categoryFilter !== 'all' && tx.category !== categoryFilter) return false;
-    if (searchQuery.trim()) {
-      const q = searchQuery.toLowerCase();
-      return (
-        tx.description.toLowerCase().includes(q) ||
-        tx.category.toLowerCase().includes(q) ||
-        tx.amount.toString().includes(q)
-      );
-    }
-    return true;
-  });
+  // Filter transactions with Default Current Month & Quarterly Selectors
+  const filtered = useMemo(() => {
+    const now = new Date();
+    const currentYear = now.getFullYear();
+    const currentMonth = now.getMonth();
 
-  // Export CSV
-  const handleExportCSV = () => {
-    const headers = ['نوع', 'مبلغ (تومان)', 'دسته‌بندی', 'توضیحات', 'تاریخ'];
-    const rows = filtered.map((tx) => [
-      tx.type === 'income' ? 'درآمد' : 'هزینه',
-      tx.amount,
-      tx.category,
-      `"${tx.description.replace(/"/g, '""')}"`,
-      formatShamsiDate(tx.date),
-    ]);
+    const startOfCurrentMonth = new Date(currentYear, currentMonth, 1);
+    const startOfLastMonth = new Date(currentYear, currentMonth - 1, 1);
+    const endOfLastMonth = new Date(currentYear, currentMonth, 0, 23, 59, 59);
+    const startOfQuarter = new Date(currentYear, currentMonth - 2, 1); // 3 months active period
 
-    const csvContent =
-      'data:text/csv;charset=utf-8,\uFEFF' +
-      [headers.join(','), ...rows.map((e) => e.join(','))].join('\n');
+    return transactions.filter((tx) => {
+      // 1. Period Filter
+      if (periodFilter === 'current_month') {
+        const d = new Date(tx.date);
+        if (d < startOfCurrentMonth) return false;
+      } else if (periodFilter === 'last_month') {
+        const d = new Date(tx.date);
+        if (d < startOfLastMonth || d > endOfLastMonth) return false;
+      } else if (periodFilter === 'quarter') {
+        const d = new Date(tx.date);
+        if (d < startOfQuarter) return false;
+      }
 
-    const encodedUri = encodeURI(csvContent);
-    const link = document.createElement('a');
-    link.setAttribute('href', encodedUri);
-    link.setAttribute('download', `chandboom_transactions_${Date.now()}.csv`);
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
+      // 2. Type Filter
+      if (typeFilter !== 'all' && tx.type !== typeFilter) return false;
+
+      // 3. Category Filter
+      if (categoryFilter !== 'all' && tx.category !== categoryFilter) return false;
+
+      // 4. Search Filter
+      if (searchQuery.trim()) {
+        const q = searchQuery.toLowerCase();
+        return (
+          tx.description.toLowerCase().includes(q) ||
+          tx.category.toLowerCase().includes(q) ||
+          tx.amount.toString().includes(q)
+        );
+      }
+      return true;
+    });
+  }, [transactions, periodFilter, typeFilter, categoryFilter, searchQuery]);
+
+  // Group transactions by date with daily subtotals
+  const groupedByDay = useMemo(() => {
+    const map = new Map<string, DayGroup>();
+
+    // Sort descending by date
+    const sorted = [...filtered].sort(
+      (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()
+    );
+
+    sorted.forEach((tx) => {
+      const dateKey = tx.date ? tx.date.split('T')[0] : 'نامشخص';
+      const displayDate = formatShamsiDate(tx.date);
+
+      if (!map.has(dateKey)) {
+        map.set(dateKey, {
+          dateKey,
+          displayDate,
+          totalIncome: 0,
+          totalExpense: 0,
+          items: [],
+        });
+      }
+
+      const grp = map.get(dateKey)!;
+      grp.items.push(tx);
+      if (tx.type === 'income') {
+        grp.totalIncome += tx.amount;
+      } else {
+        grp.totalExpense += tx.amount;
+      }
+    });
+
+    return Array.from(map.values());
+  }, [filtered]);
+
+  // Summary Metrics of Filtered Period
+  const periodTotalIncome = useMemo(
+    () => filtered.filter((t) => t.type === 'income').reduce((acc, t) => acc + t.amount, 0),
+    [filtered]
+  );
+  const periodTotalExpense = useMemo(
+    () => filtered.filter((t) => t.type === 'expense').reduce((acc, t) => acc + t.amount, 0),
+    [filtered]
+  );
+
+  // Enhanced Excel Export
+  const handleExportExcel = () => {
+    exportTransactionsToExcel(
+      filtered,
+      `chandboon_transactions_${periodFilter}_${Date.now()}.xlsx`
+    );
   };
 
   const allCategories = Array.from(new Set([...EXPENSE_CATEGORIES, ...INCOME_CATEGORIES]));
@@ -100,26 +173,38 @@ export const TransactionsView: React.FC<TransactionsViewProps> = ({
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <h2 className="font-cairo text-2xl font-bold text-zinc-900 dark:text-zinc-100">
-            تراکنش‌های مالی و دفتر ثبت
+            تراکنش‌های مالی و تایم‌لاین هوشمند
           </h2>
           <p className="text-xs sm:text-sm text-zinc-600 dark:text-zinc-400 mt-1">
-            مشاهده، جستجو، فیلتر و خروجی اکسل از کلیه درآمدها و هزینه‌های ثبت شده در سامانه چندبوم
+            مشاهده تراکنش‌ها به تفکیک روز، فیلترهای فصلی و ماهانه، ثبت با پیامک بانکی و خروجی اکسل
           </p>
         </div>
 
-        <div className="flex items-center gap-2.5 font-cairo">
+        <div className="flex flex-wrap items-center gap-2 font-cairo">
+          {onOpenBankSmsModal && (
+            <button
+              onClick={onOpenBankSmsModal}
+              title="پردازش و استخراج خودکار از متن پیامک یا فیش بانکی"
+              className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-blue-50 dark:bg-[#131F2A] text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-blue-900/60 hover:bg-blue-100 text-xs font-bold transition cursor-pointer shadow-xs"
+            >
+              <CreditCard className="w-4 h-4 text-blue-600 dark:text-blue-400" />
+              <span>پردازش پیامک بانکی</span>
+            </button>
+          )}
+
           <button
-            onClick={handleExportCSV}
-            className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-white dark:bg-[#0F1512] text-zinc-700 dark:text-zinc-300 border border-[#E2E8E4] dark:border-[#1A2621] hover:bg-zinc-50 dark:hover:bg-[#16221D] text-xs font-bold transition cursor-pointer shadow-xs"
+            onClick={handleExportExcel}
+            title="دانلود فایل اکسل چندشیت با تفکیک دسته‌بندی و فرمت ارزی"
+            className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-emerald-50 dark:bg-[#14231C] text-emerald-800 dark:text-emerald-300 border border-emerald-300 dark:border-emerald-800 hover:bg-emerald-100 text-xs font-bold transition cursor-pointer shadow-xs"
           >
-            <Download className="w-4 h-4 text-emerald-700 dark:text-emerald-400" />
-            <span>خروجی CSV (اکسل)</span>
+            <FileSpreadsheet className="w-4 h-4 text-emerald-600" />
+            <span>خروجی اکسل پیشرفته (XLSX)</span>
           </button>
 
           <button
             id="open-add-transaction-modal-btn"
             onClick={() => onOpenTransactionModal()}
-            className="flex items-center gap-2 px-4 py-2 rounded-xl bg-emerald-700 hover:bg-emerald-800 dark:bg-emerald-600 dark:hover:bg-emerald-500 text-white text-xs sm:text-sm font-bold shadow-xs transition cursor-pointer"
+            className="flex items-center gap-2 px-4 py-2 rounded-xl bg-emerald-700 hover:bg-emerald-800 text-white text-xs sm:text-sm font-bold shadow-xs transition cursor-pointer"
           >
             <Plus className="w-4 h-4" />
             <span>ثبت تراکنش جدید</span>
@@ -151,8 +236,70 @@ export const TransactionsView: React.FC<TransactionsViewProps> = ({
         </button>
       </form>
 
-      {/* Filters Bar */}
-      <div className="p-4 bg-white dark:bg-[#0F1512] rounded-2xl border border-[#E2E8E4] dark:border-[#1A2621] shadow-xs space-y-3">
+      {/* Timeline Period Tabs & Filters Bar */}
+      <div className="p-4 bg-white dark:bg-[#0F1512] rounded-3xl border border-[#E2E8E4] dark:border-[#1A2621] shadow-xs space-y-4">
+        {/* Row 1: Quick Timeline Period Selector Tabs */}
+        <div className="flex flex-wrap items-center justify-between gap-3 border-b border-[#E2E8E4] dark:border-[#1A2621] pb-3">
+          <div className="flex items-center gap-1.5 p-1 bg-zinc-100 dark:bg-[#141F1A] rounded-2xl text-xs font-bold">
+            <button
+              type="button"
+              onClick={() => setPeriodFilter('current_month')}
+              className={`px-3.5 py-1.5 rounded-xl transition cursor-pointer ${
+                periodFilter === 'current_month'
+                  ? 'bg-white dark:bg-[#0F1512] text-emerald-700 dark:text-emerald-400 shadow-xs'
+                  : 'text-zinc-600 dark:text-zinc-400 hover:text-zinc-900'
+              }`}
+            >
+              ماه جاری
+            </button>
+            <button
+              type="button"
+              onClick={() => setPeriodFilter('last_month')}
+              className={`px-3.5 py-1.5 rounded-xl transition cursor-pointer ${
+                periodFilter === 'last_month'
+                  ? 'bg-white dark:bg-[#0F1512] text-emerald-700 dark:text-emerald-400 shadow-xs'
+                  : 'text-zinc-600 dark:text-zinc-400 hover:text-zinc-900'
+              }`}
+            >
+              ماه گذشته
+            </button>
+            <button
+              type="button"
+              onClick={() => setPeriodFilter('quarter')}
+              className={`px-3.5 py-1.5 rounded-xl transition cursor-pointer ${
+                periodFilter === 'quarter'
+                  ? 'bg-white dark:bg-[#0F1512] text-emerald-700 dark:text-emerald-400 shadow-xs'
+                  : 'text-zinc-600 dark:text-zinc-400 hover:text-zinc-900'
+              }`}
+            >
+              ۳ ماه اخیر (فصلی)
+            </button>
+            <button
+              type="button"
+              onClick={() => setPeriodFilter('all')}
+              className={`px-3.5 py-1.5 rounded-xl transition cursor-pointer ${
+                periodFilter === 'all'
+                  ? 'bg-white dark:bg-[#0F1512] text-zinc-900 dark:text-white shadow-xs'
+                  : 'text-zinc-600 dark:text-zinc-400 hover:text-zinc-900'
+              }`}
+            >
+              همه ({toPersianDigits(transactions.length)})
+            </button>
+          </div>
+
+          {/* Period Summary Totals */}
+          <div className="flex items-center gap-3 text-xs">
+            <span className="text-zinc-500">
+              درآمد دوره: <b className="text-emerald-700 dark:text-emerald-400 font-bold font-mono">+{formatToman(periodTotalIncome)}</b>
+            </span>
+            <span className="text-zinc-300 dark:text-zinc-700">|</span>
+            <span className="text-zinc-500">
+              هزینه دوره: <b className="text-rose-600 dark:text-rose-400 font-bold font-mono">-{formatToman(periodTotalExpense)}</b>
+            </span>
+          </div>
+        </div>
+
+        {/* Row 2: Search, Type and Category Filters */}
         <div className="flex flex-col sm:flex-row gap-3">
           {/* Search Box */}
           <div className="relative flex-1">
@@ -176,7 +323,7 @@ export const TransactionsView: React.FC<TransactionsViewProps> = ({
                   : 'text-zinc-600 dark:text-zinc-400'
               }`}
             >
-              همه ({toPersianDigits(transactions.length)})
+              همه انواع
             </button>
             <button
               onClick={() => setTypeFilter('expense')}
@@ -218,92 +365,144 @@ export const TransactionsView: React.FC<TransactionsViewProps> = ({
         </div>
       </div>
 
-      {/* Transactions Table / List */}
-      <div className="bg-white dark:bg-[#0F1512] rounded-2xl border border-[#E2E8E4] dark:border-[#1A2621] shadow-xs overflow-hidden">
-        {filtered.length === 0 ? (
-          <div className="p-12 text-center text-zinc-400 space-y-3">
-            <p className="text-xs sm:text-sm">تراکنشی با مشخصات فیلتر شده یافت نشد.</p>
-            <button
-              onClick={() => onOpenTransactionModal()}
-              className="px-4 py-2 rounded-xl bg-emerald-700 hover:bg-emerald-800 text-white font-cairo font-bold text-xs cursor-pointer shadow-xs transition"
-            >
-              ثبت اولین تراکنش
-            </button>
+      {/* Transactions List Grouped by Day */}
+      <div className="space-y-4">
+        {groupedByDay.length === 0 ? (
+          <div className="p-12 text-center text-zinc-400 space-y-3 bg-white dark:bg-[#0F1512] rounded-3xl border border-[#E2E8E4] dark:border-[#1A2621]">
+            <Calendar className="w-10 h-10 text-zinc-300 dark:text-zinc-600 mx-auto" />
+            <p className="text-xs sm:text-sm">
+              هیچ تراکنشی در بازه انتخابی ({periodFilter === 'current_month' ? 'ماه جاری' : periodFilter === 'last_month' ? 'ماه گذشته' : '۳ ماه اخیر'}) یافت نشد.
+            </p>
+            <div className="flex items-center justify-center gap-2 pt-2">
+              <button
+                onClick={() => onOpenTransactionModal()}
+                className="px-4 py-2 rounded-xl bg-emerald-700 hover:bg-emerald-800 text-white font-cairo font-bold text-xs cursor-pointer shadow-xs transition"
+              >
+                ثبت اولین تراکنش
+              </button>
+              {onOpenBankSmsModal && (
+                <button
+                  onClick={onOpenBankSmsModal}
+                  className="px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-cairo font-bold text-xs cursor-pointer shadow-xs transition"
+                >
+                  پردازش پیامک بانکی
+                </button>
+              )}
+            </div>
           </div>
         ) : (
-          <div className="divide-y divide-zinc-100 dark:divide-[#1A2621]/80">
-            {filtered.map((tx) => (
-              <div
-                key={tx.id}
-                className="p-4 sm:p-5 flex items-center justify-between gap-4 hover:bg-zinc-50/60 dark:hover:bg-[#121B17] transition"
-              >
-                <div className="flex items-center gap-3.5 min-w-0">
-                  <div
-                    className={`w-10 h-10 rounded-2xl flex items-center justify-center shrink-0 ${
-                      tx.type === 'income'
-                        ? 'bg-emerald-50 text-emerald-700 dark:bg-[#13251D] dark:text-emerald-300'
-                        : 'bg-rose-50 text-rose-700 dark:bg-[#251515] dark:text-rose-300'
-                    }`}
-                  >
-                    {tx.type === 'income' ? (
-                      <TrendingUp className="w-5 h-5" />
-                    ) : (
-                      <TrendingDown className="w-5 h-5" />
-                    )}
-                  </div>
-
-                  <div className="min-w-0">
-                    <h4 className="font-cairo font-bold text-sm text-zinc-900 dark:text-zinc-100 truncate">
-                      {tx.description}
-                    </h4>
-                    <div className="flex items-center gap-2 mt-0.5 text-xs text-zinc-500">
-                      <span className="px-2 py-0.5 rounded-md bg-zinc-100 dark:bg-[#15201A] text-[11px]">
-                        {tx.category}
-                      </span>
-                      <span>•</span>
-                      <span>{formatShamsiDate(tx.date)}</span>
-                    </div>
-                  </div>
+          groupedByDay.map((group) => (
+            <div
+              key={group.dateKey}
+              className="bg-white dark:bg-[#0F1512] rounded-3xl border border-[#E2E8E4] dark:border-[#1A2621] shadow-xs overflow-hidden"
+            >
+              {/* Daily Group Header with Subtotals */}
+              <div className="px-5 py-3.5 bg-zinc-50/80 dark:bg-[#121B17] border-b border-[#E2E8E4] dark:border-[#1A2621] flex flex-wrap items-center justify-between gap-3">
+                <div className="flex items-center gap-2">
+                  <div className="w-2 h-2 rounded-full bg-emerald-500" />
+                  <span className="font-cairo font-bold text-xs sm:text-sm text-zinc-900 dark:text-white">
+                    {group.displayDate}
+                  </span>
+                  <span className="text-[11px] text-zinc-400">
+                    ({toPersianDigits(group.items.length)} تراکنش)
+                  </span>
                 </div>
 
-                <div className="flex items-center gap-4 shrink-0">
-                  <div className="text-left font-cairo">
-                    <span
-                      className={`text-base font-bold ${
-                        tx.type === 'income'
-                          ? 'text-emerald-700 dark:text-emerald-400'
-                          : 'text-zinc-900 dark:text-white'
-                      }`}
-                    >
-                      {tx.type === 'income' ? '+ ' : '- '}
-                      {formatToman(tx.amount)}
+                {/* Daily Subtotal Badges */}
+                <div className="flex items-center gap-3 text-xs font-mono">
+                  {group.totalIncome > 0 && (
+                    <span className="px-2.5 py-0.5 rounded-full bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300 font-bold text-[11px]">
+                      درآمد: +{formatToman(group.totalIncome)}
                     </span>
-                  </div>
-
-                  <div className="flex items-center gap-1">
-                    <button
-                      onClick={() => onOpenTransactionModal(tx)}
-                      title="ویرایش تراکنش"
-                      className="p-1.5 rounded-lg text-zinc-400 hover:text-emerald-700 hover:bg-emerald-50 dark:hover:bg-[#16251E] transition cursor-pointer"
-                    >
-                      <Edit2 className="w-4 h-4" />
-                    </button>
-                    <button
-                      onClick={() => {
-                        if (confirm('آیا از حذف این تراکنش اطمینان دارید؟')) {
-                          deleteTransaction(tx.id);
-                        }
-                      }}
-                      title="حذف تراکنش"
-                      className="p-1.5 rounded-lg text-zinc-400 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-[#281515] transition cursor-pointer"
-                    >
-                      <Trash2 className="w-4 h-4" />
-                    </button>
-                  </div>
+                  )}
+                  {group.totalExpense > 0 && (
+                    <span className="px-2.5 py-0.5 rounded-full bg-rose-100 text-rose-800 dark:bg-rose-950 dark:text-rose-300 font-bold text-[11px]">
+                      هزینه: -{formatToman(group.totalExpense)}
+                    </span>
+                  )}
                 </div>
               </div>
-            ))}
-          </div>
+
+              {/* Transactions in This Day */}
+              <div className="divide-y divide-zinc-100 dark:divide-[#1A2621]/80">
+                {group.items.map((tx) => (
+                  <div
+                    key={tx.id}
+                    className="p-4 sm:p-5 flex items-center justify-between gap-4 hover:bg-zinc-50/60 dark:hover:bg-[#121B17] transition"
+                  >
+                    <div className="flex items-center gap-3.5 min-w-0">
+                      <div
+                        className={`w-10 h-10 rounded-2xl flex items-center justify-center shrink-0 ${
+                          tx.type === 'income'
+                            ? 'bg-emerald-50 text-emerald-700 dark:bg-[#13251D] dark:text-emerald-300'
+                            : 'bg-rose-50 text-rose-700 dark:bg-[#251515] dark:text-rose-300'
+                        }`}
+                      >
+                        {tx.type === 'income' ? (
+                          <TrendingUp className="w-5 h-5" />
+                        ) : (
+                          <TrendingDown className="w-5 h-5" />
+                        )}
+                      </div>
+
+                      <div className="min-w-0">
+                        <h4 className="font-cairo font-bold text-sm text-zinc-900 dark:text-zinc-100 truncate">
+                          {tx.description}
+                        </h4>
+                        <div className="flex items-center gap-2 mt-0.5 text-xs text-zinc-500">
+                          <span className="px-2 py-0.5 rounded-md bg-zinc-100 dark:bg-[#15201A] text-[11px]">
+                            {tx.category}
+                          </span>
+                          {tx.account && (
+                            <>
+                              <span>•</span>
+                              <span className="text-[11px] text-zinc-400">{tx.account}</span>
+                            </>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="flex items-center gap-4 shrink-0">
+                      <div className="text-left font-cairo">
+                        <span
+                          className={`text-base font-bold ${
+                            tx.type === 'income'
+                              ? 'text-emerald-700 dark:text-emerald-400'
+                              : 'text-zinc-900 dark:text-white'
+                          }`}
+                        >
+                          {tx.type === 'income' ? '+ ' : '- '}
+                          {formatToman(tx.amount)}
+                        </span>
+                      </div>
+
+                      <div className="flex items-center gap-1">
+                        <button
+                          onClick={() => onOpenTransactionModal(tx)}
+                          title="ویرایش تراکنش"
+                          className="p-1.5 rounded-lg text-zinc-400 hover:text-emerald-700 hover:bg-emerald-50 dark:hover:bg-[#16251E] transition cursor-pointer"
+                        >
+                          <Edit2 className="w-4 h-4" />
+                        </button>
+                        <button
+                          onClick={() => {
+                            if (confirm('آیا از حذف این تراکنش اطمینان دارید؟')) {
+                              deleteTransaction(tx.id);
+                            }
+                          }}
+                          title="حذف تراکنش"
+                          className="p-1.5 rounded-lg text-zinc-400 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-[#281515] transition cursor-pointer"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          ))
         )}
       </div>
     </div>

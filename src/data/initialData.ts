@@ -91,7 +91,7 @@ export const SUBSCRIPTION_PLANS: SubscriptionPlan[] = [
 ];
 
 export const GUEST_USER: UserProfile = {
-  id: 'usr-guest',
+  id: 'guest',
   email: '',
   full_name: 'کاربر مهمان',
   avatar_url: MALE_AVATAR_SVG,
@@ -102,32 +102,17 @@ export const GUEST_USER: UserProfile = {
   monthly_budget_cap: 0,
   theme_preference: 'dark',
   currency: 'تومان',
+  age: undefined,
+  gender: undefined,
   created_at: new Date().toISOString(),
 };
 
-export const INITIAL_USER: UserProfile = {
-  id: 'usr-admin-01',
-  email: 'seyedmahanhejrati@gmail.com',
-  full_name: 'سید ماهان هجرتی',
-  avatar_url: MALE_AVATAR_SVG,
-  role: 'admin',
-  tier: 'pro',
-  subscription_status: 'active',
-  subscription_expires_at: new Date(Date.now() + 90 * 24 * 60 * 60 * 1000).toISOString(),
-  monthly_budget_cap: 35000000,
-  theme_preference: 'dark',
-  currency: 'تومان',
-  created_at: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString(),
-};
+// Purged Production State: All initial data structures start completely empty
+export const INITIAL_USER: UserProfile = GUEST_USER;
 
 export const INITIAL_TRANSACTIONS: Transaction[] = [];
-
 export const INITIAL_REMINDERS: Reminder[] = [];
-
 export const INITIAL_NOTIFICATIONS: NotificationItem[] = [];
-
 export const INITIAL_TICKETS: Ticket[] = [];
-
 export const INITIAL_MANUAL_PAYMENTS: ManualPaymentSubmission[] = [];
-
 export const INITIAL_GOALS: FinancialGoal[] = [];

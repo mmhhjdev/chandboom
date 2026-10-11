@@ -22,7 +22,8 @@ import {
 import { useApp } from '../context/AppContext';
 import { FinancialGoal } from '../types';
 import { formatToman, formatShamsiDate, toPersianDigits } from '../utils/formatters';
-import { getDeepSeekApiKey } from '../utils/deepseekService';
+import { getConversationalAdvice } from '../services/aiService';
+import { getCachedGoalInsights, setCachedGoalInsight } from '../utils/aiCache';
 
 export const GoalsView: React.FC = () => {
   const { goals, addGoal, updateGoal, deleteGoal, contributeToGoal, metrics, user, isProUser, setActiveTab } = useApp();
@@ -40,7 +41,7 @@ export const GoalsView: React.FC = () => {
   const [notes, setNotes] = useState('');
   const [contributeAmount, setContributeAmount] = useState<string>('');
 
-  // AI Feasibility Analysis State
+  // AI Feasibility Analysis State with local controlled caching
   const [analyzingGoalId, setAnalyzingGoalId] = useState<string | null>(null);
   const [aiAnalysisResults, setAiAnalysisResults] = useState<Record<string, {
     score: number;
@@ -48,11 +49,23 @@ export const GoalsView: React.FC = () => {
     requiredMonthly: number;
     projectedMonths: number;
     advice: string;
-  }>>({});
+  }>>(() => {
+    return getCachedGoalInsights();
+  });
 
   const totalTarget = goals.reduce((acc, g) => acc + g.target_amount, 0);
   const totalSaved = goals.reduce((acc, g) => acc + g.current_amount, 0);
   const overallProgress = totalTarget > 0 ? Math.min(Math.round((totalSaved / totalTarget) * 100), 100) : 0;
+
+  // Calculate user hourly wage for Impulse Buy Shield (160 standard working hours per month)
+  const userHourlyWage = Math.round(
+    Math.max(
+      (metrics.totalIncome || user.monthly_budget_cap || 20000000) / 160,
+      100000
+    )
+  );
+  const numericTarget = parseFloat(targetAmount) || 0;
+  const targetWorkHours = numericTarget > 0 ? Math.round(numericTarget / userHourlyWage) : 0;
 
   const handleOpenAdd = () => {
     setTitle('');
@@ -109,7 +122,7 @@ export const GoalsView: React.FC = () => {
     setSelectedGoal(null);
   };
 
-  // Run DeepSeek AI Feasibility Calculation
+  // Run AI Feasibility Calculation
   const runAiFeasibility = async (goal: FinancialGoal) => {
     setAnalyzingGoalId(goal.id);
 
@@ -144,62 +157,48 @@ export const GoalsView: React.FC = () => {
     if (score < 40) statusText = 'نیازمند تعدیل مهلت یا افزایش درآمد';
     else if (score < 75) statusText = 'قابل دستیابی با کنترل هزینه‌های متفرقه';
 
-    // Query DeepSeek Chat API if key is available
-    const apiKey = getDeepSeekApiKey();
+    // Query AI Advisor for goal feasibility
     let aiAdvice = `برای دستیابی به هدف «${goal.title}» تا مهلت مقرر، نیاز به ذخیره ماهانه حدود ${formatToman(requiredMonthly)} دارید. روند خالص فعلی شما (${formatToman(netMonthlySavings)} در ماه) ${score >= 70 ? 'پوشش‌دهنده این هدف است.' : 'کمی کمتر از سقف مورد نیاز است.'}`;
 
-    if (apiKey) {
-      try {
-        const prompt = `تحلیل امکان‌پذیری هدف مالی کاربر:
+    try {
+      const prompt = `تحلیل امکان‌پذیری هدف مالی کاربر:
 - هدف: ${goal.title} (${formatToman(goal.target_amount)})
 - اندوخته فعلی: ${formatToman(goal.current_amount)}
 - مهلت باقیمانده: ${toPersianDigits(Math.round(remainingMonths))} ماه
 - درآمد ماهانه فعلی: ${formatToman(metrics.totalIncome)}
 - هزینه ماهانه فعلی: ${formatToman(metrics.totalExpense)}
 - پس‌انداز ماهانه خالص: ${formatToman(netMonthlySavings)}
-- سن کاربر: ${user.age || 'نامشخص'} | جنسیت: ${user.gender || 'نامشخص'}
 
 لطفاً در ۲ جمله فارسی تخصصی، احتمال موفقیت و ۱ راهکار بهینه‌سازی بودجه ارائه بده.`;
 
-        const res = await fetch('https://api.deepseek.com/chat/completions', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            Authorization: `Bearer ${apiKey}`,
-          },
-          body: JSON.stringify({
-            model: 'deepseek-chat',
-            messages: [
-              { role: 'system', content: 'شما موتور هوش مصنوعی سنجش ریسک و امکان‌پذیری اهداف مالی چندبوم هستید.' },
-              { role: 'user', content: prompt },
-            ],
-            temperature: 0.3,
-            max_tokens: 300,
-          }),
-        });
+      const reply = await getConversationalAdvice(prompt, metrics, user.monthly_budget_cap, {
+        age: user.age,
+        gender: user.gender,
+        fullName: user.full_name,
+      });
 
-        if (res.ok) {
-          const data = await res.json();
-          const reply = data.choices?.[0]?.message?.content;
-          if (reply) {
-            aiAdvice = reply.trim();
-          }
-        }
-      } catch (err) {
-        console.warn('DeepSeek AI feasibility query note:', err);
+      if (reply) {
+        aiAdvice = reply.trim();
       }
+    } catch (err) {
+      console.warn('دستیار هوشمند چندبوم: خطای بررسی امکان‌پذیری هدف:', err);
     }
+
+    const insightData = {
+      score,
+      statusText,
+      requiredMonthly,
+      projectedMonths,
+      advice: aiAdvice,
+      analyzedAt: new Date().toISOString(),
+    };
 
     setAiAnalysisResults((prev) => ({
       ...prev,
-      [goal.id]: {
-        score,
-        statusText,
-        requiredMonthly,
-        projectedMonths,
-        advice: aiAdvice,
-      },
+      [goal.id]: insightData,
     }));
+
+    setCachedGoalInsight(goal.id, insightData);
 
     setAnalyzingGoalId(null);
   };
@@ -218,7 +217,7 @@ export const GoalsView: React.FC = () => {
             </span>
           </div>
           <p className="text-xs sm:text-sm text-zinc-600 dark:text-zinc-400 mt-1">
-            تعریف اهداف خرید، سرمایه‌گذاری و صندوق پس‌انداز با ارزیابی احتمال تحقق توسط هوش مصنوعی DeepSeek
+            تعریف اهداف خرید، سرمایه‌گذاری و صندوق پس‌انداز با ارزیابی احتمال تحقق توسط دستیار هوشمند چندبوم
           </p>
         </div>
 
@@ -396,6 +395,14 @@ export const GoalsView: React.FC = () => {
                     </span>
                   </div>
 
+                  {/* Impulse Buy Shield Hours Badge */}
+                  <div className="flex items-center gap-1.5 text-[11px] text-zinc-500 dark:text-zinc-400 bg-zinc-50 dark:bg-[#121B16] px-2.5 py-1 rounded-xl border border-[#E2E8E4] dark:border-[#1F2E27] w-fit">
+                    <ShieldCheck className="w-3.5 h-3.5 text-emerald-600" />
+                    <span>
+                      معادل <b className="text-zinc-900 dark:text-zinc-100 font-bold">{toPersianDigits(Math.round(goal.target_amount / userHourlyWage))}</b> ساعت کار شما
+                    </span>
+                  </div>
+
                   <div className="w-full h-3 bg-zinc-100 dark:bg-zinc-800 rounded-full overflow-hidden">
                     <div
                       className={`h-full rounded-full transition-all duration-500 ${
@@ -418,7 +425,7 @@ export const GoalsView: React.FC = () => {
                       <div className="flex items-center gap-2">
                         <Bot className="w-4 h-4 text-amber-500" />
                         <h5 className="font-cairo font-bold text-xs text-amber-900 dark:text-amber-200">
-                          نتیجه ارزیابی هوش مصنوعی DeepSeek:
+                          نتیجه ارزیابی دستیار هوشمند چندبوم:
                         </h5>
                         <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-200 text-amber-800 dark:bg-amber-900 dark:text-amber-200">
                           {aiRes.statusText}
@@ -488,6 +495,14 @@ export const GoalsView: React.FC = () => {
                     min={1000}
                     className="w-full px-3 py-2 bg-zinc-50 dark:bg-[#141E1A] border border-[#E2E8E4] dark:border-[#1F2E27] rounded-xl text-xs text-zinc-900 dark:text-white outline-none focus:ring-2 focus:ring-emerald-600"
                   />
+                  {numericTarget > 0 && (
+                    <div className="mt-1.5 p-2 rounded-xl bg-emerald-50/90 dark:bg-emerald-950/40 border border-emerald-300 dark:border-emerald-800 text-[11px] text-emerald-900 dark:text-emerald-200 flex items-start gap-1.5 leading-relaxed">
+                      <ShieldCheck className="w-3.5 h-3.5 text-emerald-600 shrink-0 mt-0.5" />
+                      <span>
+                        این هدف معادل <b>{toPersianDigits(targetWorkHours)} ساعت</b> از زمان کاری شما بر اساس درآمد ساعتی ثبت‌شده است.
+                      </span>
+                    </div>
+                  )}
                 </div>
 
                 <div>
