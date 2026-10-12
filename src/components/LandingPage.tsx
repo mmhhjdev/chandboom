@@ -13,13 +13,13 @@ import {
   Lock,
   Star,
   ChevronDown,
-  Globe,
   Crown,
   Laptop,
   CreditCard,
   HelpCircle,
   ShieldCheck,
-  Check
+  Check,
+  LogIn,
 } from 'lucide-react';
 import { useApp } from '../context/AppContext';
 
@@ -29,33 +29,23 @@ interface LandingPageProps {
   onOpenSubscription?: () => void;
 }
 
-type Lang = 'fa' | 'en';
-
 export const LandingPage: React.FC<LandingPageProps> = ({
   onEnterApp,
   onOpenAuth,
   onOpenSubscription,
 }) => {
   const { isAuthenticated, openAuthGuard, openSubscriptionModal } = useApp();
-  const [lang, setLang] = useState<Lang>('fa');
   const [openFaq, setOpenFaq] = useState<number | null>(0);
   const [interactiveInput, setInteractiveInput] = useState('');
   const [demoParsed, setDemoParsed] = useState<{ amount: string; cat: string; desc: string } | null>(null);
 
-  // Sync document attributes when language changes
+  // Sync document attributes for Persian RTL
   useEffect(() => {
     const html = document.documentElement;
-    html.lang = lang === 'fa' ? 'fa' : 'en';
-    html.dir = lang === 'fa' ? 'rtl' : 'ltr';
-    document.title =
-      lang === 'fa'
-        ? 'چندبوم (Chandboom) - سامانه هوشمند مدیریت مالی و بودجه‌بندی با هوش مصنوعی'
-        : 'Chandboom | Next-Gen AI Financial & Wealth Management System';
-  }, [lang]);
-
-  const toggleLanguage = () => {
-    setLang((prev) => (prev === 'fa' ? 'en' : 'fa'));
-  };
+    html.lang = 'fa';
+    html.dir = 'rtl';
+    document.title = 'چندبوم | مدیریت مالی شخصی با هوش مصنوعی پیشرفته';
+  }, []);
 
   const handleSubscriptionClick = () => {
     if (!isAuthenticated) {
@@ -72,21 +62,17 @@ export const LandingPage: React.FC<LandingPageProps> = ({
   const handleTestDemoAI = (sampleText?: string) => {
     const text = sampleText || interactiveInput;
     if (!text) return;
-    if (lang === 'fa') {
-      if (text.includes('گوشت') || text.includes('غذا') || text.includes('شام')) {
-        setDemoParsed({ amount: '۳۵۰,۰۰۰ تومان', cat: 'خوراک و غذا 🥩', desc: text });
-      } else if (text.includes('بنزین') || text.includes('اسنپ') || text.includes('کرایه')) {
-        setDemoParsed({ amount: '۸۵,۰۰۰ تومان', cat: 'حمل و نقل 🚗', desc: text });
-      } else {
-        setDemoParsed({ amount: '۱۲۰,۰۰۰ تومان', cat: 'خرید روزمره 🛍️', desc: text });
-      }
+    if (text.includes('گوشت') || text.includes('غذا') || text.includes('شام')) {
+      setDemoParsed({ amount: '۳۵۰,۰۰۰ تومان', cat: 'خوراک و غذا 🥩', desc: text });
+    } else if (text.includes('بنزین') || text.includes('اسنپ') || text.includes('کرایه')) {
+      setDemoParsed({ amount: '۸۵,۰۰۰ تومان', cat: 'حمل و نقل 🚗', desc: text });
     } else {
-      setDemoParsed({ amount: '$24.50', cat: 'Food & Dining 🍽️', desc: text });
+      setDemoParsed({ amount: '۱۲۰,۰۰۰ تومان', cat: 'خرید روزمره 🛍️', desc: text });
     }
   };
 
-  const isRtl = lang === 'fa';
-  const ArrowIcon = isRtl ? ArrowLeft : ArrowRight;
+  const isRtl = true;
+  const ArrowIcon = ArrowLeft;
 
   return (
     <div
@@ -104,28 +90,28 @@ export const LandingPage: React.FC<LandingPageProps> = ({
       </div>
 
       {/* 1. TOP NAVBAR */}
-      <header className="sticky top-0 z-50 backdrop-blur-xl bg-[#070B09]/85 border-b border-emerald-950/60 transition-all font-cairo">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 h-20 flex items-center justify-between gap-3 sm:gap-4">
+      <header className="sticky top-0 z-50 backdrop-blur-xl bg-[#070B09]/85 border-b border-emerald-950/60 transition-all font-cairo w-full overflow-x-hidden">
+        <div className="max-w-7xl mx-auto px-3 sm:px-6 h-16 sm:h-20 flex items-center justify-between gap-1.5 sm:gap-4 flex-nowrap w-full">
           {/* Logo with Bahman Font */}
-          <div className="flex items-center gap-3 shrink-0">
-            <div className="w-11 h-11 rounded-2xl bg-gradient-to-br from-emerald-500 to-teal-800 p-0.5 shadow-lg shadow-emerald-950/50 flex items-center justify-center">
-              <div className="w-full h-full bg-[#090F0C] rounded-[14px] flex items-center justify-center overflow-hidden">
+          <div className="flex items-center gap-2 sm:gap-3 shrink-0 min-w-0">
+            <div className="w-9 h-9 sm:w-11 sm:h-11 rounded-xl sm:rounded-2xl bg-gradient-to-br from-emerald-500 to-teal-800 p-0.5 shadow-lg shadow-emerald-950/50 flex items-center justify-center shrink-0">
+              <div className="w-full h-full bg-[#090F0C] rounded-[10px] sm:rounded-[14px] flex items-center justify-center overflow-hidden">
                 <img
                   src="/logo.png"
                   alt={isRtl ? 'لوگوی رسمی چندبوم' : 'Chandboom Official Logo'}
-                  className="w-8 h-8 object-contain"
+                  className="w-6 h-6 sm:w-8 sm:h-8 object-contain"
                   onError={(e) => {
                     (e.currentTarget as HTMLImageElement).src = '/assets/logo.png';
                   }}
                 />
               </div>
             </div>
-            <div className="flex flex-col">
-              <span className="font-brand text-2xl font-black tracking-tight text-white flex items-center gap-1.5">
+            <div className="flex flex-col min-w-0">
+              <span className="font-brand text-lg sm:text-2xl font-black tracking-tight text-white flex items-center gap-1 sm:gap-1.5 whitespace-nowrap">
                 {isRtl ? 'چندبوم' : 'Chandboom'}
-                <span className="w-2 h-2 rounded-full bg-amber-400 inline-block animate-pulse" />
+                <span className="w-1.5 h-1.5 sm:w-2 sm:h-2 rounded-full bg-amber-400 inline-block animate-pulse shrink-0" />
               </span>
-              <span className="text-[10px] font-bold text-emerald-400 tracking-wider uppercase">
+              <span className="hidden md:block text-[10px] font-bold text-emerald-400 tracking-wider uppercase whitespace-nowrap">
                 {isRtl ? 'سامانه هوشمند مالی و بودجه' : 'AI Financial Operating System'}
               </span>
             </div>
@@ -159,45 +145,40 @@ export const LandingPage: React.FC<LandingPageProps> = ({
             </a>
           </nav>
 
-          {/* Right Action Buttons */}
-          <div className="flex items-center gap-2 sm:gap-2.5 shrink-0">
-            {/* Language Switcher */}
-            <button
-              onClick={toggleLanguage}
-              aria-label={isRtl ? 'تغییر زبان به انگلیسی' : 'Switch to Persian'}
-              className="flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-xl bg-zinc-900/90 border border-emerald-900/40 text-xs font-semibold text-zinc-300 hover:text-white hover:border-emerald-600 transition shadow-xs cursor-pointer"
-            >
-              <Globe className="w-3.5 h-3.5 text-emerald-400" />
-              <span>{lang === 'fa' ? 'EN' : 'فارسی'}</span>
-            </button>
+          {/* Left Action Buttons in RTL */}
+          <div className="flex items-center gap-1.5 sm:gap-2.5 shrink-0 flex-nowrap">
+            {!isAuthenticated ? (
+              /* Guest State: Golden subscription hidden, show elegant ورود / ثبت‌نام button */
+              <button
+                onClick={onOpenAuth}
+                className="flex items-center gap-1.5 px-3 sm:px-4 py-1.5 sm:py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-zinc-950 font-black text-xs sm:text-xs shadow-lg shadow-emerald-500/20 hover:shadow-emerald-500/40 transition-all cursor-pointer shrink-0"
+              >
+                <LogIn className="w-4 h-4 text-zinc-950 shrink-0" />
+                <span className="whitespace-nowrap">ورود / ثبت‌نام</span>
+              </button>
+            ) : (
+              /* Logged-in State */
+              <>
+                {/* Prominent Golden Pro Button in Navbar */}
+                <button
+                  onClick={handleSubscriptionClick}
+                  className="flex items-center gap-1 sm:gap-1.5 px-2.5 sm:px-4 py-1.5 sm:py-2 rounded-xl bg-gradient-to-r from-amber-400 via-amber-500 to-yellow-500 hover:from-amber-300 hover:to-yellow-400 text-zinc-950 font-black text-[11px] sm:text-xs transition cursor-pointer shadow-md hover:shadow-amber-500/20 active:scale-95 shrink-0"
+                  title="خرید اشتراک طلایی"
+                >
+                  <Crown className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-zinc-950 shrink-0" />
+                  <span className="hidden sm:inline whitespace-nowrap">خرید اشتراک طلایی</span>
+                  <span className="sm:hidden whitespace-nowrap">اشتراک طلایی</span>
+                </button>
 
-            {/* Prominent Golden Pro Button in Navbar (Requirement 3 & 4) */}
-            <button
-              onClick={handleSubscriptionClick}
-              className="flex items-center gap-1.5 px-3 sm:px-4 py-2 rounded-xl bg-gradient-to-r from-amber-400 via-amber-500 to-yellow-500 hover:from-amber-300 hover:to-yellow-400 text-zinc-950 font-black text-xs transition cursor-pointer shadow-md hover:shadow-amber-500/20 active:scale-95 shrink-0"
-              title={isRtl ? 'خرید اشتراک طلایی' : 'Buy Pro Pass'}
-            >
-              <Crown className="w-4 h-4 text-zinc-950" />
-              <span>{isRtl ? 'خرید اشتراک طلایی' : 'Pro Pass'}</span>
-            </button>
-
-            {/* Enter App Button */}
-            <button
-              onClick={onEnterApp}
-              className="hidden sm:inline-flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-bold text-zinc-300 hover:text-white hover:bg-zinc-900/80 transition cursor-pointer border border-transparent hover:border-zinc-800"
-            >
-              <span>{isRtl ? 'ورود به اپلیکیشن' : 'Log In'}</span>
-            </button>
-
-            {/* Primary Get Started Free CTA */}
-            <button
-              onClick={onOpenAuth}
-              className="flex items-center gap-1.5 sm:gap-2 px-3.5 sm:px-4 py-2 rounded-xl bg-gradient-to-r from-emerald-500 via-teal-500 to-emerald-600 hover:from-emerald-400 hover:to-teal-500 text-zinc-950 font-black text-xs sm:text-sm shadow-lg shadow-emerald-500/20 hover:shadow-emerald-500/40 transition-all transform hover:-translate-y-0.5 active:translate-y-0 cursor-pointer"
-            >
-              <Sparkles className="w-4 h-4 text-zinc-950" />
-              <span className="hidden xs:inline">{isRtl ? 'شروع رایگان' : 'Start Free'}</span>
-              <span className="xs:hidden">{isRtl ? 'شروع' : 'Start'}</span>
-            </button>
+                {/* Enter App Button */}
+                <button
+                  onClick={onEnterApp}
+                  className="flex items-center gap-1.5 px-3 py-1.5 sm:py-2 rounded-xl text-xs font-bold bg-zinc-900/90 text-white hover:bg-zinc-800 transition cursor-pointer border border-zinc-800 shrink-0"
+                >
+                  <span>ورود به سامانه</span>
+                </button>
+              </>
+            )}
           </div>
         </div>
       </header>

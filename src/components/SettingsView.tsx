@@ -457,33 +457,89 @@ export const SettingsView: React.FC<SettingsViewProps> = ({ onOpenAvatarModal })
         </div>
       </form>
 
-      {/* Theme Switcher */}
-      <div className="p-6 bg-white dark:bg-[#0E1511] rounded-3xl border border-[#E2E8E4] dark:border-[#1F2E27] shadow-xs flex items-center justify-between">
-        <div>
-          <h4 className="font-cairo font-bold text-sm text-zinc-900 dark:text-white">
-            حالت تاریک / روشن (تم نمایشی)
-          </h4>
-          <p className="text-xs text-zinc-500 mt-0.5">
-            تغییر پالت رنگی رابط کاربری متناسب با نور محیط
-          </p>
+      {/* 4. Theme & Appearance Settings (منتقل‌شده از هدر به تنظیمات پروفایل) */}
+      <div className="p-6 bg-white dark:bg-[#0E1511] rounded-3xl border border-[#E2E8E4] dark:border-[#1F2E27] shadow-xs space-y-4">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-[#E2E8E4] dark:border-[#1F2E27]">
+          <div>
+            <h4 className="font-cairo font-bold text-base text-zinc-900 dark:text-white flex items-center gap-2">
+              {theme === 'dark' ? (
+                <Moon className="w-5 h-5 text-emerald-400" />
+              ) : (
+                <Sun className="w-5 h-5 text-amber-500" />
+              )}
+              <span>تنظیمات ظاهر سامانه و تم رنگی (Theme Settings)</span>
+            </h4>
+            <p className="text-xs text-zinc-500 mt-0.5">
+              تغییر حالت شب و روز رابط کاربری سامانه چندبوم متناسب با سلیقه و نور محیط
+            </p>
+          </div>
+
+          <span className="px-3 py-1 rounded-full text-xs font-cairo font-bold bg-zinc-100 dark:bg-[#16231D] text-zinc-700 dark:text-zinc-300 border border-[#E2E8E4] dark:border-[#22332A] self-start sm:self-auto">
+            تم فعلی: {theme === 'dark' ? 'حالت شب (تاریک)' : 'حالت روز (روشن)'}
+          </span>
         </div>
 
-        <button
-          onClick={toggleTheme}
-          className="flex items-center gap-2 px-4 py-2 rounded-xl bg-zinc-100 dark:bg-[#15231C] text-zinc-800 dark:text-zinc-200 border border-[#E2E8E4] dark:border-[#1F2E27] text-xs font-cairo font-bold transition cursor-pointer"
-        >
-          {theme === 'dark' ? (
-            <>
-              <Sun className="w-4 h-4 text-amber-400" />
-              <span>حالت روشن</span>
-            </>
-          ) : (
-            <>
-              <Moon className="w-4 h-4 text-emerald-700" />
-              <span>حالت تاریک</span>
-            </>
-          )}
-        </button>
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          {/* Light Mode Option Button */}
+          <button
+            type="button"
+            onClick={() => {
+              if (theme === 'dark') toggleTheme();
+            }}
+            className={`p-4 rounded-2xl border text-right transition cursor-pointer flex items-center justify-between ${
+              theme === 'light'
+                ? 'bg-amber-50/60 dark:bg-amber-950/20 border-amber-400/80 ring-2 ring-amber-400/30'
+                : 'bg-zinc-50 dark:bg-[#141E1A] border-[#E2E8E4] dark:border-[#1F2E27] hover:border-zinc-300 dark:hover:border-zinc-700'
+            }`}
+          >
+            <div className="flex items-center gap-3">
+              <div className={`p-2.5 rounded-xl ${theme === 'light' ? 'bg-amber-500 text-white shadow-md' : 'bg-zinc-200 dark:bg-zinc-800 text-zinc-500'}`}>
+                <Sun className="w-5 h-5" />
+              </div>
+              <div>
+                <p className="font-cairo font-bold text-sm text-zinc-900 dark:text-white">
+                  حالت روز (روشن)
+                </p>
+                <p className="text-[11px] text-zinc-500 mt-0.5">
+                  رابط کاربری سفید و شفاف مناسب برای محیط‌های پرنور
+                </p>
+              </div>
+            </div>
+            {theme === 'light' && (
+              <CheckCircle2 className="w-5 h-5 text-amber-500 shrink-0" />
+            )}
+          </button>
+
+          {/* Dark Mode Option Button */}
+          <button
+            type="button"
+            onClick={() => {
+              if (theme === 'light') toggleTheme();
+            }}
+            className={`p-4 rounded-2xl border text-right transition cursor-pointer flex items-center justify-between ${
+              theme === 'dark'
+                ? 'bg-emerald-950/30 border-emerald-500/80 ring-2 ring-emerald-500/30'
+                : 'bg-zinc-50 dark:bg-[#141E1A] border-[#E2E8E4] dark:border-[#1F2E27] hover:border-zinc-300 dark:hover:border-zinc-700'
+            }`}
+          >
+            <div className="flex items-center gap-3">
+              <div className={`p-2.5 rounded-xl ${theme === 'dark' ? 'bg-emerald-600 text-white shadow-md' : 'bg-zinc-200 dark:bg-zinc-800 text-zinc-500'}`}>
+                <Moon className="w-5 h-5" />
+              </div>
+              <div>
+                <p className="font-cairo font-bold text-sm text-zinc-900 dark:text-white">
+                  حالت شب (تاریک)
+                </p>
+                <p className="text-[11px] text-zinc-500 mt-0.5">
+                  رابط کاربری تیره و بهینه با مصرف باتری کمتر و کاهش خستگی چشم
+                </p>
+              </div>
+            </div>
+            {theme === 'dark' && (
+              <CheckCircle2 className="w-5 h-5 text-emerald-500 shrink-0" />
+            )}
+          </button>
+        </div>
       </div>
 
       {/* Security Architecture Info */}

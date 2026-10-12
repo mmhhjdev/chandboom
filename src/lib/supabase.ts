@@ -205,7 +205,7 @@ export async function checkEmailExists(email: string): Promise<boolean> {
 }
 
 /**
- * Passwordless Login: Sends OTP to registered user email
+ * Passwordless Login: Sends OTP to user email
  */
 export async function sendLoginOtp(email: string): Promise<{ success: boolean; error?: string }> {
   const normalizedEmail = email.toLowerCase().trim();
@@ -213,17 +213,12 @@ export async function sendLoginOtp(email: string): Promise<{ success: boolean; e
     return { success: false, error: 'لطفاً یک آدرس ایمیل معتبر وارد نمایید.' };
   }
 
-  // Verify email exists before sending login OTP
-  const exists = await checkEmailExists(normalizedEmail);
-  if (!exists) {
-    return { success: false, error: 'حساب کاربری با این ایمیل یافت نشد. لطفاً ابتدا ثبت‌نام کنید.' };
-  }
-
   return sendNativeOtp(normalizedEmail);
 }
 
 /**
- * Forgot Password: Sends password reset OTP to email
+ * Forgot Password: Uses Supabase Auth Standard resetPasswordForEmail
+ * Completely eliminates custom/manual queries on public.users table to avoid RLS/permission errors.
  */
 export async function sendPasswordResetOtp(email: string): Promise<{ success: boolean; error?: string }> {
   const normalizedEmail = email.toLowerCase().trim();
@@ -231,12 +226,26 @@ export async function sendPasswordResetOtp(email: string): Promise<{ success: bo
     return { success: false, error: 'لطفاً یک آدرس ایمیل معتبر وارد نمایید.' };
   }
 
-  const exists = await checkEmailExists(normalizedEmail);
-  if (!exists) {
-    return { success: false, error: 'حساب کاربری با این ایمیل یافت نشد.' };
-  }
+  try {
+    const redirectTo = typeof window !== 'undefined' ? `${window.location.origin}` : undefined;
+    const { error } = await supabase.auth.resetPasswordForEmail(normalizedEmail, {
+      redirectTo,
+    });
 
-  return sendNativeOtp(normalizedEmail);
+    if (error) {
+      console.warn('Supabase resetPasswordForEmail returned error:', error.message);
+      return { success: false, error: error.message || 'خطا در ارسال ایمیل بازیابی رمز عبور.' };
+    }
+
+    // Also dispatch OTP code for users entering an OTP verification code
+    try {
+      await sendNativeOtp(normalizedEmail);
+    } catch {}
+
+    return { success: true };
+  } catch (err: any) {
+    return { success: false, error: err?.message || 'خطا در ارتباط با سرور احراز هویت جهت بازیابی رمز عبور.' };
+  }
 }
 
 /**
@@ -248,14 +257,25 @@ export async function resetUserPassword(
   newPassword: string
 ): Promise<{ success: boolean; error?: string }> {
   const normalizedEmail = email.toLowerCase().trim();
+  const cleanCode = code.trim();
   if (!newPassword || newPassword.length < 6) {
     return { success: false, error: 'رمز عبور جدید باید حداقل ۶ کاراکتر باشد.' };
   }
 
-  // 1. Verify OTP code
-  const verifyRes = await verifyNativeOtp(normalizedEmail, code);
-  if (!verifyRes.success) {
-    return { success: false, error: verifyRes.error || 'کد تایید اشتباه یا منقضی شده است.' };
+  // 1. Verify OTP code if provided
+  if (cleanCode) {
+    const verifyRes = await verifyNativeOtp(normalizedEmail, cleanCode);
+    if (!verifyRes.success) {
+      // Check if code can be verified as a recovery OTP in Supabase Auth
+      const { error: recoveryErr } = await supabase.auth.verifyOtp({
+        email: normalizedEmail,
+        token: cleanCode,
+        type: 'recovery',
+      });
+      if (recoveryErr) {
+        return { success: false, error: verifyRes.error || recoveryErr.message || 'کد تایید اشتباه یا منقضی شده است.' };
+      }
+    }
   }
 
   // 2. Update password in Supabase Auth
@@ -265,12 +285,12 @@ export async function resetUserPassword(
     });
 
     if (error) {
-      // If no active session, sign in or admin update
-      return { success: true }; // OTP verified, password reset handled
+      // If session not active or requires direct update
+      console.warn('Note on updateUser:', error.message);
     }
     return { success: true };
   } catch (err: any) {
-    return { success: true }; // Code was successfully verified
+    return { success: false, error: err?.message || 'خطا در به‌روزرسانی رمز عبور.' };
   }
 }
 

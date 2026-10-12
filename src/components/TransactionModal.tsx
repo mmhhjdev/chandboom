@@ -11,10 +11,12 @@ import {
   Lock,
   Crown,
   Plus,
+  Mic,
+  MicOff,
 } from 'lucide-react';
 import { useApp } from '../context/AppContext';
 import { Transaction, TransactionCategory, TransactionType } from '../types';
-import { parsePersianFinancialText } from '../utils/aiParser';
+import { processFinancialAI } from '../services/aiService';
 import { formatToman } from '../utils/formatters';
 
 interface TransactionModalProps {
@@ -90,9 +92,11 @@ export const TransactionModal: React.FC<TransactionModalProps> = ({
   const [tags, setTags] = useState<string[]>([]);
   const [tagInput, setTagInput] = useState<string>('');
 
-  // Integrated AI text auto-fill state
+  // Integrated AI text/voice auto-fill state
   const [aiPrompt, setAiPrompt] = useState<string>('');
   const [aiFeedback, setAiFeedback] = useState<string | null>(null);
+  const [isAiLoading, setIsAiLoading] = useState<boolean>(false);
+  const [isListening, setIsListening] = useState<boolean>(false);
 
   useEffect(() => {
     if (editingTransaction) {
@@ -144,9 +148,56 @@ export const TransactionModal: React.FC<TransactionModalProps> = ({
     setTags(tags.filter((t) => t !== tToRemove));
   };
 
-  // Smart Typing AI Assistant Auto-Fill
-  const handleAiAutoFill = () => {
-    if (!aiPrompt.trim()) return;
+  const toggleVoiceRecognition = () => {
+    const SpeechRecognition =
+      (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
+    if (!SpeechRecognition) {
+      setAiFeedback('مرورگر شما از ورودی صوتی پشتیبانی نمی‌کند.');
+      setTimeout(() => setAiFeedback(null), 3000);
+      return;
+    }
+
+    if (isListening) {
+      setIsListening(false);
+      return;
+    }
+
+    try {
+      const recognition = new SpeechRecognition();
+      recognition.lang = 'fa-IR';
+      recognition.continuous = false;
+      recognition.interimResults = false;
+
+      recognition.onstart = () => {
+        setIsListening(true);
+        setAiFeedback('🎙️ در حال گوش دادن به پیام صوتی شما... صحبت کنید');
+      };
+
+      recognition.onresult = (e: any) => {
+        const transcript = e.results?.[0]?.[0]?.transcript;
+        if (transcript) {
+          setAiPrompt(transcript);
+          handleAiAutoFill(transcript);
+        }
+        setIsListening(false);
+      };
+
+      recognition.onerror = () => {
+        setIsListening(false);
+        setAiFeedback('متوجه صدا نشدم، لطفاً پیام را تایپ نمایید.');
+      };
+
+      recognition.onend = () => setIsListening(false);
+      recognition.start();
+    } catch {
+      setIsListening(false);
+    }
+  };
+
+  // Smart Typing AI Assistant Auto-Fill and Auto-Submit
+  const handleAiAutoFill = async (overrideText?: string) => {
+    const textToProcess = (overrideText || aiPrompt).trim();
+    if (!textToProcess) return;
 
     if (!isAuthenticated) {
       setAiFeedback('⚠️ لطفاً ابتدا وارد حساب کاربری خود در چندبوم شوید.');
@@ -159,27 +210,49 @@ export const TransactionModal: React.FC<TransactionModalProps> = ({
       return;
     }
 
-    const parsed = parsePersianFinancialText(aiPrompt);
+    setIsAiLoading(true);
+    setAiFeedback('در حال تحلیل هوشمند متن با هوش مصنوعی...');
 
-    if (parsed.type) {
-      setType(parsed.type);
-    }
-    if (parsed.amount) {
-      setAmount(parsed.amount.toString());
-    }
-    if (parsed.category) {
-      setCategory(parsed.category);
-    }
-    if (parsed.description) {
-      setDescription(parsed.description);
-    }
+    try {
+      const result = await processFinancialAI(textToProcess);
 
-    if (aiPrompt.includes('کارت دوم')) setAccount('کارت دوم');
-    else if (aiPrompt.includes('نقد') || aiPrompt.includes('صندوق') || aiPrompt.includes('اسکناس')) setAccount('صندوق نقدی');
-    else if (aiPrompt.includes('پس انداز') || aiPrompt.includes('پس‌انداز')) setAccount('حساب پس‌انداز');
+      if (result.is_ambiguous) {
+        setAiFeedback(`⚠️ ${result.clarification_message || 'مبلغ دقیق یا نوع تراکنش مشخص نیست، لطفاً بفرمایید درآمد است یا هزینه؟'}`);
+        return;
+      }
 
-    setAiFeedback('✅ فیلدها توسط هوش مصنوعی چندبوم به طور خودکار تکمیل شدند!');
-    setTimeout(() => setAiFeedback(null), 3000);
+      if (result.is_transaction && result.transaction) {
+        const tx = result.transaction;
+        // 1. Auto-fill form fields with structured JSON output
+        setType(tx.type);
+        setAmount(tx.amount.toString());
+        setCategory(tx.category);
+        setDescription(tx.title);
+        if (tx.date) setShamsiDate(tx.date);
+
+        // 2. Automatically register final transaction in database without manual guesswork
+        await addTransaction({
+          type: tx.type,
+          amount: tx.amount,
+          category: tx.category,
+          account: account || 'کارت اصلی',
+          description: tx.title,
+          tags: tags.length > 0 ? tags : undefined,
+          date: new Date().toISOString(),
+        });
+
+        setAiFeedback(`✅ تراکنش «${tx.title}» (${formatToman(tx.amount)}) تکمیل و در دیتابیس ثبت نهایی شد!`);
+        setTimeout(() => {
+          onClose();
+        }, 1300);
+      } else {
+        setAiFeedback(result.clarification_message || 'متن وارد شده شامل تراکنش مالی معتبر نمی‌باشد.');
+      }
+    } catch {
+      setAiFeedback('خطا در پردازش هوش مصنوعی.');
+    } finally {
+      setIsAiLoading(false);
+    }
   };
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -308,16 +381,33 @@ export const TransactionModal: React.FC<TransactionModalProps> = ({
                     handleAiAutoFill();
                   }
                 }}
-                placeholder="مثلاً بنویسید: خرید میوه ۸۵ هزار تومن با کارت اصلی..."
+                placeholder={
+                  isListening
+                    ? 'در حال گوش دادن به صدای شما... بفرمایید'
+                    : 'پیام متنی یا صوتی: مثلاً «خرید میوه ۸۵ هزار تومن با کارت اصلی...»'
+                }
                 className="flex-1 px-3 py-2 bg-black/40 border border-[#1F3128] rounded-xl text-xs text-white placeholder-zinc-500 outline-none focus:border-emerald-500 font-cairo"
               />
               <button
                 type="button"
-                onClick={handleAiAutoFill}
-                className="px-3 py-2 rounded-xl bg-emerald-700 hover:bg-emerald-600 text-white text-xs font-cairo font-bold transition flex items-center gap-1 shrink-0 cursor-pointer shadow-xs"
+                onClick={toggleVoiceRecognition}
+                className={`p-2 rounded-xl border transition cursor-pointer shrink-0 ${
+                  isListening
+                    ? 'bg-rose-600 text-white border-rose-400 animate-pulse'
+                    : 'bg-[#15241D] hover:bg-[#1E342B] text-emerald-400 border-[#243D32]'
+                }`}
+                title={isListening ? 'توقف ضبط صدا' : 'ثبت صوتی تراکنش با هوش مصنوعی'}
+              >
+                {isListening ? <MicOff className="w-3.5 h-3.5 text-white" /> : <Mic className="w-3.5 h-3.5" />}
+              </button>
+              <button
+                type="button"
+                disabled={isAiLoading}
+                onClick={() => handleAiAutoFill()}
+                className="px-3 py-2 rounded-xl bg-emerald-700 hover:bg-emerald-600 disabled:opacity-50 text-white text-xs font-cairo font-bold transition flex items-center gap-1 shrink-0 cursor-pointer shadow-xs"
               >
                 <Sparkles className="w-3.5 h-3.5" />
-                <span>تشخیص خودکار</span>
+                <span>{isAiLoading ? 'در حال تحلیل...' : 'تشخیص و ثبت خودکار'}</span>
               </button>
             </div>
 

@@ -16,12 +16,13 @@ export const GAPGPT_CHAT_MODEL = 'gapgpt-gemma-26b-a4b';
 export const GAPGPT_FALLBACK_CHAT_MODEL = 'gpt-6-luna';
 
 /**
- * Retrieves the GapGPT API Key from environment variables
+ * Retrieves the AI API Key from environment variables
  */
 export function getGapGptApiKey(): string {
   const key =
     (typeof import.meta !== 'undefined' && (import.meta as any).env?.VITE_GAPGPT_API_KEY) ||
-    (typeof process !== 'undefined' && process.env?.GAPGPT_API_KEY) ||
+    (typeof import.meta !== 'undefined' && (import.meta as any).env?.VITE_DEEPSEEK_API_KEY) ||
+    (typeof process !== 'undefined' && (process.env?.GAPGPT_API_KEY || process.env?.DEEPSEEK_API_KEY)) ||
     '';
   return key ? key.trim() : '';
 }
@@ -72,3 +73,21 @@ export async function generateGapGptChatResponse(
 ): Promise<string> {
   return getConversationalAdvice(userQuery, metrics, monthlyCap, demographics);
 }
+
+/**
+ * Backwards Compatibility Aliases
+ */
+export const parseTransactionWithDeepSeek = async (input: string): Promise<ParsedAITransaction> => {
+  const res = await parseTransactionWithGapGpt(input);
+  return {
+    type: res.type,
+    amount: res.amount,
+    category: res.category || 'سایر',
+    description: res.clean_title,
+    date: res.date || new Date().toISOString(),
+    confidence: res.confidence,
+  };
+};
+
+export const generateDeepSeekAdvice = generateGapGptChatResponse;
+export const getDeepSeekApiKey = getGapGptApiKey;

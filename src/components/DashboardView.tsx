@@ -27,9 +27,10 @@ import {
 import { useApp } from '../context/AppContext';
 import { formatToman, formatShamsiDate, toPersianDigits } from '../utils/formatters';
 import { parsePersianFinancialText, generateFinancialAdvice } from '../utils/aiParser';
-import { parseTransactionWithSystemOne, getConversationalAdvice } from '../services/aiService';
-import { TransactionCategory } from '../types';
+import { processFinancialAI, parseTransactionWithSystemOne, getConversationalAdvice } from '../services/aiService';
+import { TransactionCategory, TransactionType } from '../types';
 import { getCachedDashboardChat, setCachedDashboardChat } from '../utils/aiCache';
+import { EXPENSE_CATEGORIES, INCOME_CATEGORIES } from '../data/initialData';
 import {
   MONTHLY_QUESTS,
   getCompletedQuests,
@@ -49,6 +50,14 @@ interface ChatMessage {
   sender: 'user' | 'assistant';
   text: string;
   time: string;
+}
+
+interface TransactionDraft {
+  amount: number;
+  type: TransactionType;
+  clean_title: string;
+  bank?: string | null;
+  category: TransactionCategory;
 }
 
 export const DashboardView: React.FC<DashboardViewProps> = ({
@@ -99,6 +108,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
       setTimeout(() => setQuestCelebration(false), 3000);
     }
   };
+  const [pendingDraft, setPendingDraft] = useState<TransactionDraft | null>(null);
   const [chatMessages, setChatMessages] = useState<ChatMessage[]>(() => {
     const cached = getCachedDashboardChat();
     if (cached && cached.length > 0) return cached;
@@ -106,7 +116,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
       {
         id: '1',
         sender: 'assistant',
-        text: 'سلام! من «هوش مصنوعی چندبوم» هستم. می‌توانید هزینه‌ها و درآمدهایتان را به زبان ساده بنویسید تا ثبت کنم (مثلاً: «خرید سوپرمارکت ۸۰ هزار تومن») یا بپرسید: «برام تحلیل کن که تا چند ماه آینده میتونم چیکار بکنم».',
+        text: 'سلام! من «دستیار هوشمند چندبوم» هستم. می‌توانید هزینه‌ها و درآمدهایتان را به زبان ساده بنویسید تا ثبت کنم (مثلاً: «خرید سوپرمارکت ۸۰ هزار تومن») یا بپرسید: «برام تحلیل کن که تا چند ماه آینده میتونم چیکار بکنم».',
         time: 'هم‌اکنون',
       },
     ];
@@ -131,6 +141,38 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
     'راهکار پس‌انداز و کنترل مخارج',
   ];
 
+  const handleConfirmDraft = async () => {
+    if (!pendingDraft) return;
+    await addTransaction({
+      type: pendingDraft.type,
+      amount: pendingDraft.amount,
+      category: pendingDraft.category,
+      description: pendingDraft.clean_title,
+      account: pendingDraft.bank || 'کارت اصلی',
+      date: new Date().toISOString(),
+    });
+
+    const reply = `✅ تراکنش توسط «دستیار هوشمند چندبوم» با موفقیت ثبت شد:
+• نوع: ${pendingDraft.type === 'expense' ? 'هزینه' : 'درآمد'}
+• مبلغ: ${formatToman(pendingDraft.amount)}
+• دسته‌بندی انتخابی: ${pendingDraft.category}
+• شرح: ${pendingDraft.clean_title}
+
+این رکورد به جدول تراکنش‌های شما اضافه شد و تراز کل فوراً به‌روزرسانی گردید.`;
+
+    setChatMessages((prev) => [
+      ...prev,
+      {
+        id: Date.now().toString(),
+        sender: 'assistant',
+        text: reply,
+        time: 'هم‌اکنون',
+      },
+    ]);
+
+    setPendingDraft(null);
+  };
+
   const handleSendPrompt = (textToSend: string) => {
     if (!textToSend.trim()) return;
 
@@ -152,47 +194,64 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
       time: 'لحظاتی پیش',
     };
 
-    setChatMessages((prev) => [...prev, newMsg]);
+    const updatedMessages = [...chatMessages, newMsg];
+    setChatMessages(updatedMessages);
     setAiInput('');
     setIsTyping(true);
 
-    parseTransactionWithSystemOne(userText)
-      .then(async (parsed) => {
-        let replyText = '';
-
-        if (parsed.amount && parsed.type) {
+    processFinancialAI(userText, {
+      metrics,
+      monthlyCap: user.monthly_budget_cap,
+      fullName: user.full_name,
+      chatHistory: updatedMessages.map((m) => ({
+        role: m.sender === 'user' ? 'user' : 'assistant',
+        text: m.text,
+      })),
+    })
+      .then(async (result) => {
+        if (result.is_ambiguous) {
+          // Ambiguity handling
+          setChatMessages((prev) => [
+            ...prev,
+            {
+              id: (Date.now() + 1).toString(),
+              sender: 'assistant',
+              text: result.clarification_message || 'مبلغ دقیق یا نوع تراکنش مشخص نیست، لطفاً بفرمایید درآمد است یا هزینه؟',
+              time: 'هم‌اکنون',
+            },
+          ]);
+        } else if (result.is_transaction && result.transaction) {
+          // Automatic transaction recording from structured output
+          const tx = result.transaction;
           await addTransaction({
-            type: parsed.type,
-            amount: parsed.amount,
-            category: (parsed.category as TransactionCategory) || 'خوراک و غذا',
-            description: parsed.clean_title || userText,
+            type: tx.type,
+            amount: tx.amount,
+            category: tx.category,
+            description: tx.title,
+            account: 'کارت اصلی',
             date: new Date().toISOString(),
           });
 
-          replyText = `✅ تراکنش توسط «دستیار هوشمند چندبوم» ثبت شد:
-• نوع: ${parsed.type === 'expense' ? 'هزینه' : 'درآمد'}
-• مبلغ: ${formatToman(parsed.amount)}
-• دسته‌بندی: ${parsed.category || 'عمومی'}
-• شرح: ${parsed.clean_title || userText}
-
-این رکورد به جدول تراکنش‌های شما اضافه شد و تراز کل فوراً به‌روزرسانی گردید.`;
+          setChatMessages((prev) => [
+            ...prev,
+            {
+              id: (Date.now() + 1).toString(),
+              sender: 'assistant',
+              text: `✅ تراکنش «${tx.title}» به مبلغ ${formatToman(tx.amount)} در دسته‌بندی «${tx.category}» به صورت خودکار ثبت گردید.`,
+              time: 'هم‌اکنون',
+            },
+          ]);
         } else {
-          replyText = await getConversationalAdvice(userText, metrics, user.monthly_budget_cap, {
-            age: user.age,
-            gender: user.gender,
-            fullName: user.full_name,
-          });
+          setChatMessages((prev) => [
+            ...prev,
+            {
+              id: (Date.now() + 1).toString(),
+              sender: 'assistant',
+              text: result.conversational_reply || 'در صورت نیاز به ثبت تراکنش یا سوال مالی در خدمتم.',
+              time: 'هم‌اکنون',
+            },
+          ]);
         }
-
-        setChatMessages((prev) => [
-          ...prev,
-          {
-            id: (Date.now() + 1).toString(),
-            sender: 'assistant',
-            text: replyText,
-            time: 'هم‌اکنون',
-          },
-        ]);
       })
       .catch((err) => {
         console.error('AI error:', err);
@@ -520,7 +579,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
               </div>
               <div>
                 <h3 className="font-cairo text-sm font-bold text-zinc-900 dark:text-zinc-100 flex items-center gap-2">
-                  <span>هوش مصنوعی چندبوم</span>
+                  <span>دستیار هوشمند چندبوم</span>
                   <span className="px-2 py-0.5 rounded-full text-[9px] bg-amber-100 dark:bg-amber-950/80 text-amber-800 dark:text-amber-300 font-bold border border-amber-300 dark:border-amber-800">
                     دستیار اختصاصی مالی
                   </span>
@@ -585,7 +644,73 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                 <div className="w-2 h-2 rounded-full bg-emerald-600 animate-bounce" />
                 <div className="w-2 h-2 rounded-full bg-emerald-600 animate-bounce delay-100" />
                 <div className="w-2 h-2 rounded-full bg-emerald-600 animate-bounce delay-200" />
-                <span>هوش مصنوعی چندبوم در حال پردازش است...</span>
+                <span>دستیار هوشمند چندبوم در حال پردازش است...</span>
+              </div>
+            )}
+
+            {/* Smart Interactive Draft Confirmation Card */}
+            {pendingDraft && (
+              <div className="p-4 rounded-2xl bg-amber-50/70 dark:bg-[#16251E] border-2 border-amber-400/80 shadow-md space-y-3 animate-in fade-in zoom-in-95 font-cairo text-right">
+                <div className="flex items-center justify-between border-b border-amber-200 dark:border-emerald-800/40 pb-2">
+                  <div className="flex items-center gap-1.5 text-amber-800 dark:text-amber-300 font-bold text-xs">
+                    <Sparkles className="w-4 h-4 text-amber-500" />
+                    <span>پیش‌نویس تراکنش هوشمند (انتخاب دستی دسته‌بندی)</span>
+                  </div>
+                  <span className="text-[10px] px-2 py-0.5 rounded-full font-bold bg-amber-400/20 text-amber-800 dark:text-amber-300 border border-amber-400/40">
+                    {pendingDraft.type === 'expense' ? 'هزینه' : 'درآمد'}
+                  </span>
+                </div>
+
+                <div className="grid grid-cols-2 gap-2 text-xs">
+                  <div>
+                    <span className="text-zinc-500 text-[10px] block">عنوان استخراج‌شده:</span>
+                    <span className="font-bold text-zinc-900 dark:text-white truncate block">{pendingDraft.clean_title}</span>
+                  </div>
+                  <div>
+                    <span className="text-zinc-500 text-[10px] block">مبلغ دقیق:</span>
+                    <span className="font-bold text-emerald-700 dark:text-emerald-400 font-mono">{formatToman(pendingDraft.amount)}</span>
+                  </div>
+                </div>
+
+                <div className="space-y-1">
+                  <label className="text-xs font-bold text-zinc-800 dark:text-zinc-200 block">
+                    دسته‌بندی تراکنش را تایید یا انتخاب کنید:
+                  </label>
+                  <select
+                    value={pendingDraft.category}
+                    onChange={(e) =>
+                      setPendingDraft({
+                        ...pendingDraft,
+                        category: e.target.value as TransactionCategory,
+                      })
+                    }
+                    className="w-full px-3 py-1.5 rounded-xl bg-white dark:bg-[#0E1713] border border-zinc-300 dark:border-emerald-700/60 text-xs text-zinc-900 dark:text-white outline-none focus:ring-1 focus:ring-emerald-500 font-cairo"
+                  >
+                    {(pendingDraft.type === 'income' ? INCOME_CATEGORIES : EXPENSE_CATEGORIES).map((cat) => (
+                      <option key={cat} value={cat}>
+                        {cat}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                <div className="flex items-center gap-2 pt-1">
+                  <button
+                    type="button"
+                    onClick={handleConfirmDraft}
+                    className="flex-1 py-2 rounded-xl bg-emerald-700 hover:bg-emerald-800 text-white font-bold text-xs transition cursor-pointer flex items-center justify-center gap-1 shadow-xs"
+                  >
+                    <CheckCircle2 className="w-3.5 h-3.5" />
+                    <span>تایید و ثبت نهایی در تراکنش‌ها</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setPendingDraft(null)}
+                    className="px-3.5 py-2 rounded-xl border border-zinc-300 dark:border-zinc-700 hover:bg-zinc-100 dark:hover:bg-[#1E2C25] text-zinc-600 dark:text-zinc-300 font-bold text-xs transition cursor-pointer"
+                  >
+                    انصراف
+                  </button>
+                </div>
               </div>
             )}
           </div>

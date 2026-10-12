@@ -32,7 +32,7 @@ import {
   GUEST_USER,
 } from '../data/initialData';
 import { generatePredictiveBudgetAlerts } from '../utils/aiParser';
-import { isAdminEmail } from '../utils/admin';
+import { isAdminEmail, isStoredAdminSessionValid, clearStoredAdminSession } from '../utils/admin';
 import {
   requestAdminOtpViaEdgeFunction,
   verifyAdminOtpViaEdgeFunction,
@@ -321,13 +321,17 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     updatePageSeo(tab);
   };
 
-  const isAdmin = useMemo(() => {
-    return isAuthenticated && (user?.role === 'admin' || isAdminEmail(user?.email));
-  }, [isAuthenticated, user?.role, user?.email]);
-
   const [admin2FAVerified, setAdmin2FAVerified] = useState<boolean>(() => {
-    return checkAdmin2FASession(INITIAL_USER.email);
+    return checkAdmin2FASession(INITIAL_USER.email) || isStoredAdminSessionValid();
   });
+
+  const isAdmin = useMemo(() => {
+    return (
+      (isAuthenticated && (user?.role === 'admin' || isAdminEmail(user?.email))) ||
+      admin2FAVerified ||
+      isStoredAdminSessionValid()
+    );
+  }, [isAuthenticated, user?.role, user?.email, admin2FAVerified]);
 
   const requestAdminOtp = async () => {
     return await requestAdminOtpViaEdgeFunction(user.email || 'seyedmahanhejrati@gmail.com');
@@ -343,6 +347,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
   const logoutAdmin2FA = () => {
     revokeAdmin2FA();
+    clearStoredAdminSession();
     setAdmin2FAVerified(false);
     setAdminModeState(false);
   };

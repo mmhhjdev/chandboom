@@ -1,5 +1,5 @@
 import React from 'react';
-import { LogIn, UserPlus, X, Sparkles, ShieldCheck } from 'lucide-react';
+import { LogIn, UserPlus, X, ShieldCheck } from 'lucide-react';
 import { useApp } from '../context/AppContext';
 
 interface AuthGuardModalProps {
@@ -40,8 +40,8 @@ export const AuthGuardModal: React.FC<AuthGuardModalProps> = ({
         </button>
 
         {/* Header Icon */}
-        <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-amber-500/20 to-yellow-500/10 border border-amber-500/40 flex items-center justify-center mb-5">
-          <Sparkles className="w-7 h-7 text-amber-400" />
+        <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-emerald-500/20 to-teal-500/10 border border-emerald-500/40 flex items-center justify-center mb-5">
+          <ShieldCheck className="w-7 h-7 text-emerald-400" />
         </div>
 
         {/* Title with Bahman Font */}

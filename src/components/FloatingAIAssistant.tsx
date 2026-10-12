@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import {
   Bot,
   Sparkles,
@@ -12,19 +12,29 @@ import {
   Receipt,
   User,
   ShieldAlert,
+  Mic,
+  MicOff,
 } from 'lucide-react';
 import { useApp } from '../context/AppContext';
 import { formatToman } from '../utils/formatters';
-import { parsePersianFinancialText, generateFinancialAdvice } from '../utils/aiParser';
-import { parseTransactionWithSystemOne, getConversationalAdvice } from '../services/aiService';
-import { TransactionCategory } from '../types';
+import { processFinancialAI } from '../services/aiService';
+import { TransactionCategory, TransactionType } from '../types';
 import { getCachedAIChat, setCachedAIChat } from '../utils/aiCache';
+import { EXPENSE_CATEGORIES, INCOME_CATEGORIES } from '../data/initialData';
 
 interface ChatMessage {
   id: string;
   sender: 'assistant' | 'user';
   text: string;
   time: string;
+}
+
+interface TransactionDraft {
+  amount: number;
+  type: TransactionType;
+  clean_title: string;
+  bank?: string | null;
+  category: TransactionCategory;
 }
 
 export const FloatingAIAssistant: React.FC = () => {
@@ -42,7 +52,10 @@ export const FloatingAIAssistant: React.FC = () => {
   const [isOpen, setIsOpen] = useState(false);
   const [input, setInput] = useState('');
   const [isTyping, setIsTyping] = useState(false);
+  const [isListening, setIsListening] = useState(false);
+  const recognitionRef = useRef<any>(null);
   const [notice, setNotice] = useState<string | null>(null);
+  const [pendingDraft, setPendingDraft] = useState<TransactionDraft | null>(null);
   const [messages, setMessages] = useState<ChatMessage[]>(() => {
     const cached = getCachedAIChat();
     if (cached && cached.length > 0) return cached;
@@ -50,8 +63,8 @@ export const FloatingAIAssistant: React.FC = () => {
       {
         id: 'welcome-1',
         sender: 'assistant',
-        text: `سلام! من «هوش مصنوعی چندبوم» هستم، دستیار اختصاصی مدیریت مالی و تحلیل بودجه شما.
-می‌توانید پیام دهید تا تراکنش‌هایتان را ثبت کنم (مثلاً: «۵۰ هزار تومن قهوه») یا بپرسید «برام تحلیل کن که تا چند ماه آینده میتونم چیکار بکنم».`,
+        text: `سلام! من «دستیار هوشمند چندبوم» هستم، مشاور اختصاصی مدیریت مالی و تحلیل بودجه شما.
+می‌توانید پیام صوتی یا متنی دهید تا تراکنش‌هایتان را تحلیل و ثبت کنم (مثلاً: «حقوق پروژه ۲۵ میلیونی در تاریخ...» یا «خرید قهوه ۵۰ تومن») یا سوالات بودجه‌ای خود را بپرسید.`,
         time: 'لحظاتی پیش',
       },
     ];
@@ -63,10 +76,102 @@ export const FloatingAIAssistant: React.FC = () => {
 
   const presetQuestions = [
     'ثبت کن ۵۰ هزار تومن قهوه',
+    'حقوق پروژه ۲۵ میلیونی در تاریخ ۲۵ مهر',
     'برام تحلیل کن که تا چند ماه آینده میتونم چیکار بکنم',
     'وضعیت مصرف سقف بودجه چطوره؟',
-    'پیشنهاد هوش مصنوعی برای افزایش پس‌انداز چیست؟',
   ];
+
+  const toggleVoiceRecognition = () => {
+    const SpeechRecognition =
+      (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
+    if (!SpeechRecognition) {
+      setNotice('مرورگر شما از ورودی صوتی پشتیبانی نمی‌کند. لطفاً متن را تایپ کنید.');
+      setTimeout(() => setNotice(null), 3000);
+      return;
+    }
+
+    if (isListening) {
+      if (recognitionRef.current) {
+        recognitionRef.current.stop();
+      }
+      setIsListening(false);
+      return;
+    }
+
+    try {
+      const recognition = new SpeechRecognition();
+      recognitionRef.current = recognition;
+      recognition.lang = 'fa-IR';
+      recognition.continuous = false;
+      recognition.interimResults = false;
+
+      recognition.onstart = () => {
+        setIsListening(true);
+        setNotice('🎙️ در حال گوش دادن به پیام صوتی شما... بفرمایید');
+      };
+
+      recognition.onresult = (event: any) => {
+        const transcript = event.results?.[0]?.[0]?.transcript;
+        if (transcript) {
+          setInput(transcript);
+          setNotice(`✅ دریافت شد: «${transcript}»`);
+          setTimeout(() => {
+            setNotice(null);
+            handleSendMessage(transcript);
+          }, 500);
+        }
+        setIsListening(false);
+      };
+
+      recognition.onerror = () => {
+        setIsListening(false);
+        setNotice('متوجه صدا نشدم، لطفاً مجدداً امتحان کنید یا تایپ نمایید.');
+        setTimeout(() => setNotice(null), 3000);
+      };
+
+      recognition.onend = () => {
+        setIsListening(false);
+      };
+
+      recognition.start();
+    } catch {
+      setIsListening(false);
+      setNotice('خطا در دسترسی به میکروفون.');
+      setTimeout(() => setNotice(null), 3000);
+    }
+  };
+
+  const handleConfirmDraft = async () => {
+    if (!pendingDraft) return;
+    await addTransaction({
+      type: pendingDraft.type,
+      amount: pendingDraft.amount,
+      category: pendingDraft.category,
+      description: pendingDraft.clean_title,
+      account: pendingDraft.bank || 'کارت اصلی',
+      date: new Date().toISOString(),
+    });
+
+    const reply = `✅ تراکنش توسط «دستیار هوشمند چندبوم» با موفقیت ثبت شد:
+• نوع: ${pendingDraft.type === 'expense' ? 'هزینه' : 'درآمد'}
+• مبلغ: ${formatToman(pendingDraft.amount)}
+• دسته‌بندی انتخابی: ${pendingDraft.category}
+• شرح: ${pendingDraft.clean_title}
+
+این رکورد در جدول تراکنش‌های شما ثبت شد و مانده حساب فوراً به‌روزرسانی گردید.`;
+
+    setMessages((prev) => [
+      ...prev,
+      {
+        id: Date.now().toString(),
+        sender: 'assistant',
+        text: reply,
+        time: 'هم‌اکنون',
+      },
+    ]);
+
+    setPendingDraft(null);
+  };
 
   const handleSendMessage = (textToSend?: string) => {
     const userText = (textToSend || input).trim();
@@ -95,48 +200,75 @@ export const FloatingAIAssistant: React.FC = () => {
       time: 'هم‌اکنون',
     };
 
-    setMessages((prev) => [...prev, newMsg]);
+    const updatedMessages = [...messages, newMsg];
+    setMessages(updatedMessages);
     setInput('');
     setIsTyping(true);
     setNotice(null);
 
-    parseTransactionWithSystemOne(userText)
-      .then(async (parsed) => {
-        let replyText = '';
-
-        if (parsed.amount && parsed.type) {
+    processFinancialAI(userText, {
+      metrics,
+      monthlyCap: user.monthly_budget_cap,
+      fullName: user.full_name,
+      chatHistory: updatedMessages.map((m) => ({
+        role: m.sender === 'user' ? 'user' : 'assistant',
+        text: m.text,
+      })),
+    })
+      .then(async (result) => {
+        if (result.is_ambiguous) {
+          // Ambiguity Handling
+          setMessages((prev) => [
+            ...prev,
+            {
+              id: (Date.now() + 1).toString(),
+              sender: 'assistant',
+              text: result.clarification_message || 'مبلغ دقیق یا نوع تراکنش مشخص نیست، لطفاً بفرمایید درآمد است یا هزینه؟',
+              time: 'هم‌اکنون',
+            },
+          ]);
+        } else if (result.is_transaction && result.transaction) {
+          // Automatic Transaction Registration from AI Structured Output
+          const tx = result.transaction;
           await addTransaction({
-            type: parsed.type,
-            amount: parsed.amount,
-            category: (parsed.category as TransactionCategory) || 'خوراک و غذا',
-            description: parsed.clean_title || userText,
+            type: tx.type,
+            amount: tx.amount,
+            category: tx.category,
+            description: tx.title,
+            account: 'کارت اصلی',
             date: new Date().toISOString(),
           });
 
-          replyText = `✅ تراکنش توسط «دستیار هوشمند چندبوم» ثبت شد:
-• نوع: ${parsed.type === 'expense' ? 'هزینه' : 'درآمد'}
-• مبلغ: ${formatToman(parsed.amount)}
-• دسته‌بندی: ${parsed.category || 'عمومی'}
-• شرح: ${parsed.clean_title || userText}
+          const replyText = `✅ تراکنش توسط «دستیار هوشمند چندبوم» تحلیل و به صورت خودکار در دیتابیس ثبت شد:
+• نوع: ${tx.type === 'income' ? 'درآمد (واریز)' : 'هزینه (پرداخت)'}
+• عنوان: ${tx.title}
+• مبلغ: ${formatToman(tx.amount)}
+• دسته‌بندی: ${tx.category}
+• تاریخ: ${tx.date}
 
-این رکورد به جدول تراکنش‌های شما اضافه شد و تراز کل فوراً به‌روزرسانی گردید.`;
+این رکورد در حسابداری شما ثبت شد و مانده حساب فوراً به‌روزرسانی گردید.`;
+
+          setMessages((prev) => [
+            ...prev,
+            {
+              id: (Date.now() + 1).toString(),
+              sender: 'assistant',
+              text: replyText,
+              time: 'هم‌اکنون',
+            },
+          ]);
         } else {
-          replyText = await getConversationalAdvice(userText, metrics, user.monthly_budget_cap, {
-            age: user.age,
-            gender: user.gender,
-            fullName: user.full_name,
-          });
+          // Conversational Advisor
+          setMessages((prev) => [
+            ...prev,
+            {
+              id: (Date.now() + 1).toString(),
+              sender: 'assistant',
+              text: result.conversational_reply || 'در صورت نیاز به ثبت تراکنش یا سوال مالی در خدمتم.',
+              time: 'هم‌اکنون',
+            },
+          ]);
         }
-
-        setMessages((prev) => [
-          ...prev,
-          {
-            id: (Date.now() + 1).toString(),
-            sender: 'assistant',
-            text: replyText,
-            time: 'هم‌اکنون',
-          },
-        ]);
       })
       .catch((err) => {
         console.error('AI chat error:', err);
@@ -198,13 +330,13 @@ export const FloatingAIAssistant: React.FC = () => {
               </div>
               <div>
                 <h3 className="font-cairo text-sm font-bold flex items-center gap-1.5 text-white">
-                  <span>هوش مصنوعی چندبوم</span>
+                  <span>دستیار هوشمند چندبوم</span>
                   <span className="px-1.5 py-0.2 rounded-md text-[9px] bg-emerald-500/20 text-emerald-300 font-mono font-bold border border-emerald-400/40">
                     Chandboom AI
                   </span>
                 </h3>
                 <p className="text-[10px] text-emerald-200">
-                  دستیار هوشمند ثبت تراکنش و تحلیل مالی
+                  دستیار اختصاصی ثبت تراکنش و مشاوره مالی
                 </p>
               </div>
             </div>
@@ -311,7 +443,73 @@ export const FloatingAIAssistant: React.FC = () => {
                 <div className="w-2 h-2 rounded-full bg-emerald-500 animate-bounce" />
                 <div className="w-2 h-2 rounded-full bg-emerald-500 animate-bounce delay-100" />
                 <div className="w-2 h-2 rounded-full bg-emerald-500 animate-bounce delay-200" />
-                <span>هوش مصنوعی چندبوم در حال پردازش است...</span>
+                <span>دستیار هوشمند چندبوم در حال پردازش است...</span>
+              </div>
+            )}
+
+            {/* Smart Interactive Draft Modal / Card (Category MUST be manually chosen!) */}
+            {pendingDraft && (
+              <div className="p-3.5 rounded-2xl bg-[#14231D] border-2 border-amber-400/70 shadow-xl space-y-3 animate-in fade-in zoom-in-95 font-cairo">
+                <div className="flex items-center justify-between border-b border-emerald-800/40 pb-2">
+                  <div className="flex items-center gap-1.5 text-amber-300 font-bold text-xs">
+                    <Sparkles className="w-4 h-4 text-amber-400" />
+                    <span>پیش‌نویس تراکنش هوشمند</span>
+                  </div>
+                  <span className="text-[10px] px-2 py-0.5 rounded-full font-bold bg-amber-400/20 text-amber-300 border border-amber-400/40">
+                    {pendingDraft.type === 'expense' ? 'هزینه' : 'درآمد'}
+                  </span>
+                </div>
+
+                <div className="grid grid-cols-2 gap-2 text-xs">
+                  <div>
+                    <span className="text-zinc-400 text-[10px] block">عنوان:</span>
+                    <span className="font-bold text-white truncate block">{pendingDraft.clean_title}</span>
+                  </div>
+                  <div>
+                    <span className="text-zinc-400 text-[10px] block">مبلغ دقیق:</span>
+                    <span className="font-bold text-emerald-400 font-mono">{formatToman(pendingDraft.amount)}</span>
+                  </div>
+                </div>
+
+                <div className="space-y-1">
+                  <label className="text-[11px] text-zinc-300 font-bold block">
+                    دسته‌بندی را تایید یا انتخاب کنید:
+                  </label>
+                  <select
+                    value={pendingDraft.category}
+                    onChange={(e) =>
+                      setPendingDraft({
+                        ...pendingDraft,
+                        category: e.target.value as TransactionCategory,
+                      })
+                    }
+                    className="w-full px-3 py-1.5 rounded-xl bg-[#0B1511] border border-emerald-700/60 text-xs text-white outline-none focus:ring-1 focus:ring-emerald-500 font-cairo"
+                  >
+                    {(pendingDraft.type === 'income' ? INCOME_CATEGORIES : EXPENSE_CATEGORIES).map((cat) => (
+                      <option key={cat} value={cat}>
+                        {cat}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                <div className="flex items-center gap-2 pt-1">
+                  <button
+                    type="button"
+                    onClick={handleConfirmDraft}
+                    className="flex-1 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs transition cursor-pointer flex items-center justify-center gap-1 shadow-sm"
+                  >
+                    <CheckCircle2 className="w-3.5 h-3.5" />
+                    <span>تایید و ثبت در حسابداری</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setPendingDraft(null)}
+                    className="px-3 py-2 rounded-xl bg-zinc-800 hover:bg-zinc-700 text-zinc-300 font-bold text-xs transition cursor-pointer"
+                  >
+                    انصراف
+                  </button>
+                </div>
               </div>
             )}
           </div>
@@ -348,10 +546,25 @@ export const FloatingAIAssistant: React.FC = () => {
                   ? 'ابتدا وارد حساب کاربری خود شوید...'
                   : !isProUser
                   ? 'ویژه مشترکین طلایی پرو...'
-                  : 'پیام دهید: مثلاً «خرید میوه ۴۵ تومن» یا سوال مالی...'
+                  : isListening
+                  ? 'در حال شنیدن صدای شما... صحبت کنید'
+                  : 'پیام متنی یا صوتی دهید: «حقوق پروژه ۲۵ میلیونی...»'
               }
               className="flex-1 px-3.5 py-2.5 bg-[#122019] border border-[#1E3328] rounded-xl text-xs text-white placeholder-zinc-500 outline-none focus:border-emerald-500 font-cairo"
             />
+            {/* Voice Input Button */}
+            <button
+              type="button"
+              onClick={toggleVoiceRecognition}
+              className={`p-2.5 rounded-xl border transition cursor-pointer shadow-xs ${
+                isListening
+                  ? 'bg-rose-600 text-white border-rose-400 animate-pulse'
+                  : 'bg-[#15241D] hover:bg-[#1E342B] text-emerald-400 border-[#243D32]'
+              }`}
+              title={isListening ? 'توقف ضبط صدا' : 'ارسال پیام صوتی به هوش مصنوعی'}
+            >
+              {isListening ? <MicOff className="w-4 h-4 text-white" /> : <Mic className="w-4 h-4" />}
+            </button>
             <button
               type="submit"
               disabled={isTyping}

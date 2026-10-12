@@ -246,4 +246,22 @@ BEGIN
   RETURN v_new_expiry;
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
+
+-- 14. Admins Authentication Table
+CREATE TABLE IF NOT EXISTS public.admins (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  email TEXT UNIQUE NOT NULL,
+  password TEXT NOT NULL,
+  full_name TEXT NOT NULL DEFAULT 'مدیر ارشد چندبوم',
+  role TEXT NOT NULL DEFAULT 'admin',
+  created_at TIMESTAMPTZ NOT NULL DEFAULT timezone('utc'::text, now())
+);
+
+ALTER TABLE public.admins ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "Admins read access" ON public.admins FOR SELECT USING (true);
+
+-- Seed initial admin
+INSERT INTO public.admins (email, password, full_name, role)
+VALUES ('seyedmahanhejrati@gmail.com', 'AdminChandboom2026!', 'سید ماهان هجرتی', 'admin')
+ON CONFLICT (email) DO NOTHING;
 `;

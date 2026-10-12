@@ -7,7 +7,7 @@ interface ViewSeoMeta {
 
 const VIEW_METAS: Record<ActiveTab, ViewSeoMeta> = {
   landing: {
-    title: 'چندبوم (Chandboom) - سامانه هوشمند مدیریت مالی و بودجه‌بندی با هوش مصنوعی',
+    title: 'چندبوم | مدیریت مالی شخصی با هوش مصنوعی پیشرفته',
     description: 'سامانه لوکس و مدرن چندبوم (Chandboom): مدیریت هوشمند دارایی، پیش‌بینی ۳ ماهه جریان نقدینگی با هوش مصنوعی، یادآور اقساط و چک و محاسبه عادلانه دنگ سفر.',
   },
   dashboard: {

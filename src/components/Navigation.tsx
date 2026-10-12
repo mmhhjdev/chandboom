@@ -68,7 +68,7 @@ export const Navigation: React.FC = () => {
       {/* Desktop Horizontal Tabs Under Header */}
       <nav
         id="desktop-navigation-bar"
-        className="hidden md:block bg-white dark:bg-[#0A100D] border-b border-[#E2E8E4] dark:border-[#1A2621] font-cairo"
+        className="hidden md:block bg-white dark:bg-[#0A100D] border-b border-[#E2E8E4] dark:border-[#1A2621] font-cairo relative z-20"
       >
         <div className="max-w-7xl mx-auto px-4 sm:px-6">
           <div className="flex items-center gap-1 overflow-x-auto no-scrollbar py-2">

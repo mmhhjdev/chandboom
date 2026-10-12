@@ -12,7 +12,6 @@ import {
   RefreshCw,
   KeyRound,
   ArrowRight,
-  Sparkles,
 } from 'lucide-react';
 import { useApp } from '../context/AppContext';
 
@@ -121,17 +120,20 @@ export const AuthModal: React.FC = () => {
     // 3. Forgot Password Request
     if (mode === 'forgot_password') {
       setIsLoading(true);
+      setError(null);
+      setSuccessMsg(null);
       try {
         const res = await requestPasswordResetOtp(cleanEmail);
         if (res.success) {
+          setSuccessMsg('کد/لینک بازیابی رمز عبور با موفقیت به ایمیل شما ارسال شد.');
           setOtpAction('reset_password');
           setIsOtpStep(true);
           setTimerSeconds(120);
         } else {
-          setError(res.error || 'حساب کاربری با این ایمیل یافت نشد.');
+          setError(res.error || 'خطا در ارسال کد/لینک بازیابی رمز عبور به ایمیل.');
         }
       } catch (err: any) {
-        setError(err?.message || 'خطا در ارسال کد بازیابی.');
+        setError(err?.message || 'خطا در ارتباط با سرور جهت بازیابی رمز عبور.');
       } finally {
         setIsLoading(false);
       }
@@ -566,7 +568,6 @@ export const AuthModal: React.FC = () => {
                       : 'text-zinc-500 hover:text-zinc-800'
                   }`}
                 >
-                  <Sparkles className="w-3 h-3 text-amber-400" />
                   <span>ورود با کد یکبارمصرف (OTP)</span>
                 </button>
               </div>

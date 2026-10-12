@@ -2,6 +2,7 @@ export {
   getAiBaseUrl,
   getAiApiKey,
   isAiConfigured,
+  processFinancialAI,
   parseTransactionWithSystemOne,
   getConversationalAdvice,
   aiService,
