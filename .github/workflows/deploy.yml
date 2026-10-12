@@ -1,4 +1,4 @@
-name: Deploy Chandboom to GitHub Pages[cite: 8]
+name: Deploy Chandboom to GitHub Pages
 
 on:
   push:
@@ -62,8 +62,6 @@ jobs:
         uses: actions/upload-pages-artifact@v3
         with:
           path: './dist'
-
-
 
   deploy:
     name: Deploy to GitHub Pages
