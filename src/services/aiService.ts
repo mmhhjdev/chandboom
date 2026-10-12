@@ -1,21 +1,7 @@
 /**
- * چندبوم (Chandboom) - AI Transaction & Financial Processing Engine
- *
- * 1. Structured JSON Output for Transactions:
- *    {
- *      "type": "income" | "expense",
- *      "title": "عنوان کوتاه و تمیز تراکنش",
- *      "amount": number (تومان),
- *      "category": "دسته‌بندی مناسب",
- *      "date": "تاریخ استاندارد"
- *    }
- *
- * 2. Ambiguity Handling:
- *    If the user's input is incomplete or ambiguous (e.g. amount is missing or transaction type is unclear),
- *    the AI responds with a concise clarification request without guessing or fabricating fake data.
+ * چندبوم (Chandboom) - Unified GapGPT AI Transaction & Financial Processing Engine
  */
 
-import { GoogleGenAI } from '@google/genai';
 import { TransactionCategory, TransactionType } from '../types';
 import { sanitizeAIPrompt } from '../utils/security';
 import {
@@ -44,7 +30,6 @@ export interface AiProcessResult {
   raw_input?: string;
 }
 
-// Legacy format compatibility
 export interface AiParsedTransaction {
   clean_title: string;
   amount: number;
@@ -82,37 +67,33 @@ export function getCurrentShamsiDate(): string {
 }
 
 /**
- * Helper to get the Gemini API Key
+ * Helper to get GapGPT API Key from environment
  */
-export function getGeminiApiKey(): string {
-  const envKey =
-    (typeof process !== 'undefined' && (process.env?.GEMINI_API_KEY || (process.env as any)?.VITE_GEMINI_API_KEY)) ||
-    (typeof import.meta !== 'undefined' && ((import.meta as any).env?.VITE_GEMINI_API_KEY || (import.meta as any).env?.GEMINI_API_KEY)) ||
-    '';
-  return envKey ? envKey.trim() : '';
-}
-
-export function getAiApiKey(): string {
-  return getGeminiApiKey() || getSecondaryApiKey();
-}
-
-export function getAiBaseUrl(): string {
-  return 'https://api.gapgpt.app/v1';
-}
-
-/**
- * Helper to get GapGPT / Secondary API Key
- */
-export function getSecondaryApiKey(): string {
+export function getGapGptApiKey(): string {
   const key =
-    (typeof import.meta !== 'undefined' && ((import.meta as any).env?.VITE_GAPGPT_API_KEY || (import.meta as any).env?.VITE_DEEPSEEK_API_KEY)) ||
-    (typeof process !== 'undefined' && (process.env?.GAPGPT_API_KEY || process.env?.VITE_GAPGPT_API_KEY)) ||
+    (typeof import.meta !== 'undefined' &&
+      ((import.meta as any).env?.VITE_GAPGPT_API_KEY ||
+        (import.meta as any).env?.VITE_DEEPSEEK_API_KEY ||
+        (import.meta as any).env?.GEMINI_API_KEY)) ||
+    (typeof process !== 'undefined' &&
+      (process.env?.GAPGPT_API_KEY || process.env?.VITE_GAPGPT_API_KEY || process.env?.DEEPSEEK_API_KEY)) ||
     '';
   return key ? key.trim() : '';
 }
 
+export function getAiApiKey(): string {
+  return getGapGptApiKey();
+}
+
+export function getAiBaseUrl(): string {
+  const url =
+    (typeof import.meta !== 'undefined' && (import.meta as any).env?.VITE_GAPGPT_BASE_URL) ||
+    'https://api.gapgpt.app/v1';
+  return url.replace(/\/$/, '');
+}
+
 export function isAiConfigured(): boolean {
-  return Boolean(getGeminiApiKey() || getSecondaryApiKey());
+  return Boolean(getGapGptApiKey());
 }
 
 const VALID_EXPENSE_CATEGORIES: TransactionCategory[] = [
@@ -135,9 +116,6 @@ const VALID_INCOME_CATEGORIES: TransactionCategory[] = [
   'سایر دریافتی‌ها',
 ];
 
-/**
- * Normalizes category string to one of the approved system categories
- */
 function normalizeCategory(catStr: string | undefined, type: TransactionType): TransactionCategory {
   if (!catStr) {
     return type === 'income' ? 'حقوق و دستمزد' : 'خوراک و رستوران';
@@ -150,30 +128,29 @@ function normalizeCategory(catStr: string | undefined, type: TransactionType): T
   if (type === 'income') {
     if (clean.includes('حقوق') || clean.includes('دستمزد')) return 'حقوق و دستمزد';
     if (clean.includes('سود') || clean.includes('سرمایه')) return 'سرمایه‌گذاری و سود';
-    if (clean.includes('هدیه') || clean.includes('جایزه') || clean.includes('عیدی')) return 'هدیه و پاداش';
+    if (clean.includes('هدیه') || clean.includes('جایزه')) return 'هدیه و پاداش';
     if (clean.includes('فروش') || clean.includes('کسب')) return 'فروش و کسب‌وکار';
     return 'سایر دریافتی‌ها';
   } else {
-    if (clean.includes('خوراک') || clean.includes('غذا') || clean.includes('رستوران') || clean.includes('میوه')) return 'خوراک و رستوران';
-    if (clean.includes('مسکن') || clean.includes('اجاره') || clean.includes('خانه')) return 'مسکن و اجاره';
-    if (clean.includes('حمل') || clean.includes('ماشین') || clean.includes('بنزین') || clean.includes('اسنپ')) return 'حمل‌ونقل و خودرو';
-    if (clean.includes('پوشاک') || clean.includes('لباس') || clean.includes('خرید')) return 'خرید و پوشاک';
-    if (clean.includes('تفریح') || clean.includes('سرگرمی') || clean.includes('سینما')) return 'سرگرمی و تفریح';
-    if (clean.includes('سلامت') || clean.includes('درمان') || clean.includes('دارو') || clean.includes('دکتر')) return 'سلامت و درمان';
-    if (clean.includes('قبض') || clean.includes('شارژ') || clean.includes('برق') || clean.includes('آب')) return 'قبوض و شارژ';
-    if (clean.includes('آموزش') || clean.includes('کتاب') || clean.includes('درس')) return 'آموزش و کتاب';
+    if (clean.includes('خوراک') || clean.includes('غذا') || clean.includes('رستوران')) return 'خوراک و رستوران';
+    if (clean.includes('مسکن') || clean.includes('اجاره')) return 'مسکن و اجاره';
+    if (clean.includes('حمل') || clean.includes('بنزین') || clean.includes('اسنپ')) return 'حمل‌ونقل و خودرو';
+    if (clean.includes('پوشاک') || clean.includes('لباس')) return 'خرید و پوشاک';
+    if (clean.includes('تفریح') || clean.includes('سرگرمی')) return 'سرگرمی و تفریح';
+    if (clean.includes('سلامت') || clean.includes('درمان') || clean.includes('دارو')) return 'سلامت و درمان';
+    if (clean.includes('قبض') || clean.includes('شارژ')) return 'قبوض و شارژ';
+    if (clean.includes('آموزش') || clean.includes('کتاب')) return 'آموزش و کتاب';
     return 'سایر و متفرقه';
   }
 }
 
 /**
- * Local Rule-Based Ambiguity and Extraction Engine (Fallback)
+ * Local Rule-Based Engine (Fallback)
  */
 function analyzeLocally(input: string): AiProcessResult {
   const { safePrompt } = sanitizeAIPrompt(input);
   const p = safePrompt.trim();
 
-  // 1. Small talk or Greeting
   if (isGreetingOrSmallTalk(p)) {
     return {
       is_transaction: false,
@@ -183,11 +160,9 @@ function analyzeLocally(input: string): AiProcessResult {
     };
   }
 
-  // Check transaction keywords
-  const hasTxKeyword = /(خرید|خریدم|خریده|خرج|خرجی|واریز|واریزی|پرداخت|پرداختی|دستمزد|گرفتم|فاکتور|اسنپ|ساندویچ|قهوه|کارت|پیتزا|بنزین|اجاره|قسط|میوه|سوپرمارکت|دیجیکالا|درآمد|حقوق|پاداش)/i.test(p);
+  const hasTxKeyword = /(خرید|خریدم|خرج|واریز|واریزی|پرداخت|دستمزد|گرفتم|اسنپ|ساندویچ|قهوه|پیتزا|بنزین|اجاره|قسط|میوه|سوپرمارکت|درآمد|حقوق|پاداش)/i.test(p);
   const amount = parsePersianAmount(p);
 
-  // Ambiguity Detection: If user expresses intent to record a transaction but no valid amount found
   if (hasTxKeyword && amount <= 0) {
     const isIncome = /(واریز|حقوق|پاداش|درآمد|دستمزد|گرفتم)/i.test(p);
     const msg = isIncome
@@ -201,18 +176,6 @@ function analyzeLocally(input: string): AiProcessResult {
     };
   }
 
-  // Ambiguity Detection: If user entered just a number without item or type
-  const isPureNumber = /^[0-9۰-۹\s,،]+$/.test(p.replace(/(تومان|تومن|ریال|هزار|میلیون)/g, '').trim());
-  if (isPureNumber && !hasTxKeyword && p.length < 25) {
-    return {
-      is_transaction: false,
-      is_ambiguous: true,
-      clarification_message: 'مبلغ مشخص شده است اما مشخص نکردید این تراکنش بابت چه موردی و آیا درآمد است یا هزینه؟ لطفاً عنوان و نوع آن را بفرمایید.',
-      raw_input: p,
-    };
-  }
-
-  // If complete transaction detected
   if (amount > 0) {
     const isIncome = /(واریز|حقوق|پاداش|درآمد|دستمزد|گرفتم|فروش|سود)/i.test(p);
     const type: TransactionType = isIncome ? 'income' : 'expense';
@@ -234,7 +197,6 @@ function analyzeLocally(input: string): AiProcessResult {
     };
   }
 
-  // Default financial question or small talk
   return {
     is_transaction: false,
     is_ambiguous: false,
@@ -244,8 +206,7 @@ function analyzeLocally(input: string): AiProcessResult {
 }
 
 /**
- * Main AI Engine: Analyzes user input (text or transcribed voice)
- * and returns structured JSON output for transactions or clarification for ambiguous queries.
+ * Main AI Engine using GapGPT API (`/chat/completions`)
  */
 export async function processFinancialAI(
   userInput: string,
@@ -267,104 +228,91 @@ export async function processFinancialAI(
     };
   }
 
-  const geminiKey = getGeminiApiKey();
+  const apiKey = getGapGptApiKey();
+  const baseUrl = getAiBaseUrl();
   const currentShamsi = getCurrentShamsiDate();
 
-  // 1. Try Gemini 3.8 Flash with Structured JSON Output
-  if (geminiKey) {
+  if (apiKey) {
     try {
-      const ai = new GoogleGenAI({ apiKey: geminiKey });
-      const systemInstruction = `شما موتور تحلیل هوشمند تراکنش‌های مالی و مشاور مدیریت مالی سامانه «چندبوم» (Chandboom) هستید.
-وظیفه شما تحلیل دقیق پیام متنی یا صوتی کاربر (تبدیل‌شده به متن) است.
+      const systemPrompt = `شما موتور هوشمند تراکنش‌های مالی و مشاور مالی سامانه «چندبوم» (Chandboom) هستید.
+تاریخ امروز: ${currentShamsi}
+دسته‌بندی‌های هزینه‌ها: 'خوراک و رستوران', 'مسکن و اجاره', 'حمل‌ونقل و خودرو', 'خرید و پوشاک', 'سرگرمی و تفریح', 'سلامت و درمان', 'قبوض و شارژ', 'آموزش و کتاب', 'سایر و متفرقه'
+دسته‌بندی‌های درآمدها: 'حقوق و دستمزد', 'سرمایه‌گذاری و سود', 'هدیه و پاداش', 'فروش و کسب‌وکار', 'سایر دریافتی‌ها'
 
-دسته‌بندی‌های استاندارد سامانه چندبوم:
-- هزینه‌ها (expense): 'خوراک و رستوران' | 'مسکن و اجاره' | 'حمل‌ونقل و خودرو' | 'خرید و پوشاک' | 'سرگرمی و تفریح' | 'سلامت و درمان' | 'قبوض و شارژ' | 'آموزش و کتاب' | 'سایر و متفرقه'
-- درآمدها (income): 'حقوق و دستمزد' | 'سرمایه‌گذاری و سود' | 'هدیه و پاداش' | 'فروش و کسب‌وکار' | 'سایر دریافتی‌ها'
-
-تاریخ امروز سامانه: ${currentShamsi}
-
-دستورالعمل خروجی:
-خروجی شما باید منحصراً یک ساختار JSON معتبر باشد.
-
-حالت الف) کاربر قصد ثبت یا گزارش تراکنش مالی (درآمد یا هزینه) دارد:
-۱. اگر اطلاعات برای ثبت تراکنش ناقص یا مبهم است (مثلاً مبلغ مشخص نشده، یا مشخص نیست درآمد است یا هزینه، یا عنوان تراکنش مبهم است):
-   هرگز اطلاعات فیک یا حدسی پر نکنید. خروجی باید به این صورت باشد:
-   {
-     "is_transaction": false,
-     "is_ambiguous": true,
-     "clarification_message": "یک جمله کوتاه، مؤدبانه و صمیمی به زبان فارسی که مشخص می‌کند کدام بخش مبهم است و درخواست شفاف‌سازی می‌کند (مثال: «مبلغ دقیق یا نوع تراکنش را مشخص نکردید، لطفاً بفرمایید درآمد است یا هزینه؟» یا «مبلغ دقیق خرید ساندویچ را مشخص نکردید، لطفاً بفرمایید چند تومان است؟»)"
-   }
-
-۲. اگر اطلاعات تراکنش کامل است (دارای نوع درآمد یا هزینه، مبلغ مشخص و عنوان مشخص):
-   خروجی باید به این صورت باشد:
-   {
-     "is_transaction": true,
-     "is_ambiguous": false,
-     "transaction": {
-       "type": "income" یا "expense",
-       "title": "عنوان کوتاه و تمیز تراکنش بدون کلمات اضافه مثل خرید، واریز، مبلغ یا تومان (مثال: حقوق پروژه، خرید میوه، اسنپ)",
-       "amount": عدد صحیح دقیق به تومان (مثلاً ۲۵ میلیون = 25000000، ۵۰ هزار = 50000، ریال بر ۱۰ تقسیم شود),
-       "category": "یکی از دسته‌بندی‌های استاندارد ذکر شده در بالا متناسب با موضوع",
-       "date": "تاریخ استخراج‌شده از متن (مثلاً اگر کاربر گفت ۲۵ مهر: ۱۴۰۳/۰۷/۲۵؛ در غیر این صورت تاریخ استاندارد ${currentShamsi})"
-     }
-   }
-
-حالت ب) اگر پیام کاربر گفتگوی عمومی، احوالپرسی یا سوال و تحلیل مالی است و قصد ثبت تراکنش ندارد:
+پاسخ خود را دقیقاً در قالب یک شیء JSON معتبر بازگردانید:
+۱. اگر تراکنش است و اطلاعات کامل است:
+{
+  "is_transaction": true,
+  "is_ambiguous": false,
+  "transaction": {
+    "type": "income" یا "expense",
+    "title": "عنوان کوتاه و تمیز",
+    "amount": عدد صحیح به تومان,
+    "category": "یکی از دسته‌بندی‌های دقیق بالا",
+    "date": "${currentShamsi}"
+  }
+}
+۲. اگر اطلاعات تراکنش مبهم یا ناقص است:
+{
+  "is_transaction": false,
+  "is_ambiguous": true,
+  "clarification_message": "متن درخواست شفاف‌سازی مؤدبانه به فارسی"
+}
+۳. اگر گفتگوی عادی یا مشاوره مالی است:
 {
   "is_transaction": false,
   "is_ambiguous": false,
-  "conversational_reply": "پاسخ دوستانه، دلگرم‌کننده و تحلیلی در چند بند کوتاه به زبان فارسی به عنوان «دستیار هوشمند چندبوم»"
+  "conversational_reply": "پاسخ مشاوره‌ای جذاب و دقیق به فارسی"
 }`;
 
-      const response = await ai.models.generateContent({
-        model: 'gemini-3.8-flash',
-        contents: trimmed,
-        config: {
-          systemInstruction,
-          responseMimeType: 'application/json',
-          temperature: 0.2,
+      const messages = [
+        { role: 'system', content: systemPrompt },
+        ...(userContext?.chatHistory?.map((m) => ({ role: m.role, content: m.text })) || []),
+        { role: 'user', content: trimmed },
+      ];
+
+      const res = await fetch(`${baseUrl}/chat/completions`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${apiKey}`,
         },
+        body: JSON.stringify({
+          model: 'gapgpt-gemma-26b-a4b',
+          messages,
+          temperature: 0.2,
+          response_format: { type: 'json_object' },
+        }),
       });
 
-      const responseText = response.text ? response.text.trim() : '';
-      if (responseText) {
-        try {
-          const parsed = JSON.parse(responseText);
-
-          // If structured transaction is returned
-          if (parsed.is_transaction && (parsed.transaction || (parsed.type && parsed.amount))) {
-            const rawTx = parsed.transaction || parsed;
-            const txType: TransactionType = String(rawTx.type).toLowerCase().includes('income') ? 'income' : 'expense';
-            const numAmount = Number(rawTx.amount) || 0;
-            if (numAmount > 0) {
-              return {
-                is_transaction: true,
-                is_ambiguous: false,
-                transaction: {
-                  type: txType,
-                  title: String(rawTx.title || trimmed).trim(),
-                  amount: Math.round(numAmount),
-                  category: normalizeCategory(rawTx.category, txType),
-                  date: String(rawTx.date || currentShamsi),
-                },
-                raw_input: trimmed,
-              };
-            }
+      if (res.ok) {
+        const data = await res.json();
+        const content = data.choices?.[0]?.message?.content;
+        if (content) {
+          const parsed = JSON.parse(content);
+          if (parsed.is_transaction && parsed.transaction) {
+            const tx = parsed.transaction;
+            return {
+              is_transaction: true,
+              is_ambiguous: false,
+              transaction: {
+                type: tx.type === 'income' ? 'income' : 'expense',
+                title: tx.title || trimmed,
+                amount: Number(tx.amount) || 0,
+                category: normalizeCategory(tx.category, tx.type),
+                date: tx.date || currentShamsi,
+              },
+              raw_input: trimmed,
+            };
           }
-
-          // If ambiguous query
           if (parsed.is_ambiguous || parsed.clarification_message) {
             return {
               is_transaction: false,
               is_ambiguous: true,
-              clarification_message:
-                parsed.clarification_message ||
-                'مبلغ دقیق یا نوع تراکنش مشخص نیست، لطفاً بفرمایید درآمد است یا هزینه؟',
+              clarification_message: parsed.clarification_message || 'مبلغ یا نوع تراکنش نامشخص است.',
               raw_input: trimmed,
             };
           }
-
-          // Conversational answer
           if (parsed.conversational_reply) {
             return {
               is_transaction: false,
@@ -373,25 +321,18 @@ export async function processFinancialAI(
               raw_input: trimmed,
             };
           }
-        } catch (jsonErr) {
-          console.warn('Could not parse Gemini JSON response, falling back:', jsonErr);
         }
       }
-    } catch (geminiError: any) {
-      console.warn('Gemini generateContent call encountered an issue, trying fallback:', geminiError?.message);
+    } catch (err) {
+      console.warn('GapGPT API request failed, falling back to local engine:', err);
     }
   }
 
-  // 2. Fallback to Local Rule-Based Engine
   return analyzeLocally(trimmed);
 }
 
-/**
- * Backward compatibility parser (used in SMS parsing and legacy callers)
- */
 export async function parseTransactionWithSystemOne(input: string): Promise<AiParsedTransaction> {
   const result = await processFinancialAI(input);
-
   if (result.is_transaction && result.transaction) {
     return {
       clean_title: result.transaction.title,
@@ -404,8 +345,6 @@ export async function parseTransactionWithSystemOne(input: string): Promise<AiPa
       raw_input: input,
     };
   }
-
-  // Fallback
   const local = parsePersianSmartNLU(input);
   return {
     clean_title: local.cleanTitle,
@@ -419,9 +358,6 @@ export async function parseTransactionWithSystemOne(input: string): Promise<AiPa
   };
 }
 
-/**
- * Conversational advice caller
- */
 export async function getConversationalAdvice(
   userQuery: string,
   metrics: { totalIncome: number; totalExpense: number; balance: number },
@@ -434,7 +370,7 @@ export async function getConversationalAdvice(
     monthlyCap,
     fullName: demographics?.fullName,
     chatHistory: chatHistory?.map((h) => ({
-      role: h.role === 'user' || h.sender === 'user' ? 'user' : 'assistant',
+      role: (h.role === 'user' || h.sender === 'user' ? 'user' : 'assistant') as 'user' | 'assistant',
       text: h.text || h.content || '',
     })),
   });
@@ -449,9 +385,6 @@ export async function getConversationalAdvice(
   return result.conversational_reply || 'چگونه می‌توانم در مدیریت مالی به شما کمک کنم؟';
 }
 
-/**
- * Standard Unified Export Object
- */
 export const aiService = {
   processFinancialAI,
   parseTransaction: parseTransactionWithSystemOne,
