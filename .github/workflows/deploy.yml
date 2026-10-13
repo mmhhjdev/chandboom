@@ -1,4 +1,4 @@
-```yaml
+
 name: Deploy Chandboom to GitHub Pages
 
 on:
@@ -42,24 +42,26 @@ jobs:
         env:
           VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
           VITE_SUPABASE_ANON_KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY }}
-          VITE_GAPGPT_BASE_URL: ${{ vars.VITE_GAPGPT_BASE_URL || 'https://api.gapgpt.app/v1' }}
+          VITE_GAPGPT_BASE_URL: ${{ vars.VITE_GAPGPT_BASE_URL }}
         run: |
           set -eu
 
           if [ -z "$VITE_SUPABASE_URL" ]; then
-            echo "::error::Missing VITE_SUPABASE_URL repository secret"
+            echo "::error::VITE_SUPABASE_URL is missing"
             exit 1
           fi
 
           if [ -z "$VITE_SUPABASE_ANON_KEY" ]; then
-            echo "::error::Missing VITE_SUPABASE_ANON_KEY repository secret"
+            echo "::error::VITE_SUPABASE_ANON_KEY is missing"
             exit 1
           fi
+
+          GAPGPT_URL="${VITE_GAPGPT_BASE_URL:-https://api.gapgpt.app/v1}"
 
           {
             printf 'VITE_SUPABASE_URL=%s\n' "$VITE_SUPABASE_URL"
             printf 'VITE_SUPABASE_ANON_KEY=%s\n' "$VITE_SUPABASE_ANON_KEY"
-            printf 'VITE_GAPGPT_BASE_URL=%s\n' "$VITE_GAPGPT_BASE_URL"
+            printf 'VITE_GAPGPT_BASE_URL=%s\n' "$GAPGPT_URL"
           } > .env
 
       - name: Build Application
@@ -105,4 +107,3 @@ jobs:
       - name: Deploy to GitHub Pages
         id: deployment
         uses: actions/deploy-pages@v4
-```
