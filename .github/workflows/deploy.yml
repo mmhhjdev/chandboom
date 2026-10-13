@@ -1,3 +1,4 @@
+```yaml
 name: Deploy Chandboom
 
 'on':
@@ -19,8 +20,7 @@ jobs:
   build:
     name: Build Chandboom
     runs-on: ubuntu-latest
-    
-    # اضافه کردن محیط به جاب بیلد برای دسترسی به Environment Secrets
+
     environment:
       name: github-pages
 
@@ -44,20 +44,23 @@ jobs:
         env:
           VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
           VITE_SUPABASE_ANON_KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY }}
+
           VITE_GAPGPT_API_KEY: ${{ secrets.VITE_GAPGPT_API_KEY }}
           VITE_AI_API_KEY: ${{ secrets.VITE_AI_API_KEY || secrets.VITE_GAPGPT_API_KEY }}
+
           VITE_GAPGPT_BASE_URL: ${{ secrets.VITE_GAPGPT_BASE_URL || vars.VITE_GAPGPT_BASE_URL || 'https://api.gapgpt.app/v1' }}
-          VITE_AI_BASE_URL: ${{ secrets.VITE_AI_BASE_URL || vars.VITE_AI_BASE_URL || 'https://api.gapgpt.app/v1' }}
+          VITE_AI_BASE_URL: ${{ secrets.VITE_AI_BASE_URL || vars.VITE_AI_BASE_URL || secrets.VITE_GAPGPT_BASE_URL || vars.VITE_GAPGPT_BASE_URL || 'https://api.gapgpt.app/v1' }}
+
         run: npm run build
 
       - name: Verify build output
         run: |
           if [ ! -f dist/index.html ]; then
-            echo "Build failed: dist/index.html not found"
+            echo "::error::Build failed: dist/index.html was not generated."
             exit 1
           fi
 
-          echo "Build completed successfully."
+          echo "Build output verified."
 
       - name: Copy GitHub Pages files
         run: |
@@ -90,3 +93,4 @@ jobs:
       - name: Deploy to GitHub Pages
         id: deployment
         uses: actions/deploy-pages@v4
+```
