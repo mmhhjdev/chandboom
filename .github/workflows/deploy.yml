@@ -19,6 +19,10 @@ jobs:
   build:
     name: Build Chandboom
     runs-on: ubuntu-latest
+    
+    # اضافه کردن محیط به جاب بیلد برای دسترسی به Environment Secrets
+    environment:
+      name: github-pages
 
     steps:
       - name: Checkout repository
