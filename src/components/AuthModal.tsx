@@ -125,12 +125,12 @@ export const AuthModal: React.FC = () => {
       try {
         const res = await requestPasswordResetOtp(cleanEmail);
         if (res.success) {
-          setSuccessMsg('کد/لینک بازیابی رمز عبور با موفقیت به ایمیل شما ارسال شد.');
+          setSuccessMsg('اگر این ایمیل در سامانه ثبت شده باشد، کد ۶ تا ۸ رقمی بازیابی برای آن ارسال می‌شود.');
           setOtpAction('reset_password');
           setIsOtpStep(true);
           setTimerSeconds(120);
         } else {
-          setError(res.error || 'خطا در ارسال کد/لینک بازیابی رمز عبور به ایمیل.');
+          setError(res.error || 'ارسال کد بازیابی ناموفق بود.');
         }
       } catch (err: any) {
         setError(err?.message || 'خطا در ارتباط با سرور جهت بازیابی رمز عبور.');
@@ -158,7 +158,8 @@ export const AuthModal: React.FC = () => {
 
       setIsLoading(true);
       try {
-        const res = await requestSignupOtp(cleanEmail);
+        const numericAge = age ? parseInt(age, 10) : undefined;
+        const res = await requestSignupOtp(cleanEmail, password, fullName.trim(), numericAge, gender);
         if (res.isDuplicate || (res.error && res.error.includes('قبلاً ثبت شده'))) {
           // Strict duplicate registration prevention:
           setError('این ایمیل قبلاً ثبت شده است. لطفاً وارد شوید.');
@@ -186,8 +187,8 @@ export const AuthModal: React.FC = () => {
   const handleVerifyOtp = async (e: React.FormEvent) => {
     e.preventDefault();
     const cleanCode = otpCode.trim();
-    if (!cleanCode || cleanCode.length < 6 || cleanCode.length > 8) {
-      setError('لطفاً کد تایید را به طور کامل وارد نمایید (۶ تا ۸ رقم).');
+    if (!/^\d{6,8}$/.test(cleanCode)) {
+      setError('لطفاً کد تأیید دریافتی را کامل وارد کنید (۶ تا ۸ رقم).');
       return;
     }
 
@@ -200,7 +201,7 @@ export const AuthModal: React.FC = () => {
       if (otpAction === 'login') {
         const res = await loginWithOtp(cleanEmail, cleanCode);
         if (!res.success) {
-          setError(res.error || 'کد تایید اشتباه یا منقضی شده است.');
+          setError(res.error || 'کد تأیید اشتباه است یا اعتبار آن تمام شده است.');
         } else {
           setIsAuthModalOpen(false);
           setIsOtpStep(false);
@@ -211,8 +212,8 @@ export const AuthModal: React.FC = () => {
 
       // 2. Forgot Password Reset
       if (otpAction === 'reset_password') {
-        if (!newPassword || newPassword.length < 6) {
-          setError('رمز عبور جدید باید حداقل ۶ کاراکتر باشد.');
+        if (!newPassword || newPassword.length < 8) {
+          setError('رمز عبور جدید باید حداقل ۸ کاراکتر باشد.');
           return;
         }
         if (newPassword !== confirmPassword) {
@@ -246,7 +247,7 @@ export const AuthModal: React.FC = () => {
       );
 
       if (!res.success) {
-        setError(res.error || 'کد تایید اشتباه یا منقضی شده است.');
+        setError(res.error || 'کد تأیید اشتباه است یا اعتبار آن تمام شده است.');
       } else {
         setIsAuthModalOpen(false);
         setIsOtpStep(false);
@@ -270,7 +271,7 @@ export const AuthModal: React.FC = () => {
       } else if (otpAction === 'reset_password') {
         res = await requestPasswordResetOtp(cleanEmail);
       } else {
-        res = await requestSignupOtp(cleanEmail);
+        res = await requestSignupOtp(cleanEmail, password, fullName.trim(), age ? parseInt(age, 10) : undefined, gender);
       }
 
       if (res.success) {
@@ -380,7 +381,7 @@ export const AuthModal: React.FC = () => {
           <form onSubmit={handleVerifyOtp} className="space-y-4">
             <div className="text-center space-y-1">
               <p className="text-xs text-zinc-600 dark:text-zinc-400">
-                کد تایید ۶ رقمی امنیتی به آدرس ایمیل زیر ارسال گردید:
+                کد تأیید عددی امنیتی به آدرس ایمیل زیر ارسال گردید:
               </p>
               <p className="font-mono text-xs font-bold text-emerald-700 dark:text-emerald-400" dir="ltr">
                 {email}
@@ -399,14 +400,14 @@ export const AuthModal: React.FC = () => {
 
             <div>
               <label className="block text-xs font-cairo font-bold text-zinc-700 dark:text-zinc-300 mb-1.5 text-center">
-                کد ۶ رقمی دریافتی:
+                کد تأیید دریافتی (۶ تا ۸ رقم):
               </label>
               <input
                 type="text"
                 maxLength={8}
                 value={otpCode}
                 onChange={(e) => setOtpCode(e.target.value.replace(/[^0-9]/g, ''))}
-                placeholder="------"
+                placeholder="کد تأیید"
                 required
                 autoFocus
                 className="w-full py-2.5 bg-zinc-50 dark:bg-[#141E1A] border-2 border-[#E2E8E4] dark:border-[#1F2E27] rounded-2xl text-center text-2xl font-mono tracking-widest text-zinc-900 dark:text-white outline-none focus:border-emerald-600 transition"
@@ -423,10 +424,10 @@ export const AuthModal: React.FC = () => {
                   <input
                     type="password"
                     required
-                    minLength={6}
+                    minLength={8}
                     value={newPassword}
                     onChange={(e) => setNewPassword(e.target.value)}
-                    placeholder="حداقل ۶ کاراکتر"
+                    placeholder="حداقل ۸ کاراکتر"
                     className="w-full px-3 py-2 bg-zinc-50 dark:bg-[#141E1A] border border-[#E2E8E4] dark:border-[#1F2E27] rounded-xl text-xs text-zinc-900 dark:text-white outline-none focus:ring-2 focus:ring-emerald-600 font-mono"
                     dir="ltr"
                   />
@@ -470,7 +471,7 @@ export const AuthModal: React.FC = () => {
             <div className="pt-2 space-y-2">
               <button
                 type="submit"
-                disabled={isLoading || otpCode.length < 6}
+                disabled={isLoading || !/^\d{6,8}$/.test(otpCode.trim())}
                 className="w-full py-2.5 rounded-xl bg-emerald-700 hover:bg-emerald-800 text-white font-cairo font-bold text-xs shadow-xs transition cursor-pointer disabled:opacity-50 flex items-center justify-center gap-2"
               >
                 <CheckCircle2 className="w-4 h-4" />
@@ -499,7 +500,7 @@ export const AuthModal: React.FC = () => {
           /* FORGOT PASSWORD FORM */
           <form onSubmit={handleSendOtpOrLogin} className="space-y-4">
             <div className="p-3 rounded-2xl bg-zinc-50 dark:bg-[#141E1A] border border-[#E2E8E4] dark:border-[#1F2E27] text-xs text-zinc-600 dark:text-zinc-400 leading-relaxed">
-              آدرس ایمیل حساب کاربری خود را وارد نمایید تا کد ۶ رقمی بازیابی رمز عبور برای شما ارسال گردد.
+              آدرس ایمیل حساب کاربری خود را وارد نمایید تا کد ۶ تا ۸ رقمی بازیابی رمز عبور برای شما ارسال گردد.
             </div>
 
             <div>
@@ -677,7 +678,7 @@ export const AuthModal: React.FC = () => {
                     type="password"
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
-                    placeholder="حداقل ۶ کاراکتر"
+                    placeholder="حداقل ۸ کاراکتر"
                     required
                     minLength={6}
                     className="w-full pr-9 pl-3 py-2 bg-zinc-50 dark:bg-[#141E1A] border border-[#E2E8E4] dark:border-[#1F2E27] rounded-xl text-xs text-zinc-900 dark:text-white outline-none focus:ring-2 focus:ring-emerald-600 font-mono text-left"

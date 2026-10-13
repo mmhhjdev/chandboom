@@ -227,19 +227,27 @@ export const FloatingAIAssistant: React.FC = () => {
               time: 'هم‌اکنون',
             },
           ]);
-        } else if (result.is_transaction && result.transaction) {
-          // Automatic Transaction Registration from AI Structured Output
-          const tx = result.transaction;
-          await addTransaction({
-            type: tx.type,
-            amount: tx.amount,
-            category: tx.category,
-            description: tx.title,
-            account: 'کارت اصلی',
-            date: new Date().toISOString(),
-          });
+        } else if (result.is_transaction && ((result.transactions && result.transactions.length > 0) || result.transaction)) {
+          // Automatic Transaction(s) Registration from AI Structured Output
+          const txList = result.transactions && result.transactions.length > 0
+            ? result.transactions
+            : [result.transaction!];
 
-          const replyText = `✅ تراکنش توسط «دستیار هوشمند چندبوم» تحلیل و به صورت خودکار در دیتابیس ثبت شد:
+          for (const tx of txList) {
+            await addTransaction({
+              type: tx.type,
+              amount: tx.amount,
+              category: tx.category,
+              description: tx.title,
+              account: 'کارت اصلی',
+              date: new Date().toISOString(),
+            });
+          }
+
+          let replyText = '';
+          if (txList.length === 1) {
+            const tx = txList[0];
+            replyText = `✅ تراکنش توسط «دستیار هوشمند چندبوم» تحلیل و به صورت خودکار در دیتابیس ثبت شد:
 • نوع: ${tx.type === 'income' ? 'درآمد (واریز)' : 'هزینه (پرداخت)'}
 • عنوان: ${tx.title}
 • مبلغ: ${formatToman(tx.amount)}
@@ -247,6 +255,11 @@ export const FloatingAIAssistant: React.FC = () => {
 • تاریخ: ${tx.date}
 
 این رکورد در حسابداری شما ثبت شد و مانده حساب فوراً به‌روزرسانی گردید.`;
+          } else {
+            replyText = `✅ تعداد ${txList.length.toLocaleString('fa-IR')} تراکنش به صورت گروهی توسط «دستیار هوشمند چندبوم» تحلیل و همگی در دیتابیس ثبت شدند:\n\n` +
+              txList.map((tx, idx) => `${(idx + 1).toLocaleString('fa-IR')}. ${tx.type === 'income' ? '🟢 واریز' : '🔴 هزینه'}: «${tx.title}» به مبلغ ${formatToman(tx.amount)} در دسته‌بندی «${tx.category}»`).join('\n') +
+              `\n\nکلیه این رکوردها در حسابداری شما ثبت شدند و مانده حساب فوراً به‌روزرسانی گردید.`;
+          }
 
           setMessages((prev) => [
             ...prev,
@@ -277,7 +290,7 @@ export const FloatingAIAssistant: React.FC = () => {
           {
             id: (Date.now() + 1).toString(),
             sender: 'assistant',
-            text: 'خطایی در پردازش رخ داد. لطفاً مجدداً امتحان نمایید.',
+            text: err?.message || 'خطا در برقراری ارتباط با هوش مصنوعی چندبوم',
             time: 'هم‌اکنون',
           },
         ]);

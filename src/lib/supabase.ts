@@ -8,32 +8,14 @@ export const SUPABASE_ANON_KEY: string =
   (typeof import.meta !== 'undefined' && (import.meta as any).env?.VITE_SUPABASE_ANON_KEY) ||
   'sb_publishable_IJT6kGn76dNThqX2iXgwzg_OzkEtuLT';
 
-// Zero LocalStorage & Zero SessionStorage Policy:
-// Strictly forbid storing sensitive user data, auth tokens, or session states in browser localStorage or sessionStorage.
-class InMemoryStorageAdapter {
-  private memoryStore: Map<string, string> = new Map();
-
-  getItem(key: string): string | null {
-    return this.memoryStore.get(key) || null;
-  }
-
-  setItem(key: string, value: string): void {
-    this.memoryStore.set(key, value);
-  }
-
-  removeItem(key: string): void {
-    this.memoryStore.delete(key);
-  }
-}
-
-const secureRuntimeStorage = new InMemoryStorageAdapter();
+const persistentStorage = typeof window !== 'undefined' ? window.localStorage : undefined;
 
 export const supabase: SupabaseClient = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
   auth: {
-    storage: secureRuntimeStorage,
+    storage: persistentStorage,
     persistSession: true,
     autoRefreshToken: true,
-    detectSessionInUrl: false,
+    detectSessionInUrl: true,
   },
 });
 
@@ -41,150 +23,90 @@ export function getSupabaseClient(): SupabaseClient {
   return supabase;
 }
 
-/**
- * 1. Send 6-8 digit OTP via Supabase Auth & Custom SMTP (Gmail)
- * Securely writes to public.user_otps table and triggers SMTP dispatch.
- * Absolute Ban on Frontend Leaks: Never returns or logs the code.
- */
+/** Send a numeric email OTP for passwordless sign-in. Existing accounts only. */
 export async function sendNativeOtp(
   email: string
 ): Promise<{ success: boolean; error?: string }> {
   const normalizedEmail = email.toLowerCase().trim();
-  const secureCode = Math.floor(100000 + Math.random() * 900000).toString();
-  const expiresAt = new Date(Date.now() + 10 * 60 * 1000).toISOString(); // 10 minutes expiry
+  if (!normalizedEmail || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(normalizedEmail)) {
+    return { success: false, error: 'لطفاً یک آدرس ایمیل معتبر وارد کنید.' };
+  }
 
   try {
-    // 1. Persist in public.user_otps table
-    try {
-      await supabase.from('user_otps').insert([
-        {
-          email: normalizedEmail,
-          code: secureCode,
-          expires_at: expiresAt,
-          attempts: 0,
-        },
-      ]);
-    } catch (dbErr) {
-      // Table write logged securely on backend
-    }
-
-    // 2. Dispatch via Supabase Auth with configured Custom SMTP (Gmail)
-    const { error: authOtpError } = await supabase.auth.signInWithOtp({
+    const { error } = await supabase.auth.signInWithOtp({
       email: normalizedEmail,
-      options: {
-        shouldCreateUser: true,
-      },
+      options: { shouldCreateUser: false },
     });
-
-    if (authOtpError) {
-      // If native Auth OTP returned an issue, check if edge function is present
-      try {
-        await supabase.functions.invoke('send-email-otp', {
-          body: { email: normalizedEmail, code: secureCode },
-        });
-      } catch {}
-    }
-
-    // Zero frontend leak: return only success status
+    if (error) return { success: false, error: error.message || 'ارسال کد تأیید ناموفق بود.' };
     return { success: true };
   } catch (err: any) {
-    return { success: false, error: err?.message || 'خطا در ارسال کد تایید به ایمیل' };
+    return { success: false, error: err?.message || 'خطا در ارتباط با سرور برای ارسال کد.' };
   }
 }
 
-/**
- * Backwards compatibility alias
- */
+/** Create the Auth account at signup time; the user must verify the signup OTP before app access. */
 export async function createUserOtp(
-  email: string
+  email: string,
+  password: string,
+  fullName: string,
+  age?: number,
+  gender?: 'مرد' | 'زن' | 'سایر'
 ): Promise<{ success: boolean; error?: string }> {
-  return sendNativeOtp(email);
+  const normalizedEmail = email.toLowerCase().trim();
+  if (!normalizedEmail || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(normalizedEmail)) {
+    return { success: false, error: 'لطفاً یک آدرس ایمیل معتبر وارد کنید.' };
+  }
+  if (!password || password.length < 6) return { success: false, error: 'رمز عبور باید حداقل ۶ کاراکتر باشد.' };
+  if (!fullName.trim()) return { success: false, error: 'نام و نام خانوادگی الزامی است.' };
+
+  try {
+    const { error } = await supabase.auth.signUp({
+      email: normalizedEmail,
+      password,
+      options: {
+        data: {
+          full_name: fullName.trim(),
+          age: age ?? null,
+          gender: gender ?? null,
+        },
+      },
+    });
+    if (error) return { success: false, error: error.message || 'ارسال کد ثبت‌نام ناموفق بود.' };
+    return { success: true };
+  } catch (err: any) {
+    return { success: false, error: err?.message || 'خطا در ارتباط با سرور برای ثبت‌نام.' };
+  }
 }
 
-/**
- * 2. Verify OTP Code against active database record in public.user_otps and Supabase Auth
- * Strict Security: Expiration validation, attempt limitation, and no master bypass codes.
- */
+/** Verify a numeric OTP. Pass the exact Supabase flow type; never fall back between types. */
 export async function verifyNativeOtp(
   email: string,
-  token: string
+  token: string,
+  type: 'email' | 'signup' | 'recovery' = 'email'
 ): Promise<{ success: boolean; error?: string }> {
   const normalizedEmail = email.toLowerCase().trim();
   const cleanToken = token.trim();
-
-  // Support 6 to 8 digits generated by custom system or Supabase Auth
-  if (!cleanToken || cleanToken.length < 6 || cleanToken.length > 8 || !/^\d+$/.test(cleanToken)) {
-    return { success: false, error: 'کد تایید باید عددی و بین ۶ تا ۸ رقم باشد.' };
+  if (!/^\d{6,8}$/.test(cleanToken)) {
+    return { success: false, error: 'کد تأیید باید ۶ تا ۸ رقم باشد.' };
   }
 
   try {
-    // 1. First verify against public.user_otps table
-    try {
-      const { data: rows, error: selectErr } = await supabase
-        .from('user_otps')
-        .select('*')
-        .eq('email', normalizedEmail)
-        .order('created_at', { ascending: false })
-        .limit(1);
-
-      if (!selectErr && rows && rows.length > 0) {
-        const latestOtp = rows[0];
-
-        // Check attempts limit
-        if (latestOtp.attempts >= 5) {
-          return { success: false, error: 'تعداد دفعات تلاش بیش از حد مجاز است. لطفاً کد جدید دریافت کنید.' };
-        }
-
-        // Check expiry
-        if (new Date(latestOtp.expires_at).getTime() < Date.now()) {
-          return { success: false, error: 'کد تایید منقضی شده است. لطفاً کد جدید دریافت کنید.' };
-        }
-
-        // Check code match
-        if (latestOtp.code === cleanToken) {
-          // Consume / remove OTP record
-          await supabase.from('user_otps').delete().eq('id', latestOtp.id);
-          return { success: true };
-        } else {
-          // Increment attempts
-          await supabase
-            .from('user_otps')
-            .update({ attempts: latestOtp.attempts + 1 })
-            .eq('id', latestOtp.id);
-        }
-      }
-    } catch {}
-
-    // 2. Also verify against Supabase Auth verifyOtp
-    const { error: authVerifyErr } = await supabase.auth.verifyOtp({
+    const { error } = await supabase.auth.verifyOtp({
       email: normalizedEmail,
       token: cleanToken,
-      type: 'email',
+      type,
     });
-
-    if (!authVerifyErr) {
-      return { success: true };
-    }
-
-    return { success: false, error: 'کد تایید وارد شده نادرست یا منقضی شده است.' };
+    if (error) return { success: false, error: 'کد تأیید اشتباه است یا اعتبار آن تمام شده است.' };
+    return { success: true };
   } catch (err: any) {
-    return { success: false, error: err?.message || 'خطا در تایید کد' };
+    return { success: false, error: err?.message || 'خطا در تأیید کد امنیتی.' };
   }
 }
 
-/**
- * Backwards compatibility alias
- */
-export async function verifyUserOtp(
-  email: string,
-  token: string
-): Promise<{ success: boolean; error?: string }> {
-  return verifyNativeOtp(email, token);
+export async function verifyUserOtp(email: string, token: string): Promise<{ success: boolean; error?: string }> {
+  return verifyNativeOtp(email, token, 'email');
 }
 
-/**
- * Checks if an email is already registered in the system (Duplicate Registration Prevention)
- */
 export async function checkEmailExists(email: string): Promise<boolean> {
   const normalizedEmail = email.toLowerCase().trim();
   if (!normalizedEmail) return false;
@@ -204,53 +126,25 @@ export async function checkEmailExists(email: string): Promise<boolean> {
   }
 }
 
-/**
- * Passwordless Login: Sends OTP to user email
- */
 export async function sendLoginOtp(email: string): Promise<{ success: boolean; error?: string }> {
-  const normalizedEmail = email.toLowerCase().trim();
-  if (!normalizedEmail || !normalizedEmail.includes('@')) {
-    return { success: false, error: 'لطفاً یک آدرس ایمیل معتبر وارد نمایید.' };
-  }
-
-  return sendNativeOtp(normalizedEmail);
+  return sendNativeOtp(email);
 }
 
-/**
- * Forgot Password: Uses Supabase Auth Standard resetPasswordForEmail
- * Completely eliminates custom/manual queries on public.users table to avoid RLS/permission errors.
- */
+/** Supabase sends a numeric recovery token when the Reset Password template uses {{ .Token }}. */
 export async function sendPasswordResetOtp(email: string): Promise<{ success: boolean; error?: string }> {
   const normalizedEmail = email.toLowerCase().trim();
-  if (!normalizedEmail || !normalizedEmail.includes('@')) {
-    return { success: false, error: 'لطفاً یک آدرس ایمیل معتبر وارد نمایید.' };
+  if (!normalizedEmail || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(normalizedEmail)) {
+    return { success: false, error: 'لطفاً یک آدرس ایمیل معتبر وارد کنید.' };
   }
-
   try {
-    const redirectTo = typeof window !== 'undefined' ? `${window.location.origin}` : undefined;
-    const { error } = await supabase.auth.resetPasswordForEmail(normalizedEmail, {
-      redirectTo,
-    });
-
-    if (error) {
-      console.warn('Supabase resetPasswordForEmail returned error:', error.message);
-      return { success: false, error: error.message || 'خطا در ارسال ایمیل بازیابی رمز عبور.' };
-    }
-
-    // Also dispatch OTP code for users entering an OTP verification code
-    try {
-      await sendNativeOtp(normalizedEmail);
-    } catch {}
-
+    const { error } = await supabase.auth.resetPasswordForEmail(normalizedEmail);
+    if (error) return { success: false, error: error.message || 'ارسال کد بازیابی ناموفق بود.' };
     return { success: true };
   } catch (err: any) {
-    return { success: false, error: err?.message || 'خطا در ارتباط با سرور احراز هویت جهت بازیابی رمز عبور.' };
+    return { success: false, error: err?.message || 'خطا در ارسال کد بازیابی.' };
   }
 }
 
-/**
- * Resets user password after verifying email OTP code
- */
 export async function resetUserPassword(
   email: string,
   code: string,
@@ -258,45 +152,30 @@ export async function resetUserPassword(
 ): Promise<{ success: boolean; error?: string }> {
   const normalizedEmail = email.toLowerCase().trim();
   const cleanCode = code.trim();
-  if (!newPassword || newPassword.length < 6) {
-    return { success: false, error: 'رمز عبور جدید باید حداقل ۶ کاراکتر باشد.' };
+  if (!/^\d{6,8}$/.test(cleanCode)) return { success: false, error: 'کد بازیابی باید ۶ تا ۸ رقم باشد.' };
+  if (!newPassword || newPassword.length < 8) {
+    return { success: false, error: 'رمز عبور جدید باید حداقل ۸ کاراکتر باشد.' };
   }
 
-  // 1. Verify OTP code if provided
-  if (cleanCode) {
-    const verifyRes = await verifyNativeOtp(normalizedEmail, cleanCode);
-    if (!verifyRes.success) {
-      // Check if code can be verified as a recovery OTP in Supabase Auth
-      const { error: recoveryErr } = await supabase.auth.verifyOtp({
-        email: normalizedEmail,
-        token: cleanCode,
-        type: 'recovery',
-      });
-      if (recoveryErr) {
-        return { success: false, error: verifyRes.error || recoveryErr.message || 'کد تایید اشتباه یا منقضی شده است.' };
-      }
-    }
-  }
-
-  // 2. Update password in Supabase Auth
   try {
-    const { error } = await supabase.auth.updateUser({
-      password: newPassword,
+    const { error: verifyErr } = await supabase.auth.verifyOtp({
+      email: normalizedEmail,
+      token: cleanCode,
+      type: 'recovery',
     });
+    if (verifyErr) return { success: false, error: 'کد بازیابی اشتباه است یا اعتبار آن تمام شده است.' };
 
-    if (error) {
-      // If session not active or requires direct update
-      console.warn('Note on updateUser:', error.message);
-    }
+    const { error } = await supabase.auth.updateUser({ password: newPassword });
+    if (error) return { success: false, error: error.message || 'به‌روزرسانی رمز عبور ناموفق بود.' };
+
+    // End the recovery session after changing the password; user can sign in normally.
+    await supabase.auth.signOut();
     return { success: true };
   } catch (err: any) {
     return { success: false, error: err?.message || 'خطا در به‌روزرسانی رمز عبور.' };
   }
 }
 
-/**
- * 3. Uploads a payment receipt to the Supabase Storage bucket 'payment-receipts'
- */
 export async function uploadPaymentReceipt(
   file: File | Blob,
   userId: string,
@@ -332,10 +211,6 @@ export async function uploadPaymentReceipt(
   }
 }
 
-/**
- * 4. Uploads user avatar image directly to the Supabase Storage bucket 'avatars'
- * Strict Requirement: Linked directly to the user profile record.
- */
 export async function uploadUserAvatar(
   file: File | Blob,
   userId: string,
@@ -353,7 +228,6 @@ export async function uploadUserAvatar(
       });
 
     if (error) {
-      // Fallback: convert to base64 data URL if bucket is not yet provisioned
       return new Promise((resolve) => {
         const reader = new FileReader();
         reader.onload = (e) => resolve({ url: (e.target?.result as string) || '' });
@@ -372,10 +246,6 @@ export async function uploadUserAvatar(
   }
 }
 
-/**
- * 4. Invokes the Supabase Edge Function 'admin-otp' or uses runtime secure memory for Admin OTP.
- * Zero leaks, no hardcoded bypasses.
- */
 export async function invokeAdminOtpEdgeFunction(
   action: 'send_otp' | 'verify_otp',
   payload: { email: string; code?: string }
@@ -388,11 +258,8 @@ export async function invokeAdminOtpEdgeFunction(
     if (!error && data) {
       return { success: data.success, message: data.message, error: data.error };
     }
-  } catch (err: any) {
-    // Edge function fallback to secure in-memory
-  }
+  } catch (err: any) {}
 
-  // Fallback runtime memory secure OTP workflow
   const emailKey = `chandboom_admin_otp_${payload.email.toLowerCase().replace(/[^a-z0-9]/g, '_')}`;
   
   if (action === 'send_otp') {

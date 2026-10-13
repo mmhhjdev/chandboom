@@ -25,6 +25,7 @@ import { DailyQuestsModal } from './components/DailyQuestsModal';
 import { Transaction } from './types';
 import { ShieldCheck, Heart, Sparkles, ShieldAlert } from 'lucide-react';
 import { initSecurityProtection } from './utils/devtoolsProtection';
+import { EnvNoticeBanner } from './components/EnvNoticeBanner';
 
 const AppContent: React.FC = () => {
   const {
@@ -84,6 +85,9 @@ const AppContent: React.FC = () => {
           </div>
         )}
 
+        {/* Environment configuration banner if variables missing */}
+        <EnvNoticeBanner />
+
         <LandingPage
           onEnterApp={() => setActiveTab('dashboard')}
           onOpenAuth={() => {
@@ -116,6 +120,9 @@ const AppContent: React.FC = () => {
           <span>کدهای منبع سامانه جهت حفظ امنیت حساب‌های مالی رمزنگاری و حفاظت شده‌اند.</span>
         </div>
       )}
+
+      {/* Environment configuration banner if variables missing */}
+      <EnvNoticeBanner />
 
       {/* Top Header */}
       <Header
@@ -158,7 +165,7 @@ const AppContent: React.FC = () => {
       <footer className="border-t border-[#E2E8E4] dark:border-[#1A2621] py-6 mb-18 md:mb-0 text-xs text-zinc-500 dark:text-zinc-400 bg-white/50 dark:bg-[#0A100D]/50 font-cairo">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 flex flex-col sm:flex-row items-center justify-between gap-3">
           <div className="flex items-center gap-2">
-            <img src="/logo.png" alt="لوگوی چندبوم" className="w-5 h-5 object-contain" onError={(e) => { (e.currentTarget as HTMLImageElement).src = '/assets/logo.png'; }} />
+            <img src="./logo.png" alt="لوگوی چندبوم" className="w-5 h-5 object-contain" onError={(e) => { (e.currentTarget as HTMLImageElement).src = './assets/logo.png'; }} />
             <span className="font-brand font-bold text-sm text-zinc-800 dark:text-zinc-200">
               چندبوم (Chandboom)
             </span>

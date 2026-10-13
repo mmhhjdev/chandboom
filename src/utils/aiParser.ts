@@ -7,6 +7,7 @@ import {
 } from '../types';
 import { toEnglishDigits } from './formatters';
 import { sanitizeAIPrompt } from './security';
+import { processFinancialAI } from '../services/aiService';
 
 const CATEGORY_KEYWORDS: Partial<Record<TransactionCategory, string[]>> = {
   'خوراک و غذا': [
@@ -260,27 +261,56 @@ export function parseTransactionLocally(input: string): ParsedAITransaction {
   };
 }
 
+/**
+ * استخراج ساختاریافته تراکنش مالی منحصراً از طریق هوش مصنوعی چندبوم
+ * در صورت بروز خطا یا عدم تنظیم کلید، خطای شفاف بازگردانده شده و پاسخ جعلی تولید نمی‌شود.
+ */
 export async function parseTransactionWithAI(input: string): Promise<ParsedAITransaction> {
-  const { safePrompt } = sanitizeAIPrompt(input);
+  const result = await processFinancialAI(input);
 
-  try {
-    const res = await fetch('/api/ai/parse', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ prompt: safePrompt }),
-    });
-
-    if (res.ok) {
-      const data = await res.json();
-      if (data && data.amount !== undefined) {
-        return data as ParsedAITransaction;
-      }
-    }
-  } catch {
-    // Graceful fallback to local rule-based Persian NLP
+  if (result.is_transaction && result.transaction) {
+    return {
+      type: result.transaction.type,
+      amount: result.transaction.amount,
+      category: result.transaction.category,
+      description: result.transaction.title,
+      date: new Date().toISOString(),
+      confidence: 0.99,
+    };
   }
 
-  return parseTransactionLocally(safePrompt);
+  if (result.is_ambiguous && result.clarification_message) {
+    throw new Error(result.clarification_message);
+  }
+
+  throw new Error('متن وارد شده شامل اطلاعات تراکنش مالی معتبر نمی‌باشد.');
+}
+
+/**
+ * استخراج ساختاریافته گروهی چند تراکنش مالی منحصراً از طریق هوش مصنوعی چندبوم
+ */
+export async function parseTransactionsBatchWithAI(input: string): Promise<ParsedAITransaction[]> {
+  const result = await processFinancialAI(input);
+  const txList = (result.is_transaction && result.transactions && result.transactions.length > 0)
+    ? result.transactions
+    : (result.is_transaction && result.transaction ? [result.transaction] : []);
+
+  if (txList.length > 0) {
+    return txList.map((tx) => ({
+      type: tx.type,
+      amount: tx.amount,
+      category: tx.category,
+      description: tx.title,
+      date: new Date().toISOString(),
+      confidence: 0.99,
+    }));
+  }
+
+  if (result.is_ambiguous && result.clarification_message) {
+    throw new Error(result.clarification_message);
+  }
+
+  throw new Error('متن وارد شده شامل اطلاعات تراکنش مالی معتبر نمی‌باشد.');
 }
 
 /**

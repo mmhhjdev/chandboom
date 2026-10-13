@@ -32,7 +32,7 @@ import {
   GUEST_USER,
 } from '../data/initialData';
 import { generatePredictiveBudgetAlerts } from '../utils/aiParser';
-import { isAdminEmail, isStoredAdminSessionValid, clearStoredAdminSession } from '../utils/admin';
+import { isAdminEmail, isStoredAdminSessionValid, clearStoredAdminSession, getEnvAdminEmail } from '../utils/admin';
 import {
   requestAdminOtpViaEdgeFunction,
   verifyAdminOtpViaEdgeFunction,
@@ -44,6 +44,7 @@ import {
   getSupabaseClient,
   createUserOtp,
   verifyUserOtp,
+  verifyNativeOtp,
   checkEmailExists,
   sendLoginOtp,
   sendPasswordResetOtp,
@@ -96,7 +97,7 @@ interface AppContextType {
     age?: number,
     gender?: 'مرد' | 'زن' | 'سایر'
   ) => Promise<AuthResult>;
-  requestSignupOtp: (email: string) => Promise<{ success: boolean; code?: string; error?: string; isDuplicate?: boolean }>;
+  requestSignupOtp: (email: string, password: string, fullName: string, age?: number, gender?: 'مرد' | 'زن' | 'سایر') => Promise<{ success: boolean; error?: string; isDuplicate?: boolean }>;
   verifySignupOtpAndRegister: (
     email: string,
     code: string,
@@ -252,6 +253,42 @@ function translateSupabaseError(msg: string): string {
   return msg;
 }
 
+const VALID_TABS: ActiveTab[] = [
+  'landing',
+  'dashboard',
+  'transactions',
+  'goals',
+  'analytics',
+  'reminders',
+  'dong',
+  'subscription',
+  'support',
+  'settings',
+  'ai-assistant',
+];
+
+function getInitialTab(): ActiveTab {
+  if (typeof window !== 'undefined') {
+    // 1. Check window.location.hash (e.g. #/dashboard or #dashboard)
+    const hash = window.location.hash.replace(/^#\/?/, '').trim().toLowerCase();
+    if (VALID_TABS.includes(hash as ActiveTab)) {
+      return hash as ActiveTab;
+    }
+    // 2. Check path if decoded by GitHub Pages 404 handler
+    const path = window.location.pathname.replace(/^\/+/g, '').replace(/\/+$/g, '').toLowerCase();
+    if (VALID_TABS.includes(path as ActiveTab)) {
+      return path as ActiveTab;
+    }
+  }
+  try {
+    const stored = localStorage.getItem('chandboom_active_tab');
+    if (stored && VALID_TABS.includes(stored as ActiveTab)) {
+      return stored as ActiveTab;
+    }
+  } catch {}
+  return 'landing';
+}
+
 export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   // Strict Zero LocalStorage & Zero SessionStorage policy:
   // Theme relies solely on component state and system preferences (no browser storage).
@@ -270,7 +307,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
   const toggleDarkMode = () => setIsDarkMode((prev) => !prev);
 
-  const [activeTab, setActiveTabState] = useState<ActiveTab>('landing');
+  const [activeTab, setActiveTabState] = useState<ActiveTab>(getInitialTab);
   const [adminMode, setAdminModeState] = useState<boolean>(false);
   const [activeSupportTicketId, setActiveSupportTicketId] = useState<string | null>(null);
 
@@ -319,7 +356,34 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const setActiveTab = (tab: ActiveTab) => {
     setActiveTabState(tab);
     updatePageSeo(tab);
+    try {
+      localStorage.setItem('chandboom_active_tab', tab);
+    } catch {}
+    if (typeof window !== 'undefined') {
+      const currentHash = window.location.hash.replace(/^#\/?/, '').trim().toLowerCase();
+      if (currentHash !== tab) {
+        window.location.hash = `#/${tab}`;
+      }
+    }
   };
+
+  // Sync with browser back/forward buttons and hash navigation for GitHub Pages
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const handleHashChange = () => {
+      const hash = window.location.hash.replace(/^#\/?/, '').trim().toLowerCase();
+      if (VALID_TABS.includes(hash as ActiveTab) && hash !== activeTab) {
+        setActiveTabState(hash as ActiveTab);
+        updatePageSeo(hash as ActiveTab);
+        try {
+          localStorage.setItem('chandboom_active_tab', hash);
+        } catch {}
+      }
+    };
+
+    window.addEventListener('hashchange', handleHashChange);
+    return () => window.removeEventListener('hashchange', handleHashChange);
+  }, [activeTab]);
 
   const [admin2FAVerified, setAdmin2FAVerified] = useState<boolean>(() => {
     return checkAdmin2FASession(INITIAL_USER.email) || isStoredAdminSessionValid();
@@ -334,11 +398,11 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   }, [isAuthenticated, user?.role, user?.email, admin2FAVerified]);
 
   const requestAdminOtp = async () => {
-    return await requestAdminOtpViaEdgeFunction(user.email || 'seyedmahanhejrati@gmail.com');
+    return await requestAdminOtpViaEdgeFunction(user.email || getEnvAdminEmail() || 'admin@chandboom.ir');
   };
 
   const verifyAdmin2FA = async (code: string) => {
-    const result = await verifyAdminOtpViaEdgeFunction(code, user.email || 'seyedmahanhejrati@gmail.com');
+    const result = await verifyAdminOtpViaEdgeFunction(code, user.email || getEnvAdminEmail() || 'admin@chandboom.ir');
     if (result.success) {
       setAdmin2FAVerified(true);
     }
@@ -381,14 +445,19 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     if (!supabase) return;
 
     try {
-      // 1. Fetch User Profile
-      const { data: profileData } = await supabase.from('users').select('*').eq('id', userId).single();
+      // 1. Fetch User Profile with maybeSingle() to prevent PGRST116 throwing
+      const { data: profileData } = await supabase
+        .from('users')
+        .select('*')
+        .eq('id', userId)
+        .maybeSingle();
+
       const isAdm = isAdminEmail(userEmail) || profileData?.role === 'admin';
       const currentRole: UserRole = isAdm ? 'admin' : (profileData?.role || 'user');
 
       const mergedUser: UserProfile = {
         ...GUEST_USER,
-        ...profileData,
+        ...(profileData || {}),
         id: userId,
         email: userEmail,
         role: currentRole,
@@ -469,10 +538,12 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     }
   };
 
-  // Restore session via real Supabase Auth
+  // Restore session via real Supabase Auth (bulletproof cloud session persistence)
   useEffect(() => {
     const supabase = getSupabaseClient();
     if (!supabase) return;
+
+    let isMounted = true;
 
     const restoreSession = async () => {
       try {
@@ -482,9 +553,16 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
           return;
         }
 
-        if (session?.user) {
+        if (session?.user && isMounted) {
           setIsAuthenticated(true);
-          setActiveTabState('dashboard');
+          const targetTab = (() => {
+            try {
+              const stored = localStorage.getItem('chandboom_active_tab');
+              if (stored && stored !== 'landing') return stored as ActiveTab;
+            } catch {}
+            return 'dashboard';
+          })();
+          setActiveTabState(targetTab);
           const email = session.user.email || '';
           await fetchUserDataFromSupabase(session.user.id, email);
         }
@@ -496,9 +574,18 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     restoreSession();
 
     const { data: authListener } = supabase.auth.onAuthStateChange(async (event: string, session: any) => {
-      if (event === 'SIGNED_IN' && session?.user) {
+      if (!isMounted) return;
+
+      if (session?.user && (event === 'SIGNED_IN' || event === 'INITIAL_SESSION' || event === 'TOKEN_REFRESHED' || event === 'USER_UPDATED')) {
         setIsAuthenticated(true);
-        setActiveTabState('dashboard');
+        const targetTab = (() => {
+          try {
+            const stored = localStorage.getItem('chandboom_active_tab');
+            if (stored && stored !== 'landing') return stored as ActiveTab;
+          } catch {}
+          return 'dashboard';
+        })();
+        setActiveTabState(targetTab);
         const email = session.user.email || '';
         await fetchUserDataFromSupabase(session.user.id, email);
       } else if (event === 'SIGNED_OUT') {
@@ -507,10 +594,14 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         setAdminModeState(false);
         setAdmin2FAVerified(false);
         setActiveTabState('landing');
+        try {
+          localStorage.removeItem('chandboom_active_tab');
+        } catch {}
       }
     });
 
     return () => {
+      isMounted = false;
       authListener?.subscription?.unsubscribe();
     };
   }, []);
@@ -1413,17 +1504,19 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     return await checkEmailExists(email);
   };
 
-  const requestSignupOtp = async (email: string) => {
+  const requestSignupOtp = async (
+    email: string,
+    password: string,
+    fullName: string,
+    age?: number,
+    gender?: 'مرد' | 'زن' | 'سایر'
+  ) => {
     const cleanEmail = email.trim().toLowerCase();
     const isRegistered = await checkEmailExists(cleanEmail);
     if (isRegistered) {
-      return {
-        success: false,
-        error: 'این ایمیل قبلاً ثبت شده است. لطفاً وارد شوید.',
-        isDuplicate: true,
-      };
+      return { success: false, error: 'این ایمیل قبلاً ثبت شده است. لطفاً وارد شوید.', isDuplicate: true };
     }
-    return await createUserOtp(cleanEmail);
+    return await createUserOtp(cleanEmail, password, fullName, age, gender);
   };
 
   const requestLoginOtp = async (email: string) => {
@@ -1452,8 +1545,10 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         return { success: true };
       }
     }
-    setIsAuthenticated(true);
-    return { success: true };
+    // The OTP may authenticate with Supabase, but do not grant app access without a matching app profile.
+    await supabase.auth.signOut();
+    setIsAuthenticated(false);
+    return { success: false, error: 'برای این ایمیل پروفایل کاربری پیدا نشد. لطفاً با رمز عبور وارد شوید یا با پشتیبانی تماس بگیرید.' };
   };
 
   const requestPasswordResetOtp = async (email: string) => {
@@ -1474,17 +1569,45 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     age?: number,
     gender?: 'مرد' | 'زن' | 'سایر'
   ): Promise<AuthResult> => {
-    const verifyRes = await verifyUserOtp(email, code);
-    if (!verifyRes.success) {
-      return { success: false, error: verifyRes.error || 'کد تایید اشتباه است.' };
+    const cleanEmail = email.trim().toLowerCase();
+    const supabase = getSupabaseClient();
+    const verifyRes = await verifyNativeOtp(cleanEmail, code, 'signup');
+    if (!verifyRes.success) return { success: false, error: verifyRes.error || 'کد تأیید اشتباه یا منقضی شده است.' };
+
+    // verifyOtp(type=signup) creates the real Supabase session. Never create a second Auth user here.
+    const { data: authData, error: authError } = await supabase.auth.getUser();
+    if (authError || !authData.user || authData.user.email?.toLowerCase() !== cleanEmail) {
+      await supabase.auth.signOut();
+      return { success: false, error: 'تأیید ایمیل انجام شد اما نشست حساب قابل تأیید نیست. دوباره وارد شوید.' };
     }
 
-    // Now complete registration in Supabase Auth & public.users
-    const regRes = await registerWithEmail(email, fullName, password, undefined, age, gender);
-    if (regRes.success) {
-      await loginWithEmail(email, password);
+    const authUser = authData.user;
+    const isAdm = isAdminEmail(cleanEmail);
+    const profilePayload = {
+      id: authUser.id,
+      email: cleanEmail,
+      full_name: fullName.trim() || String(authUser.user_metadata?.full_name || cleanEmail.split('@')[0]),
+      age: age ?? authUser.user_metadata?.age ?? null,
+      gender: gender ?? authUser.user_metadata?.gender ?? null,
+      avatar_url: authUser.user_metadata?.avatar_url || MALE_AVATAR_SVG,
+      role: isAdm ? 'admin' : 'user',
+      tier: 'free',
+      subscription_status: 'none',
+      monthly_budget_cap: 20000000,
+      theme_preference: isDarkMode ? 'dark' : 'light',
+      currency: 'تومان',
+    };
+
+    const { error: profileError } = await supabase.from('users').upsert(profilePayload, { onConflict: 'id' });
+    if (profileError) {
+      // Do not claim success if the app profile could not be persisted; Auth account remains verified.
+      console.error('Failed to create verified user profile:', profileError.message);
+      return { success: false, error: 'ایمیل تأیید شد، اما ساخت پروفایل کاربری انجام نشد. لطفاً دوباره وارد شوید یا با پشتیبانی تماس بگیرید.' };
     }
-    return regRes;
+
+    setIsAuthenticated(true);
+    await fetchUserDataFromSupabase(authUser.id, cleanEmail);
+    return { success: true };
   };
 
   // Financial Goals Handlers (اهداف مالی)

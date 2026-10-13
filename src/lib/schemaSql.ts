@@ -260,8 +260,8 @@ CREATE TABLE IF NOT EXISTS public.admins (
 ALTER TABLE public.admins ENABLE ROW LEVEL SECURITY;
 CREATE POLICY "Admins read access" ON public.admins FOR SELECT USING (true);
 
--- Seed initial admin
-INSERT INTO public.admins (email, password, full_name, role)
-VALUES ('seyedmahanhejrati@gmail.com', 'AdminChandboom2026!', 'سید ماهان هجرتی', 'admin')
-ON CONFLICT (email) DO NOTHING;
+-- Seed initial admin (configure via environment variables or Supabase dashboard)
+-- INSERT INTO public.admins (email, password, full_name, role)
+-- VALUES ('admin@chandboom.ir', 'YOUR_ADMIN_PASSWORD', 'مدیر ارشد چندبوم', 'admin')
+-- ON CONFLICT (email) DO NOTHING;
 `;

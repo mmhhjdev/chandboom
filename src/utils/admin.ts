@@ -1,11 +1,5 @@
 import { getSupabaseClient } from '../lib/supabase';
 
-// The Admin Panel is exclusively accessible by configured admin accounts
-export const ADMIN_EMAILS: string[] = [
-  'seyedmahanhejrati@gmail.com',
-  'admin@chandboon.ir',
-];
-
 export const ADMIN_SESSION_KEY = 'chandboon_admin_session';
 
 export interface AdminSession {
@@ -16,10 +10,30 @@ export interface AdminSession {
   authenticatedAt: number;
 }
 
+/**
+ * Securely retrieves admin credentials from environment variables
+ */
+export function getEnvAdminEmail(): string {
+  const envVal =
+    (typeof import.meta !== 'undefined' && (import.meta as any).env?.VITE_ADMIN_EMAIL) ||
+    (typeof process !== 'undefined' && process.env?.VITE_ADMIN_EMAIL) ||
+    '';
+  return envVal ? envVal.trim().toLowerCase() : '';
+}
+
+export function getEnvAdminPassword(): string {
+  const envVal =
+    (typeof import.meta !== 'undefined' && (import.meta as any).env?.VITE_ADMIN_PASSWORD) ||
+    (typeof process !== 'undefined' && process.env?.VITE_ADMIN_PASSWORD) ||
+    '';
+  return envVal ? envVal.trim() : '';
+}
+
 export function isAdminEmail(email?: string | null): boolean {
   if (!email) return false;
   const clean = email.trim().toLowerCase();
-  return ADMIN_EMAILS.includes(clean);
+  const envEmail = getEnvAdminEmail();
+  return Boolean(envEmail && clean === envEmail);
 }
 
 export function canAccessAdminPanel(userRole?: string, email?: string): boolean {
@@ -137,13 +151,13 @@ export async function verifyAdminCredentials(
     }
   }
 
-  // 2. High-availability Fallback Authentication for Whitelisted Admin Email
-  if (isAdminEmail(cleanEmail)) {
-    // Standard secure admin passcode or seed password
-    if (cleanPassword === 'AdminChandboom2026!' || cleanPassword === '123456' || cleanPassword === 'admin') {
-      const session = setStoredAdminSession(cleanEmail, 'سید ماهان هجرتی');
-      return { success: true, session };
-    }
+  // 2. High-availability Fallback Authentication using Environment Variables
+  const envAdminEmail = getEnvAdminEmail();
+  const envAdminPassword = getEnvAdminPassword();
+
+  if (envAdminEmail && envAdminPassword && cleanEmail === envAdminEmail && cleanPassword === envAdminPassword) {
+    const session = setStoredAdminSession(cleanEmail, 'مدیر ارشد سامانه');
+    return { success: true, session };
   }
 
   return { success: false, error: 'اطلاعات کاربری ادمین در سیستم یافت نشد یا رمز عبور نامعتبر است.' };

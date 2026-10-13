@@ -18,7 +18,7 @@ import {
 import { useApp } from '../context/AppContext';
 import { Transaction, TransactionCategory, TransactionType } from '../types';
 import { formatToman, formatShamsiDate, toPersianDigits } from '../utils/formatters';
-import { parsePersianFinancialText } from '../utils/aiParser';
+import { processFinancialAI } from '../services/aiService';
 import { EXPENSE_CATEGORIES, INCOME_CATEGORIES } from '../data/initialData';
 import { exportTransactionsToExcel } from '../utils/excelExporter';
 
@@ -48,24 +48,45 @@ export const TransactionsView: React.FC<TransactionsViewProps> = ({
   const [categoryFilter, setCategoryFilter] = useState<string>('all');
   const [periodFilter, setPeriodFilter] = useState<PeriodFilter>('current_month');
   const [quickAiText, setQuickAiText] = useState('');
+  const [isAiLoading, setIsAiLoading] = useState(false);
+  const [aiError, setAiError] = useState<string | null>(null);
 
-  // Quick Natural Language Add
-  const handleQuickAiSubmit = (e: React.FormEvent) => {
+  // Quick Natural Language Add (Supports Batch Multi-Transactions via Chandboom AI)
+  const handleQuickAiSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!quickAiText.trim()) return;
+    const text = quickAiText.trim();
+    if (!text || isAiLoading) return;
 
-    const parsed = parsePersianFinancialText(quickAiText);
-    if (parsed.amount) {
-      addTransaction({
-        type: parsed.type || 'expense',
-        amount: parsed.amount,
-        category: (parsed.category as TransactionCategory) || 'خوراک و غذا',
-        description: parsed.description || quickAiText.trim(),
-        date: new Date().toISOString(),
-      });
-      setQuickAiText('');
-    } else {
-      alert('مبلغ قابل تشخیصی در متن یافت نشد. مثلاً بنویسید: «خرید نان ۲۰۰۰۰ تومان»');
+    setIsAiLoading(true);
+    setAiError(null);
+
+    try {
+      const result = await processFinancialAI(text);
+      if (result.is_transaction && ((result.transactions && result.transactions.length > 0) || result.transaction)) {
+        const txList = result.transactions && result.transactions.length > 0
+          ? result.transactions
+          : [result.transaction!];
+
+        for (const tx of txList) {
+          await addTransaction({
+            type: tx.type,
+            amount: tx.amount,
+            category: tx.category,
+            description: tx.title,
+            account: 'کارت اصلی',
+            date: new Date().toISOString(),
+          });
+        }
+        setQuickAiText('');
+      } else if (result.is_ambiguous && result.clarification_message) {
+        setAiError(result.clarification_message);
+      } else {
+        setAiError('مبلغ قابل تشخیصی در متن یافت نشد. لطفاً اطلاعات تراکنش را با مبلغ به تومان وارد نمایید.');
+      }
+    } catch (err: any) {
+      setAiError(err?.message || 'خطا در برقراری ارتباط با هوش مصنوعی چندبوم');
+    } finally {
+      setIsAiLoading(false);
     }
   };
 
@@ -213,28 +234,52 @@ export const TransactionsView: React.FC<TransactionsViewProps> = ({
       </div>
 
       {/* Natural Language Quick Input Bar */}
-      <form
-        onSubmit={handleQuickAiSubmit}
-        className="p-3 bg-white dark:bg-[#0F1512] rounded-2xl border border-[#E2E8E4] dark:border-[#1A2621] shadow-xs flex items-center gap-2"
-      >
-        <div className="p-2 rounded-xl bg-emerald-50 dark:bg-[#121F19] text-emerald-700 dark:text-emerald-300 shrink-0">
-          <Sparkles className="w-4 h-4" />
-        </div>
-        <input
-          type="text"
-          value={quickAiText}
-          onChange={(e) => setQuickAiText(e.target.value)}
-          placeholder="ثبت سریع متنی با هوش مصنوعی (مثلاً: ۳۵ هزار تومن نان سنگک یا یک میلیون حقوق)..."
-          className="flex-1 text-xs sm:text-sm bg-transparent outline-none text-zinc-900 dark:text-white placeholder:text-zinc-400 font-cairo"
-        />
-        <button
-          type="submit"
-          disabled={!quickAiText.trim()}
-          className="px-4 py-1.5 rounded-xl bg-emerald-700 hover:bg-emerald-800 text-white text-xs font-cairo font-bold transition cursor-pointer disabled:opacity-50 shrink-0"
+      <div className="space-y-2">
+        <form
+          onSubmit={handleQuickAiSubmit}
+          className="p-3 bg-white dark:bg-[#0F1512] rounded-2xl border border-[#E2E8E4] dark:border-[#1A2621] shadow-xs flex items-center gap-2"
         >
-          ثبت سریع
-        </button>
-      </form>
+          <div className="p-2 rounded-xl bg-emerald-50 dark:bg-[#121F19] text-emerald-700 dark:text-emerald-300 shrink-0">
+            <Sparkles className="w-4 h-4" />
+          </div>
+          <input
+            type="text"
+            value={quickAiText}
+            onChange={(e) => {
+              setQuickAiText(e.target.value);
+              if (aiError) setAiError(null);
+            }}
+            placeholder="ثبت هوشمند گروهی یا تکی (مثلاً: واریز ۲۵ میلیون حقوق، خرید قهوه ۵۰ هزار و اسنپ ۱۲۰ تومن)..."
+            className="flex-1 text-xs sm:text-sm bg-transparent outline-none text-zinc-900 dark:text-white placeholder:text-zinc-400 font-cairo"
+            disabled={isAiLoading}
+          />
+          <button
+            type="submit"
+            disabled={!quickAiText.trim() || isAiLoading}
+            className="px-4 py-1.5 rounded-xl bg-emerald-700 hover:bg-emerald-800 text-white text-xs font-cairo font-bold transition cursor-pointer disabled:opacity-50 shrink-0 flex items-center gap-1.5"
+          >
+            {isAiLoading ? (
+              <>
+                <div className="w-3.5 h-3.5 border-2 border-white/40 border-t-white rounded-full animate-spin" />
+                <span>در حال تحلیل...</span>
+              </>
+            ) : (
+              <span>ثبت سریع</span>
+            )}
+          </button>
+        </form>
+        {aiError && (
+          <div className="px-3.5 py-2 rounded-xl bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-900/50 text-rose-700 dark:text-rose-300 text-xs font-cairo flex items-center justify-between">
+            <span>{aiError}</span>
+            <button
+              onClick={() => setAiError(null)}
+              className="text-rose-500 hover:text-rose-700 dark:hover:text-rose-200 text-xs px-1 cursor-pointer"
+            >
+              ✕
+            </button>
+          </div>
+        )}
+      </div>
 
       {/* Timeline Period Tabs & Filters Bar */}
       <div className="p-4 bg-white dark:bg-[#0F1512] rounded-3xl border border-[#E2E8E4] dark:border-[#1A2621] shadow-xs space-y-4">

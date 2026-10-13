@@ -97,11 +97,11 @@ export const LandingPage: React.FC<LandingPageProps> = ({
             <div className="w-9 h-9 sm:w-11 sm:h-11 rounded-xl sm:rounded-2xl bg-gradient-to-br from-emerald-500 to-teal-800 p-0.5 shadow-lg shadow-emerald-950/50 flex items-center justify-center shrink-0">
               <div className="w-full h-full bg-[#090F0C] rounded-[10px] sm:rounded-[14px] flex items-center justify-center overflow-hidden">
                 <img
-                  src="/logo.png"
+                  src="./logo.png"
                   alt={isRtl ? 'لوگوی رسمی چندبوم' : 'Chandboom Official Logo'}
                   className="w-6 h-6 sm:w-8 sm:h-8 object-contain"
                   onError={(e) => {
-                    (e.currentTarget as HTMLImageElement).src = '/assets/logo.png';
+                    (e.currentTarget as HTMLImageElement).src = './assets/logo.png';
                   }}
                 />
               </div>
@@ -964,11 +964,11 @@ export const LandingPage: React.FC<LandingPageProps> = ({
             <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-emerald-600 to-teal-800 p-0.5 flex items-center justify-center">
               <div className="w-full h-full bg-[#0A100D] rounded-[10px] flex items-center justify-center">
                 <img
-                  src="/logo.png"
+                  src="./logo.png"
                   alt="Chandboom"
                   className="w-6 h-6 object-contain"
                   onError={(e) => {
-                    (e.currentTarget as HTMLImageElement).src = '/assets/logo.png';
+                    (e.currentTarget as HTMLImageElement).src = './assets/logo.png';
                   }}
                 />
               </div>

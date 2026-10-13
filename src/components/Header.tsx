@@ -55,10 +55,10 @@ export const Header: React.FC<HeaderProps> = ({
           >
             <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl sm:rounded-2xl overflow-hidden shadow-md group-hover:scale-105 transition flex items-center justify-center bg-white dark:bg-[#0E1512] border border-emerald-500/40 p-1 shrink-0">
               <img
-                src="/logo.png"
+                src="./logo.png"
                 alt="لوگوی رسمی چندبوم"
                 onError={(e) => {
-                  (e.currentTarget as HTMLImageElement).src = '/assets/logo.png';
+                  (e.currentTarget as HTMLImageElement).src = './assets/logo.png';
                 }}
                 className="w-full h-full object-contain"
               />

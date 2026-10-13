@@ -35,6 +35,8 @@ import {
   clearStoredAdminSession,
   isStoredAdminSessionValid,
   isAdminEmail,
+  getEnvAdminEmail,
+  getEnvAdminPassword,
 } from '../utils/admin';
 import { getSupabaseClient } from '../lib/supabase';
 import { formatToman, formatShamsiDateTime, formatShamsiDate, toPersianDigits } from '../utils/formatters';
@@ -69,7 +71,7 @@ export const AdminDashboardModal: React.FC<AdminDashboardModalProps> = ({ isOpen
   const [isAdminAuthenticated, setIsAdminAuthenticated] = useState<boolean>(() => {
     return isStoredAdminSessionValid() || isAdmin2FAVerified;
   });
-  const [adminEmailInput, setAdminEmailInput] = useState(user?.email || 'seyedmahanhejrati@gmail.com');
+  const [adminEmailInput, setAdminEmailInput] = useState(() => user?.email || getEnvAdminEmail() || '');
   const [adminPasswordInput, setAdminPasswordInput] = useState('');
   const [adminAuthError, setAdminAuthError] = useState<string | null>(null);
   const [isAuthSubmitting, setIsAuthSubmitting] = useState(false);
@@ -284,12 +286,12 @@ export const AdminDashboardModal: React.FC<AdminDashboardModalProps> = ({ isOpen
         }
       }
 
-      // 2. پشتیبانی از اکانت‌های مدیر ارشد در صورت دسترسی لوکال یا عدم دسترسی موقت به دیتابیس
-      if (!isVerified && isAdminEmail(cleanEmail)) {
-        if (cleanPassword === 'AdminChandboom2026!' || cleanPassword === '123456' || cleanPassword === 'admin') {
-          isVerified = true;
-          adminName = 'سید ماهان هجرتی';
-        }
+      // 2. پشتیبانی از اکانت‌های مدیر ارشد بر اساس متغیرهای محیطی VITE_ADMIN_EMAIL و VITE_ADMIN_PASSWORD
+      const envAdminEmail = getEnvAdminEmail();
+      const envAdminPassword = getEnvAdminPassword();
+      if (!isVerified && envAdminEmail && envAdminPassword && cleanEmail === envAdminEmail && cleanPassword === envAdminPassword) {
+        isVerified = true;
+        adminName = 'مدیر ارشد سامانه';
       }
 
       if (isVerified) {
@@ -310,13 +312,15 @@ export const AdminDashboardModal: React.FC<AdminDashboardModalProps> = ({ isOpen
         setAdminAuthError('اطلاعات کاربری ادمین در سیستم یافت نشد یا رمز عبور نامعتبر است.');
       }
     } catch (err: any) {
-      // در صورت خطای اتصال به شبکه برای ایمیل‌های وایت‌لیست ادمین
-      if (isAdminEmail(cleanEmail) && (cleanPassword === 'AdminChandboom2026!' || cleanPassword === '123456' || cleanPassword === 'admin')) {
-        setStoredAdminSession(cleanEmail, 'سید ماهان هجرتی');
+      // در صورت خطای اتصال به شبکه برای ایمیل‌های وایت‌لیست ادمین بر اساس متغیر محیطی
+      const envAdminEmail = getEnvAdminEmail();
+      const envAdminPassword = getEnvAdminPassword();
+      if (envAdminEmail && envAdminPassword && cleanEmail === envAdminEmail && cleanPassword === envAdminPassword) {
+        setStoredAdminSession(cleanEmail, 'مدیر ارشد سامانه');
         try {
           localStorage.setItem('isAdmin', 'true');
           localStorage.setItem('admin_email', cleanEmail);
-          localStorage.setItem('admin_name', 'سید ماهان هجرتی');
+          localStorage.setItem('admin_name', 'مدیر ارشد سامانه');
         } catch {}
         setIsAdminAuthenticated(true);
         setAdminAuthError(null);
@@ -470,7 +474,7 @@ export const AdminDashboardModal: React.FC<AdminDashboardModalProps> = ({ isOpen
                     required
                     value={adminEmailInput}
                     onChange={(e) => setAdminEmailInput(e.target.value)}
-                    placeholder="seyedmahanhejrati@gmail.com"
+                    placeholder={getEnvAdminEmail() || "admin@chandboom.ir"}
                     dir="ltr"
                     className="w-full px-3.5 py-2.5 bg-zinc-50 dark:bg-[#141F19] border border-[#E2E8E4] dark:border-[#1F2E27] rounded-xl text-xs font-mono text-zinc-900 dark:text-white outline-none focus:ring-2 focus:ring-emerald-600"
                   />

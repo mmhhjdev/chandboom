@@ -6,7 +6,7 @@
  * this module provides a structured local caching mechanism exclusively for:
  * 1. AI chat histories (Floating assistant and Dashboard chat)
  * 2. Automated lightweight financial health check summaries
- * 3. DeepSeek insights and financial goals feasibility projections
+ * 3. Chandboom AI insights and financial goals feasibility projections
  * 
  * Security Guard:
  * Strictly forbids storing auth tokens, passwords, session objects, or financial credentials.
@@ -153,7 +153,7 @@ export function setCachedFinancialHealthCheck(check: CachedFinancialHealthCheck)
   }
 }
 
-// 4. DeepSeek Financial Goals Feasibility Projections
+// 4. Chandboom AI Financial Goals Feasibility Projections
 export function getCachedGoalInsights(): Record<string, CachedGoalFeasibility> {
   if (typeof window === 'undefined') return {};
   try {

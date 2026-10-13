@@ -248,8 +248,8 @@ export const TransactionModal: React.FC<TransactionModalProps> = ({
       } else {
         setAiFeedback(result.clarification_message || 'متن وارد شده شامل تراکنش مالی معتبر نمی‌باشد.');
       }
-    } catch {
-      setAiFeedback('خطا در پردازش هوش مصنوعی.');
+    } catch (err: any) {
+      setAiFeedback(err?.message || 'خطا در برقراری ارتباط با هوش مصنوعی چندبوم');
     } finally {
       setIsAiLoading(false);
     }

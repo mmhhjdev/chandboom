@@ -64,7 +64,7 @@ export const BankSmsModal: React.FC<BankSmsModalProps> = ({
     setIsProcessing(true);
 
     try {
-      // 1. Parse using GapGPT typesafe/jev-1.13 (/systemone) and Smart NLU parser
+      // 1. Parse using Chandboom AI Smart NLU parser
       const parsed = await parseTransactionWithSystemOne(text);
 
       if (!parsed.amount || parsed.amount <= 0) {
@@ -90,7 +90,7 @@ export const BankSmsModal: React.FC<BankSmsModalProps> = ({
       setIsParsed(true);
     } catch (err: any) {
       console.error('Error parsing transaction text:', err);
-      setParseError('خطا در پردازش هوشمند پیامک. لطفاً متن را بررسی نمایید.');
+      setParseError(err?.message || 'خطا در برقراری ارتباط با هوش مصنوعی چندبوم');
     } finally {
       setIsProcessing(false);
     }

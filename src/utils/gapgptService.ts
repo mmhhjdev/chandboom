@@ -1,39 +1,30 @@
 import { ParsedAITransaction, TransactionCategory, TransactionType } from '../types';
-import { parseTransactionWithSystemOne, getConversationalAdvice } from '../services/aiService';
+import {
+  parseTransactionWithSystemOne,
+  getConversationalAdvice,
+  getAiApiKey,
+  getAiBaseUrl,
+  isAiConfigured,
+  AI_CHAT_MODEL,
+  AI_PARSER_MODEL,
+} from '../services/aiService';
 
 /**
- * چندبوم (Chandboom) - Unified AI Provider Integration
- * Model A: typesafe/jev-1.13 (/systemone) for structured transaction parsing
- * Model B: gapgpt-gemma-26b-a4b (/chat/completions) for conversational advisory
+ * سامانه مدیریت مالی چندبوم - اتصال اختصاصی هوش مصنوعی چندبوم
  */
 
-export const GAPGPT_BASE_URL =
-  (typeof import.meta !== 'undefined' && (import.meta as any).env?.VITE_GAPGPT_BASE_URL) ||
-  'https://api.gapgpt.app/v1';
+export const GAPGPT_BASE_URL = getAiBaseUrl();
+export const GAPGPT_PARSER_MODEL = AI_PARSER_MODEL;
+export const GAPGPT_CHAT_MODEL = AI_CHAT_MODEL;
 
-export const GAPGPT_PARSER_MODEL = 'typesafe/jev-1.13';
-export const GAPGPT_CHAT_MODEL = 'gapgpt-gemma-26b-a4b';
-export const GAPGPT_FALLBACK_CHAT_MODEL = 'gpt-6-luna';
-
-/**
- * Retrieves the AI API Key from environment variables
- */
 export function getGapGptApiKey(): string {
-  const key =
-    (typeof import.meta !== 'undefined' && (import.meta as any).env?.VITE_GAPGPT_API_KEY) ||
-    (typeof import.meta !== 'undefined' && (import.meta as any).env?.VITE_DEEPSEEK_API_KEY) ||
-    (typeof process !== 'undefined' && (process.env?.GAPGPT_API_KEY || process.env?.DEEPSEEK_API_KEY)) ||
-    '';
-  return key ? key.trim() : '';
+  return getAiApiKey();
 }
 
 export function isGapGptConfigured(): boolean {
-  return Boolean(getGapGptApiKey());
+  return isAiConfigured();
 }
 
-/**
- * Structure returned by the specialized Parser Model (typesafe/jev-1.13)
- */
 export interface GapGptParsedTransaction {
   clean_title: string;
   amount: number;
@@ -46,7 +37,7 @@ export interface GapGptParsedTransaction {
 }
 
 /**
- * 1. Structured Data & Transaction Parser (typesafe/jev-1.13 via /systemone)
+ * استخراج ساختاریافته تراکنش با هوش مصنوعی چندبوم
  */
 export async function parseTransactionWithGapGpt(input: string): Promise<GapGptParsedTransaction> {
   const res = await parseTransactionWithSystemOne(input);
@@ -63,7 +54,7 @@ export async function parseTransactionWithGapGpt(input: string): Promise<GapGptP
 }
 
 /**
- * 2. Conversational Advisor & General Chat (gapgpt-gemma-26b-a4b via /chat/completions)
+ * دریافت مشاوره و گفتگوی مالی هوشمند
  */
 export async function generateGapGptChatResponse(
   userQuery: string,
@@ -75,14 +66,14 @@ export async function generateGapGptChatResponse(
 }
 
 /**
- * Backwards Compatibility Aliases
+ * نام‌های مستعار جهت حفظ سازگاری
  */
 export const parseTransactionWithDeepSeek = async (input: string): Promise<ParsedAITransaction> => {
   const res = await parseTransactionWithGapGpt(input);
   return {
     type: res.type,
     amount: res.amount,
-    category: res.category || 'سایر',
+    category: res.category || 'سایر و متفرقه',
     description: res.clean_title,
     date: res.date || new Date().toISOString(),
     confidence: res.confidence,

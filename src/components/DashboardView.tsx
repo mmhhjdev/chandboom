@@ -26,7 +26,6 @@ import {
 } from 'lucide-react';
 import { useApp } from '../context/AppContext';
 import { formatToman, formatShamsiDate, toPersianDigits } from '../utils/formatters';
-import { parsePersianFinancialText, generateFinancialAdvice } from '../utils/aiParser';
 import { processFinancialAI, parseTransactionWithSystemOne, getConversationalAdvice } from '../services/aiService';
 import { TransactionCategory, TransactionType } from '../types';
 import { getCachedDashboardChat, setCachedDashboardChat } from '../utils/aiCache';
@@ -220,24 +219,38 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
               time: 'هم‌اکنون',
             },
           ]);
-        } else if (result.is_transaction && result.transaction) {
-          // Automatic transaction recording from structured output
-          const tx = result.transaction;
-          await addTransaction({
-            type: tx.type,
-            amount: tx.amount,
-            category: tx.category,
-            description: tx.title,
-            account: 'کارت اصلی',
-            date: new Date().toISOString(),
-          });
+        } else if (result.is_transaction && ((result.transactions && result.transactions.length > 0) || result.transaction)) {
+          // Automatic transaction(s) recording from structured output
+          const txList = result.transactions && result.transactions.length > 0
+            ? result.transactions
+            : [result.transaction!];
+
+          for (const tx of txList) {
+            await addTransaction({
+              type: tx.type,
+              amount: tx.amount,
+              category: tx.category,
+              description: tx.title,
+              account: 'کارت اصلی',
+              date: new Date().toISOString(),
+            });
+          }
+
+          let replyText = '';
+          if (txList.length === 1) {
+            const tx = txList[0];
+            replyText = `✅ تراکنش «${tx.title}» به مبلغ ${formatToman(tx.amount)} در دسته‌بندی «${tx.category}» به صورت خودکار ثبت گردید.`;
+          } else {
+            replyText = `✅ تعداد ${txList.length.toLocaleString('fa-IR')} تراکنش همزمان با موفقیت ثبت شدند:\n\n` +
+              txList.map((tx, idx) => `${(idx + 1).toLocaleString('fa-IR')}. ${tx.type === 'income' ? '🟢 واریز' : '🔴 هزینه'}: «${tx.title}» - ${formatToman(tx.amount)} (${tx.category})`).join('\n');
+          }
 
           setChatMessages((prev) => [
             ...prev,
             {
               id: (Date.now() + 1).toString(),
               sender: 'assistant',
-              text: `✅ تراکنش «${tx.title}» به مبلغ ${formatToman(tx.amount)} در دسته‌بندی «${tx.category}» به صورت خودکار ثبت گردید.`,
+              text: replyText,
               time: 'هم‌اکنون',
             },
           ]);
@@ -260,7 +273,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
           {
             id: (Date.now() + 1).toString(),
             sender: 'assistant',
-            text: 'خطایی در پردازش رخ داد. لطفاً مجدداً امتحان نمایید.',
+            text: err?.message || 'خطا در برقراری ارتباط با هوش مصنوعی چندبوم',
             time: 'هم‌اکنون',
           },
         ]);
