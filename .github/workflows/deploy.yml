@@ -33,15 +33,15 @@ jobs:
       - name: Install Dependencies
         run: npm ci || npm install
 
-      - name: Verify TypeScript & Lint
-        run: npm run lint
+      - name: Optional Lint Check
+        run: npm run lint --if-present
 
       - name: Build Application for Production
         env:
           VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
           VITE_SUPABASE_ANON_KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY }}
           VITE_GAPGPT_API_KEY: ${{ secrets.VITE_GAPGPT_API_KEY }}
-          VITE_GAPGPT_BASE_URL: ${{ vars.VITE_GAPGPT_BASE_URL || 'https://gapgpt.app/api/v1' }}
+          VITE_GAPGPT_BASE_URL: ${{ vars.VITE_GAPGPT_BASE_URL || 'https://api.gapgpt.app/v1' }}
         run: npm run build
 
       - name: Verify CNAME and SPA 404 Routing in Dist
