@@ -42,8 +42,8 @@ jobs:
           VITE_SUPABASE_ANON_KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY }}
           VITE_GAPGPT_API_KEY: ${{ secrets.VITE_GAPGPT_API_KEY }}
           VITE_AI_API_KEY: ${{ secrets.VITE_AI_API_KEY || secrets.VITE_GAPGPT_API_KEY }}
-          VITE_GAPGPT_BASE_URL: ${{ vars.VITE_GAPGPT_BASE_URL || 'https://api.gapgpt.app/v1' }}
-          VITE_AI_BASE_URL: ${{ vars.VITE_AI_BASE_URL || 'https://api.gapgpt.app/v1' }}
+          VITE_GAPGPT_BASE_URL: ${{ secrets.VITE_GAPGPT_BASE_URL || vars.VITE_GAPGPT_BASE_URL || 'https://api.gapgpt.app/v1' }}
+          VITE_AI_BASE_URL: ${{ secrets.VITE_AI_BASE_URL || vars.VITE_AI_BASE_URL || 'https://api.gapgpt.app/v1' }}
         run: npm run build
 
       - name: Verify build output
