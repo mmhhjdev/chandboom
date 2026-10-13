@@ -1,4 +1,4 @@
-
+```yaml
 name: Deploy Chandboom to GitHub Pages
 
 on:
@@ -19,7 +19,7 @@ concurrency:
 
 jobs:
   build:
-    name: Build Static App
+    name: Build Chandboom
     runs-on: ubuntu-latest
 
     steps:
@@ -35,39 +35,52 @@ jobs:
       - name: Install Dependencies
         run: npm ci
 
-      - name: Optional Lint Check
+      - name: Lint Check
         run: npm run lint --if-present
 
-      - name: Create Temporary Environment File
+      - name: Create Environment File
         env:
           VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
           VITE_SUPABASE_ANON_KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY }}
+          VITE_GAPGPT_API_KEY: ${{ secrets.VITE_GAPGPT_API_KEY }}
+          VITE_AI_API_KEY: ${{ secrets.VITE_AI_API_KEY }}
           VITE_GAPGPT_BASE_URL: ${{ vars.VITE_GAPGPT_BASE_URL }}
+          VITE_AI_BASE_URL: ${{ vars.VITE_AI_BASE_URL }}
         run: |
           set -eu
 
           if [ -z "$VITE_SUPABASE_URL" ]; then
-            echo "::error::VITE_SUPABASE_URL is missing"
+            echo "::error::Missing VITE_SUPABASE_URL secret"
             exit 1
           fi
 
           if [ -z "$VITE_SUPABASE_ANON_KEY" ]; then
-            echo "::error::VITE_SUPABASE_ANON_KEY is missing"
+            echo "::error::Missing VITE_SUPABASE_ANON_KEY secret"
             exit 1
           fi
 
           GAPGPT_URL="${VITE_GAPGPT_BASE_URL:-https://api.gapgpt.app/v1}"
+          AI_URL="${VITE_AI_BASE_URL:-$GAPGPT_URL}"
 
           {
             printf 'VITE_SUPABASE_URL=%s\n' "$VITE_SUPABASE_URL"
             printf 'VITE_SUPABASE_ANON_KEY=%s\n' "$VITE_SUPABASE_ANON_KEY"
             printf 'VITE_GAPGPT_BASE_URL=%s\n' "$GAPGPT_URL"
+            printf 'VITE_AI_BASE_URL=%s\n' "$AI_URL"
+
+            if [ -n "$VITE_GAPGPT_API_KEY" ]; then
+              printf 'VITE_GAPGPT_API_KEY=%s\n' "$VITE_GAPGPT_API_KEY"
+            fi
+
+            if [ -n "$VITE_AI_API_KEY" ]; then
+              printf 'VITE_AI_API_KEY=%s\n' "$VITE_AI_API_KEY"
+            fi
           } > .env
 
       - name: Build Application
         run: npm run build
 
-      - name: Remove Temporary Environment File
+      - name: Remove Environment File
         if: always()
         run: rm -f .env
 
@@ -107,3 +120,4 @@ jobs:
       - name: Deploy to GitHub Pages
         id: deployment
         uses: actions/deploy-pages@v4
+```
