@@ -1,15 +1,8 @@
 import { createClient, SupabaseClient } from '@supabase/supabase-js';
 
-export const SUPABASE_URL: string =
-  (typeof import.meta !== 'undefined' && (import.meta as any).env?.VITE_SUPABASE_URL) ||
-  'https://yqmhtfuwnnlzenqrhyxm.supabase.co';
+export const SUPABASE_URL: string = import.meta.env.VITE_SUPABASE_URL || '';
+export const SUPABASE_ANON_KEY: string = import.meta.env.VITE_SUPABASE_ANON_KEY || '';
 
-export const SUPABASE_ANON_KEY: string =
-  (typeof import.meta !== 'undefined' && (import.meta as any).env?.VITE_SUPABASE_ANON_KEY) ||
-  'sb_publishable_IJT6kGn76dNThqX2iXgwzg_OzkEtuLT';
-
-// Robust Cloud Session Storage for Modern Web Apps:
-// Uses browser localStorage for zero-loss session persistence across page reloads and browser visits.
 const persistentStorage = typeof window !== 'undefined' ? window.localStorage : undefined;
 
 export const supabase: SupabaseClient = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
@@ -63,7 +56,6 @@ export function translateSupabaseError(msg?: string): string {
 
 /**
  * 1. ارسال کد تایید یکبارمصرف (OTP) از طریق سیستم احراز هویت رسمی Supabase Auth
- * درخواست صدور کد OTP ایمیلی به جای Magic Link بدون افشای رمز
  */
 export async function sendNativeOtp(
   email: string,
@@ -96,7 +88,6 @@ export const createUserOtp = sendNativeOtp;
 
 /**
  * 2. اعتبارسنجی کد تایید OTP در Supabase Auth
- * پشتیبانی از توکن‌های ۶ تا ۸ رقمی با نوع‌های 'email' و 'signup'
  */
 export async function verifyNativeOtp(
   email: string,
@@ -117,7 +108,6 @@ export async function verifyNativeOtp(
       type,
     });
 
-    // Fallback: اگر با type مشخص شده تایید نشد، سایر حالات ممکن را تست می‌کند
     if (verifyRes.error && type === 'email') {
       const altRes = await supabase.auth.verifyOtp({
         email: normalizedEmail,
@@ -155,7 +145,7 @@ export async function verifyNativeOtp(
 export const verifyUserOtp = verifyNativeOtp;
 
 /**
- * Checks if an email is already registered in the system (Duplicate Registration Prevention)
+ * بررسی وجود ایمیل در سیستم
  */
 export async function checkEmailExists(email: string): Promise<boolean> {
   const normalizedEmail = email.toLowerCase().trim();
@@ -177,7 +167,7 @@ export async function checkEmailExists(email: string): Promise<boolean> {
 }
 
 /**
- * Passwordless Login: Sends OTP to user email
+ * ورود با رمز عبور موقت (OTP)
  */
 export async function sendLoginOtp(email: string): Promise<{ success: boolean; error?: string }> {
   const normalizedEmail = email.toLowerCase().trim();
@@ -189,8 +179,7 @@ export async function sendLoginOtp(email: string): Promise<{ success: boolean; e
 }
 
 /**
- * Forgot Password: Uses Supabase Auth Standard resetPasswordForEmail
- * Completely eliminates custom/manual queries on public.users table to avoid RLS/permission errors.
+ * بازیابی رمز عبور
  */
 export async function sendPasswordResetOtp(email: string): Promise<{ success: boolean; error?: string }> {
   const normalizedEmail = email.toLowerCase().trim();
@@ -209,7 +198,6 @@ export async function sendPasswordResetOtp(email: string): Promise<{ success: bo
       return { success: false, error: error.message || 'خطا در ارسال ایمیل بازیابی رمز عبور.' };
     }
 
-    // Also dispatch OTP code for users entering an OTP verification code
     try {
       await sendNativeOtp(normalizedEmail);
     } catch {}
@@ -221,7 +209,7 @@ export async function sendPasswordResetOtp(email: string): Promise<{ success: bo
 }
 
 /**
- * Resets user password after verifying email OTP code
+ * ریست کردن رمز عبور پس از تایید کد
  */
 export async function resetUserPassword(
   email: string,
@@ -234,7 +222,6 @@ export async function resetUserPassword(
     return { success: false, error: 'رمز عبور جدید باید حداقل ۶ کاراکتر باشد.' };
   }
 
-  // 1. Verify recovery OTP code with Supabase Auth
   if (cleanCode) {
     const { error: recoveryErr } = await supabase.auth.verifyOtp({
       email: normalizedEmail,
@@ -250,14 +237,12 @@ export async function resetUserPassword(
     }
   }
 
-  // 2. Update password in Supabase Auth
   try {
     const { error } = await supabase.auth.updateUser({
       password: newPassword,
     });
 
     if (error) {
-      // If session not active or requires direct update
       console.warn('Note on updateUser:', error.message);
     }
     return { success: true };
@@ -267,7 +252,7 @@ export async function resetUserPassword(
 }
 
 /**
- * 3. Uploads a payment receipt to the Supabase Storage bucket 'payment-receipts'
+ * آپلود فیش پرداخت
  */
 export async function uploadPaymentReceipt(
   file: File | Blob,
@@ -305,8 +290,7 @@ export async function uploadPaymentReceipt(
 }
 
 /**
- * 4. Uploads user avatar image directly to the Supabase Storage bucket 'avatars'
- * Strict Requirement: Linked directly to the user profile record.
+ * آپلود تصویر آواتار
  */
 export async function uploadUserAvatar(
   file: File | Blob,
@@ -325,7 +309,6 @@ export async function uploadUserAvatar(
       });
 
     if (error) {
-      // Fallback: convert to base64 data URL if bucket is not yet provisioned
       return new Promise((resolve) => {
         const reader = new FileReader();
         reader.onload = (e) => resolve({ url: (e.target?.result as string) || '' });
@@ -345,8 +328,7 @@ export async function uploadUserAvatar(
 }
 
 /**
- * 4. Invokes the Supabase Edge Function 'admin-otp' strictly on the server.
- * Never degrades to insecure local memory or client-side storage.
+ * اتصال به Edge Function مربوط به OTP ادمین
  */
 export async function invokeAdminOtpEdgeFunction(
   action: 'send_otp' | 'verify_otp',
@@ -373,15 +355,13 @@ export async function invokeAdminOtpEdgeFunction(
   } catch (err: any) {
     return {
       success: false,
-      error: err?.message || 'ارتباط با سرور امن احراز هویت ادمین برقرار نشد. لطفاً وضعیت Edge Function را بررسی فرمایید.',
+      error: err?.message || 'ارتباط با سرور امن احراز هویت ادمین برقرار نشد.',
     };
   }
 }
 
 /**
- * 5. Invokes the Supabase Edge Function 'admin-review-order'
- * Executes payment review (approval/rejection) and subscription updates securely on the server
- * with caller JWT authentication and admin authorization.
+ * بررسی سفارشات توسط ادمین
  */
 export async function invokeAdminReviewOrderEdgeFunction(params: {
   action: 'approve' | 'reject';
@@ -395,7 +375,7 @@ export async function invokeAdminReviewOrderEdgeFunction(params: {
     if (!token) {
       return {
         success: false,
-        error: 'نشست احراز هویت مدیر ارشد یافت نشد. لطفاً مجدداً با حساب مدیریت لاگین فرمایید.',
+        error: 'نشست احراز هویت مدیر ارشد یافت نشد.',
       };
     }
 
@@ -429,8 +409,7 @@ export async function invokeAdminReviewOrderEdgeFunction(params: {
 }
 
 /**
- * 6. Invokes the Supabase Edge Function 'admin-manage-user'
- * Updates user role, tier, and subscription duration securely on the server.
+ * مدیریت کاربران توسط ادمین
  */
 export async function invokeAdminManageUserEdgeFunction(params: {
   action: 'update_role_tier' | 'update_subscription_days';
@@ -447,7 +426,7 @@ export async function invokeAdminManageUserEdgeFunction(params: {
     if (!token) {
       return {
         success: false,
-        error: 'نشست احراز هویت مدیر ارشد یافت نشد. لطفاً مجدداً لاگین فرمایید.',
+        error: 'نشست احراز هویت مدیر ارشد یافت نشد.',
       };
     }
 
@@ -479,4 +458,3 @@ export async function invokeAdminManageUserEdgeFunction(params: {
     };
   }
 }
-
