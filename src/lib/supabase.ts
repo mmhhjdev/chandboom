@@ -1,12 +1,24 @@
 import { createClient, SupabaseClient } from '@supabase/supabase-js';
 
-export const SUPABASE_URL: string =
-  (typeof import.meta !== 'undefined' && (import.meta as any).env?.VITE_SUPABASE_URL) ||
-  'https://yqmhtfuwnnlzenqrhyxm.supabase.co';
+// Fallback values
+const FALLBACK_SUPABASE_URL = 'https://yqmhtfuwnnlzenqrhyxm.supabase.co';
+const FALLBACK_SUPABASE_ANON_KEY = 'sb_publishable_IJT6kGn76dNThqX2iXgwzg_OzkEtuLT';
 
-export const SUPABASE_ANON_KEY: string =
-  (typeof import.meta !== 'undefined' && (import.meta as any).env?.VITE_SUPABASE_ANON_KEY) ||
-  'sb_publishable_IJT6kGn76dNThqX2iXgwzg_OzkEtuLT';
+// Validation helpers
+function isValidSupabaseUrl(url: unknown): url is string {
+  return typeof url === 'string' && url.trim().startsWith('https://') && url.trim().includes('.supabase.co');
+}
+
+function isValidSupabaseKey(key: unknown): key is string {
+  return typeof key === 'string' && key.trim().length > 20;
+}
+
+// Safe environment variable access with trim and validation
+const envUrl = typeof import.meta !== 'undefined' ? (import.meta as any).env?.VITE_SUPABASE_URL : undefined;
+const envKey = typeof import.meta !== 'undefined' ? (import.meta as any).env?.VITE_SUPABASE_ANON_KEY : undefined;
+
+export const SUPABASE_URL: string = isValidSupabaseUrl(envUrl) ? envUrl.trim() : FALLBACK_SUPABASE_URL;
+export const SUPABASE_ANON_KEY: string = isValidSupabaseKey(envKey) ? envKey.trim() : FALLBACK_SUPABASE_ANON_KEY;
 
 // Robust Cloud Session Storage for Modern Web Apps:
 // Uses browser localStorage for zero-loss session persistence across page reloads and browser visits.
@@ -26,8 +38,8 @@ export function getSupabaseClient(): SupabaseClient {
 }
 
 /**
- * ترجمه خطاهای سوپابیس به زبان فارسی روان
- */
+ترجمه خطاهای سوپابیس به زبان فارسی روان
+*/
 export function translateSupabaseError(msg?: string): string {
   if (!msg) return 'خطایی در پردازش اطلاعات رخ داد.';
   const lower = msg.toLowerCase();
@@ -62,9 +74,9 @@ export function translateSupabaseError(msg?: string): string {
 }
 
 /**
- * 1. ارسال کد تایید یکبارمصرف (OTP) از طریق سیستم احراز هویت رسمی Supabase Auth
- * درخواست صدور کد OTP ایمیلی به جای Magic Link بدون افشای رمز
- */
+ارسال کد تایید یکبارمصرف (OTP) از طریق سیستم احراز هویت رسمی Supabase Auth
+درخواست صدور کد OTP ایمیلی به جای Magic Link بدون افشای رمز
+*/
 export async function sendNativeOtp(
   email: string,
   options?: { shouldCreateUser?: boolean }
@@ -73,7 +85,6 @@ export async function sendNativeOtp(
   if (!normalizedEmail || !normalizedEmail.includes('@')) {
     return { success: false, error: 'لطفاً یک آدرس ایمیل معتبر وارد نمایید.' };
   }
-
   try {
     const { error } = await supabase.auth.signInWithOtp({
       email: normalizedEmail,
@@ -81,11 +92,9 @@ export async function sendNativeOtp(
         shouldCreateUser: options?.shouldCreateUser ?? true,
       },
     });
-
     if (error) {
       return { success: false, error: translateSupabaseError(error.message) };
     }
-
     return { success: true };
   } catch (err: any) {
     return { success: false, error: translateSupabaseError(err?.message) };
@@ -95,9 +104,9 @@ export async function sendNativeOtp(
 export const createUserOtp = sendNativeOtp;
 
 /**
- * 2. اعتبارسنجی کد تایید OTP در Supabase Auth
- * پشتیبانی از توکن‌های ۶ تا ۸ رقمی با نوع‌های 'email' و 'signup'
- */
+اعتبارسنجی کد تایید OTP در Supabase Auth
+پشتیبانی از توکن‌های  تا ۸ رقمی با نوع‌های 'email' و 'signup'
+*/
 export async function verifyNativeOtp(
   email: string,
   token: string,
@@ -105,18 +114,15 @@ export async function verifyNativeOtp(
 ): Promise<{ success: boolean; session?: any; user?: any; error?: string }> {
   const normalizedEmail = email.toLowerCase().trim();
   const cleanToken = token.trim();
-
   if (!cleanToken || cleanToken.length < 6 || cleanToken.length > 8 || !/^\d+$/.test(cleanToken)) {
-    return { success: false, error: 'کد تایید باید عددی و بین ۶ تا ۸ رقم باشد.' };
+    return { success: false, error: 'کد تایید باید عددی و بین  تا ۸ رقم باشد.' };
   }
-
   try {
     let verifyRes = await supabase.auth.verifyOtp({
       email: normalizedEmail,
       token: cleanToken,
       type,
     });
-
     // Fallback: اگر با type مشخص شده تایید نشد، سایر حالات ممکن را تست می‌کند
     if (verifyRes.error && type === 'email') {
       const altRes = await supabase.auth.verifyOtp({
@@ -137,11 +143,9 @@ export async function verifyNativeOtp(
         verifyRes = altRes;
       }
     }
-
     if (verifyRes.error) {
       return { success: false, error: translateSupabaseError(verifyRes.error.message) };
     }
-
     return {
       success: true,
       session: verifyRes.data?.session,
@@ -155,8 +159,8 @@ export async function verifyNativeOtp(
 export const verifyUserOtp = verifyNativeOtp;
 
 /**
- * Checks if an email is already registered in the system (Duplicate Registration Prevention)
- */
+Checks if an email is already registered in the system (Duplicate Registration Prevention)
+*/
 export async function checkEmailExists(email: string): Promise<boolean> {
   const normalizedEmail = email.toLowerCase().trim();
   if (!normalizedEmail) return false;
@@ -166,7 +170,6 @@ export async function checkEmailExists(email: string): Promise<boolean> {
       .select('id, email')
       .eq('email', normalizedEmail)
       .maybeSingle();
-
     if (!error && data && data.email) {
       return true;
     }
@@ -177,43 +180,38 @@ export async function checkEmailExists(email: string): Promise<boolean> {
 }
 
 /**
- * Passwordless Login: Sends OTP to user email
- */
+Passwordless Login: Sends OTP to user email
+*/
 export async function sendLoginOtp(email: string): Promise<{ success: boolean; error?: string }> {
   const normalizedEmail = email.toLowerCase().trim();
   if (!normalizedEmail || !normalizedEmail.includes('@')) {
     return { success: false, error: 'لطفاً یک آدرس ایمیل معتبر وارد نمایید.' };
   }
-
   return sendNativeOtp(normalizedEmail);
 }
 
 /**
- * Forgot Password: Uses Supabase Auth Standard resetPasswordForEmail
- * Completely eliminates custom/manual queries on public.users table to avoid RLS/permission errors.
- */
+Forgot Password: Uses Supabase Auth Standard resetPasswordForEmail
+Completely eliminates custom/manual queries on public.users table to avoid RLS/permission errors.
+*/
 export async function sendPasswordResetOtp(email: string): Promise<{ success: boolean; error?: string }> {
   const normalizedEmail = email.toLowerCase().trim();
   if (!normalizedEmail || !normalizedEmail.includes('@')) {
     return { success: false, error: 'لطفاً یک آدرس ایمیل معتبر وارد نمایید.' };
   }
-
   try {
     const redirectTo = typeof window !== 'undefined' ? `${window.location.origin}` : undefined;
     const { error } = await supabase.auth.resetPasswordForEmail(normalizedEmail, {
       redirectTo,
     });
-
     if (error) {
       console.warn('Supabase resetPasswordForEmail returned error:', error.message);
       return { success: false, error: error.message || 'خطا در ارسال ایمیل بازیابی رمز عبور.' };
     }
-
     // Also dispatch OTP code for users entering an OTP verification code
     try {
       await sendNativeOtp(normalizedEmail);
     } catch {}
-
     return { success: true };
   } catch (err: any) {
     return { success: false, error: err?.message || 'خطا در ارتباط با سرور احراز هویت جهت بازیابی رمز عبور.' };
@@ -221,8 +219,8 @@ export async function sendPasswordResetOtp(email: string): Promise<{ success: bo
 }
 
 /**
- * Resets user password after verifying email OTP code
- */
+Resets user password after verifying email OTP code
+*/
 export async function resetUserPassword(
   email: string,
   code: string,
@@ -233,7 +231,6 @@ export async function resetUserPassword(
   if (!newPassword || newPassword.length < 6) {
     return { success: false, error: 'رمز عبور جدید باید حداقل ۶ کاراکتر باشد.' };
   }
-
   // 1. Verify recovery OTP code with Supabase Auth
   if (cleanCode) {
     const { error: recoveryErr } = await supabase.auth.verifyOtp({
@@ -241,7 +238,6 @@ export async function resetUserPassword(
       token: cleanCode,
       type: 'recovery',
     });
-
     if (recoveryErr) {
       const fallbackVerify = await verifyNativeOtp(normalizedEmail, cleanCode, 'email');
       if (!fallbackVerify.success) {
@@ -249,13 +245,11 @@ export async function resetUserPassword(
       }
     }
   }
-
   // 2. Update password in Supabase Auth
   try {
     const { error } = await supabase.auth.updateUser({
       password: newPassword,
     });
-
     if (error) {
       // If session not active or requires direct update
       console.warn('Note on updateUser:', error.message);
@@ -267,8 +261,8 @@ export async function resetUserPassword(
 }
 
 /**
- * 3. Uploads a payment receipt to the Supabase Storage bucket 'payment-receipts'
- */
+Uploads a payment receipt to the Supabase Storage bucket 'payment-receipts'
+*/
 export async function uploadPaymentReceipt(
   file: File | Blob,
   userId: string,
@@ -277,14 +271,12 @@ export async function uploadPaymentReceipt(
   try {
     const ext = fileName ? fileName.split('.').pop() || 'png' : 'png';
     const filePath = `${userId}/${Date.now()}_${Math.random().toString(36).substring(7)}.${ext}`;
-
     const { data, error } = await supabase.storage
       .from('payment-receipts')
       .upload(filePath, file, {
         upsert: true,
         contentType: (file as File).type || 'image/jpeg',
       });
-
     if (error) {
       return new Promise((resolve) => {
         const reader = new FileReader();
@@ -293,11 +285,9 @@ export async function uploadPaymentReceipt(
         reader.readAsDataURL(file);
       });
     }
-
     const { data: publicUrlData } = supabase.storage
       .from('payment-receipts')
       .getPublicUrl(data.path);
-
     return { url: publicUrlData?.publicUrl || data.path };
   } catch (err: any) {
     return { url: '', error: err?.message || 'خطا در آپلود فیش' };
@@ -305,9 +295,9 @@ export async function uploadPaymentReceipt(
 }
 
 /**
- * 4. Uploads user avatar image directly to the Supabase Storage bucket 'avatars'
- * Strict Requirement: Linked directly to the user profile record.
- */
+Uploads user avatar image directly to the Supabase Storage bucket 'avatars'
+Strict Requirement: Linked directly to the user profile record.
+*/
 export async function uploadUserAvatar(
   file: File | Blob,
   userId: string,
@@ -316,14 +306,12 @@ export async function uploadUserAvatar(
   try {
     const ext = fileName ? fileName.split('.').pop() || 'png' : 'png';
     const filePath = `${userId}/${Date.now()}_avatar.${ext}`;
-
     const { data, error } = await supabase.storage
       .from('avatars')
       .upload(filePath, file, {
         upsert: true,
         contentType: (file as File).type || 'image/jpeg',
       });
-
     if (error) {
       // Fallback: convert to base64 data URL if bucket is not yet provisioned
       return new Promise((resolve) => {
@@ -333,11 +321,9 @@ export async function uploadUserAvatar(
         reader.readAsDataURL(file);
       });
     }
-
     const { data: publicUrlData } = supabase.storage
       .from('avatars')
       .getPublicUrl(data.path);
-
     return { url: publicUrlData?.publicUrl || data.path };
   } catch (err: any) {
     return { url: '', error: err?.message || 'خطا در آپلود تصویر نمایه' };
@@ -345,9 +331,9 @@ export async function uploadUserAvatar(
 }
 
 /**
- * 4. Invokes the Supabase Edge Function 'admin-otp' strictly on the server.
- * Never degrades to insecure local memory or client-side storage.
- */
+Invokes the Supabase Edge Function 'admin-otp' strictly on the server.
+Never degrades to insecure local memory or client-side storage.
+*/
 export async function invokeAdminOtpEdgeFunction(
   action: 'send_otp' | 'verify_otp',
   payload: { email: string; code?: string }
@@ -356,11 +342,9 @@ export async function invokeAdminOtpEdgeFunction(
     const { data, error } = await supabase.functions.invoke('admin-otp', {
       body: { action, ...payload },
     });
-
     if (error) {
       return { success: false, error: translateSupabaseError(error.message) };
     }
-
     if (data) {
       return {
         success: Boolean(data.success),
@@ -379,10 +363,10 @@ export async function invokeAdminOtpEdgeFunction(
 }
 
 /**
- * 5. Invokes the Supabase Edge Function 'admin-review-order'
- * Executes payment review (approval/rejection) and subscription updates securely on the server
- * with caller JWT authentication and admin authorization.
- */
+Invokes the Supabase Edge Function 'admin-review-order'
+Executes payment review (approval/rejection) and subscription updates securely on the server
+with caller JWT authentication and admin authorization.
+*/
 export async function invokeAdminReviewOrderEdgeFunction(params: {
   action: 'approve' | 'reject';
   paymentId: string;
@@ -391,25 +375,21 @@ export async function invokeAdminReviewOrderEdgeFunction(params: {
   try {
     const sessionRes = await supabase.auth.getSession();
     const token = sessionRes?.data?.session?.access_token;
-
     if (!token) {
       return {
         success: false,
         error: 'نشست احراز هویت مدیر ارشد یافت نشد. لطفاً مجدداً با حساب مدیریت لاگین فرمایید.',
       };
     }
-
     const { data, error } = await supabase.functions.invoke('admin-review-order', {
       body: params,
       headers: {
         Authorization: `Bearer ${token}`,
       },
     });
-
     if (error) {
       return { success: false, error: translateSupabaseError(error.message) };
     }
-
     if (data) {
       return {
         success: Boolean(data.success),
@@ -418,7 +398,6 @@ export async function invokeAdminReviewOrderEdgeFunction(params: {
         data: data.data,
       };
     }
-
     return { success: false, error: 'پاسخی از سرور بررسی سفارش دریافت نشد.' };
   } catch (err: any) {
     return {
@@ -429,9 +408,9 @@ export async function invokeAdminReviewOrderEdgeFunction(params: {
 }
 
 /**
- * 6. Invokes the Supabase Edge Function 'admin-manage-user'
- * Updates user role, tier, and subscription duration securely on the server.
- */
+Invokes the Supabase Edge Function 'admin-manage-user'
+Updates user role, tier, and subscription duration securely on the server.
+*/
 export async function invokeAdminManageUserEdgeFunction(params: {
   action: 'update_role_tier' | 'update_subscription_days';
   userId: string;
@@ -443,25 +422,21 @@ export async function invokeAdminManageUserEdgeFunction(params: {
   try {
     const sessionRes = await supabase.auth.getSession();
     const token = sessionRes?.data?.session?.access_token;
-
     if (!token) {
       return {
         success: false,
         error: 'نشست احراز هویت مدیر ارشد یافت نشد. لطفاً مجدداً لاگین فرمایید.',
       };
     }
-
     const { data, error } = await supabase.functions.invoke('admin-manage-user', {
       body: params,
       headers: {
         Authorization: `Bearer ${token}`,
       },
     });
-
     if (error) {
       return { success: false, error: translateSupabaseError(error.message) };
     }
-
     if (data) {
       return {
         success: Boolean(data.success),
@@ -470,7 +445,6 @@ export async function invokeAdminManageUserEdgeFunction(params: {
         data: data.data,
       };
     }
-
     return { success: false, error: 'پاسخی از سرور مدیریت کاربران دریافت نشد.' };
   } catch (err: any) {
     return {
@@ -479,4 +453,3 @@ export async function invokeAdminManageUserEdgeFunction(params: {
     };
   }
 }
-
