@@ -1,16 +1,9 @@
 import tailwindcss from '@tailwindcss/vite';
 import react from '@vitejs/plugin-react';
 import path from 'path';
-import { defineConfig, loadEnv } from 'vite';
+import {defineConfig} from 'vite';
 
-export default defineConfig(({ mode }) => {
-  // بارگذاری متغیرهای محیطی
-  const env = loadEnv(mode, process.cwd(), '');
-
-  // ترکیب متغیرهای محیطی لود شده با متغیرهای تزریق شده توسط گیت‌هاب اکشنز (process.env)
-  const supabaseUrl = process.env.VITE_SUPABASE_URL || env.VITE_SUPABASE_URL || '';
-  const supabaseAnonKey = process.env.VITE_SUPABASE_ANON_KEY || env.VITE_SUPABASE_ANON_KEY || '';
-
+export default defineConfig(() => {
   return {
     base: './',
     plugins: [react(), tailwindcss()],
@@ -32,17 +25,20 @@ export default defineConfig(({ mode }) => {
       ],
     },
     define: {
-      'process.env.GEMINI_API_KEY': JSON.stringify(process.env.GEMINI_API_KEY || env.GEMINI_API_KEY || ''),
-      // تزریق مستقیم مقادیر خوانده شده از گیت‌هاب سکرتز به داخل import.meta.env در زمان بیلد
-      'import.meta.env.VITE_SUPABASE_URL': JSON.stringify(supabaseUrl),
-      'import.meta.env.VITE_SUPABASE_ANON_KEY': JSON.stringify(supabaseAnonKey),
+      'process.env.GEMINI_API_KEY': JSON.stringify(process.env.GEMINI_API_KEY || ''),
     },
     server: {
+      // HMR is disabled in AI Studio via DISABLE_HMR env var.
+      // Do not modifyâfile watching is disabled to prevent flickering during agent edits.
       hmr: process.env.DISABLE_HMR !== 'true',
+      // Disable file watching when DISABLE_HMR is true to save CPU during agent edits.
       watch: process.env.DISABLE_HMR === 'true' ? null : {},
     },
     build: {
+      // تنظیمات دیباگ و دسترسی به سورس‌کدها در مرورگر (Debug Mode / Source Code Access)
+      // در حالت توسعه یا در صورت تنظیم VITE_ENABLE_SOURCEMAP=true سورس‌مپ فعال می‌شود تا دسترسی کامل به کدهای اصلی فراهم باشد
       sourcemap: process.env.VITE_ENABLE_SOURCEMAP === 'true' || process.env.NODE_ENV === 'development',
+      // کنترل مینیفای کدها: در صورت نیاز به دیباگ دقیق‌تر می‌توانید minifyEnabled را به false تغییر دهید
       minify: process.env.VITE_DISABLE_MINIFY === 'true' ? false : ('esbuild' as const),
     },
   };

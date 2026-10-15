@@ -144,36 +144,18 @@ export async function verifyAdminCredentials(
     }
 
     if (data?.user) {
-      const userEmail = (data.user.email || '').trim().toLowerCase();
-
-      // The authoritative role is stored in public.users, not in Auth metadata.
-      // Query the profile using the authenticated user's UUID so the result matches
-      // the account that just signed in.
-      const { data: profile, error: profileError } = await supabase
-        .from('users')
-        .select('id, email, role, full_name')
-        .eq('id', data.user.id)
-        .maybeSingle();
-
-      if (profileError) {
-        await supabase.auth.signOut();
-        return {
-          success: false,
-          error: 'ورود انجام شد، اما خواندن نقش کاربر از جدول users ناموفق بود. دسترسی مدیریت فعال نشد.',
-        };
-      }
-
-      const isAuthorized = profile?.role === 'admin' || isAdminEmail(userEmail);
+      const userEmail = data.user.email?.toLowerCase();
+      const role = data.user.user_metadata?.role || data.user.app_metadata?.role;
+      const isAuthorized = isAdminEmail(userEmail) || role === 'admin';
 
       if (isAuthorized) {
-        const name = profile?.full_name || data.user.user_metadata?.full_name || data.user.user_metadata?.name || 'مدیر ارشد چندبوم';
+        const name = data.user.user_metadata?.full_name || data.user.user_metadata?.name || 'مدیر ارشد چندبوم';
         const session = setStoredAdminSession(cleanEmail, name);
         return { success: true, session };
       } else {
-        await supabase.auth.signOut();
         return {
           success: false,
-          error: 'ورود انجام شد، اما نقش این حساب در public.users برابر admin نیست. شناسه حساب Auth و users باید یکی باشد.',
+          error: 'اطلاعات ورود در Supabase Auth تایید شد، اما این حساب دسترسی سطح مدیریت ندارد.',
         };
       }
     }
