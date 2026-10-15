@@ -1,0 +1,23 @@
+{
+  "name": "chandboom-web",
+  "private": true,
+  "version": "1.0.0",
+  "type": "module",
+  "description": "Chandboom (chandboom.ir) — Persian RTL finance SPA source modules (Vite + React + TypeScript). NOTE: the full app source is built elsewhere; this repo publishes the pre-bundled artifact in public/assets and assembles dist/ statically.",
+  "scripts": {
+    "lint": "tsc --noEmit",
+    "build": "node scripts/build.mjs"
+  },
+  "dependencies": {
+    "@supabase/supabase-js": "^2.45.0",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
+    "react-router-dom": "^6.26.0"
+  },
+  "devDependencies": {
+    "@types/react": "^18.3.3",
+    "@types/react-dom": "^18.3.0",
+    "typescript": "^5.5.4",
+    "vite": "^5.4.0"
+  }
+}

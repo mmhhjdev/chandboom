@@ -56,6 +56,7 @@
     <meta name="twitter:description" content="ثبت خودکار پیامک بانکی، هوش مصنوعی تحلیل مالی، برنامه‌ریزی مالی و اهداف با چندبوم." />
     <meta name="twitter:image" content="https://chandboom.ir/logo.png" />
 
+
     <!-- 5. PWA & Mobile Web App Meta Tags -->
     <meta name="application-name" content="چندبوم" />
     <meta name="apple-mobile-web-app-capable" content="yes" />
@@ -156,6 +157,16 @@
     </script>
     <script type="module" crossorigin src="/assets/index-fHm4fCDV.js"></script>
     <link rel="stylesheet" crossorigin href="/assets/index-zCtNAbXt.css">
+
+    <!-- 4.1 Google Analytics 4 (Measurement ID injected at build time by Vite) -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=%VITE_GA_MEASUREMENT_ID%"></script>
+    <script>
+      window.dataLayer = window.dataLayer || [];
+      function gtag() { dataLayer.push(arguments); }
+      gtag('js', new Date());
+      gtag('config', '%VITE_GA_MEASUREMENT_ID%', { send_page_view: false });
+    </script>
+
   </head>
   <body class="bg-[#F8FAF9] text-zinc-900 dark:bg-[#090D0B] dark:text-zinc-100 min-h-screen transition-colors duration-200 selection:bg-emerald-600 selection:text-white font-cairo">
     <div id="root"></div>
