@@ -1,7 +1,12 @@
 import { createClient, SupabaseClient } from '@supabase/supabase-js';
 
-export const SUPABASE_URL: string = import.meta.env.VITE_SUPABASE_URL || '';
-export const SUPABASE_ANON_KEY: string = import.meta.env.VITE_SUPABASE_ANON_KEY || '';
+export const SUPABASE_URL: string = (import.meta as any).env.VITE_SUPABASE_URL || '';
+export const SUPABASE_ANON_KEY: string = (import.meta as any).env.VITE_SUPABASE_ANON_KEY || '';
+
+// بررسی امنیتی برای اطمینان از وجود URL معتبر
+if (!SUPABASE_URL || !SUPABASE_URL.startsWith('http')) {
+  console.error('CRITICAL ERROR: VITE_SUPABASE_URL is missing or invalid during runtime!');
+}
 
 const persistentStorage = typeof window !== 'undefined' ? window.localStorage : undefined;
 
@@ -54,9 +59,6 @@ export function translateSupabaseError(msg?: string): string {
   return msg;
 }
 
-/**
- * 1. ارسال کد تایید یکبارمصرف (OTP) از طریق سیستم احراز هویت رسمی Supabase Auth
- */
 export async function sendNativeOtp(
   email: string,
   options?: { shouldCreateUser?: boolean }
@@ -86,9 +88,6 @@ export async function sendNativeOtp(
 
 export const createUserOtp = sendNativeOtp;
 
-/**
- * 2. اعتبارسنجی کد تایید OTP در Supabase Auth
- */
 export async function verifyNativeOtp(
   email: string,
   token: string,
@@ -144,9 +143,6 @@ export async function verifyNativeOtp(
 
 export const verifyUserOtp = verifyNativeOtp;
 
-/**
- * بررسی وجود ایمیل در سیستم
- */
 export async function checkEmailExists(email: string): Promise<boolean> {
   const normalizedEmail = email.toLowerCase().trim();
   if (!normalizedEmail) return false;
@@ -166,9 +162,6 @@ export async function checkEmailExists(email: string): Promise<boolean> {
   }
 }
 
-/**
- * ورود با رمز عبور موقت (OTP)
- */
 export async function sendLoginOtp(email: string): Promise<{ success: boolean; error?: string }> {
   const normalizedEmail = email.toLowerCase().trim();
   if (!normalizedEmail || !normalizedEmail.includes('@')) {
@@ -178,9 +171,6 @@ export async function sendLoginOtp(email: string): Promise<{ success: boolean; e
   return sendNativeOtp(normalizedEmail);
 }
 
-/**
- * بازیابی رمز عبور
- */
 export async function sendPasswordResetOtp(email: string): Promise<{ success: boolean; error?: string }> {
   const normalizedEmail = email.toLowerCase().trim();
   if (!normalizedEmail || !normalizedEmail.includes('@')) {
@@ -194,7 +184,6 @@ export async function sendPasswordResetOtp(email: string): Promise<{ success: bo
     });
 
     if (error) {
-      console.warn('Supabase resetPasswordForEmail returned error:', error.message);
       return { success: false, error: error.message || 'خطا در ارسال ایمیل بازیابی رمز عبور.' };
     }
 
@@ -208,9 +197,6 @@ export async function sendPasswordResetOtp(email: string): Promise<{ success: bo
   }
 }
 
-/**
- * ریست کردن رمز عبور پس از تایید کد
- */
 export async function resetUserPassword(
   email: string,
   code: string,
@@ -251,9 +237,6 @@ export async function resetUserPassword(
   }
 }
 
-/**
- * آپلود فیش پرداخت
- */
 export async function uploadPaymentReceipt(
   file: File | Blob,
   userId: string,
@@ -289,9 +272,6 @@ export async function uploadPaymentReceipt(
   }
 }
 
-/**
- * آپلود تصویر آواتار
- */
 export async function uploadUserAvatar(
   file: File | Blob,
   userId: string,
@@ -327,9 +307,6 @@ export async function uploadUserAvatar(
   }
 }
 
-/**
- * اتصال به Edge Function مربوط به OTP ادمین
- */
 export async function invokeAdminOtpEdgeFunction(
   action: 'send_otp' | 'verify_otp',
   payload: { email: string; code?: string }
@@ -360,9 +337,6 @@ export async function invokeAdminOtpEdgeFunction(
   }
 }
 
-/**
- * بررسی سفارشات توسط ادمین
- */
 export async function invokeAdminReviewOrderEdgeFunction(params: {
   action: 'approve' | 'reject';
   paymentId: string;
@@ -373,44 +347,29 @@ export async function invokeAdminReviewOrderEdgeFunction(params: {
     const token = sessionRes?.data?.session?.access_token;
 
     if (!token) {
-      return {
-        success: false,
-        error: 'نشست احراز هویت مدیر ارشد یافت نشد.',
-      };
+      return { success: false, error: 'نشست احراز هویت مدیر ارشد یافت نشد.' };
     }
 
     const { data, error } = await supabase.functions.invoke('admin-review-order', {
       body: params,
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
+      headers: { Authorization: `Bearer ${token}` },
     });
 
     if (error) {
       return { success: false, error: translateSupabaseError(error.message) };
     }
 
-    if (data) {
-      return {
-        success: Boolean(data.success),
-        message: data.message,
-        error: data.error,
-        data: data.data,
-      };
-    }
-
-    return { success: false, error: 'پاسخی از سرور بررسی سفارش دریافت نشد.' };
-  } catch (err: any) {
     return {
-      success: false,
-      error: err?.message || 'خطا در ارتباط با سرور بررسی سفارشات.',
+      success: Boolean(data?.success),
+      message: data?.message,
+      error: data?.error,
+      data: data?.data,
     };
+  } catch (err: any) {
+    return { success: false, error: err?.message || 'خطا در ارتباط با سرور بررسی سفارشات.' };
   }
 }
 
-/**
- * مدیریت کاربران توسط ادمین
- */
 export async function invokeAdminManageUserEdgeFunction(params: {
   action: 'update_role_tier' | 'update_subscription_days';
   userId: string;
@@ -424,37 +383,25 @@ export async function invokeAdminManageUserEdgeFunction(params: {
     const token = sessionRes?.data?.session?.access_token;
 
     if (!token) {
-      return {
-        success: false,
-        error: 'نشست احراز هویت مدیر ارشد یافت نشد.',
-      };
+      return { success: false, error: 'نشست احراز هویت مدیر ارشد یافت نشد.' };
     }
 
     const { data, error } = await supabase.functions.invoke('admin-manage-user', {
       body: params,
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
+      headers: { Authorization: `Bearer ${token}` },
     });
 
     if (error) {
       return { success: false, error: translateSupabaseError(error.message) };
     }
 
-    if (data) {
-      return {
-        success: Boolean(data.success),
-        message: data.message,
-        error: data.error,
-        data: data.data,
-      };
-    }
-
-    return { success: false, error: 'پاسخی از سرور مدیریت کاربران دریافت نشد.' };
-  } catch (err: any) {
     return {
-      success: false,
-      error: err?.message || 'خطا در ارتباط با سرور مدیریت کاربران.',
+      success: Boolean(data?.success),
+      message: data?.message,
+      error: data?.error,
+      data: data?.data,
     };
+  } catch (err: any) {
+    return { success: false, error: err?.message || 'خطا در ارتباط با سرور مدیریت کاربران.' };
   }
 }

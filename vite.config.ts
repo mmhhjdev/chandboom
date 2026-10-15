@@ -4,8 +4,12 @@ import path from 'path';
 import { defineConfig, loadEnv } from 'vite';
 
 export default defineConfig(({ mode }) => {
-  // بارگذاری متغیرهای محیطی سیستم و گیت‌هاب اکشنز
+  // بارگذاری متغیرهای محیطی
   const env = loadEnv(mode, process.cwd(), '');
+
+  // ترکیب متغیرهای محیطی لود شده با متغیرهای تزریق شده توسط گیت‌هاب اکشنز (process.env)
+  const supabaseUrl = process.env.VITE_SUPABASE_URL || env.VITE_SUPABASE_URL || '';
+  const supabaseAnonKey = process.env.VITE_SUPABASE_ANON_KEY || env.VITE_SUPABASE_ANON_KEY || '';
 
   return {
     base: './',
@@ -29,21 +33,16 @@ export default defineConfig(({ mode }) => {
     },
     define: {
       'process.env.GEMINI_API_KEY': JSON.stringify(process.env.GEMINI_API_KEY || env.GEMINI_API_KEY || ''),
-      // تزریق قطعی متغیرهای سوپابیس در زمان بیلد برای جلوگیری از خطای URL نامعتبر
-      'import.meta.env.VITE_SUPABASE_URL': JSON.stringify(env.VITE_SUPABASE_URL || process.env.VITE_SUPABASE_URL || ''),
-      'import.meta.env.VITE_SUPABASE_ANON_KEY': JSON.stringify(env.VITE_SUPABASE_ANON_KEY || process.env.VITE_SUPABASE_ANON_KEY || ''),
+      // تزریق مستقیم مقادیر خوانده شده از گیت‌هاب سکرتز به داخل import.meta.env در زمان بیلد
+      'import.meta.env.VITE_SUPABASE_URL': JSON.stringify(supabaseUrl),
+      'import.meta.env.VITE_SUPABASE_ANON_KEY': JSON.stringify(supabaseAnonKey),
     },
     server: {
-      // HMR is disabled in AI Studio via DISABLE_HMR env var.
-      // Do not modify—file watching is disabled to prevent flickering during agent edits.
       hmr: process.env.DISABLE_HMR !== 'true',
-      // Disable file watching when DISABLE_HMR is true to save CPU during agent edits.
       watch: process.env.DISABLE_HMR === 'true' ? null : {},
     },
     build: {
-      // تنظیمات دیباگ و دسترسی به سورس‌کدها در مرورگر (Debug Mode / Source Code Access)
       sourcemap: process.env.VITE_ENABLE_SOURCEMAP === 'true' || process.env.NODE_ENV === 'development',
-      // کنترل مینیفای کدها
       minify: process.env.VITE_DISABLE_MINIFY === 'true' ? false : ('esbuild' as const),
     },
   };
