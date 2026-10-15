@@ -41,10 +41,10 @@ export const AnalyticsView: React.FC = () => {
   const totalExpense = metrics.totalExpense;
 
   // Category Budget Limits Management
-  const limitsStorageKey = `chandboon_category_limits_${user.id || 'default'}`;
+  const limitsStorageKey = `chandboom_category_limits_${user.id || 'default'}`;
   const [categoryLimits, setCategoryLimits] = useState<Record<string, number>>(() => {
     try {
-      const saved = localStorage.getItem(limitsStorageKey);
+      const saved = localStorage.getItem(limitsStorageKey) || localStorage.getItem(`chandboon_category_limits_${user.id || 'default'}`);
       if (saved) return JSON.parse(saved);
     } catch {}
     return DEFAULT_CATEGORY_LIMITS;

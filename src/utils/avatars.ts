@@ -1,5 +1,5 @@
 /**
- * Simplified Modern Avatar System for Chandboom Platform (chandboon.ir)
+ * Simplified Modern Avatar System for Chandboom Platform (chandboom.ir)
  * Strict Requirement:
  * - Exactly TWO default avatar presets: Male and Female.
  * - Completely redesigned with high-quality, modern, minimalistic UI design style.

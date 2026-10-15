@@ -27,7 +27,6 @@ import {
   RefreshCw,
 } from 'lucide-react';
 import { useApp } from '../context/AppContext';
-import { generateAdmin2FACode } from '../utils/admin2fa';
 import {
   verifyAdminCredentials,
   getStoredAdminSession,
@@ -36,7 +35,6 @@ import {
   isStoredAdminSessionValid,
   isAdminEmail,
   getEnvAdminEmail,
-  getEnvAdminPassword,
 } from '../utils/admin';
 import { getSupabaseClient } from '../lib/supabase';
 import { formatToman, formatShamsiDateTime, formatShamsiDate, toPersianDigits } from '../utils/formatters';
@@ -69,7 +67,11 @@ export const AdminDashboardModal: React.FC<AdminDashboardModalProps> = ({ isOpen
 
   const [activeTab, setActiveTab] = useState<'payments' | 'users' | 'security' | 'stats'>('payments');
   const [isAdminAuthenticated, setIsAdminAuthenticated] = useState<boolean>(() => {
-    return isStoredAdminSessionValid() || isAdmin2FAVerified;
+    return (
+      (user && (user.role === 'admin' || isAdminEmail(user.email))) ||
+      isAdmin2FAVerified ||
+      isStoredAdminSessionValid(user?.email)
+    );
   });
   const [adminEmailInput, setAdminEmailInput] = useState(() => user?.email || getEnvAdminEmail() || '');
   const [adminPasswordInput, setAdminPasswordInput] = useState('');
@@ -89,12 +91,12 @@ export const AdminDashboardModal: React.FC<AdminDashboardModalProps> = ({ isOpen
   const [userSearch, setUserSearch] = useState('');
   const [selectedReceiptForPreview, setSelectedReceiptForPreview] = useState<string | null>(null);
 
-  // Sync session state from localStorage
+  // Sync session state from secure admin authorization
   React.useEffect(() => {
-    if (isStoredAdminSessionValid()) {
+    if (isStoredAdminSessionValid(user?.email) || isAdmin2FAVerified) {
       setIsAdminAuthenticated(true);
     }
-  }, [isOpen]);
+  }, [isOpen, user?.email, isAdmin2FAVerified]);
 
   // Fetch live requests directly from manual_payments table in Supabase
   const fetchLiveManualPayments = async () => {
@@ -256,78 +258,16 @@ export const AdminDashboardModal: React.FC<AdminDashboardModalProps> = ({ isOpen
     }
 
     try {
-      const supabase = getSupabaseClient();
-      let isVerified = false;
-      let adminName = 'مدیر ارشد چندبوم';
-
-      // 1. کوئری مستقیم به جدول admins سوپابیس بدون اتکا به Edge Function
-      if (supabase) {
-        const { data, error } = await supabase
-          .from('admins')
-          .select('*')
-          .eq('email', cleanEmail)
-          .eq('password', cleanPassword);
-
-        if (!error && data && data.length > 0) {
-          isVerified = true;
-          adminName = data[0].full_name || data[0].name || adminName;
-        } else {
-          // تطابق غیرحساس به حروف بزرگ و کوچک (Case-Insensitive) در صورت تفاوت در دیتابیس
-          const { data: ciData, error: ciError } = await supabase
-            .from('admins')
-            .select('*')
-            .ilike('email', cleanEmail)
-            .eq('password', cleanPassword);
-
-          if (!ciError && ciData && ciData.length > 0) {
-            isVerified = true;
-            adminName = ciData[0].full_name || ciData[0].name || adminName;
-          }
-        }
-      }
-
-      // 2. پشتیبانی از اکانت‌های مدیر ارشد بر اساس متغیرهای محیطی VITE_ADMIN_EMAIL و VITE_ADMIN_PASSWORD
-      const envAdminEmail = getEnvAdminEmail();
-      const envAdminPassword = getEnvAdminPassword();
-      if (!isVerified && envAdminEmail && envAdminPassword && cleanEmail === envAdminEmail && cleanPassword === envAdminPassword) {
-        isVerified = true;
-        adminName = 'مدیر ارشد سامانه';
-      }
-
-      if (isVerified) {
-        // ذخیره نشست و وضعیت ادمین در localStorage
-        setStoredAdminSession(cleanEmail, adminName);
-        try {
-          localStorage.setItem('isAdmin', 'true');
-          localStorage.setItem('admin_email', cleanEmail);
-          localStorage.setItem('admin_name', adminName);
-        } catch (storageErr) {
-          console.warn('localStorage write error:', storageErr);
-        }
-
+      const res = await verifyAdminCredentials(cleanEmail, cleanPassword);
+      if (res.success) {
         setIsAdminAuthenticated(true);
         setAdminAuthError(null);
         await fetchLiveManualPayments();
       } else {
-        setAdminAuthError('اطلاعات کاربری ادمین در سیستم یافت نشد یا رمز عبور نامعتبر است.');
+        setAdminAuthError(res.error || 'اطلاعات کاربری ادمین در سیستم یافت نشد یا رمز عبور نامعتبر است.');
       }
     } catch (err: any) {
-      // در صورت خطای اتصال به شبکه برای ایمیل‌های وایت‌لیست ادمین بر اساس متغیر محیطی
-      const envAdminEmail = getEnvAdminEmail();
-      const envAdminPassword = getEnvAdminPassword();
-      if (envAdminEmail && envAdminPassword && cleanEmail === envAdminEmail && cleanPassword === envAdminPassword) {
-        setStoredAdminSession(cleanEmail, 'مدیر ارشد سامانه');
-        try {
-          localStorage.setItem('isAdmin', 'true');
-          localStorage.setItem('admin_email', cleanEmail);
-          localStorage.setItem('admin_name', 'مدیر ارشد سامانه');
-        } catch {}
-        setIsAdminAuthenticated(true);
-        setAdminAuthError(null);
-        await fetchLiveManualPayments();
-      } else {
-        setAdminAuthError(err?.message || 'خطا در برقراری ارتباط با جدول admins');
-      }
+      setAdminAuthError(err?.message || 'خطا در برقراری ارتباط با سامانه احراز هویت');
     } finally {
       setIsAuthSubmitting(false);
     }
@@ -335,11 +275,6 @@ export const AdminDashboardModal: React.FC<AdminDashboardModalProps> = ({ isOpen
 
   const handleAdminLogout = () => {
     clearStoredAdminSession();
-    try {
-      localStorage.removeItem('isAdmin');
-      localStorage.removeItem('admin_email');
-      localStorage.removeItem('admin_name');
-    } catch {}
     logoutAdmin2FA();
     setIsAdminAuthenticated(false);
   };
@@ -391,7 +326,7 @@ export const AdminDashboardModal: React.FC<AdminDashboardModalProps> = ({ isOpen
                 {isAdminAuthenticated && (
                   <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300 border border-emerald-300 dark:border-emerald-800 flex items-center gap-1">
                     <CheckCircle2 className="w-3 h-3" />
-                    نشست ادمین فعال (localStorage)
+                    نشست مدیریت تایید‌شده
                   </span>
                 )}
               </div>
@@ -405,7 +340,7 @@ export const AdminDashboardModal: React.FC<AdminDashboardModalProps> = ({ isOpen
             {isAdminAuthenticated && (
               <button
                 onClick={handleAdminLogout}
-                title="خروج از نشست ادمین (پاکسازی localStorage)"
+                title="خروج از نشست مدیریت"
                 className="p-2 rounded-xl text-zinc-400 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/40 transition cursor-pointer flex items-center gap-1 text-xs"
               >
                 <LogOut className="w-4 h-4" />

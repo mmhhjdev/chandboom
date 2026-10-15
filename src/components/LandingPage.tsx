@@ -20,6 +20,7 @@ import {
   ShieldCheck,
   Check,
   LogIn,
+  Mic,
 } from 'lucide-react';
 import { useApp } from '../context/AppContext';
 
@@ -191,7 +192,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({
           <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-emerald-950/60 border border-emerald-500/30 text-emerald-300 text-xs font-medium mb-6 backdrop-blur-md shadow-xs animate-in fade-in slide-in-from-top-4">
             <span className="flex h-2 w-2 rounded-full bg-emerald-400 animate-ping" />
             <span className="font-semibold">
-              {isRtl ? 'نسل جدید مدیریت هوشمند ثروت و مخارج' : 'Next-Generation AI Wealth Operating System'}
+              {isRtl ? 'سامانه مدیریت مالی هوشمند و تسلط بر جریان پول' : 'Next-Generation AI Wealth Operating System'}
             </span>
             <span className="text-zinc-600">|</span>
             <span className="text-amber-400 font-bold flex items-center gap-1">
@@ -204,7 +205,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({
           <h1 className="font-bahman text-4xl sm:text-5xl lg:text-6xl font-black text-white tracking-tight leading-[1.25] sm:leading-[1.2] max-w-5xl mx-auto mb-6">
             {isRtl ? (
               <>
-                کنترل هوشمند <span className="text-transparent bg-clip-text bg-gradient-to-r from-emerald-400 via-teal-300 to-amber-300">پول و دارایی</span> با قدرت هوش مصنوعی چندبوم
+                مدیریت مالی شخصی با <span className="text-transparent bg-clip-text bg-gradient-to-r from-emerald-400 via-teal-300 to-amber-300">هوش مصنوعی</span> چندبوم
               </>
             ) : (
               <>
@@ -216,12 +217,12 @@ export const LandingPage: React.FC<LandingPageProps> = ({
           {/* Subheadline */}
           <p className="text-zinc-400 text-base sm:text-lg lg:text-xl max-w-3xl mx-auto leading-relaxed mb-10 font-medium">
             {isRtl
-              ? 'ثبت خودکار پیامک بانکی بدون دسترسی مستقیم، چالش ۳۰ روزه مدیریت پول، سپر ضد خرید تکانه‌ای، پیش‌بینی ۳ ماهه جریان نقدینگی و محاسبه عادلانه دنگ گروهی.'
-              : 'Instant bank SMS receipt parsing, 30-day financial quests, impulse buy shield, 3-month cash flow forecasting, and fair group bill splitting.'}
+              ? 'سامانه مدیریت مالی هوشمند: ثبت تراکنش با صدا و پیامک بانکی، تحلیل هوشمند هزینه‌ها و درآمدها، پیش‌بینی ۳ ماهه جریان نقدینگی و سپر ضد خرید هیجانی.'
+              : 'Smart personal finance management: natural voice transaction entry, bank SMS parsing, AI cash flow insights, 3-month forecasting, and impulse buy shield.'}
           </p>
 
           {/* Primary CTA Buttons */}
-          <div className="flex flex-col sm:flex-row items-center justify-center gap-4 max-w-md mx-auto mb-14">
+          <div className="flex flex-col sm:flex-row items-center justify-center gap-4 max-w-md mx-auto mb-12">
             <button
               onClick={onOpenAuth}
               className="w-full sm:w-auto flex items-center justify-center gap-2.5 px-7 py-4 rounded-2xl bg-gradient-to-r from-emerald-500 via-teal-500 to-emerald-600 hover:from-emerald-400 hover:to-teal-400 text-zinc-950 font-black text-base shadow-xl shadow-emerald-500/25 hover:shadow-emerald-500/40 transition-all transform hover:-translate-y-1 active:translate-y-0 cursor-pointer"
@@ -241,7 +242,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({
           </div>
 
           {/* Trust Badges */}
-          <div className="flex flex-wrap items-center justify-center gap-6 sm:gap-10 text-xs text-zinc-400 pb-4 border-b border-emerald-950/40 max-w-3xl mx-auto">
+          <div className="flex flex-wrap items-center justify-center gap-6 sm:gap-10 text-xs text-zinc-400 pb-4 border-b border-emerald-950/40 max-w-3xl mx-auto mb-12">
             <div className="flex items-center gap-2">
               <ShieldCheck className="w-4 h-4 text-emerald-400" />
               <span>{isRtl ? 'امنیت ابری پیشرفته و رمزنگاری بانکی' : 'Bank-Grade Encryption & Cloud Security'}</span>
@@ -253,6 +254,42 @@ export const LandingPage: React.FC<LandingPageProps> = ({
             <div className="flex items-center gap-2">
               <Lock className="w-4 h-4 text-teal-400" />
               <span>{isRtl ? 'حفظ کامل حریم خصوصی' : '100% Private & Anonymous'}</span>
+            </div>
+          </div>
+
+          {/* Hero Campaign Visual Showcase */}
+          <div className="relative max-w-5xl mx-auto rounded-3xl p-1 bg-gradient-to-b from-emerald-500/30 via-emerald-900/20 to-transparent shadow-2xl shadow-emerald-950/80 overflow-hidden group">
+            <div className="relative rounded-[22px] bg-[#0A100D] border border-emerald-900/60 overflow-hidden backdrop-blur-xl">
+              <picture>
+                <source srcSet="./assets/chandboom-smart-personal-finance-hero.webp" type="image/webp" />
+                <source srcSet="./assets/chandboom-smart-personal-finance-hero.jpg" type="image/jpeg" />
+                <img
+                  src="./assets/chandboom-smart-personal-finance-hero.webp"
+                  alt="داشبورد مدیریت مالی هوشمند چندبوم با هوش مصنوعی و نمودارهای تحلیلی ثروت و جریان نقدینگی"
+                  width={1376}
+                  height={768}
+                  loading="eager"
+                  decoding="async"
+                  referrerPolicy="no-referrer"
+                  className="w-full h-auto object-cover rounded-[22px] transition-transform duration-700 group-hover:scale-[1.01]"
+                />
+              </picture>
+              <div className="absolute inset-0 bg-gradient-to-t from-[#0A100D]/90 via-[#0A100D]/20 to-transparent pointer-events-none" />
+              <div className="absolute bottom-3 sm:bottom-6 right-3 sm:right-6 left-3 sm:left-6 flex flex-wrap items-center justify-between gap-3 bg-[#070B09]/85 backdrop-blur-md px-4 py-3 rounded-2xl border border-emerald-900/60 text-xs">
+                <div className="flex items-center gap-2 text-right">
+                  <span className="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-pulse shrink-0" />
+                  <span className="font-bold text-white">مدیریت مالی هوشمند با تحلیل آینده‌نگر چندبوم</span>
+                  <span className="hidden md:inline text-zinc-500">•</span>
+                  <span className="hidden md:inline text-zinc-300">ثبت تراکنش با صدا و تحلیل هوشمند هزینه‌ها و درآمدها</span>
+                </div>
+                <button
+                  onClick={onEnterApp}
+                  className="px-3.5 py-1.5 rounded-xl bg-emerald-600/90 hover:bg-emerald-500 text-zinc-950 font-bold transition flex items-center gap-1.5 cursor-pointer text-xs shrink-0"
+                >
+                  <span>ورود به سامانه</span>
+                  <ArrowIcon className="w-3.5 h-3.5" />
+                </button>
+              </div>
             </div>
           </div>
         </section>
@@ -443,18 +480,132 @@ export const LandingPage: React.FC<LandingPageProps> = ({
           <div className="text-center max-w-3xl mx-auto mb-16">
             <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-950/70 border border-emerald-500/30 text-emerald-400 text-xs font-bold mb-4">
               <Zap className="w-3.5 h-3.5" />
-              <span>{isRtl ? 'امکانات نسل آینده' : 'Built for Effortless Financial Mastery'}</span>
+              <span>{isRtl ? 'امکانات مدیریت مالی هوشمند' : 'Built for Effortless Financial Mastery'}</span>
             </div>
             <h2 className="font-bahman text-3xl sm:text-4xl lg:text-5xl font-black text-white mb-4">
               {isRtl
-                ? 'هر آنچه برای مدیریت بی‌نقص دارایی نیاز دارید'
+                ? 'مدیریت مالی شخصی با هوش مصنوعی چندبوم'
                 : 'Everything You Need for Total Financial Control'}
             </h2>
             <p className="text-zinc-400 text-base leading-relaxed">
               {isRtl
-                ? 'چندبوم به جای صفحات پیچیده اکسل یا برنامه‌های سنتی، امکاناتی پیشرفته و در عین حال ساده در اختیارتان می‌گذارد.'
+                ? 'چندبوم فراتر از یک حسابداری ساده است؛ یک دستیار هوشمند و سیستم جامع تصمیم‌گیری مالی برای آرامش خاطر شما.'
                 : 'Replace confusing spreadsheets and dated accounting tools with intuitive, AI-driven automation.'}
             </p>
+          </div>
+
+          {/* Visual Spotlight A: Voice Transaction Entry */}
+          <div className="mb-14 rounded-3xl p-1 bg-gradient-to-r from-emerald-500/20 via-teal-900/20 to-zinc-900 border border-emerald-900/40 shadow-xl overflow-hidden">
+            <div className="rounded-[22px] bg-[#0A100D] p-6 sm:p-10 grid grid-cols-1 lg:grid-cols-2 gap-8 items-center">
+              {/* Text / Copy Column */}
+              <div className="space-y-4 text-right">
+                <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-950/80 border border-emerald-800/40 text-emerald-400 text-xs font-bold">
+                  <Mic className="w-3.5 h-3.5 text-emerald-400 animate-pulse" />
+                  <span>{isRtl ? 'ثبت تراکنش با صدا' : 'Voice-Powered Entry'}</span>
+                </div>
+                <h3 className="font-bahman text-2xl sm:text-3xl font-black text-white leading-tight">
+                  {isRtl ? 'تنها با صدا صحبت کنید؛ هوش مصنوعی ثبت می‌کند' : 'Speak Naturally. Chandboom AI Logs the Rest.'}
+                </h3>
+                <p className="text-zinc-400 text-sm leading-relaxed">
+                  {isRtl
+                    ? 'بدون اتلاف وقت برای پر کردن فرم‌های خسته‌کننده یا انتخاب دستی دسته‌بندی‌ها؛ کافیست بگویید «خرید میوه ۲۰۰ تومن و کرایه تاکسی ۴۵ تومن». موتور چندبوم در کسری از ثانیه مبلغ، نوع هزینه و دسته‌بندی دقیق را استخراج کرده و حساب شما را به‌روز می‌کند.'
+                    : 'Skip the friction of tedious dropdowns. Just speak or write freely. Our fine-tuned AI extracts precise amounts in Toman, auto-categorizes, and registers transactions seamlessly.'}
+                </p>
+                <ul className="space-y-2.5 text-xs text-zinc-300 pt-2">
+                  <li className="flex items-center gap-2.5">
+                    <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
+                    <span>{isRtl ? 'تبدیل مستقیم گفتار فارسی به تراکنش معتبر به تومان' : 'Accurate Persian speech-to-transaction parsing'}</span>
+                  </li>
+                  <li className="flex items-center gap-2.5">
+                    <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
+                    <span>{isRtl ? 'شناسایی و ثبت گروهی چند تراکنش هم‌زمان در یک پیام' : 'Batch multi-transaction extraction from single voice message'}</span>
+                  </li>
+                  <li className="flex items-center gap-2.5">
+                    <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
+                    <span>{isRtl ? 'بدون نیاز به دسترسی‌های ناامن و بدون اتصال به رمز بانک' : '100% private with zero insecure banking access'}</span>
+                  </li>
+                </ul>
+              </div>
+
+              {/* Visual Asset Column */}
+              <div className="relative rounded-2xl overflow-hidden border border-emerald-900/50 shadow-2xl bg-zinc-950">
+                <picture>
+                  <source srcSet="./assets/chandboom-voice-transaction-entry.webp" type="image/webp" />
+                  <source srcSet="./assets/chandboom-voice-transaction-entry.jpg" type="image/jpeg" />
+                  <img
+                    src="./assets/chandboom-voice-transaction-entry.webp"
+                    alt="مفهوم پردازش صوت و تبدیل پیام صوتی به تراکنش مالی هوشمند در چندبوم"
+                    width={1200}
+                    height={896}
+                    loading="lazy"
+                    decoding="async"
+                    referrerPolicy="no-referrer"
+                    className="w-full h-auto object-cover rounded-2xl transition-transform duration-500 hover:scale-[1.02]"
+                  />
+                </picture>
+                <div className="absolute bottom-3 right-3 bg-[#070B09]/85 backdrop-blur-md px-3 py-1.5 rounded-xl border border-emerald-900/60 text-[11px] font-bold text-emerald-300 flex items-center gap-1.5">
+                  <Mic className="w-3 h-3 text-emerald-400" />
+                  <span>{isRtl ? 'ثبت تراکنش با صدا و هوش مصنوعی' : 'Voice Transaction Flow'}</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Visual Spotlight B: AI Financial Insights & Spending Analysis */}
+          <div className="mb-16 rounded-3xl p-1 bg-gradient-to-l from-emerald-500/20 via-amber-900/15 to-zinc-900 border border-emerald-900/40 shadow-xl overflow-hidden">
+            <div className="rounded-[22px] bg-[#0A100D] p-6 sm:p-10 grid grid-cols-1 lg:grid-cols-2 gap-8 items-center">
+              {/* Visual Asset Column (Shown first on desktop in LTR / second in RTL) */}
+              <div className="order-2 lg:order-1 relative rounded-2xl overflow-hidden border border-emerald-900/50 shadow-2xl bg-zinc-950">
+                <picture>
+                  <source srcSet="./assets/chandboom-ai-financial-insights.webp" type="image/webp" />
+                  <source srcSet="./assets/chandboom-ai-financial-insights.jpg" type="image/jpeg" />
+                  <img
+                    src="./assets/chandboom-ai-financial-insights.webp"
+                    alt="تحلیل بصری دسته‌بندی مخارج، جریان نقدینگی و بینش‌های مالی هوش مصنوعی چندبوم"
+                    width={1200}
+                    height={896}
+                    loading="lazy"
+                    decoding="async"
+                    referrerPolicy="no-referrer"
+                    className="w-full h-auto object-cover rounded-2xl transition-transform duration-500 hover:scale-[1.02]"
+                  />
+                </picture>
+                <div className="absolute bottom-3 left-3 bg-[#070B09]/85 backdrop-blur-md px-3 py-1.5 rounded-xl border border-emerald-900/60 text-[11px] font-bold text-amber-300 flex items-center gap-1.5">
+                  <TrendingUp className="w-3 h-3 text-amber-400" />
+                  <span>{isRtl ? 'تحلیل هوشمند هزینه‌ها و درآمدها' : 'Predictive Financial Insights'}</span>
+                </div>
+              </div>
+
+              {/* Text / Copy Column */}
+              <div className="order-1 lg:order-2 space-y-4 text-right">
+                <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-amber-500/10 border border-amber-500/30 text-amber-300 text-xs font-bold">
+                  <TrendingUp className="w-3.5 h-3.5 text-amber-400" />
+                  <span>{isRtl ? 'تحلیل هوشمند هزینه‌ها و درآمدها' : 'Predictive Financial Intelligence'}</span>
+                </div>
+                <h3 className="font-bahman text-2xl sm:text-3xl font-black text-white leading-tight">
+                  {isRtl ? 'پیش‌بینی ۳ ماهه جریان نقدینگی و رادار کنترل بودجه' : '3-Month Cash Flow Forecasting & Budget Guardrails'}
+                </h3>
+                <p className="text-zinc-400 text-sm leading-relaxed">
+                  {isRtl
+                    ? 'چندبوم به جای نگاه به گذشته، آینده مالی شما را ترسیم می‌کند. هوش مصنوعی با شبیه‌سازی نرخ مصرف روزانه به شما هشدار می‌دهد که تا چه تاریخی پول شما پایدار است و چگونه با مهار خریدهای احساسی، تا ۳۰ درصد به پس‌انداز ماهانه خود بیفزایید.'
+                    : 'Move from reactive bookkeeping to proactive wealth protection. Chandboom calculates your exact cash runway, highlights burn rates, and helps shield against emotional impulse spending.'}
+                </p>
+                <ul className="space-y-2.5 text-xs text-zinc-300 pt-2">
+                  <li className="flex items-center gap-2.5">
+                    <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
+                    <span>{isRtl ? 'رادار تصویری مخارج بر اساس دسته‌بندی‌های استاندارد' : 'Visual categorical breakdown across essentials and leisure'}</span>
+                  </li>
+                  <li className="flex items-center gap-2.5">
+                    <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
+                    <span>{isRtl ? 'سپر ضد خرید تکانه‌ای و تبدیل قیمت کالا به ساعات کار مفید' : 'Impulse buy shield converting price tags into work hours'}</span>
+                  </li>
+                  <li className="flex items-center gap-2.5">
+                    <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
+                    <span>{isRtl ? 'خروجی اکسل استاندارد و پیش‌بینی هوشمند روز اتمام بودجه' : 'Automated styled Excel exports with runway forecasting'}</span>
+                  </li>
+                </ul>
+              </div>
+            </div>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">

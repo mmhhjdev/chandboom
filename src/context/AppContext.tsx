@@ -44,11 +44,12 @@ import {
   getSupabaseClient,
   createUserOtp,
   verifyUserOtp,
-  verifyNativeOtp,
   checkEmailExists,
   sendLoginOtp,
   sendPasswordResetOtp,
   resetUserPassword,
+  invokeAdminReviewOrderEdgeFunction,
+  invokeAdminManageUserEdgeFunction,
 } from '../lib/supabase';
 import { MALE_AVATAR_SVG } from '../utils/avatars';
 
@@ -97,7 +98,7 @@ interface AppContextType {
     age?: number,
     gender?: 'مرد' | 'زن' | 'سایر'
   ) => Promise<AuthResult>;
-  requestSignupOtp: (email: string, password: string, fullName: string, age?: number, gender?: 'مرد' | 'زن' | 'سایر') => Promise<{ success: boolean; error?: string; isDuplicate?: boolean }>;
+  requestSignupOtp: (email: string) => Promise<{ success: boolean; code?: string; error?: string; isDuplicate?: boolean }>;
   verifySignupOtpAndRegister: (
     email: string,
     code: string,
@@ -386,14 +387,14 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   }, [activeTab]);
 
   const [admin2FAVerified, setAdmin2FAVerified] = useState<boolean>(() => {
-    return checkAdmin2FASession(INITIAL_USER.email) || isStoredAdminSessionValid();
+    return checkAdmin2FASession(INITIAL_USER.email) || isStoredAdminSessionValid(INITIAL_USER.email);
   });
 
   const isAdmin = useMemo(() => {
     return (
       (isAuthenticated && (user?.role === 'admin' || isAdminEmail(user?.email))) ||
       admin2FAVerified ||
-      isStoredAdminSessionValid()
+      isStoredAdminSessionValid(user?.email)
     );
   }, [isAuthenticated, user?.role, user?.email, admin2FAVerified]);
 
@@ -663,43 +664,66 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   };
 
   const updateUserRoleAndTier = async (userId: string, role: UserRole, tier: SubscriptionTier) => {
-    if (!isAdmin) return;
+    if (!isAdmin) {
+      alert('دسترسی غیرمجاز: فقط مدیران ارشد مجاز به تغییر نقش و سطح اشتراک کاربران هستند.');
+      return;
+    }
+
+    const res = await invokeAdminManageUserEdgeFunction({
+      action: 'update_role_tier',
+      userId,
+      role,
+      tier,
+    });
+
+    if (!res.success) {
+      alert(res.error || 'خطا در اعمال تغییرات سمت سرور');
+      return;
+    }
+
     setAllUsers((prev) =>
       prev.map((u) => (u.id === userId ? { ...u, role, tier, updated_at: new Date().toISOString() } : u))
     );
     if (user.id === userId) {
       setUser((prev) => ({ ...prev, role, tier }));
     }
-
-    const supabase = getSupabaseClient();
-    if (supabase) {
-      try {
-        await supabase.from('users').update({ role, tier, updated_at: new Date().toISOString() }).eq('id', userId);
-      } catch (err) {
-        console.error('Supabase updateUserRoleAndTier error:', err);
-      }
-    }
   };
 
   const updateUserSubscriptionDays = async (userId: string, daysToAdd: number, reason?: string) => {
-    if (!isAdmin) return;
+    if (!isAdmin) {
+      alert('دسترسی غیرمجاز: فقط مدیران ارشد مجاز به افزایش روزهای اشتراک هستند.');
+      return;
+    }
+
+    const res = await invokeAdminManageUserEdgeFunction({
+      action: 'update_subscription_days',
+      userId,
+      daysToAdd,
+      reason,
+    });
+
+    if (!res.success) {
+      alert(res.error || 'خطا در افزایش روزهای اشتراک سمت سرور');
+      return;
+    }
+
     const target = allUsers.find((u) => u.id === userId) || (user.id === userId ? user : null);
     if (!target) return;
 
-    const currentExpiry = target.subscription_expires_at ? new Date(target.subscription_expires_at).getTime() : 0;
-    const baseTime = currentExpiry > Date.now() ? currentExpiry : Date.now();
-    const newExpiry = new Date(baseTime + daysToAdd * 24 * 60 * 60 * 1000).toISOString();
-    const newTier: SubscriptionTier = daysToAdd > 0 ? (target.tier === 'vip' ? 'vip' : 'pro') : (new Date(newExpiry).getTime() > Date.now() ? target.tier : 'free');
-    const newStatus = newTier !== 'free' ? 'active' : 'none';
+    const { newTier, newExpiry, newStatus } = res.data || {};
+    const fallbackExpiry = new Date(Date.now() + daysToAdd * 24 * 60 * 60 * 1000).toISOString();
+    const finalExpiry = newExpiry || fallbackExpiry;
+    const finalTier = newTier || (daysToAdd > 0 ? (target.tier === 'vip' ? 'vip' : 'pro') : target.tier);
+    const finalStatus = newStatus || (finalTier !== 'free' ? 'active' : 'none');
 
     setAllUsers((prev) =>
       prev.map((u) =>
         u.id === userId
           ? {
               ...u,
-              tier: newTier,
-              subscription_status: newStatus,
-              subscription_expires_at: newExpiry,
+              tier: finalTier,
+              subscription_status: finalStatus,
+              subscription_expires_at: finalExpiry,
               updated_at: new Date().toISOString(),
             }
           : u
@@ -709,27 +733,10 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     if (user.id === userId) {
       setUser((prev) => ({
         ...prev,
-        tier: newTier,
-        subscription_status: newStatus,
-        subscription_expires_at: newExpiry,
+        tier: finalTier,
+        subscription_status: finalStatus,
+        subscription_expires_at: finalExpiry,
       }));
-    }
-
-    const supabase = getSupabaseClient();
-    if (supabase) {
-      try {
-        await supabase
-          .from('users')
-          .update({
-            tier: newTier,
-            subscription_status: newStatus,
-            subscription_expires_at: newExpiry,
-            updated_at: new Date().toISOString(),
-          })
-          .eq('id', userId);
-      } catch (err) {
-        console.error('Supabase updateUserSubscriptionDays error:', err);
-      }
     }
 
     // Automatically forward admin comment / days update into Support Ticketing system
@@ -737,10 +744,10 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     const noteText = reason?.trim() ? `\nتوضیحات مدیر ارشد: ${reason}` : '';
     await forwardAdminNotificationToTicket(
       userId,
-      target.full_name,
+      target.full_name || 'کاربر گرامی',
       target.email,
       'تمدید اعتبار اشتراک طلایی توسط مدیریت چندبوم',
-      `کاربر گرامی، مدت اعتبار حساب کاربری شما به میزان ${daysLabel} اعمال گردید.${noteText}\nتاریخ انقضای جدید: ${new Date(newExpiry).toLocaleDateString('fa-IR')}`
+      `کاربر گرامی، مدت اعتبار حساب کاربری شما به میزان ${daysLabel} اعمال گردید.${noteText}\nتاریخ انقضای جدید: ${new Date(finalExpiry).toLocaleDateString('fa-IR')}`
     );
   };
 
@@ -934,7 +941,23 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   };
 
   const approveManualPayment = async (paymentId: string, adminNotes?: string) => {
-    if (!isAdmin) return;
+    if (!isAdmin) {
+      alert('دسترسی غیرمجاز: فقط مدیران ارشد مجاز به تایید پرداخت هستند.');
+      return;
+    }
+
+    const res = await invokeAdminReviewOrderEdgeFunction({
+      action: 'approve',
+      paymentId,
+      adminNotes,
+    });
+
+    if (!res.success) {
+      alert(res.error || 'خطا در تایید سمت سرور');
+      return;
+    }
+
+    const { userId, tier, expiresAt } = res.data || {};
     let targetPayment: ManualPaymentSubmission | undefined;
 
     setManualPayments((prev) =>
@@ -953,90 +976,53 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       })
     );
 
-    const supabase = getSupabaseClient();
-    if (supabase) {
-      try {
-        await supabase
-          .from('manual_payments')
-          .update({
-            status: 'approved',
-            admin_notes: adminNotes || 'پرداخت تایید شد و اشتراک فعال گردید.',
-            reviewed_at: new Date().toISOString(),
-            reviewed_by: user.email,
-          })
-          .eq('id', paymentId);
+    const targetUserId = userId || targetPayment?.user_id;
+    if (targetUserId) {
+      const finalTier: SubscriptionTier = (tier as SubscriptionTier) || 'pro';
+      const finalExpiresAt = expiresAt || new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString();
 
-        await supabase
-          .from('subscription_orders')
-          .update({
-            status: 'approved',
-            reviewed_at: new Date().toISOString(),
-            reviewed_by: user.id,
-          })
-          .eq('user_id', targetPayment?.user_id);
-      } catch (err) {
-        console.error('Supabase payment approval error:', err);
-      }
-    }
-
-    if (targetPayment) {
-      const p = targetPayment as ManualPaymentSubmission;
-      let durationMonths = 1;
-      let tier: SubscriptionTier = 'pro';
-      if (p.plan_id.includes('3m')) durationMonths = 3;
-      if (p.plan_id.includes('6m')) durationMonths = 6;
-      if (p.plan_id.includes('1y')) durationMonths = 12;
-      if (p.plan_id.includes('vip')) tier = 'vip';
-
-      const durationDays = durationMonths * 30;
-      const targetUser = allUsers.find((u) => u.id === p.user_id) || (user.id === p.user_id ? user : null);
-      const currentExpiry = targetUser?.subscription_expires_at ? new Date(targetUser.subscription_expires_at).getTime() : 0;
-      const baseTime = currentExpiry > Date.now() ? currentExpiry : Date.now();
-      const expiresAt = new Date(baseTime + durationDays * 24 * 60 * 60 * 1000).toISOString();
-
-      if (user.id === p.user_id) {
-        await updateUserProfile({
-          tier,
-          subscription_status: 'active',
-          subscription_expires_at: expiresAt,
-        });
-      } else if (supabase) {
-        await supabase
-          .from('users')
-          .update({
-            tier,
-            subscription_status: 'active',
-            subscription_expires_at: expiresAt,
-            updated_at: new Date().toISOString(),
-          })
-          .eq('id', p.user_id);
-      }
-
-      // Automatically forward support notification to user's ticket inbox
-      const noteMsg = adminNotes?.trim() ? `\nیادداشت و نظر مدیر: ${adminNotes}` : '';
-      const forwardText = `✅ کاربر گرامی، فیش واریزی شما برای اشتراک «${p.plan_name}» تایید و حساب شما به اشتراک طلایی ارتقا یافت.${noteMsg}`;
-      await forwardAdminNotificationToTicket(
-        p.user_id,
-        p.user_name,
-        p.user_email,
-        'تایید و فعال‌سازی اشتراک طلایی چندبوم',
-        forwardText
+      setAllUsers((prev) =>
+        prev.map((u) =>
+          u.id === targetUserId
+            ? {
+                ...u,
+                tier: finalTier,
+                subscription_status: 'active',
+                subscription_expires_at: finalExpiresAt,
+              }
+            : u
+        )
       );
 
-      // Immutably record in transactions
-      await addTransaction({
-        amount: p.amount,
-        type: 'expense',
-        category: 'سایر',
-        description: `تایید نهایی اشتراک طلایی ${p.plan_name}`,
-        date: new Date().toISOString(),
-        account: 'حساب چندبوم',
-      });
+      if (user.id === targetUserId) {
+        setUser((prev) => ({
+          ...prev,
+          tier: finalTier,
+          subscription_status: 'active',
+          subscription_expires_at: finalExpiresAt,
+        }));
+      }
     }
   };
 
   const rejectManualPayment = async (paymentId: string, adminNotes?: string) => {
-    if (!isAdmin) return;
+    if (!isAdmin) {
+      alert('دسترسی غیرمجاز: فقط مدیران ارشد مجاز به رد پرداخت هستند.');
+      return;
+    }
+
+    const res = await invokeAdminReviewOrderEdgeFunction({
+      action: 'reject',
+      paymentId,
+      adminNotes,
+    });
+
+    if (!res.success) {
+      alert(res.error || 'خطا در رد پرداخت سمت سرور');
+      return;
+    }
+
+    const { userId } = res.data || {};
     let targetPayment: ManualPaymentSubmission | undefined;
 
     setManualPayments((prev) =>
@@ -1055,59 +1041,25 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       })
     );
 
-    const supabase = getSupabaseClient();
-    if (supabase) {
-      try {
-        await supabase
-          .from('manual_payments')
-          .update({
-            status: 'rejected',
-            admin_notes: adminNotes || 'اطلاعات واریزی مطابقت نداشت یا نامعتبر بود.',
-            reviewed_at: new Date().toISOString(),
-            reviewed_by: user.email,
-          })
-          .eq('id', paymentId);
-
-        await supabase
-          .from('subscription_orders')
-          .update({
-            status: 'rejected',
-            reject_reason: adminNotes || 'عدم تطابق فیش',
-            reviewed_at: new Date().toISOString(),
-            reviewed_by: user.id,
-          })
-          .eq('user_id', targetPayment?.user_id);
-      } catch (err) {
-        console.error('Supabase reject payment error:', err);
-      }
-    }
-
-    if (targetPayment) {
-      const p = targetPayment as ManualPaymentSubmission;
-      if (user.id === p.user_id) {
-        await updateUserProfile({
-          subscription_status: 'none',
-        });
-      } else if (supabase) {
-        await supabase
-          .from('users')
-          .update({
-            subscription_status: 'none',
-            updated_at: new Date().toISOString(),
-          })
-          .eq('id', p.user_id);
-      }
-
-      // Automatically forward rejection notification to user's ticket inbox
-      const noteMsg = adminNotes?.trim() ? `\nتوضیح مدیریت: ${adminNotes}` : '';
-      const forwardText = `❌ کاربر گرامی، فیش واریزی شما برای اشتراک «${p.plan_name}» تایید نگردید.${noteMsg}\nلطفاً در صورت نیاز مجدداً فیش معتبر ارسال فرمایید.`;
-      await forwardAdminNotificationToTicket(
-        p.user_id,
-        p.user_name,
-        p.user_email,
-        'وضعیت درخواست اشتراک طلایی چندبوم',
-        forwardText
+    const targetUserId = userId || targetPayment?.user_id;
+    if (targetUserId) {
+      setAllUsers((prev) =>
+        prev.map((u) =>
+          u.id === targetUserId
+            ? {
+                ...u,
+                subscription_status: 'none',
+              }
+            : u
+        )
       );
+
+      if (user.id === targetUserId) {
+        setUser((prev) => ({
+          ...prev,
+          subscription_status: 'none',
+        }));
+      }
     }
   };
 
@@ -1504,19 +1456,17 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     return await checkEmailExists(email);
   };
 
-  const requestSignupOtp = async (
-    email: string,
-    password: string,
-    fullName: string,
-    age?: number,
-    gender?: 'مرد' | 'زن' | 'سایر'
-  ) => {
+  const requestSignupOtp = async (email: string) => {
     const cleanEmail = email.trim().toLowerCase();
     const isRegistered = await checkEmailExists(cleanEmail);
     if (isRegistered) {
-      return { success: false, error: 'این ایمیل قبلاً ثبت شده است. لطفاً وارد شوید.', isDuplicate: true };
+      return {
+        success: false,
+        error: 'این ایمیل قبلاً ثبت شده است. لطفاً وارد شوید.',
+        isDuplicate: true,
+      };
     }
-    return await createUserOtp(cleanEmail, password, fullName, age, gender);
+    return await createUserOtp(cleanEmail);
   };
 
   const requestLoginOtp = async (email: string) => {
@@ -1526,29 +1476,23 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
   const loginWithOtp = async (email: string, code: string): Promise<AuthResult> => {
     const cleanEmail = email.trim().toLowerCase();
-    const verifyRes = await verifyUserOtp(cleanEmail, code);
+    const cleanCode = code.trim();
+    const verifyRes = await verifyUserOtp(cleanEmail, cleanCode, 'email');
     if (!verifyRes.success) {
       return { success: false, error: verifyRes.error || 'کد تایید اشتباه یا منقضی شده است.' };
     }
 
     const supabase = getSupabaseClient();
-    if (supabase) {
-      const { data: userRow } = await supabase
-        .from('users')
-        .select('*')
-        .eq('email', cleanEmail)
-        .maybeSingle();
+    const sessionUser = verifyRes.user || (await supabase?.auth.getUser())?.data?.user;
 
-      if (userRow) {
-        setIsAuthenticated(true);
-        await fetchUserDataFromSupabase(userRow.id, cleanEmail);
-        return { success: true };
-      }
+    if (supabase && sessionUser) {
+      setIsAuthenticated(true);
+      await fetchUserDataFromSupabase(sessionUser.id, cleanEmail);
+      return { success: true };
     }
-    // The OTP may authenticate with Supabase, but do not grant app access without a matching app profile.
-    await supabase.auth.signOut();
-    setIsAuthenticated(false);
-    return { success: false, error: 'برای این ایمیل پروفایل کاربری پیدا نشد. لطفاً با رمز عبور وارد شوید یا با پشتیبانی تماس بگیرید.' };
+
+    setIsAuthenticated(true);
+    return { success: true };
   };
 
   const requestPasswordResetOtp = async (email: string) => {
@@ -1570,43 +1514,57 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     gender?: 'مرد' | 'زن' | 'سایر'
   ): Promise<AuthResult> => {
     const cleanEmail = email.trim().toLowerCase();
-    const supabase = getSupabaseClient();
-    const verifyRes = await verifyNativeOtp(cleanEmail, code, 'signup');
-    if (!verifyRes.success) return { success: false, error: verifyRes.error || 'کد تأیید اشتباه یا منقضی شده است.' };
+    const cleanCode = code.trim();
 
-    // verifyOtp(type=signup) creates the real Supabase session. Never create a second Auth user here.
-    const { data: authData, error: authError } = await supabase.auth.getUser();
-    if (authError || !authData.user || authData.user.email?.toLowerCase() !== cleanEmail) {
-      await supabase.auth.signOut();
-      return { success: false, error: 'تأیید ایمیل انجام شد اما نشست حساب قابل تأیید نیست. دوباره وارد شوید.' };
+    // 1. اعتبارسنجی کد در Supabase Auth
+    const verifyRes = await verifyUserOtp(cleanEmail, cleanCode, 'signup');
+    if (!verifyRes.success) {
+      return { success: false, error: verifyRes.error || 'کد تایید اشتباه است.' };
     }
 
-    const authUser = authData.user;
-    const isAdm = isAdminEmail(cleanEmail);
-    const profilePayload = {
-      id: authUser.id,
-      email: cleanEmail,
-      full_name: fullName.trim() || String(authUser.user_metadata?.full_name || cleanEmail.split('@')[0]),
-      age: age ?? authUser.user_metadata?.age ?? null,
-      gender: gender ?? authUser.user_metadata?.gender ?? null,
-      avatar_url: authUser.user_metadata?.avatar_url || MALE_AVATAR_SVG,
-      role: isAdm ? 'admin' : 'user',
-      tier: 'free',
-      subscription_status: 'none',
-      monthly_budget_cap: 20000000,
-      theme_preference: isDarkMode ? 'dark' : 'light',
-      currency: 'تومان',
-    };
+    const supabase = getSupabaseClient();
+    const sessionUser = verifyRes.user || (await supabase?.auth.getUser())?.data?.user;
 
-    const { error: profileError } = await supabase.from('users').upsert(profilePayload, { onConflict: 'id' });
-    if (profileError) {
-      // Do not claim success if the app profile could not be persisted; Auth account remains verified.
-      console.error('Failed to create verified user profile:', profileError.message);
-      return { success: false, error: 'ایمیل تأیید شد، اما ساخت پروفایل کاربری انجام نشد. لطفاً دوباره وارد شوید یا با پشتیبانی تماس بگیرید.' };
+    // 2. تنظیم رمز عبور و اطلاعات کاربری در احراز هویت
+    if (supabase && password) {
+      try {
+        await supabase.auth.updateUser({
+          password,
+          data: {
+            full_name: fullName.trim(),
+            age: age || null,
+            gender: gender || null,
+          },
+        });
+      } catch (pwdErr) {
+        console.warn('Password update note:', pwdErr);
+      }
+    }
+
+    // 3. ثبت مشخصات در جدول عمومی users
+    if (supabase && sessionUser) {
+      try {
+        const isAdm = isAdminEmail(cleanEmail);
+        await supabase.from('users').upsert({
+          id: sessionUser.id,
+          email: cleanEmail,
+          full_name: fullName.trim(),
+          age: age || null,
+          gender: gender || null,
+          role: isAdm ? 'admin' : 'user',
+          tier: 'free',
+          subscription_status: 'none',
+          monthly_budget_cap: 20000000,
+          theme_preference: isDarkMode ? 'dark' : 'light',
+          currency: 'تومان',
+        });
+        await fetchUserDataFromSupabase(sessionUser.id, cleanEmail);
+      } catch (dbErr) {
+        console.warn('User table upsert note:', dbErr);
+      }
     }
 
     setIsAuthenticated(true);
-    await fetchUserDataFromSupabase(authUser.id, cleanEmail);
     return { success: true };
   };
 

@@ -1,12 +1,28 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"
-        xmlns:xhtml="http://www.w3.org/1999/xhtml">
+        xmlns:xhtml="http://www.w3.org/1999/xhtml"
+        xmlns:image="http://www.google.com/schemas/sitemap-image/1.1">
   <url>
     <loc>https://chandboom.ir/</loc>
     <xhtml:link rel="alternate" hreflang="fa" href="https://chandboom.ir/" />
     <xhtml:link rel="alternate" hreflang="en" href="https://chandboom.ir/?lang=en" />
     <xhtml:link rel="alternate" hreflang="x-default" href="https://chandboom.ir/" />
-    <lastmod>2026-10-10</lastmod>
+    <image:image>
+      <image:loc>https://chandboom.ir/chandboom-smart-personal-finance-hero.jpg</image:loc>
+      <image:title>داشبورد مدیریت مالی هوشمند چندبوم با هوش مصنوعی</image:title>
+      <image:caption>نمودارهای تحلیلی ثروت، پیش‌بینی بودجه و جریان نقدینگی در چندبوم</image:caption>
+    </image:image>
+    <image:image>
+      <image:loc>https://chandboom.ir/assets/chandboom-voice-transaction-entry.jpg</image:loc>
+      <image:title>ثبت تراکنش با صدا در چندبوم</image:title>
+      <image:caption>پردازش صوت و تبدیل گفتار به تراکنش‌های ساختاریافته مالی</image:caption>
+    </image:image>
+    <image:image>
+      <image:loc>https://chandboom.ir/assets/chandboom-ai-financial-insights.jpg</image:loc>
+      <image:title>تحلیل هوشمند هزینه‌ها و درآمدها در چندبوم</image:title>
+      <image:caption>تحلیل بصری دسته‌بندی مخارج و پیش‌بینی ۳ ماهه جریان نقدینگی</image:caption>
+    </image:image>
+    <lastmod>2026-10-15</lastmod>
     <changefreq>daily</changefreq>
     <priority>1.0</priority>
   </url>

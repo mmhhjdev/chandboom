@@ -182,7 +182,7 @@ export const TransactionsView: React.FC<TransactionsViewProps> = ({
   const handleExportExcel = () => {
     exportTransactionsToExcel(
       filtered,
-      `chandboon_transactions_${periodFilter}_${Date.now()}.xlsx`
+      `chandboom_transactions_${periodFilter}_${Date.now()}.xlsx`
     );
   };
 

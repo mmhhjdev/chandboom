@@ -3,14 +3,14 @@ import { Transaction } from '../types';
 import { formatShamsiDate } from './formatters';
 
 /**
- * Enhanced Excel Exporter for Chandboom Platform (chandboon.ir)
- * - Produces chandboon_transactions.xlsx
+ * Enhanced Excel Exporter for Chandboom Platform (chandboom.ir)
+ * - Produces chandboom_transactions.xlsx
  * - Sheet 1: "تراکنش‌های چندبوم" with expanded columns and automated totals row
  * - Sheet 2: "خلاصه و تحلیل دسته‌بندی‌ها" with grouped summary of Income vs Expense
  */
 export function exportTransactionsToExcel(
   transactions: Transaction[],
-  fileName: string = `chandboon_transactions_${Date.now()}.xlsx`
+  fileName: string = `chandboom_transactions_${Date.now()}.xlsx`
 ) {
   // 1. Prepare Main Sheet Data (تراکنش‌های چندبوم)
   const mainSheetRows: any[] = [];

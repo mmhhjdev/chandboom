@@ -1,5 +1,5 @@
 /**
- * 30-Day Financial Quests & Gamified Micro-Goals for Chandboom (chandboon.ir)
+ * 30-Day Financial Quests & Gamified Micro-Goals for Chandboom (chandboom.ir)
  */
 
 export interface DailyQuest {

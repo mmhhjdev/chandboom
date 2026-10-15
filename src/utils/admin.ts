@@ -1,6 +1,7 @@
 import { getSupabaseClient } from '../lib/supabase';
 
-export const ADMIN_SESSION_KEY = 'chandboon_admin_session';
+export const ADMIN_SESSION_KEY = 'chandboom_admin_session';
+export const LEGACY_ADMIN_SESSION_KEY = 'chandboon_admin_session';
 
 export interface AdminSession {
   email: string;
@@ -11,7 +12,8 @@ export interface AdminSession {
 }
 
 /**
- * Securely retrieves admin credentials from environment variables
+/**
+ * Securely retrieves admin email configuration from environment variables
  */
 export function getEnvAdminEmail(): string {
   const envVal =
@@ -19,14 +21,6 @@ export function getEnvAdminEmail(): string {
     (typeof process !== 'undefined' && process.env?.VITE_ADMIN_EMAIL) ||
     '';
   return envVal ? envVal.trim().toLowerCase() : '';
-}
-
-export function getEnvAdminPassword(): string {
-  const envVal =
-    (typeof import.meta !== 'undefined' && (import.meta as any).env?.VITE_ADMIN_PASSWORD) ||
-    (typeof process !== 'undefined' && process.env?.VITE_ADMIN_PASSWORD) ||
-    '';
-  return envVal ? envVal.trim() : '';
 }
 
 export function isAdminEmail(email?: string | null): boolean {
@@ -37,7 +31,7 @@ export function isAdminEmail(email?: string | null): boolean {
 }
 
 export function canAccessAdminPanel(userRole?: string, email?: string): boolean {
-  return isAdminEmail(email) || userRole === 'admin' || isStoredAdminSessionValid();
+  return isAdminEmail(email) || userRole === 'admin' || isStoredAdminSessionValid(email);
 }
 
 /**
@@ -45,7 +39,7 @@ export function canAccessAdminPanel(userRole?: string, email?: string): boolean 
  */
 export function getStoredAdminSession(): AdminSession | null {
   try {
-    const raw = localStorage.getItem(ADMIN_SESSION_KEY);
+    const raw = localStorage.getItem(ADMIN_SESSION_KEY) || localStorage.getItem(LEGACY_ADMIN_SESSION_KEY);
     if (!raw) return null;
     const session: AdminSession = JSON.parse(raw);
     if (!session || !session.email || !session.expiresAt) return null;
@@ -60,11 +54,22 @@ export function getStoredAdminSession(): AdminSession | null {
   }
 }
 
-export function isStoredAdminSessionValid(): boolean {
+export function isStoredAdminSessionValid(userEmail?: string): boolean {
   try {
     const session = getStoredAdminSession();
-    const isAdminFlag = localStorage.getItem('isAdmin') === 'true';
-    return Boolean(session || isAdminFlag);
+    if (!session || !session.email || !session.expiresAt) return false;
+    if (Date.now() > session.expiresAt) {
+      clearStoredAdminSession();
+      return false;
+    }
+    // Must match authorized admin email configuration
+    if (!isAdminEmail(session.email)) {
+      return false;
+    }
+    if (userEmail && session.email.toLowerCase() !== userEmail.toLowerCase()) {
+      return false;
+    }
+    return true;
   } catch {
     return false;
   }
@@ -81,7 +86,6 @@ export function setStoredAdminSession(email: string, fullName = 'مدیر ارش
   };
   try {
     localStorage.setItem(ADMIN_SESSION_KEY, JSON.stringify(session));
-    localStorage.setItem('isAdmin', 'true');
     localStorage.setItem('admin_email', cleanEmail);
     localStorage.setItem('admin_name', fullName);
   } catch (e) {
@@ -93,6 +97,7 @@ export function setStoredAdminSession(email: string, fullName = 'مدیر ارش
 export function clearStoredAdminSession(): void {
   try {
     localStorage.removeItem(ADMIN_SESSION_KEY);
+    localStorage.removeItem(LEGACY_ADMIN_SESSION_KEY);
     localStorage.removeItem('isAdmin');
     localStorage.removeItem('admin_email');
     localStorage.removeItem('admin_name');
@@ -102,9 +107,9 @@ export function clearStoredAdminSession(): void {
 }
 
 /**
- * 1. Supabase Admins Table Integration:
- * Direct query: select('*').eq('email', email).eq('password', password) without Edge Functions.
- * Upon successful match, activates a secure admin session in localStorage.
+ * Supabase Auth Cryptographic Validation:
+ * Authenticates exclusively via Supabase Auth server (secure bcrypt/Argon2 hashing).
+ * Does NOT accept client-side password fallbacks or unverified environment passwords.
  */
 export async function verifyAdminCredentials(
   emailInput: string,
@@ -119,47 +124,67 @@ export async function verifyAdminCredentials(
 
   const supabase = getSupabaseClient();
 
-  // 1. Direct query on Supabase 'admins' table
-  if (supabase) {
-    try {
-      const { data, error } = await supabase
-        .from('admins')
-        .select('*')
-        .eq('email', cleanEmail)
-        .eq('password', cleanPassword);
+  if (!supabase) {
+    return { success: false, error: 'اتصال به سرویس احراز هویت برقرار نیست.' };
+  }
 
-      if (!error && data && data.length > 0) {
-        const adminRecord = data[0];
-        const session = setStoredAdminSession(adminRecord.email, adminRecord.full_name || adminRecord.name || 'مدیر ارشد');
-        return { success: true, session };
-      }
+  try {
+    const { data, error } = await supabase.auth.signInWithPassword({
+      email: cleanEmail,
+      password: cleanPassword,
+    });
 
-      // Case-insensitive fallback for email
-      const { data: ciData, error: ciError } = await supabase
-        .from('admins')
-        .select('*')
-        .ilike('email', cleanEmail)
-        .eq('password', cleanPassword);
-
-      if (!ciError && ciData && ciData.length > 0) {
-        const adminRecord = ciData[0];
-        const session = setStoredAdminSession(adminRecord.email, adminRecord.full_name || adminRecord.name || 'مدیر ارشد');
-        return { success: true, session };
-      }
-    } catch (err: any) {
-      console.warn('Supabase admins query warning:', err?.message);
+    if (error) {
+      return {
+        success: false,
+        error: error.message.includes('Invalid login credentials')
+          ? 'ایمیل یا رمز عبور ادمین نادرست است.'
+          : error.message,
+      };
     }
+
+    if (data?.user) {
+      const userEmail = (data.user.email || '').trim().toLowerCase();
+
+      // The authoritative role is stored in public.users, not in Auth metadata.
+      // Query the profile using the authenticated user's UUID so the result matches
+      // the account that just signed in.
+      const { data: profile, error: profileError } = await supabase
+        .from('users')
+        .select('id, email, role, full_name')
+        .eq('id', data.user.id)
+        .maybeSingle();
+
+      if (profileError) {
+        await supabase.auth.signOut();
+        return {
+          success: false,
+          error: 'ورود انجام شد، اما خواندن نقش کاربر از جدول users ناموفق بود. دسترسی مدیریت فعال نشد.',
+        };
+      }
+
+      const isAuthorized = profile?.role === 'admin' || isAdminEmail(userEmail);
+
+      if (isAuthorized) {
+        const name = profile?.full_name || data.user.user_metadata?.full_name || data.user.user_metadata?.name || 'مدیر ارشد چندبوم';
+        const session = setStoredAdminSession(cleanEmail, name);
+        return { success: true, session };
+      } else {
+        await supabase.auth.signOut();
+        return {
+          success: false,
+          error: 'ورود انجام شد، اما نقش این حساب در public.users برابر admin نیست. شناسه حساب Auth و users باید یکی باشد.',
+        };
+      }
+    }
+  } catch (err: any) {
+    return {
+      success: false,
+      error: err?.message || 'خطا در ارتباط با سرور احراز هویت Supabase.',
+    };
   }
 
-  // 2. High-availability Fallback Authentication using Environment Variables
-  const envAdminEmail = getEnvAdminEmail();
-  const envAdminPassword = getEnvAdminPassword();
-
-  if (envAdminEmail && envAdminPassword && cleanEmail === envAdminEmail && cleanPassword === envAdminPassword) {
-    const session = setStoredAdminSession(cleanEmail, 'مدیر ارشد سامانه');
-    return { success: true, session };
-  }
-
-  return { success: false, error: 'اطلاعات کاربری ادمین در سیستم یافت نشد یا رمز عبور نامعتبر است.' };
+  return { success: false, error: 'اطلاعات کاربری ادمین در سیستم تایید نشد.' };
 }
+
 

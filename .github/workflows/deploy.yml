@@ -1,9 +1,10 @@
-name: Deploy Chandboom
+name: Deploy Chandboom to GitHub Pages
 
-'on':
+on:
   push:
     branches:
       - main
+      - master
   workflow_dispatch:
 
 permissions:
@@ -12,76 +13,62 @@ permissions:
   id-token: write
 
 concurrency:
-  group: github-pages
-  cancel-in-progress: true
+  group: "pages"
+  cancel-in-progress: false
 
 jobs:
   build:
-    name: Build Chandboom
+    name: Build Static Applet
     runs-on: ubuntu-latest
-    environment:
-      name: github-pages
-
     steps:
-      - name: Checkout repository
+      - name: Checkout Code
         uses: actions/checkout@v4
 
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v2
         with:
-          node-version: 20
-          cache: npm
+          bun-version: latest
 
-      - name: Install dependencies
-        run: npm install --legacy-peer-deps
+      - name: Install Dependencies
+        run: bun install --frozen-lockfile || bun install
 
-      - name: Lint
-        run: npm run lint --if-present
+      - name: Verify TypeScript & Lint
+        run: bun run lint
 
-      - name: Build application
+      - name: Build Application for Production
         env:
           VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
           VITE_SUPABASE_ANON_KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY }}
           VITE_GAPGPT_API_KEY: ${{ secrets.VITE_GAPGPT_API_KEY }}
-          VITE_AI_API_KEY: ${{ secrets.VITE_AI_API_KEY || secrets.VITE_GAPGPT_API_KEY }}
-          VITE_GAPGPT_BASE_URL: ${{ secrets.VITE_GAPGPT_BASE_URL || vars.VITE_GAPGPT_BASE_URL || 'https://api.gapgpt.app/v1' }}
-          VITE_AI_BASE_URL: ${{ secrets.VITE_AI_BASE_URL || vars.VITE_AI_BASE_URL || secrets.VITE_GAPGPT_BASE_URL || vars.VITE_GAPGPT_BASE_URL || 'https://api.gapgpt.app/v1' }}
-        run: npm run build
+          VITE_GAPGPT_BASE_URL: ${{ vars.VITE_GAPGPT_BASE_URL || 'https://api.gapgpt.app/v1' }}
+        run: bun run build
 
-      - name: Verify build output
+      - name: Verify CNAME and SPA 404 Routing in Dist
         run: |
-          if [ ! -f dist/index.html ]; then
-            echo "::error::Build failed: dist/index.html not found"
-            exit 1
-          fi
-          echo "Build completed successfully"
-
-      - name: Copy GitHub Pages files
-        run: |
-          if [ -f public/CNAME ]; then
+          if [ -f public/CNAME ] && [ ! -f dist/CNAME ]; then
             cp public/CNAME dist/CNAME
           fi
-          if [ -f public/404.html ]; then
+          if [ -f public/404.html ] && [ ! -f dist/404.html ]; then
             cp public/404.html dist/404.html
           fi
+          echo "Verified dist contents:"
+          ls -la dist
 
-      - name: Configure GitHub Pages
+      - name: Setup GitHub Pages
         uses: actions/configure-pages@v5
 
-      - name: Upload Pages artifact
+      - name: Upload Pages Artifact
         uses: actions/upload-pages-artifact@v3
         with:
-          path: dist
+          path: './dist'
 
   deploy:
-    name: Deploy Chandboom
-    runs-on: ubuntu-latest
-    needs: build
-
+    name: Deploy to GitHub Pages
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
-
+    runs-on: ubuntu-latest
+    needs: build
     steps:
       - name: Deploy to GitHub Pages
         id: deployment

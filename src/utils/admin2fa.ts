@@ -41,44 +41,9 @@ export async function verifyAdminOtpViaEdgeFunction(
   return { success: false, error: result.error || 'کد تایید اشتباه است.' };
 }
 
-export function generateAdmin2FACode(email: string): string {
-  const code = Math.floor(100000 + Math.random() * 900000).toString();
-  runtimeOtpCodes.set(email.toLowerCase(), {
-    code,
-    expiresAt: Date.now() + 5 * 60 * 1000,
-  });
-  return code;
-}
+// Local mock OTP generation and verification has been deprecated and removed.
+// All OTP generation and verification MUST occur strictly on the server (Edge Function / Supabase Auth).
 
-export function verifyAdmin2FACode(inputCode: string, email: string): { success: boolean; error?: string } {
-  try {
-    const cleanEmail = email.toLowerCase();
-    const payload = runtimeOtpCodes.get(cleanEmail);
-    if (!payload) {
-      return { success: false, error: 'کد تایید ارسال نشده یا منقضی شده است. لطفاً کد جدید دریافت کنید.' };
-    }
-
-    if (Date.now() > payload.expiresAt) {
-      runtimeOtpCodes.delete(cleanEmail);
-      return { success: false, error: 'کد تایید منقضی شده است (مهلت ۵ دقیقه).' };
-    }
-
-    if (payload.code !== inputCode.trim()) {
-      return { success: false, error: 'کد تایید یکبار مصرف اشتباه است.' };
-    }
-
-    const session: Admin2FASession = {
-      verified: true,
-      expiresAt: Date.now() + 60 * 60 * 1000,
-      email: cleanEmail,
-    };
-    runtimeAdminSessions.set(cleanEmail, session);
-    runtimeOtpCodes.delete(cleanEmail);
-    return { success: true };
-  } catch {
-    return { success: false, error: 'خطا در بررسی کد تایید' };
-  }
-}
 
 export function isAdmin2FAVerified(email: string): boolean {
   try {
