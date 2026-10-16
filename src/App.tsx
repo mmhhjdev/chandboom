@@ -22,7 +22,14 @@ import { LandingPage } from './components/LandingPage';
 import { AuthGuardModal } from './components/AuthGuardModal';
 import { BankSmsModal } from './components/BankSmsModal';
 import { DailyQuestsModal } from './components/DailyQuestsModal';
+import { Routes, Route, Link } from 'react-router-dom';
 import { Transaction } from './types';
+import { FAQPage } from './pages/FAQPage';
+import { AboutPage } from './pages/AboutPage';
+import { ContactPage } from './pages/ContactPage';
+import { FeaturesPage } from './pages/FeaturesPage';
+import { PricingPage } from './pages/PricingPage';
+import { AIAssistant } from './components/AIAssistant';
 import { ShieldCheck, Heart, Sparkles, ShieldAlert } from 'lucide-react';
 import { initSecurityProtection } from './utils/devtoolsProtection';
 import { EnvNoticeBanner } from './components/EnvNoticeBanner';
@@ -156,23 +163,34 @@ const AppContent: React.FC = () => {
         {activeTab === 'support' && (
           <SupportView onOpenTicketModal={() => setIsTicketModalOpen(true)} />
         )}
+        {activeTab === 'ai-assistant' && <AIAssistant />}
         {activeTab === 'settings' && (
           <SettingsView onOpenAvatarModal={() => setIsAvatarModalOpen(true)} />
         )}
       </main>
 
-      {/* Application Footer */}
-      <footer className="border-t border-[#E2E8E4] dark:border-[#1A2621] py-6 mb-18 md:mb-0 text-xs text-zinc-500 dark:text-zinc-400 bg-white/50 dark:bg-[#0A100D]/50 font-cairo">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 flex flex-col sm:flex-row items-center justify-between gap-3">
-          <div className="flex items-center gap-2">
-            <img src="./logo.png" alt="لوگوی چندبوم" className="w-5 h-5 object-contain" onError={(e) => { (e.currentTarget as HTMLImageElement).src = './assets/logo.png'; }} />
-            <span className="font-brand font-bold text-sm text-zinc-800 dark:text-zinc-200">
-              چندبوم (Chandboom)
-            </span>
-            <span>• تمامی حقوق برای سامانه مدیریت مالی «چندبوم» محفوظ است.</span>
+      {/* Application Footer with SEO Landing Page Links */}
+      <footer className="border-t border-[#E2E8E4] dark:border-[#1A2621] py-8 mb-18 md:mb-0 text-xs text-zinc-500 dark:text-zinc-400 bg-white/70 dark:bg-[#0A100D]/70 font-cairo">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 space-y-4">
+          <div className="flex flex-wrap items-center justify-center gap-x-6 gap-y-2 text-xs font-bold text-zinc-600 dark:text-zinc-300 pb-2 border-b border-[#E2E8E4] dark:border-[#1A2621]">
+            <Link to="/features" className="hover:text-emerald-500 transition">امکانات و قابلیت‌ها</Link>
+            <Link to="/pricing" className="hover:text-emerald-500 transition">تعرفه‌ها و اشتراک طلایی</Link>
+            <Link to="/faq" className="hover:text-emerald-500 transition">سوالات متداول (FAQ)</Link>
+            <Link to="/about" className="hover:text-emerald-500 transition">درباره ما</Link>
+            <Link to="/contact" className="hover:text-emerald-500 transition">تماس با پشتیبانی</Link>
           </div>
-          <div className="text-[11px] text-zinc-400 font-mono" dir="ltr">
-            Chandboom © {new Date().getFullYear()}
+
+          <div className="flex flex-col sm:flex-row items-center justify-between gap-3 text-[11px]">
+            <div className="flex items-center gap-2">
+              <img src="./logo.png" alt="لوگوی چندبوم" className="w-5 h-5 object-contain" onError={(e) => { (e.currentTarget as HTMLImageElement).src = './assets/logo.png'; }} />
+              <span className="font-brand font-bold text-sm text-zinc-800 dark:text-zinc-200">
+                چندبوم (Chandboom)
+              </span>
+              <span>• تمامی حقوق برای سامانه مدیریت مالی «چندبوم» محفوظ است.</span>
+            </div>
+            <div className="text-zinc-400 font-mono" dir="ltr">
+              chandboom.ir © {new Date().getFullYear()}
+            </div>
           </div>
         </div>
       </footer>
@@ -237,7 +255,14 @@ const AppContent: React.FC = () => {
 export default function App() {
   return (
     <AppProvider>
-      <AppContent />
+      <Routes>
+        <Route path="/faq" element={<FAQPage />} />
+        <Route path="/about" element={<AboutPage />} />
+        <Route path="/contact" element={<ContactPage />} />
+        <Route path="/features" element={<FeaturesPage />} />
+        <Route path="/pricing" element={<PricingPage />} />
+        <Route path="*" element={<AppContent />} />
+      </Routes>
     </AppProvider>
   );
 }

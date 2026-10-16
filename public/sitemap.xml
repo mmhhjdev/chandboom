@@ -27,20 +27,32 @@
     <priority>1.0</priority>
   </url>
   <url>
-    <loc>https://chandboom.ir/#features</loc>
-    <lastmod>2026-10-10</lastmod>
+    <loc>https://chandboom.ir/features</loc>
+    <lastmod>2026-10-16</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.9</priority>
   </url>
   <url>
-    <loc>https://chandboom.ir/#pricing</loc>
-    <lastmod>2026-10-10</lastmod>
+    <loc>https://chandboom.ir/pricing</loc>
+    <lastmod>2026-10-16</lastmod>
     <changefreq>weekly</changefreq>
-    <priority>0.85</priority>
+    <priority>0.9</priority>
   </url>
   <url>
-    <loc>https://chandboom.ir/#faq</loc>
-    <lastmod>2026-10-10</lastmod>
+    <loc>https://chandboom.ir/faq</loc>
+    <lastmod>2026-10-16</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://chandboom.ir/about</loc>
+    <lastmod>2026-10-16</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://chandboom.ir/contact</loc>
+    <lastmod>2026-10-16</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.7</priority>
   </url>

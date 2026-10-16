@@ -1,11 +1,21 @@
-import { useEffect } from 'react';
+import React, { useEffect } from 'react';
 import { useLocation } from 'react-router-dom';
-import { trackPageView } from '../lib/analytics';
+import { initGA, trackPageView } from '../lib/analytics';
 
-export default function AnalyticsTracker() {
-  const { pathname, search } = useLocation();
+/**
+ * Automatically tracks page views across client-side route changes
+ * Must be mounted inside a <BrowserRouter>
+ */
+export const AnalyticsTracker: React.FC = () => {
+  const location = useLocation();
+
   useEffect(() => {
-    trackPageView(pathname + search);
-  }, [pathname, search]);
+    initGA();
+  }, []);
+
+  useEffect(() => {
+    trackPageView(location.pathname + location.search, document.title);
+  }, [location]);
+
   return null;
-}
+};

@@ -22,6 +22,7 @@ import {
 import { useApp } from '../context/AppContext';
 import { formatToman, toPersianDigits } from '../utils/formatters';
 import { EXPENSE_CATEGORIES } from '../data/initialData';
+import { FinancialCharts } from './FinancialCharts';
 
 const DEFAULT_CATEGORY_LIMITS: Record<string, number> = {
   'خوراک و غذا': 6000000,
@@ -208,6 +209,9 @@ export const AnalyticsView: React.FC = () => {
           </p>
         </div>
       </div>
+
+      {/* Interactive Financial Visual Charts (Recharts with ErrorBoundary & Empty State) */}
+      <FinancialCharts transactions={transactions} onOpenAddTransaction={() => setActiveTab('transactions')} />
 
       {/* Category Budgeting & Spending Limits (بودجه‌بندی و سقف مخارج به تفکیک دسته‌بندی) */}
       <div className="bg-white dark:bg-[#0F1512] rounded-3xl border border-[#E2E8E4] dark:border-[#1A2621] shadow-xs p-6 space-y-6">

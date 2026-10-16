@@ -1,33 +1,82 @@
+/**
+ * Google Analytics 4 (GA4) Integration for Chandboom
+ * STRICT RULE: Never hardcode the GA measurement ID.
+ * Always retrieves from environment variable import.meta.env.VITE_GA_MEASUREMENT_ID.
+ */
+
 declare global {
   interface Window {
+    dataLayer: any[];
     gtag: (...args: any[]) => void;
   }
 }
 
-const MEASUREMENT_ID = import.meta.env.VITE_GA_MEASUREMENT_ID;
+export function getGaMeasurementId(): string {
+  return (import.meta.env.VITE_GA_MEASUREMENT_ID || '').trim();
+}
 
-export function trackPageView(path: string): void {
-  if (typeof window === 'undefined' || !window.gtag) return;
-  window.gtag('config', MEASUREMENT_ID, {
-    page_path: path,
-    page_title: document.title,
+/**
+ * Initializes GA4 dataLayer and gtag if measurement ID is provided
+ */
+export function initGA(): void {
+  const measurementId = getGaMeasurementId();
+  if (!measurementId || typeof window === 'undefined') return;
+
+  window.dataLayer = window.dataLayer || [];
+  if (!window.gtag) {
+    window.gtag = function () {
+      window.dataLayer.push(arguments);
+    };
+    window.gtag('js', new Date());
+  }
+  window.gtag('config', measurementId, {
+    send_page_view: false, // Managed manually via AnalyticsTracker
   });
 }
 
-export function trackEvent(action: string, params: Record<string, any> = {}): void {
-  if (typeof window === 'undefined' || !window.gtag) return;
-  window.gtag('event', action, { ...params, measurement_id: MEASUREMENT_ID });
+/**
+ * Tracks route page views
+ */
+export function trackPageView(path: string, title?: string): void {
+  const measurementId = getGaMeasurementId();
+  if (!measurementId || typeof window === 'undefined' || !window.gtag) return;
+
+  window.gtag('event', 'page_view', {
+    page_path: path,
+    page_title: title || document.title,
+    page_location: window.location.href,
+    send_to: measurementId,
+  });
 }
 
-export const analytics = {
-  pageView: trackPageView,
-  login: (method: string) => trackEvent('login', { method }),
-  signup: (method: string) => trackEvent('sign_up', { method }),
-  logout: () => trackEvent('logout'),
-  otpRequested: () => trackEvent('otp_requested'),
-  otpVerified: () => trackEvent('otp_verified'),
-  otpFailed: (reason?: string) => trackEvent('otp_failed', { reason }),
-  paymentReceiptUploaded: () => trackEvent('payment_receipt_uploaded'),
-  avatarUploaded: () => trackEvent('avatar_uploaded'),
-  error: (type: string, message?: string) => trackEvent('app_error', { error_type: type, message }),
-};
+/**
+ * Generic custom event tracker
+ */
+export function trackEvent(
+  eventName: string,
+  params?: Record<string, string | number | boolean | undefined>
+): void {
+  const measurementId = getGaMeasurementId();
+  if (!measurementId || typeof window === 'undefined' || !window.gtag) return;
+
+  window.gtag('event', eventName, {
+    ...params,
+    send_to: measurementId,
+  });
+}
+
+/**
+ * Specifically tracks AI Assistant usage analytics
+ */
+export function trackAiQuerySent(category: string = 'guide'): void {
+  trackEvent('ai_query_sent', {
+    category,
+    timestamp: new Date().toISOString(),
+  });
+}
+
+export function trackAiQuotaExceeded(): void {
+  trackEvent('ai_quota_exceeded', {
+    timestamp: new Date().toISOString(),
+  });
+}

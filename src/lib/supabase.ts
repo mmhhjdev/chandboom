@@ -1,24 +1,12 @@
 import { createClient, SupabaseClient } from '@supabase/supabase-js';
 
-// Fallback values
-const FALLBACK_SUPABASE_URL = 'https://yqmhtfuwnnlzenqrhyxm.supabase.co';
-const FALLBACK_SUPABASE_ANON_KEY = 'sb_publishable_IJT6kGn76dNThqX2iXgwzg_OzkEtuLT';
+export const SUPABASE_URL: string =
+  (typeof import.meta !== 'undefined' && (import.meta as any).env?.VITE_SUPABASE_URL) ||
+  'https://yqmhtfuwnnlzenqrhyxm.supabase.co';
 
-// Validation helpers
-function isValidSupabaseUrl(url: unknown): url is string {
-  return typeof url === 'string' && url.trim().startsWith('https://') && url.trim().includes('.supabase.co');
-}
-
-function isValidSupabaseKey(key: unknown): key is string {
-  return typeof key === 'string' && key.trim().length > 20;
-}
-
-// Safe environment variable access with trim and validation
-const envUrl = typeof import.meta !== 'undefined' ? (import.meta as any).env?.VITE_SUPABASE_URL : undefined;
-const envKey = typeof import.meta !== 'undefined' ? (import.meta as any).env?.VITE_SUPABASE_ANON_KEY : undefined;
-
-export const SUPABASE_URL: string = isValidSupabaseUrl(envUrl) ? envUrl.trim() : FALLBACK_SUPABASE_URL;
-export const SUPABASE_ANON_KEY: string = isValidSupabaseKey(envKey) ? envKey.trim() : FALLBACK_SUPABASE_ANON_KEY;
+export const SUPABASE_ANON_KEY: string =
+  (typeof import.meta !== 'undefined' && (import.meta as any).env?.VITE_SUPABASE_ANON_KEY) ||
+  'sb_publishable_IJT6kGn76dNThqX2iXgwzg_OzkEtuLT';
 
 // Robust Cloud Session Storage for Modern Web Apps:
 // Uses browser localStorage for zero-loss session persistence across page reloads and browser visits.
@@ -105,7 +93,7 @@ export const createUserOtp = sendNativeOtp;
 
 /**
 اعتبارسنجی کد تایید OTP در Supabase Auth
-پشتیبانی از توکن‌های  تا ۸ رقمی با نوع‌های 'email' و 'signup'
+پشتیبانی از توکن‌های ۶ تا ۸ رقمی با نوع‌های 'email' و 'signup'
 */
 export async function verifyNativeOtp(
   email: string,
@@ -115,7 +103,7 @@ export async function verifyNativeOtp(
   const normalizedEmail = email.toLowerCase().trim();
   const cleanToken = token.trim();
   if (!cleanToken || cleanToken.length < 6 || cleanToken.length > 8 || !/^\d+$/.test(cleanToken)) {
-    return { success: false, error: 'کد تایید باید عددی و بین  تا ۸ رقم باشد.' };
+    return { success: false, error: 'کد تایید باید عددی و بین ۶ تا ۸ رقم باشد.' };
   }
   try {
     let verifyRes = await supabase.auth.verifyOtp({
@@ -450,6 +438,65 @@ export async function invokeAdminManageUserEdgeFunction(params: {
     return {
       success: false,
       error: err?.message || 'خطا در ارتباط با سرور مدیریت کاربران.',
+    };
+  }
+}
+
+/**
+Invokes the Supabase Edge Function 'ai-assistant' for subscription-gated AI assistance
+Strictly passes JWT to server; never calls AI API directly from frontend.
+Returns action proposals for user confirmation (Action Agent pattern).
+*/
+export async function invokeAiAssistantEdgeFunction(
+  message: string,
+  history: Array<{ role: 'user' | 'assistant'; content: string }> = []
+): Promise<{
+  success: boolean;
+  reply?: string;
+  error?: string;
+  code?: string;
+  remaining_queries?: number;
+  action?: any;
+  requires_confirmation?: boolean;
+}> {
+  try {
+    const sessionRes = await supabase.auth.getSession();
+    const token = sessionRes?.data?.session?.access_token;
+    if (!token) {
+      return {
+        success: false,
+        error: 'برای گفت‌وگو با دستیار هوشمند ابتدا باید وارد حساب کاربری خود شوید.',
+        code: 'AUTH_REQUIRED',
+      };
+    }
+
+    const { data, error } = await supabase.functions.invoke('ai-assistant', {
+      body: { message, messages: history },
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    });
+
+    if (error) {
+      return { success: false, error: translateSupabaseError(error.message) };
+    }
+
+    if (data) {
+      return {
+        success: Boolean(data.success),
+        reply: data.reply,
+        error: data.error,
+        code: data.code,
+        remaining_queries: data.remaining_queries,
+        action: data.action,
+        requires_confirmation: data.requires_confirmation,
+      };
+    }
+    return { success: false, error: 'پاسخی از دستیار هوشمند دریافت نشد.' };
+  } catch (err: any) {
+    return {
+      success: false,
+      error: err?.message || 'خطا در برقراری ارتباط با دستیار هوشمند.',
     };
   }
 }

@@ -21,11 +21,22 @@
       }(window.location));
     </script>
 
+    <!-- Google Analytics (GA4) -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=%VITE_GA_MEASUREMENT_ID%"></script>
+    <script>
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      gtag('js', new Date());
+      gtag('config', '%VITE_GA_MEASUREMENT_ID%', {
+        send_page_view: false
+      });
+    </script>
+
     <!-- 2. Primary High-Performance SEO Meta Tags -->
-    <title>چندبوم | مدیریت مالی شخصی با هوش مصنوعی پیشرفته</title>
-    <meta name="title" content="چندبوم | مدیریت مالی شخصی با هوش مصنوعی پیشرفته" />
-    <meta name="description" content="سامانه هوشمند چندبوم (chandboom.ir): مدیریت مالی شخصی با هوش مصنوعی پیشرفته، ثبت خودکار پیامک بانکی، تحلیل بودجه ۳ ماه آینده و برنامه‌ریزی اهداف مالی." />
-    <meta name="keywords" content="مدیریت مالی شخصی, چندبوم, مدیریت مالی شخصی با هوش مصنوعی پیشرفته, حسابداری آنلاین, ثبت خودکار پیامک بانکی, دستیار هوشمند چندبوم, chandboom.ir, بودجه بندی هوشمند" />
+    <title>چندبوم | مدیریت مالی هوشمند و مدیریت مالی شخصی با هوش مصنوعی</title>
+    <meta name="title" content="چندبوم | مدیریت مالی هوشمند و مدیریت مالی شخصی با هوش مصنوعی" />
+    <meta name="description" content="سامانه هوشمند چندبوم (chandboom.ir): مدیریت مالی هوشمند و مدیریت مالی شخصی با هوش مصنوعی پیشرفته، ثبت خودکار پیامک بانکی، تحلیل بودجه ۳ ماه آینده و برنامه‌ریزی اهداف مالی." />
+    <meta name="keywords" content="مدیریت مالی هوشمند, مدیریت مالی شخصی با هوش مصنوعی, مدیریت مالی شخصی, چندبوم, دستیار مالی هوشمند چندبوم, ثبت خودکار پیامک بانکی, chandboom.ir, بودجه بندی هوشمند" />
     <meta name="author" content="تیم چندبوم (Chandboom Technologies)" />
     <meta name="robots" content="index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1" />
     <meta name="googlebot" content="index, follow" />
@@ -39,8 +50,8 @@
     <!-- 3. Open Graph / Facebook / Telegram / WhatsApp / LinkedIn -->
     <meta property="og:type" content="website" />
     <meta property="og:url" content="https://chandboom.ir/" />
-    <meta property="og:title" content="چندبوم | مدیریت مالی شخصی با هوش مصنوعی پیشرفته" />
-    <meta property="og:description" content="سامانه هوشمند چندبوم (chandboom.ir): مدیریت مالی شخصی با هوش مصنوعی پیشرفته، ثبت خودکار پیامک بانکی، ثبت تراکنش با صدا و تحلیل هوشمند بودجه." />
+    <meta property="og:title" content="چندبوم | مدیریت مالی هوشمند و مدیریت مالی شخصی با هوش مصنوعی" />
+    <meta property="og:description" content="سامانه هوشمند چندبوم (chandboom.ir): مدیریت مالی هوشمند و مدیریت مالی شخصی با هوش مصنوعی پیشرفته، ثبت خودکار پیامک بانکی، ثبت تراکنش با صدا و تحلیل هوشمند بودجه." />
     <meta property="og:image" content="https://chandboom.ir/chandboom-smart-personal-finance-hero.jpg" />
     <meta property="og:image:secure_url" content="https://chandboom.ir/chandboom-smart-personal-finance-hero.jpg" />
     <meta property="og:image:type" content="image/jpeg" />
@@ -54,8 +65,8 @@
     <!-- 4. Twitter / X Cards -->
     <meta name="twitter:card" content="summary_large_image" />
     <meta name="twitter:url" content="https://chandboom.ir/" />
-    <meta name="twitter:title" content="چندبوم | مدیریت مالی شخصی با هوش مصنوعی پیشرفته" />
-    <meta name="twitter:description" content="مدیریت مالی شخصی با هوش مصنوعی، ثبت تراکنش با صدا و تحلیل هوشمند هزینه‌ها و درآمدها در چندبوم." />
+    <meta name="twitter:title" content="چندبوم | مدیریت مالی هوشمند و مدیریت مالی شخصی با هوش مصنوعی" />
+    <meta name="twitter:description" content="مدیریت مالی هوشمند و مدیریت مالی شخصی با هوش مصنوعی، ثبت خودکار پیامک بانکی و تحلیل هوشمند هزینه‌ها و درآمدها در چندبوم." />
     <meta name="twitter:image" content="https://chandboom.ir/chandboom-smart-personal-finance-hero.jpg" />
 
     <!-- 5. PWA & Mobile Web App Meta Tags -->
@@ -70,11 +81,15 @@
     <meta name="theme-color" content="#090D0B" media="(prefers-color-scheme: dark)" />
     <meta name="theme-color" content="#F8FAF9" media="(prefers-color-scheme: light)" />
 
-    <!-- 7. Favicon & Apple Touch Icons (logo.png) -->
-    <link rel="icon" type="image/png" href="./logo.png" />
-    <link rel="shortcut icon" href="./favicon.ico" />
-    <link rel="apple-touch-icon" href="./logo.png" />
-    <link rel="manifest" href="./manifest.json" />
+    <!-- 7. Favicon & Apple Touch Icons -->
+    <link rel="icon" type="image/x-icon" href="/favicon.ico" />
+    <link rel="icon" type="image/png" sizes="32x32" href="/favicon.png" />
+    <link rel="icon" type="image/png" sizes="48x48" href="/favicon.ico" />
+    <link rel="icon" type="image/png" sizes="192x192" href="/logo.png" />
+    <link rel="icon" type="image/svg+xml" href="/logo.svg" />
+    <link rel="shortcut icon" href="/favicon.ico" />
+    <link rel="apple-touch-icon" sizes="180x180" href="/logo.png" />
+    <link rel="manifest" href="/manifest.json" />
 
     <!-- 8. Performance Preconnects & Google Fonts (Including Qahiri for Brand 'چندبوم') -->
     <link rel="preconnect" href="https://fonts.googleapis.com" />
@@ -92,8 +107,8 @@
           "@id": "https://chandboom.ir/#website",
           "url": "https://chandboom.ir/",
           "name": "چندبوم",
-          "alternateName": ["Chandboom", "مدیریت مالی شخصی چندبوم"],
-          "description": "سامانه مدیریت مالی شخصی،هوش مصنوعی تحلیل مالی و چالش ۳۰ روزه مدیریت پول",
+          "alternateName": ["Chandboom", "مدیریت مالی هوشمند چندبوم", "مدیریت مالی شخصی با هوش مصنوعی چندبوم"],
+          "description": "سامانه مدیریت مالی هوشمند و مدیریت مالی شخصی با هوش مصنوعی پیشرفته، ثبت خودکار پیامک بانکی و تحلیل مالی",
           "inLanguage": "fa-IR",
           "publisher": {
             "@id": "https://chandboom.ir/#organization"
@@ -131,7 +146,7 @@
           "@type": "SoftwareApplication",
           "@id": "https://chandboom.ir/#software",
           "name": "چندبوم",
-          "alternateName": ["Chandboom", "حسابداری آنلاین چندبوم", "هوش مصنوعی تحلیل مالی چندبوم"],
+          "alternateName": ["Chandboom", "مدیریت مالی هوشمند چندبوم", "مدیریت مالی شخصی با هوش مصنوعی چندبوم"],
           "url": "https://chandboom.ir/",
           "image": "https://chandboom.ir/chandboom-smart-personal-finance-hero.jpg",
           "applicationCategory": "FinanceApplication",
@@ -157,17 +172,6 @@
       ]
     }
     </script>
-      <!-- Google tag (gtag.js) -->
-  <script async src="https://www.googletagmanager.com/gtag/js?id=%VITE_GA_MEASUREMENT_ID%"></script>
-  <script>
-    window.dataLayer = window.dataLayer || [];
-    function gtag(){dataLayer.push(arguments);}
-    gtag('js', new Date());
-    gtag('config', '%VITE_GA_MEASUREMENT_ID%', {
-      page_path: window.location.pathname,
-      send_page_view: true
-    });
-  </script>
   </head>
   <body class="bg-[#F8FAF9] text-zinc-900 dark:bg-[#090D0B] dark:text-zinc-100 min-h-screen transition-colors duration-200 selection:bg-emerald-600 selection:text-white font-cairo">
     <div id="root"></div>

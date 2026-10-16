@@ -13,19 +13,29 @@ import {
   Image as ImageIcon,
   Trash2,
   Sparkles,
+  Crown,
+  Gem,
+  Zap,
 } from 'lucide-react';
 import { useApp } from '../context/AppContext';
 import { SubscriptionPlan } from '../types';
 import { BANK_CARD_CONFIG } from '../data/initialData';
 import { formatToman, toPersianDigits, formatCardNumber } from '../utils/formatters';
 import { generateSecureTrackingCode } from '../utils/security';
-import { uploadPaymentReceipt } from '../lib/supabase';
+import { uploadPaymentReceipt, getSupabaseClient } from '../lib/supabase';
 
 interface CheckoutModalProps {
   isOpen: boolean;
   onClose: () => void;
   selectedPlan: SubscriptionPlan;
 }
+
+// نگاشت tier به آیکون
+const TIER_ICONS: Record<string, any> = {
+  bronze: Gem,
+  pro: Crown,
+  vip: Zap,
+};
 
 export const CheckoutModal: React.FC<CheckoutModalProps> = ({
   isOpen,
@@ -34,7 +44,6 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
 }) => {
   const { user, submitManualPayment } = useApp();
   const fileInputRef = useRef<HTMLInputElement>(null);
-
   const [copiedField, setCopiedField] = useState<string | null>(null);
   const [senderName, setSenderName] = useState(user.full_name || '');
   const [receiptImage, setReceiptImage] = useState<string | null>(null);
@@ -47,6 +56,8 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
 
   if (!isOpen) return null;
 
+  const TierIcon = TIER_ICONS[selectedPlan.tier || 'pro'] || Crown;
+
   const handleCopy = (text: string, fieldName: string) => {
     navigator.clipboard.writeText(text);
     setCopiedField(fieldName);
@@ -56,17 +67,14 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
-
     if (!file.type.startsWith('image/')) {
       alert('لطفاً تنها فایل تصویری (عکس فیش واریز) انتخاب فرمایید.');
       return;
     }
-
     if (file.size > 8 * 1024 * 1024) {
       alert('حجم عکس نباید بیشتر از ۸ مگابایت باشد.');
       return;
     }
-
     setReceiptRawFile(file);
     setReceiptFileName(file.name);
     const reader = new FileReader();
@@ -95,12 +103,11 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
     }
 
     setIsSubmitting(true);
-
     try {
       const internalRefCode = generateSecureTrackingCode();
       setGeneratedTrackingCode(internalRefCode);
 
-      // Upload file directly to Supabase Storage 'payment-receipts' bucket
+      // آپلود فیش به Supabase Storage
       let finalReceiptUrl = receiptImage || '';
       if (receiptRawFile) {
         const uploadRes = await uploadPaymentReceipt(receiptRawFile, user.id, receiptFileName);
@@ -109,25 +116,52 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
         }
       }
 
-      await submitManualPayment({
-        user_id: user.id,
-        user_email: user.email,
-        user_name: senderName.trim(),
-        plan_id: selectedPlan.id,
-        plan_name: selectedPlan.nameFa,
-        amount: selectedPlan.price,
-        card_sender_name: senderName.trim(),
-        card_sender_number: 'واریز کارت به کارت',
-        reference_code: internalRefCode,
-        tracking_code: internalRefCode,
-        payment_date: new Date().toISOString(),
-        receipt_url: finalReceiptUrl,
-        notes: notes.trim(),
-      });
+      // ۱. ثبت در جدول قدیمی manual_payments (برای سازگاری با کد موجود)
+      try {
+        await submitManualPayment({
+          user_id: user.id,
+          user_email: user.email,
+          user_name: senderName.trim(),
+          plan_id: selectedPlan.id,
+          plan_name: selectedPlan.nameFa,
+          amount: selectedPlan.price,
+          card_sender_name: senderName.trim(),
+          card_sender_number: 'واریز کارت به کارت',
+          reference_code: internalRefCode,
+          tracking_code: internalRefCode,
+          payment_date: new Date().toISOString(),
+          receipt_url: finalReceiptUrl,
+          notes: notes.trim(),
+        });
+      } catch (err) {
+        console.warn('Failed to submit to manual_payments (non-fatal):', err);
+      }
+
+      // ۲. ثبت در جدول جدید subscription_orders (برای اتوماسیون جدید)
+      try {
+        const supabase = getSupabaseClient();
+        if (supabase) {
+          const { error: orderError } = await supabase.from('subscription_orders').insert([{
+            user_id: user.id,
+            plan_id: selectedPlan.id,
+            amount_toman: selectedPlan.price,
+            receipt_url: finalReceiptUrl,
+            user_notes: notes.trim(),
+            status: 'pending',
+          }]);
+
+          if (orderError) {
+            console.warn('Failed to submit to subscription_orders:', orderError);
+          }
+        }
+      } catch (err) {
+        console.warn('Failed to submit to subscription_orders (non-fatal):', err);
+      }
 
       setIsSubmittedSuccess(true);
     } catch (err) {
       console.error('Payment submission failed:', err);
+      alert('خطا در ثبت سفارش. لطفاً مجدداً تلاش کنید.');
     } finally {
       setIsSubmitting(false);
     }
@@ -143,11 +177,11 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
         <div className="flex items-center justify-between px-6 py-4 border-b border-[#E2E8E4] dark:border-[#1F2E27] bg-zinc-50/60 dark:bg-[#111A16]">
           <div className="flex items-center gap-2.5">
             <div className="p-2 rounded-2xl bg-amber-100 text-amber-800 dark:bg-amber-950/60 dark:text-amber-300">
-              <CreditCard className="w-5 h-5" />
+              <TierIcon className="w-5 h-5" />
             </div>
             <div>
               <h3 className="font-cairo text-base sm:text-lg font-bold text-zinc-900 dark:text-zinc-100">
-                پرداخت کارت به کارت (اشتراک طلایی چندبوم)
+                پرداخت کارت به کارت ({selectedPlan.nameFa})
               </h3>
               <p className="text-[11px] text-zinc-500">
                 تسویه امن و ارتقای آنی حساب به پلن {selectedPlan.nameFa}
@@ -254,23 +288,19 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
             </div>
           ) : (
             <>
-              {/* Ultra-realistic Saman Bank / Blu Bank Card Component */}
+              {/* Ultra-realistic Saman Bank Card Component */}
               <div className="relative overflow-hidden rounded-3xl p-6 sm:p-7 text-zinc-900 shadow-2xl border border-sky-200/90 bg-gradient-to-tr from-[#C9E8F9] via-[#E8F5FD] to-[#D5EEFA] select-none">
-                {/* Subtle Card Gloss Texture & diagonal watermark waves */}
                 <div className="absolute inset-0 bg-gradient-to-b from-white/35 via-transparent to-black/5 pointer-events-none" />
                 <div className="absolute -right-16 -top-16 w-56 h-56 rounded-full bg-cyan-300/20 blur-2xl pointer-events-none" />
                 <div className="absolute -left-16 -bottom-16 w-56 h-56 rounded-full bg-blue-300/20 blur-2xl pointer-events-none" />
 
-                {/* Top Row: Metallic Sim Chip (Left) & Saman Bank Logo (Right) */}
+                {/* Top Row */}
                 <div className="relative z-10 flex items-start justify-between mb-6">
-                  {/* EMV / Smart Card Chip */}
                   <div className="relative w-12 h-9 rounded-lg bg-gradient-to-br from-amber-200 via-amber-300 to-amber-500 border border-amber-600/40 shadow-sm overflow-hidden flex items-center justify-center">
                     <div className="w-full h-[1px] bg-amber-700/40 absolute" />
                     <div className="h-full w-[1px] bg-amber-700/40 absolute" />
                     <div className="w-6 h-5 rounded-md border border-amber-700/30" />
                   </div>
-
-                  {/* Official Saman Bank Logo & Emblem */}
                   <div className="flex items-center gap-2 text-right">
                     <div className="flex flex-col items-end">
                       <span className="font-bold text-sm sm:text-base text-[#113B6B] tracking-tight font-cairo">
@@ -280,7 +310,6 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
                         Saman Bank
                       </span>
                     </div>
-                    {/* Saman Bank Flower/Sun Emblem */}
                     <div className="w-8 h-8 flex items-center justify-center shrink-0">
                       <svg className="w-8 h-8" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
                         <circle cx="50" cy="50" r="14" fill="#003366" />
@@ -297,7 +326,7 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
                   </div>
                 </div>
 
-                {/* Center Row 1: IBAN / Sheba */}
+                {/* IBAN */}
                 <div className="relative z-10 mb-2 flex items-center justify-between">
                   <div className="flex items-center gap-2">
                     <span className="font-mono text-xs sm:text-sm font-semibold tracking-wide text-zinc-700" dir="ltr">
@@ -315,7 +344,7 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
                   <span className="text-[10px] text-zinc-500 font-cairo">شماره شبا</span>
                 </div>
 
-                {/* Center Row 2: Prominent Card Number */}
+                {/* Card Number */}
                 <div className="relative z-10 mb-6 bg-white/70 backdrop-blur-xs px-4 py-2.5 rounded-2xl border border-sky-300/60 shadow-xs flex items-center justify-between">
                   <span
                     className="font-mono text-lg sm:text-2xl font-black tracking-widest text-[#0C2A4D]"
@@ -333,7 +362,7 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
                   </button>
                 </div>
 
-                {/* Bottom Row: Expiry (Left) & Cardholder (Right) */}
+                {/* Bottom Row */}
                 <div className="relative z-10 flex items-end justify-between text-xs pt-1 border-t border-sky-200/70">
                   <div className="text-right">
                     <span className="text-[10px] text-zinc-500 block">صاحب حساب</span>
@@ -341,7 +370,6 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
                       {BANK_CARD_CONFIG.accountHolder}
                     </span>
                   </div>
-
                   <div className="text-left font-mono">
                     <span className="text-[10px] text-zinc-500 block">انقضای کارت:</span>
                     <span className="font-bold text-zinc-800 text-xs sm:text-sm">
@@ -382,12 +410,11 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
                   />
                 </div>
 
-                {/* Receipt Image File Upload from Laptop / Device */}
+                {/* Receipt Image Upload */}
                 <div>
                   <label className="block text-xs font-cairo font-bold text-zinc-700 dark:text-zinc-300 mb-1">
                     آپلود عکس فیش واریزی (از لپ‌تاپ یا گوشی) *
                   </label>
-
                   <input
                     ref={fileInputRef}
                     type="file"
@@ -396,7 +423,6 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
                     className="hidden"
                     id="receipt-file-input"
                   />
-
                   {receiptImage ? (
                     <div className="relative p-3 rounded-2xl bg-zinc-50 dark:bg-[#141E1A] border border-[#E2E8E4] dark:border-[#1F2E27] flex items-center justify-between gap-3">
                       <div className="flex items-center gap-3">
@@ -414,7 +440,6 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
                           </span>
                         </div>
                       </div>
-
                       <button
                         type="button"
                         onClick={handleRemoveReceipt}
@@ -438,7 +463,7 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
                           برای انتخاب عکس فیش واریز از لپ‌تاپ کلیک کنید
                         </span>
                         <span className="text-[11px] text-zinc-400 mt-0.5 block">
-                          فرمت‌های مجاز: JPG, PNG, WEBP (حداکثر ۸ مگابایت)
+                          فرمت‌های مجاز: JPG, PNG, WEBP (حداکثر  مگابایت)
                         </span>
                       </div>
                     </button>
@@ -490,4 +515,3 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
     </div>
   );
 };
-

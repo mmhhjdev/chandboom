@@ -43,19 +43,22 @@ export const SettingsView: React.FC<SettingsViewProps> = ({ onOpenAvatarModal })
     setIsAuthModalOpen,
   } = useApp();
 
-  const [fullName, setFullName] = useState(user.full_name);
-  const [budgetCap, setBudgetCap] = useState(user.monthly_budget_cap.toString());
-  const [age, setAge] = useState<string>(user.age !== undefined ? user.age.toString() : '');
-  const [gender, setGender] = useState<'مرد' | 'زن' | 'سایر'>(user.gender || 'مرد');
+  // ✅ اصلاح خطای toString با استفاده از Optional Chaining (?.) و مقدار پیش‌فرض
+  const [fullName, setFullName] = useState(user?.full_name || '');
+  const [budgetCap, setBudgetCap] = useState(user?.monthly_budget_cap?.toString() || '0');
+  const [age, setAge] = useState<string>(user?.age?.toString() || '');
+  const [gender, setGender] = useState<'مرد' | 'زن' | 'سایر'>((user?.gender as any) || 'مرد');
+  
   const [isSaved, setIsSaved] = useState(false);
   const [copiedCode, setCopiedCode] = useState<string | null>(null);
   const [selectedReceiptForPreview, setSelectedReceiptForPreview] = useState<string | null>(null);
 
-  const remainingPro = calculateRemainingProDays(user.subscription_expires_at);
+  // ✅ ایمن‌سازی فراخوانی تابع محاسبه روزهای باقی‌مانده
+  const remainingPro = calculateRemainingProDays(user?.subscription_expires_at);
 
-  // User's own payment submissions
+  // ✅ ایمن‌سازی فیلتر کردن پرداخت‌ها در صورت null بودن user
   const userPayments = manualPayments.filter(
-    (p) => isAuthenticated && (p.user_id === user.id || p.user_email === user.email)
+    (p) => isAuthenticated && user && (p.user_id === user.id || p.user_email === user.email)
   );
 
   const handleCopy = (code: string) => {
@@ -68,10 +71,11 @@ export const SettingsView: React.FC<SettingsViewProps> = ({ onOpenAvatarModal })
     e.preventDefault();
     const numCap = parseInt(budgetCap.replace(/,/g, ''), 10);
     const numAge = age ? parseInt(age, 10) : undefined;
+    
     updateUserProfile({
-      full_name: fullName.trim() || user.full_name,
-      monthly_budget_cap: isNaN(numCap) ? user.monthly_budget_cap : numCap,
-      age: numAge !== undefined && !isNaN(numAge) ? numAge : user.age,
+      full_name: fullName.trim() || user?.full_name || 'کاربر چندبوم',
+      monthly_budget_cap: isNaN(numCap) ? (user?.monthly_budget_cap || 0) : numCap,
+      age: numAge !== undefined && !isNaN(numAge) ? numAge : user?.age,
       gender,
     });
 
@@ -190,7 +194,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({ onOpenAvatarModal })
                       {remainingPro.humanText}
                     </span>
                   </p>
-                  {user.subscription_expires_at && (
+                  {user?.subscription_expires_at && (
                     <p className="text-[11px] text-zinc-400">
                       تاریخ انقضای اشتراک: {formatShamsiDate(user.subscription_expires_at)}
                     </p>
@@ -335,8 +339,8 @@ export const SettingsView: React.FC<SettingsViewProps> = ({ onOpenAvatarModal })
               className="relative group cursor-pointer"
             >
               <img
-                src={user.avatar_url}
-                alt={user.full_name}
+                src={user?.avatar_url || '/default-avatar.png'}
+                alt={user?.full_name || 'کاربر'}
                 className="w-14 h-14 rounded-2xl border-2 border-emerald-600 object-cover shadow-sm group-hover:opacity-80 transition"
               />
               <span className="absolute inset-0 flex items-center justify-center bg-black/40 rounded-2xl text-[10px] text-white opacity-0 group-hover:opacity-100 transition font-cairo">
@@ -346,9 +350,9 @@ export const SettingsView: React.FC<SettingsViewProps> = ({ onOpenAvatarModal })
 
             <div>
               <h4 className="font-cairo font-bold text-base text-zinc-900 dark:text-white">
-                {user.full_name}
+                {user?.full_name || 'کاربر چندبوم'}
               </h4>
-              <p className="text-xs text-zinc-400 font-mono">{user.email}</p>
+              <p className="text-xs text-zinc-400 font-mono">{user?.email || 'ثبت نشده'}</p>
             </div>
           </div>
 
@@ -387,7 +391,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({ onOpenAvatarModal })
             <div className="relative">
               <input
                 type="email"
-                value={user.email || 'ثبت نشده'}
+                value={user?.email || 'ثبت نشده'}
                 disabled
                 readOnly
                 title="تغییر آدرس ایمیل به دلیل امنیت حساب و تایید هویت مسدود است."
@@ -457,7 +461,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({ onOpenAvatarModal })
         </div>
       </form>
 
-      {/* 4. Theme & Appearance Settings (منتقل‌شده از هدر به تنظیمات پروفایل) */}
+      {/* 4. Theme & Appearance Settings */}
       <div className="p-6 bg-white dark:bg-[#0E1511] rounded-3xl border border-[#E2E8E4] dark:border-[#1F2E27] shadow-xs space-y-4">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-[#E2E8E4] dark:border-[#1F2E27]">
           <div>
@@ -594,4 +598,3 @@ export const SettingsView: React.FC<SettingsViewProps> = ({ onOpenAvatarModal })
     </div>
   );
 };
-

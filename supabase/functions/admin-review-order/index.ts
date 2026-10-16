@@ -76,16 +76,38 @@ serve(async (req: Request) => {
       );
     }
 
-    // Fetch payment record
-    const { data: paymentRecord, error: payFetchErr } = await supabaseAdmin
+    // Fetch payment record from manual_payments or subscription_orders
+    let paymentRecord: any = null;
+    const { data: manualPay } = await supabaseAdmin
       .from('manual_payments')
       .select('*')
       .eq('id', paymentId)
       .maybeSingle();
 
-    if (payFetchErr || !paymentRecord) {
+    if (manualPay) {
+      paymentRecord = manualPay;
+    } else {
+      const { data: subOrder } = await supabaseAdmin
+        .from('subscription_orders')
+        .select('*')
+        .eq('id', paymentId)
+        .maybeSingle();
+
+      if (subOrder) {
+        paymentRecord = {
+          id: subOrder.id,
+          user_id: subOrder.user_id,
+          plan_id: subOrder.plan_id,
+          plan_name: subOrder.plan_name || subOrder.plan_id,
+          amount: subOrder.amount_toman,
+          status: subOrder.status,
+        };
+      }
+    }
+
+    if (!paymentRecord) {
       return new Response(
-        JSON.stringify({ success: false, error: 'رکورد فیش پرداخت مورد نظر یافت نشد.' }),
+        JSON.stringify({ success: false, error: 'رکورد فیش یا سفارش اشتراک مورد نظر یافت نشد.' }),
         { status: 404, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
@@ -114,16 +136,31 @@ serve(async (req: Request) => {
           reviewed_at: nowIso,
           reviewed_by: callerUser.id,
         })
-        .eq('user_id', paymentRecord.user_id);
+        .or(`id.eq.${paymentId},user_id.eq.${paymentRecord.user_id}`);
 
       // C. Calculate subscription duration & tier
       let durationMonths = 1;
       let tier = 'pro';
+      let aiQueriesLimit = 100;
       const planId = (paymentRecord.plan_id || '').toLowerCase();
-      if (planId.includes('3m')) durationMonths = 3;
-      if (planId.includes('6m')) durationMonths = 6;
-      if (planId.includes('1y')) durationMonths = 12;
-      if (planId.includes('vip')) tier = 'vip';
+
+      if (planId.includes('bronze')) {
+        tier = 'bronze';
+        durationMonths = 1;
+        aiQueriesLimit = 20;
+      } else if (planId.includes('6m') || planId.includes('vip')) {
+        tier = 'vip';
+        durationMonths = 6;
+        aiQueriesLimit = 500;
+      } else if (planId.includes('3m')) {
+        tier = 'pro';
+        durationMonths = 3;
+        aiQueriesLimit = 150;
+      } else {
+        tier = 'pro';
+        durationMonths = 1;
+        aiQueriesLimit = 100;
+      }
 
       const durationDays = durationMonths * 30;
 
@@ -146,7 +183,10 @@ serve(async (req: Request) => {
         .update({
           tier,
           subscription_status: 'active',
+          subscription_tier: tier,
           subscription_expires_at: expiresAt,
+          ai_queries_limit: aiQueriesLimit,
+          ai_queries_used: 0,
           updated_at: nowIso,
         })
         .eq('id', paymentRecord.user_id);

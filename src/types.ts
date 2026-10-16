@@ -1,6 +1,6 @@
 export type UserRole = 'user' | 'admin';
 
-export type SubscriptionTier = 'free' | 'pro' | 'vip';
+export type SubscriptionTier = 'free' | 'bronze' | 'pro' | 'vip';
 
 export type SubscriptionStatus = 'active' | 'expired' | 'pending_approval' | 'none';
 
@@ -43,6 +43,8 @@ export interface UserProfile {
   monthly_budget_cap: number;
   theme_preference: 'dark' | 'light' | 'system';
   currency: 'تومان' | 'ریال';
+  ai_queries_used?: number;
+  ai_queries_limit?: number;
   created_at?: string;
   updated_at?: string;
 }
@@ -167,6 +169,9 @@ export interface SubscriptionPlan {
   durationMonths: number;
   description: string;
   features: string[];
+  tier?: SubscriptionTier;
+  aiAccess?: boolean;
+  monthlyAiLimit?: number;
   isPopular?: boolean;
   badge?: string;
 }
