@@ -38,7 +38,6 @@ export const SettingsView: React.FC<SettingsViewProps> = ({ onOpenAvatarModal })
     resetToDefaults,
     manualPayments,
     setActiveTab,
-    isProUser,
     isAuthenticated,
     setIsAuthModalOpen,
   } = useApp();
@@ -55,6 +54,9 @@ export const SettingsView: React.FC<SettingsViewProps> = ({ onOpenAvatarModal })
 
   // ✅ ایمن‌سازی فراخوانی تابع محاسبه روزهای باقی‌مانده
   const remainingPro = calculateRemainingProDays(user?.subscription_expires_at);
+  const settingsTierIsActive = Boolean(user && user.subscription_status === 'active' && (!user.subscription_expires_at || new Date(user.subscription_expires_at).getTime() > Date.now()) && user.tier !== 'free');
+  const settingsTierLabel = user?.tier === 'vip' ? 'VIP' : user?.tier === 'pro' ? 'پرو' : user?.tier === 'bronze' ? 'برنزی' : 'پایه / رایگان';
+  const settingsTierDescription = user?.tier === 'vip' ? 'دسترسی کامل شامل قابلیت‌های صوتی دستیار هوشمند.' : user?.tier === 'pro' ? 'دسترسی به امکانات پلن پرو؛ قابلیت‌های صوتی فقط برای VIP فعال است.' : user?.tier === 'bronze' ? 'دسترسی پایه اشتراکی به امکانات مجاز پلن برنزی.' : 'برای استفاده از امکانات اشتراکی، یکی از پلن‌ها را انتخاب کنید.';
 
   // ✅ ایمن‌سازی فیلتر کردن پرداخت‌ها در صورت null بودن user
   const userPayments = manualPayments.filter(
@@ -131,12 +133,12 @@ export const SettingsView: React.FC<SettingsViewProps> = ({ onOpenAvatarModal })
                 className="px-4 py-2.5 rounded-xl bg-gradient-to-r from-amber-500 to-yellow-500 hover:from-amber-600 text-zinc-950 font-cairo font-bold text-xs transition cursor-pointer shadow-md flex items-center gap-1.5"
               >
                 <Crown className="w-3.5 h-3.5" />
-                <span>خرید اشتراک طلایی پرو</span>
+                <span>مشاهده پلن‌های اشتراک</span>
               </button>
             </div>
           </div>
         </div>
-      ) : !isProUser ? (
+      ) : !settingsTierIsActive ? (
         <div className="p-6 rounded-3xl bg-gradient-to-br from-[#121B17] via-[#16221C] to-[#0D1512] border-2 border-emerald-600/40 shadow-xl text-white relative overflow-hidden">
           <div className="relative z-10 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
             <div className="flex items-start gap-3.5">
@@ -146,14 +148,14 @@ export const SettingsView: React.FC<SettingsViewProps> = ({ onOpenAvatarModal })
               <div>
                 <div className="flex items-center gap-2">
                   <h3 className="font-cairo font-bold text-lg text-white">
-                    وضعیت اشتراک: حساب عادی (رایگان)
+                    وضعیت اشتراک: حساب پایه / غیرفعال
                   </h3>
                   <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-zinc-800 text-zinc-400">
-                    بدون اشتراک پرو
+                    بدون اشتراک فعال
                   </span>
                 </div>
                 <p className="text-xs text-zinc-300 mt-1">
-                  جهت دسترسی به هوش مصنوعی تحلیلی، پیش‌بینی ۳ ماهه و هشدار سرعت اتمام بودجه، اشتراک طلایی تهیه کنید.
+                  {settingsTierDescription}
                 </p>
               </div>
             </div>
@@ -164,7 +166,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({ onOpenAvatarModal })
                 className="px-5 py-2.5 rounded-xl bg-gradient-to-r from-amber-500 via-amber-600 to-yellow-600 hover:from-amber-600 hover:to-yellow-700 text-zinc-950 font-cairo font-black text-xs transition cursor-pointer shadow-md flex items-center gap-1.5"
               >
                 <Sparkles className="w-3.5 h-3.5" />
-                <span>خرید اشتراک طلایی پرو</span>
+                <span>مشاهده پلن‌های اشتراک</span>
               </button>
             </div>
           </div>
@@ -179,17 +181,17 @@ export const SettingsView: React.FC<SettingsViewProps> = ({ onOpenAvatarModal })
               <div>
                 <div className="flex items-center gap-2">
                   <h3 className="font-cairo font-bold text-lg text-white">
-                    وضعیت اشتراک: حساب طلایی فعال
+                    وضعیت اشتراک: پلن {settingsTierLabel} فعال
                   </h3>
                   <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-amber-400 text-zinc-950 font-black">
-                    طلایی فعال
+                    {settingsTierLabel} فعال
                   </span>
                 </div>
 
                 <div className="mt-2 space-y-1 text-xs">
                   <p className="text-amber-200 flex items-center gap-1.5 font-bold">
                     <Clock className="w-4 h-4 text-amber-400" />
-                    <span>مانده حساب پرو:</span>
+                    <span>زمان باقی‌مانده اشتراک:</span>
                     <span className="font-cairo font-black text-sm text-white">
                       {remainingPro.humanText}
                     </span>
@@ -209,7 +211,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({ onOpenAvatarModal })
                 className="px-4 py-2.5 rounded-xl bg-gradient-to-r from-amber-500 to-yellow-500 hover:from-amber-600 hover:to-yellow-600 text-zinc-950 font-cairo font-bold text-xs transition cursor-pointer shadow-md flex items-center gap-1.5"
               >
                 <Sparkles className="w-3.5 h-3.5" />
-                <span>تمدید اشتراک طلایی</span>
+                <span>مدیریت / تمدید اشتراک</span>
               </button>
             </div>
           </div>

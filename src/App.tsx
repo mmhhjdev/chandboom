@@ -46,6 +46,8 @@ const AppContent: React.FC = () => {
     closeAuthGuard,
     addTicket,
     addTransaction,
+    user,
+    isAuthenticated,
   } = useApp();
 
   // Modals state
@@ -209,6 +211,8 @@ const AppContent: React.FC = () => {
         isOpen={isDailyQuestsModalOpen}
         onClose={() => setIsDailyQuestsModalOpen(false)}
         currentDayOfMonth={new Date().getDate()}
+        userId={isAuthenticated ? user.id : 'guest'}
+        accountCreatedAt={isAuthenticated ? user.created_at : undefined}
       />
 
       <TransactionModal

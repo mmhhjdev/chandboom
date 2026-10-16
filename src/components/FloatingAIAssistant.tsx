@@ -27,7 +27,14 @@ export const FloatingAIAssistant: React.FC = () => {
   React.useEffect(() => { setCachedAIChat(messages); }, [messages]);
   const presetQuestions = ['ثبت کن ۰ هزار تومن قهوه', 'یه گروه دنگ به اسم سفر شمال با اعضای علی و رضا بساز', 'هدف مالی خرید لپ‌تاپ ۵۰ میلیون', 'یادآور قسط وام ۲ میلیون'];
 
+  const isVipVoiceEnabled = Boolean(isAuthenticated && user?.tier === 'vip' && user?.subscription_status === 'active' && (!user?.subscription_expires_at || new Date(user.subscription_expires_at).getTime() > Date.now()));
+
   const toggleVoiceRecognition = () => {
+    if (!isVipVoiceEnabled) {
+      setNotice('ورودی و مکالمه صوتی فقط برای اشتراک VIP فعال است. برای ارتقا، پلن VIP را انتخاب کنید.');
+      setTimeout(() => setNotice(null), 3500);
+      return;
+    }
     const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
     if (!SpeechRecognition) { setNotice('مرورگر شما از ورودی صوتی پشتیبانی نمی‌کند.'); setTimeout(() => setNotice(null), 3000); return; }
     if (isListening) { if (recognitionRef.current) recognitionRef.current.stop(); setIsListening(false); return; }
@@ -151,7 +158,7 @@ export const FloatingAIAssistant: React.FC = () => {
           </div>
           <form onSubmit={(e) => { e.preventDefault(); handleSendMessage(); }} className="p-3 bg-[#0B1310] border-t border-[#1A2822] flex items-center gap-2">
             <input type="text" value={input} onChange={(e) => setInput(e.target.value)} placeholder={isListening ? 'در حال شنیدن...' : 'پیام متنی یا صوتی...'} className="flex-1 px-3.5 py-2.5 bg-[#122019] border border-[#1E3328] rounded-xl text-xs text-white placeholder-zinc-500 outline-none focus:border-emerald-500 font-cairo" />
-            <button type="button" onClick={toggleVoiceRecognition} className={`p-2.5 rounded-xl border transition cursor-pointer shadow-xs ${isListening ? 'bg-rose-600 text-white border-rose-400 animate-pulse' : 'bg-[#15241D] hover:bg-[#1E342B] text-emerald-400 border-[#243D32]'}`} title={isListening ? 'توقف ضبط' : 'ورودی صوتی'}>{isListening ? <MicOff className="w-4 h-4 text-white" /> : <Mic className="w-4 h-4" />}</button>
+            <button type="button" onClick={toggleVoiceRecognition} aria-label={isVipVoiceEnabled ? (isListening ? 'توقف ضبط صدا' : 'ورودی صوتی VIP') : 'ورودی صوتی مخصوص VIP'} className={`p-2.5 rounded-xl border transition cursor-pointer shadow-xs ${isListening ? 'bg-rose-600 text-white border-rose-400 animate-pulse' : isVipVoiceEnabled ? 'bg-[#15241D] hover:bg-[#1E342B] text-amber-300 border-amber-400/50' : 'bg-zinc-800/70 text-zinc-500 border-zinc-700'}`} title={isVipVoiceEnabled ? (isListening ? 'توقف ضبط' : 'ورودی صوتی VIP') : 'فقط برای اشتراک VIP'}>{isListening ? <MicOff className="w-4 h-4 text-white" /> : <Mic className="w-4 h-4" />}</button>
             <button type="submit" disabled={isTyping} className="p-2.5 rounded-xl bg-emerald-700 hover:bg-emerald-600 text-white transition cursor-pointer shadow-xs disabled:opacity-50" title="ارسال"><Send className="w-4 h-4 rotate-180" /></button>
           </form>
         </div>

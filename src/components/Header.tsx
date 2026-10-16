@@ -45,7 +45,7 @@ export const Header: React.FC<HeaderProps> = ({
   const tierIsActive = user.subscription_status === 'active' && (!user.subscription_expires_at || new Date(user.subscription_expires_at).getTime() > Date.now());
   const tierLabel = user.tier === 'vip' ? 'اشتراک VIP' : user.tier === 'pro' ? 'اشتراک پرو' : user.tier === 'bronze' ? 'اشتراک برنزی' : 'اشتراک پایه';
   const tierShortLabel = user.tier === 'vip' ? 'VIP' : user.tier === 'pro' ? 'پرو' : user.tier === 'bronze' ? 'برنزی' : 'پایه';
-  const tierBadgeClass = user.tier === 'vip' ? 'bg-purple-500/15 text-purple-900 dark:text-purple-200 border-purple-400/50' : user.tier === 'pro' ? 'bg-amber-500/15 text-amber-900 dark:text-amber-200 border-amber-400/50' : user.tier === 'bronze' ? 'bg-orange-500/15 text-orange-900 dark:text-orange-200 border-orange-400/50' : 'bg-zinc-100 text-zinc-700 dark:bg-zinc-800 dark:text-zinc-200 border-zinc-300 dark:border-zinc-700';
+  const tierBadgeClass = user.tier === 'vip' ? 'bg-gradient-to-r from-amber-300/25 via-yellow-400/20 to-amber-500/25 text-amber-800 dark:text-amber-200 border-amber-400/70 shadow-[0_0_12px_rgba(234,179,8,0.18)]' : user.tier === 'pro' ? 'bg-amber-500/15 text-amber-900 dark:text-amber-200 border-amber-400/50' : user.tier === 'bronze' ? 'bg-orange-500/15 text-orange-900 dark:text-orange-200 border-orange-400/50' : 'bg-zinc-100 text-zinc-700 dark:bg-zinc-800 dark:text-zinc-200 border-zinc-300 dark:border-zinc-700';
 
   return (
     <header className="sticky top-0 z-50 bg-white/95 dark:bg-[#0A100D]/95 backdrop-blur-md border-b border-[#E2E8E4] dark:border-[#1A2621] transition-colors font-cairo w-full">
@@ -214,7 +214,7 @@ export const Header: React.FC<HeaderProps> = ({
                           </div>
                         </div>
                         {tierIsActive && user.tier !== 'free' ? (
-                          <span className={`inline-flex items-center gap-1 text-[10px] font-bold ${user.tier === 'vip' ? 'text-purple-600 dark:text-purple-400' : user.tier === 'bronze' ? 'text-orange-600 dark:text-orange-400' : 'text-amber-600 dark:text-amber-400'}`}>
+                          <span className={`inline-flex items-center gap-1 text-[10px] font-bold ${user.tier === 'vip' ? 'text-amber-600 dark:text-amber-300' : user.tier === 'bronze' ? 'text-orange-600 dark:text-orange-400' : 'text-amber-600 dark:text-amber-400'}`}>
                             {user.tier === 'vip' ? <Shield className="w-3 h-3" /> : user.tier === 'bronze' ? <Gem className="w-3 h-3" /> : <Crown className="w-3 h-3" />} {tierLabel} فعال
                           </span>
                         ) : (

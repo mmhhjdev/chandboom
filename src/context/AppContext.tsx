@@ -114,7 +114,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   }, [activeTab]);
 
   const [admin2FAVerified, setAdmin2FAVerified] = useState<boolean>(() => checkAdmin2FASession(INITIAL_USER.email) || isStoredAdminSessionValid(INITIAL_USER.email));
-  const isAdmin = useMemo(() => (isAuthenticated && (user?.role === 'admin' || isAdminEmail(user?.email))) || admin2FAVerified || isStoredAdminSessionValid(user?.email), [isAuthenticated, user?.role, user?.email, admin2FAVerified]);
+  const isAdmin = useMemo(() => (isAuthenticated && ((user?.role === 'admin' || String(user?.role ?? '').toLowerCase() === 'superuser' || String(user?.role ?? '').toLowerCase() === 'super_admin') || isAdminEmail(user?.email))) || admin2FAVerified || isStoredAdminSessionValid(user?.email), [isAuthenticated, user?.role, user?.email, admin2FAVerified]);
   const requestAdminOtp = async () => await requestAdminOtpViaEdgeFunction(user.email || getEnvAdminEmail() || 'admin@chandboom.ir');
   const verifyAdmin2FA = async (code: string) => { const result = await verifyAdminOtpViaEdgeFunction(code, user.email || getEnvAdminEmail() || 'admin@chandboom.ir'); if (result.success) setAdmin2FAVerified(true); return result; };
   const logoutAdmin2FA = () => { revokeAdmin2FA(); clearStoredAdminSession(); setAdmin2FAVerified(false); setAdminModeState(false); };
@@ -151,7 +151,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     if (!supabase) return;
     try {
       const { data: profileData } = await supabase.from('users').select('*').eq('id', userId).maybeSingle();
-      const isAdm = isAdminEmail(userEmail) || profileData?.role === 'admin';
+      const isAdm = isAdminEmail(userEmail) || ['admin', 'superuser', 'super_admin', 'super-admin'].includes(String(profileData?.role ?? '').trim().toLowerCase());
       const currentRole: UserRole = isAdm ? 'admin' : (profileData?.role || 'user');
       const mergedUser: UserProfile = { ...GUEST_USER, ...(profileData || {}), id: userId, email: userEmail, role: currentRole, full_name: profileData?.full_name || userEmail.split('@')[0] };
       setUser(mergedUser);

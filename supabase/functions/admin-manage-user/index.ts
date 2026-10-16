@@ -15,7 +15,12 @@ serve(async (req: Request) => {
   try {
     const supabaseUrl = Deno.env.get('SUPABASE_URL') || '';
     const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') || '';
-    const configuredAdminEmail = (Deno.env.get('ADMIN_EMAIL') || 'admin@chandboom.ir').toLowerCase().trim();
+    const configuredAdminEmails = new Set([
+      ...(Deno.env.get('ADMIN_EMAILS') || '').split(','),
+      Deno.env.get('ADMIN_EMAIL') || '',
+      'seyedmahanhejrati@gmail.com',
+      'mahan.hejrati91@gmail.com',
+    ].map((email) => email.trim().toLowerCase()).filter(Boolean));
 
     if (!supabaseUrl || !supabaseServiceKey) {
       return new Response(
@@ -49,14 +54,14 @@ serve(async (req: Request) => {
     const callerEmail = (callerUser.email || '').toLowerCase().trim();
 
     // 2. Verify caller has admin privileges
-    const isConfiguredAdmin = callerEmail === configuredAdminEmail;
+    const isConfiguredAdmin = configuredAdminEmails.has(callerEmail);
     const { data: dbCaller } = await supabaseAdmin
       .from('users')
       .select('id, role')
       .eq('id', callerUser.id)
       .maybeSingle();
 
-    const isDbAdmin = dbCaller?.role === 'admin';
+    const isDbAdmin = ['admin', 'superuser', 'super_admin', 'super-admin'].includes(String(dbCaller?.role ?? '').trim().toLowerCase());
 
     if (!isConfiguredAdmin && !isDbAdmin) {
       return new Response(
