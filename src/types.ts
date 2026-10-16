@@ -180,11 +180,11 @@ export interface ManualPaymentSubmission {
   plan_id: string;
   plan_name: string;
   amount: number;
-  card_sender_name: string;
-  card_sender_number: string;
-  reference_code: string;
+  card_sender_name?: string;
+  card_sender_number?: string;
+  reference_code?: string;
   tracking_code: string;
-  payment_date: string;
+  payment_date?: string;
   receipt_url?: string;
   notes?: string;
   status: 'pending' | 'approved' | 'rejected';

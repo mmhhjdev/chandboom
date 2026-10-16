@@ -77,7 +77,7 @@ export const FloatingAIAssistant: React.FC = () => {
           setPendingReply(response.reply);
           if (response.action.type === 'create_transaction') { setPendingDraft({ amount: response.action.params?.amount || 0, type: response.action.params?.type || 'expense', clean_title: response.action.params?.description || userText, category: response.action.params?.category || 'سایر و متفرقه' }); }
           else { setPendingAction({ type: response.action.type, params: response.action.params, description: response.action.description }); }
-        } else { setMessages((prev) => [...prev, { id: (Date.now() + 1).toString(), sender: 'assistant', text: response.reply, time: 'هم‌اکنون' }]); }
+        } else { setMessages((prev) => [...prev, { id: (Date.now() + 1).toString(), sender: 'assistant', text: response.reply || 'پاسخی از دستیار دریافت نشد.', time: 'هم‌اکنون' }]); }
       } else { setMessages((prev) => [...prev, { id: (Date.now() + 1).toString(), sender: 'assistant', text: response.error || 'خطا در ارتباط با هوش مصنوعی', time: 'هم‌اکنون' }]); }
     } catch (err: any) { setMessages((prev) => [...prev, { id: (Date.now() + 1).toString(), sender: 'assistant', text: err?.message || 'خطا در پردازش', time: 'هم‌اکنون' }]); }
     finally { setIsTyping(false); }

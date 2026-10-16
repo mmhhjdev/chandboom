@@ -79,6 +79,7 @@ export const SubscriptionView: React.FC = () => {
     const durationMonths = Math.round(dbPlan.duration_days / 30);
     return {
       id: dbPlan.id,
+      name: dbPlan.name,
       nameFa: dbPlan.name_fa,
       description: `اشتراک ${dbPlan.name_fa} با ${dbPlan.ai_queries_limit === -1 ? 'پرسش نامحدود' : `${dbPlan.ai_queries_limit} پرسش`} در ماه`,
       price: dbPlan.price_toman,
