@@ -260,7 +260,6 @@ export const MONTHLY_QUESTS: DailyQuest[] = [
     rewardPoints: 50,
     badge: '👑 استاد بودجه',
   },
-,
   { day: 32, title: 'مرور هزینه‌های ثابت', description: 'اجاره، قبوض، اینترنت و هزینه‌های ثابت را فهرست کنید.', category: 'آگاهی مالی', rewardPoints: 20, badge: '📋 هزینه‌های ثابت' },
   { day: 33, title: 'تعیین سقف خریدهای تفریحی', description: 'برای تفریح و سرگرمی این هفته یک سقف واقع‌بینانه تعیین کنید.', category: 'کنترل مخارج', rewardPoints: 20, badge: '🎈 تفریح متعادل' },
   { day: 34, title: 'بررسی کارمزدها', description: 'کارمزدهای بانکی و خدماتی اخیر را بررسی کنید و موارد قابل‌کاهش را بشناسید.', category: 'آگاهی مالی', rewardPoints: 25, badge: '🔎 دیده‌بان کارمزد' },
