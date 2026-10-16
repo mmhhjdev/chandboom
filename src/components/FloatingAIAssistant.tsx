@@ -1,5 +1,5 @@
 import React, { useState, useRef } from 'react';
-import { Bot, Sparkles, Send, X, Lock, Crown, CheckCircle2, AlertCircle, User, Mic, MicOff } from 'lucide-react';
+import { Bot, Sparkles, Send, X, Lock, Crown, CheckCircle2, AlertCircle, User, Mic, MicOff, Loader2 } from 'lucide-react';
 import { useApp } from '../context/AppContext';
 import { formatToman } from '../utils/formatters';
 import { invokeAiAssistantEdgeFunction } from '../lib/supabase';
@@ -9,6 +9,7 @@ import { EXPENSE_CATEGORIES, INCOME_CATEGORIES } from '../data/initialData';
 
 interface ChatMessage { id: string; sender: 'assistant' | 'user'; text: string; time: string; }
 interface TransactionDraft { amount: number; type: TransactionType; clean_title: string; bank?: string | null; category: TransactionCategory; }
+interface PendingAction { type: string; params: any; description: string; }
 
 export const FloatingAIAssistant: React.FC = () => {
   const { isAuthenticated, isProUser, hasAIAccess, addTransaction, metrics, user, transactions, setActiveTab, setIsAuthModalOpen, createDongGroup, addGoal, addReminder } = useApp();
@@ -19,26 +20,19 @@ export const FloatingAIAssistant: React.FC = () => {
   const recognitionRef = useRef<any>(null);
   const [notice, setNotice] = useState<string | null>(null);
   const [pendingDraft, setPendingDraft] = useState<TransactionDraft | null>(null);
-  const [pendingAction, setPendingAction] = useState<any>(null);
+  const [pendingAction, setPendingAction] = useState<PendingAction | null>(null);
   const [pendingReply, setPendingReply] = useState('');
-  const [messages, setMessages] = useState<ChatMessage[]>(() => {
-    const cached = getCachedAIChat();
-    if (cached && cached.length > 0) return cached;
-    return [{ id: 'welcome-1', sender: 'assistant', text: 'سلام! من «دستیار هوشمند چندبوم» هستم. می‌توانید تراکنش‌هایتان را ثبت کنید، گروه دنگ بسازید، هدف مالی تعریف کنید یا یادآور تنظیم کنید.', time: 'لحظاتی پیش' }];
-  });
+  const [messages, setMessages] = useState<ChatMessage[]>(() => { const cached = getCachedAIChat(); if (cached && cached.length > 0) return cached; return [{ id: 'welcome-1', sender: 'assistant', text: 'سلام! من «دستیار هوشمند چندبوم» هستم. می‌توانید تراکنش‌هایتان را ثبت کنید، گروه دنگ بسازید، هدف مالی تعریف کنید یا یادآور تنظیم کنید.', time: 'لحظاتی پیش' }]; });
 
   React.useEffect(() => { setCachedAIChat(messages); }, [messages]);
-
-  const presetQuestions = ['ثبت کن ۵۰ هزار تومن قهوه', 'یه گروه دنگ به اسم سفر شمال با اعضای علی و رضا بساز', 'هدف مالی خرید لپ‌تاپ ۵۰ میلیون', 'یادآور قسط وام ۲ میلیون'];
+  const presetQuestions = ['ثبت کن ۰ هزار تومن قهوه', 'یه گروه دنگ به اسم سفر شمال با اعضای علی و رضا بساز', 'هدف مالی خرید لپ‌تاپ ۵۰ میلیون', 'یادآور قسط وام ۲ میلیون'];
 
   const toggleVoiceRecognition = () => {
     const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
     if (!SpeechRecognition) { setNotice('مرورگر شما از ورودی صوتی پشتیبانی نمی‌کند.'); setTimeout(() => setNotice(null), 3000); return; }
     if (isListening) { if (recognitionRef.current) recognitionRef.current.stop(); setIsListening(false); return; }
     try {
-      const recognition = new SpeechRecognition();
-      recognitionRef.current = recognition;
-      recognition.lang = 'fa-IR'; recognition.continuous = false; recognition.interimResults = false;
+      const recognition = new SpeechRecognition(); recognitionRef.current = recognition; recognition.lang = 'fa-IR'; recognition.continuous = false; recognition.interimResults = false;
       recognition.onstart = () => { setIsListening(true); setNotice('🎙️ در حال گوش دادن...'); };
       recognition.onresult = (event: any) => { const transcript = event.results?.[0]?.[0]?.transcript; if (transcript) { setInput(transcript); setNotice(`✅ «${transcript}»`); setTimeout(() => { setNotice(null); handleSendMessage(transcript); }, 500); } setIsListening(false); };
       recognition.onerror = () => { setIsListening(false); setNotice('متوجه صدا نشدم.'); setTimeout(() => setNotice(null), 3000); };
@@ -47,39 +41,17 @@ export const FloatingAIAssistant: React.FC = () => {
     } catch { setIsListening(false); setNotice('خطا در دسترسی به میکروفون.'); setTimeout(() => setNotice(null), 3000); }
   };
 
-  const handleConfirmDraft = async () => {
-    if (!pendingDraft) return;
-    await addTransaction({ type: pendingDraft.type, amount: pendingDraft.amount, category: pendingDraft.category, description: pendingDraft.clean_title, account: pendingDraft.bank || 'کارت اصلی', date: new Date().toISOString() });
-    setMessages((prev) => [...prev, { id: Date.now().toString(), sender: 'assistant', text: `✅ تراکنش «${pendingDraft.clean_title}» به مبلغ ${formatToman(pendingDraft.amount)} ثبت شد.`, time: 'هم‌اکنون' }]);
-    setPendingDraft(null);
-  };
+  const handleConfirmDraft = async () => { if (!pendingDraft) return; await addTransaction({ type: pendingDraft.type, amount: pendingDraft.amount, category: pendingDraft.category, description: pendingDraft.clean_title, account: pendingDraft.bank || 'کارت اصلی', date: new Date().toISOString() }); setMessages((prev) => [...prev, { id: Date.now().toString(), sender: 'assistant', text: `✅ تراکنش «${pendingDraft.clean_title}» به مبلغ ${formatToman(pendingDraft.amount)} ثبت شد.`, time: 'هم‌اکنون' }]); setPendingDraft(null); };
 
   const handleConfirmAction = async () => {
-    if (!pendingAction) return;
-    setIsTyping(true);
+    if (!pendingAction) return; setIsTyping(true);
     try {
       let success = false; let successMessage = '';
       switch (pendingAction.type) {
-        case 'create_transaction': {
-          const { amount, category, type, description } = pendingAction.params;
-          await addTransaction({ amount: Number(amount), category: category || 'سایر و متفرقه', type: type || 'expense', description: description || pendingAction.description, date: new Date().toISOString(), account: 'ثبت توسط AI' });
-          success = true; successMessage = `✅ تراکنش ثبت شد.`; break;
-        }
-        case 'create_dong_group': {
-          const { name, members } = pendingAction.params;
-          const result = await createDongGroup(name, members || [], false);
-          if (result.success) { success = true; successMessage = `✅ گروه دنگ «${name}» ساخته شد.`; } else throw new Error(result.error); break;
-        }
-        case 'create_goal': {
-          const { title, target_amount, deadline, category } = pendingAction.params;
-          await addGoal({ title: title || pendingAction.description, target_amount: Number(target_amount) || 0, current_amount: 0, deadline: deadline || null, category: category || 'سایر', status: 'in_progress', notes: '' });
-          success = true; successMessage = `✅ هدف مالی «${title}» ساخته شد.`; break;
-        }
-        case 'create_reminder': {
-          const { title, amount, due_date, category, recurrence } = pendingAction.params;
-          await addReminder({ title: title || pendingAction.description, amount: Number(amount) || 0, due_date: due_date || new Date().toISOString(), category: category || 'سایر', is_paid: false, recurrence: recurrence || 'once' });
-          success = true; successMessage = `✅ یادآور «${title}» تنظیم شد.`; break;
-        }
+        case 'create_transaction': { const { amount, category, type, description } = pendingAction.params; await addTransaction({ amount: Number(amount), category: category || 'سایر و متفرقه', type: type || 'expense', description: description || pendingAction.description, date: new Date().toISOString(), account: 'ثبت توسط AI' }); success = true; successMessage = `✅ تراکنش ثبت شد.`; break; }
+        case 'create_dong_group': { const { name, members } = pendingAction.params; const result = await createDongGroup(name, members || [], false); if (result.success) { success = true; successMessage = `✅ گروه دنگ «${name}» ساخته شد.`; } else throw new Error(result.error); break; }
+        case 'create_goal': { const { title, target_amount, deadline, category } = pendingAction.params; await addGoal({ title: title || pendingAction.description, target_amount: Number(target_amount) || 0, current_amount: 0, deadline: deadline || null, category: category || 'سایر', status: 'in_progress', notes: '' }); success = true; successMessage = `✅ هدف مالی «${title}» ساخته شد.`; break; }
+        case 'create_reminder': { const { title, amount, due_date, recurrence } = pendingAction.params; await addReminder({ title: title || pendingAction.description, amount: Number(amount) || 0, due_date: due_date || new Date().toISOString(), category: 'قبوض و شارژ', is_paid: false, recurrence: recurrence || 'once' }); success = true; successMessage = `✅ یادآور «${title}» تنظیم شد.`; break; }
         default: throw new Error(`نوع action ناشناخته: ${pendingAction.type}`);
       }
       if (success) { setMessages((prev) => [...prev, { id: Date.now().toString(), sender: 'assistant', text: `${pendingReply}\n\n${successMessage}`, time: 'هم‌اکنون' }]); setPendingAction(null); setPendingReply(''); }
@@ -98,27 +70,21 @@ export const FloatingAIAssistant: React.FC = () => {
     const updatedMessages = [...messages, newMsg];
     setMessages(updatedMessages); setInput(''); setIsTyping(true); setNotice(null); setPendingAction(null); setPendingDraft(null);
     try {
-      const historyPayload = updatedMessages.map((m) => ({ role: m.sender === 'user' ? 'user' : 'assistant', content: m.text }));
+      const historyPayload = updatedMessages.map((m): { role: 'user' | 'assistant'; content: string } => ({ role: m.sender === 'user' ? 'user' : 'assistant', content: m.text }));
       const response = await invokeAiAssistantEdgeFunction(userText, historyPayload);
       if (response.success && response.reply) {
         if (response.action && response.requires_confirmation) {
           setPendingReply(response.reply);
-          setPendingAction({ type: response.action.type, params: response.action.params, description: response.action.description });
-        } else {
-          setMessages((prev) => [...prev, { id: (Date.now() + 1).toString(), sender: 'assistant', text: response.reply, time: 'هم‌اکنون' }]);
-        }
+          if (response.action.type === 'create_transaction') { setPendingDraft({ amount: response.action.params?.amount || 0, type: response.action.params?.type || 'expense', clean_title: response.action.params?.description || userText, category: response.action.params?.category || 'سایر و متفرقه' }); }
+          else { setPendingAction({ type: response.action.type, params: response.action.params, description: response.action.description }); }
+        } else { setMessages((prev) => [...prev, { id: (Date.now() + 1).toString(), sender: 'assistant', text: response.reply, time: 'هم‌اکنون' }]); }
       } else { setMessages((prev) => [...prev, { id: (Date.now() + 1).toString(), sender: 'assistant', text: response.error || 'خطا در ارتباط با هوش مصنوعی', time: 'هم‌اکنون' }]); }
     } catch (err: any) { setMessages((prev) => [...prev, { id: (Date.now() + 1).toString(), sender: 'assistant', text: err?.message || 'خطا در پردازش', time: 'هم‌اکنون' }]); }
     finally { setIsTyping(false); }
   };
 
-  const getActionIcon = (type: string) => {
-    switch (type) { case 'create_transaction': return '💳'; case 'create_dong_group': return '👥'; case 'create_goal': return '🎯'; case 'create_reminder': return '🔔'; default: return '✨'; }
-  };
-
-  const getActionTitle = (type: string) => {
-    switch (type) { case 'create_transaction': return 'ثبت تراکنش'; case 'create_dong_group': return 'ساخت گروه دنگ'; case 'create_goal': return 'تعریف هدف مالی'; case 'create_reminder': return 'تنظیم یادآور'; default: return 'انجام عملیات'; }
-  };
+  const getActionIcon = (type: string) => { switch (type) { case 'create_transaction': return '💳'; case 'create_dong_group': return '👥'; case 'create_goal': return '🎯'; case 'create_reminder': return '🔔'; default: return '✨'; } };
+  const getActionTitle = (type: string) => { switch (type) { case 'create_transaction': return 'ثبت تراکنش'; case 'create_dong_group': return 'ساخت گروه دنگ'; case 'create_goal': return 'تعریف هدف مالی'; case 'create_reminder': return 'تنظیم یادآور'; default: return 'انجام عملیات'; } };
 
   return (
     <>
@@ -157,15 +123,23 @@ export const FloatingAIAssistant: React.FC = () => {
               </div>
             ))}
             {isTyping && !pendingAction && (<div className="flex items-center gap-2 text-xs text-zinc-400"><div className="w-2 h-2 rounded-full bg-emerald-500 animate-bounce" /><div className="w-2 h-2 rounded-full bg-emerald-500 animate-bounce delay-100" /><div className="w-2 h-2 rounded-full bg-emerald-500 animate-bounce delay-200" /><span>در حال پردازش...</span></div>)}
+            
+            {pendingDraft && (
+               <div className="p-3.5 rounded-2xl bg-[#14231D] border-2 border-amber-400/70 shadow-xl space-y-3 animate-in fade-in zoom-in-95 font-cairo">
+                 <div className="flex items-center justify-between border-b border-emerald-800/40 pb-2"><div className="flex items-center gap-1.5 text-amber-300 font-bold text-xs"><Sparkles className="w-4 h-4 text-amber-400" /><span>پیش‌نویس تراکنش هوشمند</span></div><span className="text-[10px] px-2 py-0.5 rounded-full font-bold bg-amber-400/20 text-amber-300 border border-amber-400/40">{pendingDraft.type === 'expense' ? 'هزینه' : 'درآمد'}</span></div>
+                 <div className="grid grid-cols-2 gap-2 text-xs"><div><span className="text-zinc-400 text-[10px] block">عنوان:</span><span className="font-bold text-white truncate block">{pendingDraft.clean_title}</span></div><div><span className="text-zinc-400 text-[10px] block">مبلغ دقیق:</span><span className="font-bold text-emerald-400 font-mono">{formatToman(pendingDraft.amount)}</span></div></div>
+                 <div className="space-y-1"><label className="text-[11px] text-zinc-300 font-bold block">دسته‌بندی را تایید یا انتخاب کنید:</label><select value={pendingDraft.category} onChange={(e) => setPendingDraft({ ...pendingDraft, category: e.target.value as TransactionCategory })} className="w-full px-3 py-1.5 rounded-xl bg-[#0B1511] border border-emerald-700/60 text-xs text-white outline-none focus:ring-1 focus:ring-emerald-500 font-cairo">{(pendingDraft.type === 'income' ? INCOME_CATEGORIES : EXPENSE_CATEGORIES).map((cat) => (<option key={cat} value={cat}>{cat}</option>))}</select></div>
+                 <div className="flex items-center gap-2 pt-1"><button type="button" onClick={handleConfirmDraft} className="flex-1 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs transition cursor-pointer flex items-center justify-center gap-1 shadow-sm"><CheckCircle2 className="w-3.5 h-3.5" /><span>تایید و ثبت</span></button><button type="button" onClick={() => setPendingDraft(null)} className="px-3 py-2 rounded-xl bg-zinc-800 hover:bg-zinc-700 text-zinc-300 font-bold text-xs transition cursor-pointer">انصراف</button></div>
+               </div>
+             )}
+
             {pendingAction && (
-              <div className="p-3.5 rounded-2xl bg-[#14231D] border-2 border-amber-400/70 shadow-xl space-y-3 animate-in fade-in zoom-in-95 font-cairo">
-                <div className="flex items-center justify-between border-b border-emerald-800/40 pb-2">
-                  <div className="flex items-center gap-1.5 text-amber-300 font-bold text-xs"><Sparkles className="w-4 h-4 text-amber-400" /><span>{getActionTitle(pendingAction.type)} - نیاز به تأیید</span></div>
-                </div>
+              <div className="p-3.5 rounded-2xl bg-[#14231D] border-2 border-purple-400/70 shadow-xl space-y-3 animate-in fade-in zoom-in-95 font-cairo">
+                <div className="flex items-center justify-between border-b border-purple-800/40 pb-2"><div className="flex items-center gap-1.5 text-purple-300 font-bold text-xs"><Sparkles className="w-4 h-4 text-purple-400" /><span>{getActionTitle(pendingAction.type)} - نیاز به تأیید</span></div></div>
                 <p className="text-xs text-zinc-300 leading-relaxed">{pendingReply}</p>
                 <p className="text-[11px] font-bold text-zinc-400 bg-black/20 p-2 rounded-lg">📋 {pendingAction.description}</p>
                 <div className="flex items-center gap-2 pt-1">
-                  <button type="button" onClick={handleConfirmAction} disabled={isTyping} className="flex-1 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 disabled:opacity-50 text-white font-bold text-xs transition cursor-pointer flex items-center justify-center gap-1 shadow-sm"><CheckCircle2 className="w-3.5 h-3.5" /><span>{isTyping ? 'در حال انجام...' : 'بله، انجام بده'}</span></button>
+                  <button type="button" onClick={handleConfirmAction} disabled={isTyping} className="flex-1 py-2 rounded-xl bg-purple-600 hover:bg-purple-500 disabled:opacity-50 text-white font-bold text-xs transition cursor-pointer flex items-center justify-center gap-1 shadow-sm">{isTyping ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <CheckCircle2 className="w-3.5 h-3.5" />} <span>{isTyping ? 'در حال انجام...' : 'بله، انجام بده'}</span></button>
                   <button type="button" onClick={handleRejectAction} disabled={isTyping} className="flex-1 py-2 rounded-xl bg-rose-600 hover:bg-rose-500 disabled:opacity-50 text-white font-bold text-xs transition cursor-pointer"><X className="w-3.5 h-3.5" /><span>انصراف</span></button>
                 </div>
               </div>

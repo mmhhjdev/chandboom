@@ -90,13 +90,13 @@ export const SubscriptionView: React.FC = () => {
     };
   };
 
-  // Get all plans (DB or fallback)
+  // Get all plans (DB or fallback) with ✅ FIX for TS2367
   const allPlans: SubscriptionPlan[] = React.useMemo(() => {
     if (dbPlans.length > 0) {
       return dbPlans.map(convertDbPlanToSubscriptionPlan);
     }
-    // Fallback to hardcoded plans
-    return SUBSCRIPTION_PLANS.filter((p) => p.price > 0);
+    // Fallback to hardcoded plans ensuring price is treated as number
+    return SUBSCRIPTION_PLANS.filter((p) => Number(p.price) > 0);
   }, [dbPlans]);
 
   const handleSelectPlan = (plan: SubscriptionPlan) => {
@@ -288,7 +288,7 @@ export const SubscriptionView: React.FC = () => {
             </span>
           </div>
           <p className="text-xs text-zinc-500 dark:text-zinc-400 leading-relaxed max-w-xl">
-            شامل ثبت دستی درآمد و هزینه، نمودار تراز، ۲ گروه دنگ و ۲ یادآور مالی به صورت نامحدود و رایگان برای همیشه. امکانات هوش مصنوعی نیازمند اشتراک‌های برنزی یا پرو می‌باشد.
+            شامل ثبت دستی درآمد و هزینه، نمودار تراز، ۲ گروه دنگ و  یادآور مالی به صورت نامحدود و رایگان برای همیشه. امکانات هوش مصنوعی نیازمند اشتراک‌های برنزی یا پرو می‌باشد.
           </p>
         </div>
         <div className="shrink-0">
@@ -341,7 +341,7 @@ export const SubscriptionView: React.FC = () => {
                   ثبت هوشمند پیامک بانکی با هوش مصنوعی
                 </td>
                 <td className="p-3.5 text-center text-zinc-400">فقط پیش‌نمایش</td>
-                <td className="p-3.5 text-center font-bold text-emerald-600">تا ۲۰ پیامک</td>
+                <td className="p-3.5 text-center font-bold text-emerald-600">تا ۰ پیامک</td>
                 <td className="p-3.5 text-center font-bold text-emerald-700 dark:text-emerald-400 bg-amber-50/20 dark:bg-amber-950/10">
                   نامحدود
                 </td>
@@ -427,11 +427,11 @@ export const SubscriptionView: React.FC = () => {
           <ul className="space-y-2.5 text-xs text-zinc-600 dark:text-zinc-400 leading-relaxed">
             <li className="flex items-start gap-2">
               <span className="font-bold text-zinc-400">•</span>
-              <span><strong>پرداخت هزینه دوره‌ای:</strong> برای دسترسی مداوم به اشتراک طلایی نیاز به تمدید ماهانه،  ماهه یا ۶ ماهه دارید.</span>
+              <span><strong>پرداخت هزینه دوره‌ای:</strong> برای دسترسی مداوم به اشتراک طلایی نیاز به تمدید ماهانه، ۳ ماهه یا  ماهه دارید.</span>
             </li>
             <li className="flex items-start gap-2">
               <span className="font-bold text-zinc-400">•</span>
-              <span><strong>عدم توجیه برای افراد کم‌فعالیت:</strong> اگر در ماه تنها ۲ یا ۳ تراکنش ساده ثبت می‌کنید، امکانات اشتراک رایگان برای شما کاملاً کافی است و نیازی به ارتقا به پرو ندارید.</span>
+              <span><strong>عدم توجیه برای افراد کم‌فعالیت:</strong> اگر در ماه تنها  یا ۳ تراکنش ساده ثبت می‌کنید، امکانات اشتراک رایگان برای شما کاملاً کافی است و نیازی به ارتقا به پرو ندارید.</span>
             </li>
             <li className="flex items-start gap-2">
               <span className="font-bold text-zinc-400">•</span>

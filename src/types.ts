@@ -1,11 +1,7 @@
 export type UserRole = 'user' | 'admin';
-
 export type SubscriptionTier = 'free' | 'bronze' | 'pro' | 'vip';
-
 export type SubscriptionStatus = 'active' | 'expired' | 'pending_approval' | 'none';
-
 export type TransactionType = 'income' | 'expense';
-
 export type TransactionCategory =
   | 'خوراک و رستوران'
   | 'خوراک و غذا'
@@ -76,9 +72,7 @@ export interface NotificationItem {
 }
 
 export type TicketDepartment = 'پشتیبانی مالی' | 'پشتیبانی فنی' | 'انتقادات و پیشنهادات' | 'عمومی';
-
 export type TicketPriority = 'low' | 'medium' | 'high' | 'urgent';
-
 export type TicketStatus = 'open' | 'in_progress' | 'resolved' | 'closed';
 
 export interface TicketMessage {
@@ -120,6 +114,7 @@ export type ActiveTab =
 
 export type NavTab = ActiveTab;
 
+// ✅ اصلاح: وضعیت هدف باید با مقادیر DB مطابقت داشته باشد
 export interface FinancialGoal {
   id: string;
   user_id: string;
@@ -128,7 +123,7 @@ export interface FinancialGoal {
   current_amount: number;
   deadline: string;
   category?: string;
-  status: 'in_progress' | 'achieved' | 'paused';
+  status: 'in_progress' | 'achieved' | 'paused'; // حذف 'active'
   notes?: string;
   created_at: string;
   updated_at?: string;
@@ -171,11 +166,12 @@ export interface SubscriptionPlan {
   features: string[];
   tier?: SubscriptionTier;
   aiAccess?: boolean;
-  monthlyAiLimit?: number;
+  monthlyAiLimit?: number | string; // ✅ اصلاح: پذیرش string برای "نامحدود"
   isPopular?: boolean;
   badge?: string;
 }
 
+// ✅ اضافه شدن فیلدهای گمشده برای رفع خطای TS2339/TS2353
 export interface ManualPaymentSubmission {
   id: string;
   user_id: string;
@@ -196,6 +192,10 @@ export interface ManualPaymentSubmission {
   created_at: string;
   reviewed_at?: string;
   reviewed_by?: string;
+  // فیلدهای جدید مورد نیاز AppContext و AdminDashboardModal
+  receipt_image_url?: string;
+  card_last4?: string;
+  alt_id?: string;
 }
 
 export interface ParsedAITransaction {
