@@ -1,3 +1,4 @@
+
 name: Deploy Chandboom to GitHub Pages
 
 on:
@@ -13,13 +14,14 @@ permissions:
   id-token: write
 
 concurrency:
-  group: "pages"
+  group: pages
   cancel-in-progress: false
 
 jobs:
   build:
-    name: Build Static Applet
+    name: Build Chandboom
     runs-on: ubuntu-latest
+
     steps:
       - name: Checkout Code
         uses: actions/checkout@v4
@@ -30,10 +32,56 @@ jobs:
           bun-version: latest
 
       - name: Install Dependencies
-        run: bun install --frozen-lockfile || bun install
+        run: bun install --frozen-lockfile
 
-      - name: Verify TypeScript & Lint
+      - name: Verify TypeScript and Lint
         run: bun run lint
+
+      - name: Validate Supabase Configuration
+        env:
+          VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
+          VITE_SUPABASE_ANON_KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY }}
+        run: |
+          node <<'NODE'
+          const urlValue = process.env.VITE_SUPABASE_URL?.trim();
+          const anonKey = process.env.VITE_SUPABASE_ANON_KEY?.trim();
+
+          if (!urlValue) {
+            console.error(
+              'ERROR: VITE_SUPABASE_URL is missing from GitHub Actions Secrets.'
+            );
+            process.exit(1);
+          }
+
+          let parsed;
+          try {
+            parsed = new URL(urlValue);
+          } catch {
+            console.error(
+              'ERROR: VITE_SUPABASE_URL is not a valid URL.'
+            );
+            process.exit(1);
+          }
+
+          if (
+            !['https:', 'http:'].includes(parsed.protocol) ||
+            !parsed.hostname
+          ) {
+            console.error(
+              'ERROR: Supabase URL must use HTTP or HTTPS.'
+            );
+            process.exit(1);
+          }
+
+          if (!anonKey) {
+            console.error(
+              'ERROR: VITE_SUPABASE_ANON_KEY is missing from GitHub Actions Secrets.'
+            );
+            process.exit(1);
+          }
+
+          console.log('Supabase configuration checks passed.');
+          NODE
 
       - name: Build Application for Production
         env:
@@ -44,15 +92,22 @@ jobs:
           VITE_GA_MEASUREMENT_ID: ${{ secrets.VITE_GA_MEASUREMENT_ID }}
         run: bun run build
 
-      - name: Verify CNAME and SPA 404 Routing in Dist
+      - name: Prepare GitHub Pages Files
         run: |
-          if [ -f public/CNAME ] && [ ! -f dist/CNAME ]; then
+          if [ -f public/CNAME ]; then
             cp public/CNAME dist/CNAME
           fi
-          if [ -f public/404.html ] && [ ! -f dist/404.html ]; then
+
+          if [ -f public/404.html ]; then
             cp public/404.html dist/404.html
           fi
-          echo "Verified dist contents:"
+
+          test -d dist || {
+            echo "ERROR: dist directory was not generated."
+            exit 1
+          }
+
+          echo "Generated files:"
           ls -la dist
 
       - name: Setup GitHub Pages
@@ -61,15 +116,17 @@ jobs:
       - name: Upload Pages Artifact
         uses: actions/upload-pages-artifact@v3
         with:
-          path: './dist'
+          path: ./dist
 
   deploy:
     name: Deploy to GitHub Pages
+    runs-on: ubuntu-latest
+    needs: build
+
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
-    runs-on: ubuntu-latest
-    needs: build
+
     steps:
       - name: Deploy to GitHub Pages
         id: deployment
