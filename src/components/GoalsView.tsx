@@ -59,7 +59,7 @@ export const GoalsView: React.FC = () => {
     setIsContributeModalOpen(false); setSelectedGoal(null);
   };
 
-  // ✅ اصلاح: استفاده از Edge Function به جای getConversationalAdvice
+  // فراخوانی امن تحلیل هدف از طریق Supabase Edge Function
   const runAiFeasibility = async (goal: FinancialGoal) => {
     if (!hasAIAccess) { if (openSubscriptionModal) openSubscriptionModal(); else setActiveTab('subscription'); return; }
     setAnalyzingGoalId(goal.id);

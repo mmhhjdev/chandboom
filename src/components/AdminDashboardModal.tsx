@@ -38,7 +38,7 @@ import {
   isAdminEmail,
   getEnvAdminEmail,
 } from '../utils/admin';
-import { getSupabaseClient, invokeAdminReviewOrderEdgeFunction } from '../lib/supabase';
+import { getSupabaseClient, getPaymentReceiptViewUrl, invokeAdminReviewOrderEdgeFunction } from '../lib/supabase';
 import { formatToman, formatShamsiDateTime, formatShamsiDate, toPersianDigits } from '../utils/formatters';
 import { calculateRemainingProDays } from '../utils/security';
 import { UserRole, SubscriptionTier, UserProfile, ManualPaymentSubmission } from '../types';
@@ -112,7 +112,23 @@ export const AdminDashboardModal: React.FC<AdminDashboardModalProps> = ({ isOpen
   const [isOtpLoading, setIsOtpLoading] = useState(false);
   const [adminNotes, setAdminNotes] = useState<Record<string, string>>({});
   const [userSearch, setUserSearch] = useState('');
+  const [pendingTierByUser, setPendingTierByUser] = useState<Record<string, SubscriptionTier>>({});
   const [selectedReceiptForPreview, setSelectedReceiptForPreview] = useState<string | null>(null);
+  const [receiptPreviewError, setReceiptPreviewError] = useState<string | null>(null);
+  const [isReceiptPreviewLoading, setIsReceiptPreviewLoading] = useState(false);
+
+  const openReceiptPreview = async (reference?: string | null) => {
+    if (!reference) return;
+    setReceiptPreviewError(null);
+    setIsReceiptPreviewLoading(true);
+    try {
+      const result = await getPaymentReceiptViewUrl(reference);
+      if (!result.url) { setReceiptPreviewError(result.error || 'نمایش تصویر فیش ناموفق بود.'); return; }
+      setSelectedReceiptForPreview(result.url);
+    } catch (error) {
+      setReceiptPreviewError(error instanceof Error ? error.message : 'نمایش تصویر فیش ناموفق بود.');
+    } finally { setIsReceiptPreviewLoading(false); }
+  };
 
   // Sync session state
   React.useEffect(() => {
@@ -859,7 +875,7 @@ export const AdminDashboardModal: React.FC<AdminDashboardModalProps> = ({ isOpen
                                 {pay.receipt_url ? (
                                   <button
                                     type="button"
-                                    onClick={() => setSelectedReceiptForPreview(pay.receipt_url || null)}
+                                    onClick={() => void openReceiptPreview(pay.receipt_url)}
                                     className="inline-flex items-center gap-1 text-emerald-700 dark:text-emerald-400 font-bold hover:underline cursor-pointer"
                                   >
                                     <Eye className="w-3.5 h-3.5" />
@@ -1122,18 +1138,44 @@ export const AdminDashboardModal: React.FC<AdminDashboardModalProps> = ({ isOpen
                                     >
                                       تنظیم روزها
                                     </button>
-                                    <button
-                                      onClick={() =>
-                                        updateUserRoleAndTier(
-                                          u.id,
-                                          u.role,
-                                          u.tier === 'pro' ? 'free' : 'pro'
-                                        )
-                                      }
-                                      className="px-2 py-1 rounded-lg border border-amber-400/80 dark:border-amber-700 text-amber-800 dark:text-amber-300 hover:bg-amber-50 dark:hover:bg-amber-950/40 text-[10px] font-bold cursor-pointer"
-                                    >
-                                      {u.tier === 'pro' ? 'تنزیل به رایگان' : 'ارتقا به پرو'}
-                                    </button>
+                                    <div className="flex items-center gap-1.5 rounded-xl border border-zinc-200 dark:border-zinc-700 p-1.5 bg-white/70 dark:bg-zinc-900/50">
+                                      <select
+                                        aria-label={`انتخاب پلن برای ${u.full_name}`}
+                                        value={pendingTierByUser[u.id] ?? u.tier ?? 'free'}
+                                        onChange={(e) => setPendingTierByUser((prev) => ({ ...prev, [u.id]: e.target.value as SubscriptionTier }))}
+                                        className="max-w-[125px] rounded-lg border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 px-2 py-1.5 text-[10px] font-bold"
+                                      >
+                                        <option value="free">پایه / رایگان</option>
+                                        <option value="bronze">برنزی</option>
+                                        <option value="pro">پرو</option>
+                                        <option value="vip">VIP</option>
+                                      </select>
+                                      <button
+                                        type="button"
+                                        onClick={async () => {
+                                          const tier = pendingTierByUser[u.id] ?? u.tier ?? 'free';
+                                          if (tier !== 'free') {
+                                            const daysText = window.prompt('مدت اشتراک از امروز چند روز باشد؟ (برای تمدید، روزهای جدید به اعتبار فعلی اضافه می‌شوند)', '30');
+                                            if (daysText === null) return;
+                                            const days = Number.parseInt(daysText, 10);
+                                            if (!Number.isInteger(days) || days < 1 || days > 3650) {
+                                              window.alert('لطفاً تعداد روز معتبر بین ۱ تا ۳۶۵۰ وارد کنید.');
+                                              return;
+                                            }
+                                            const tierUpdated = await updateUserRoleAndTier(u.id, u.role, tier);
+                                            if (!tierUpdated) return;
+                                            await updateUserSubscriptionDays(u.id, days, `تنظیم پلن ${tier.toUpperCase()} به مدت ${days} روز توسط مدیر ارشد`);
+                                          } else {
+                                            const tierUpdated = await updateUserRoleAndTier(u.id, u.role, 'free');
+                                            if (!tierUpdated) return;
+                                          }
+                                          setPendingTierByUser((prev) => { const next = { ...prev }; delete next[u.id]; return next; });
+                                        }}
+                                        className="px-2 py-1.5 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white text-[10px] font-bold cursor-pointer whitespace-nowrap"
+                                      >
+                                        اعمال پلن
+                                      </button>
+                                    </div>
                                   </div>
                                 </td>
                               </tr>
@@ -1220,6 +1262,16 @@ export const AdminDashboardModal: React.FC<AdminDashboardModalProps> = ({ isOpen
           </>
         )}
       </div>
+
+      {receiptPreviewError && (
+        <div className="fixed bottom-5 right-5 z-[80] max-w-sm rounded-xl bg-rose-600 px-4 py-3 text-sm font-bold text-white shadow-xl">
+          {receiptPreviewError}
+          <button type="button" onClick={() => setReceiptPreviewError(null)} className="mr-3 underline">بستن</button>
+        </div>
+      )}
+      {isReceiptPreviewLoading && (
+        <div className="fixed bottom-5 right-5 z-[80] rounded-xl bg-zinc-900 px-4 py-3 text-sm font-bold text-white shadow-xl">در حال دریافت امن تصویر فیش…</div>
+      )}
 
       {/* Admin Receipt Lightbox Preview Modal */}
       {selectedReceiptForPreview && (

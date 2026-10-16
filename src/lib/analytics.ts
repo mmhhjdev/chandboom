@@ -29,6 +29,14 @@ export function initGA(): void {
     };
     window.gtag('js', new Date());
   }
+  const scriptId = 'chandboom-google-analytics';
+  if (!document.getElementById(scriptId)) {
+    const script = document.createElement('script');
+    script.id = scriptId;
+    script.async = true;
+    script.src = `https://www.googletagmanager.com/gtag/js?id=${encodeURIComponent(measurementId)}`;
+    document.head.appendChild(script);
+  }
   window.gtag('config', measurementId, {
     send_page_view: false, // Managed manually via AnalyticsTracker
   });

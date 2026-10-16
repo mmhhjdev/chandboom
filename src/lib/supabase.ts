@@ -265,21 +265,31 @@ export async function uploadPaymentReceipt(
         upsert: true,
         contentType: (file as File).type || 'image/jpeg',
       });
-    if (error) {
-      return new Promise((resolve) => {
-        const reader = new FileReader();
-        reader.onload = (e) => resolve({ url: (e.target?.result as string) || '' });
-        reader.onerror = () => resolve({ url: '', error: 'خطا در بارگذاری تصویر فیش' });
-        reader.readAsDataURL(file);
-      });
+    if (error || !data?.path) {
+      return { url: '', error: `ذخیره فیش در فضای ذخیره‌سازی انجام نشد: ${error?.message || 'مسیر فایل دریافت نشد'}` };
     }
-    const { data: publicUrlData } = supabase.storage
-      .from('payment-receipts')
-      .getPublicUrl(data.path);
-    return { url: publicUrlData?.publicUrl || data.path };
+    // Persist only the stable Storage object path. The admin UI creates a short-lived
+    // signed URL at viewing time so the bucket can remain private.
+    return { url: data.path };
   } catch (err: any) {
     return { url: '', error: err?.message || 'خطا در آپلود فیش' };
   }
+}
+
+
+/** Resolve a stored payment receipt path/legacy URL into a short-lived private Storage URL. */
+export async function getPaymentReceiptViewUrl(reference: string): Promise<{ url: string; error?: string }> {
+  const value = (reference || '').trim();
+  if (!value) return { url: '', error: 'مسیر فیش ثبت نشده است.' };
+  let objectPath = value;
+  const marker = '/storage/v1/object/public/payment-receipts/';
+  const signedMarker = '/storage/v1/object/sign/payment-receipts/';
+  if (value.includes(marker)) objectPath = value.split(marker)[1].split('?')[0];
+  else if (value.includes(signedMarker)) objectPath = value.split(signedMarker)[1].split('?')[0];
+  else if (/^https?:\/\//i.test(value)) return { url: value };
+  const { data, error } = await supabase.storage.from('payment-receipts').createSignedUrl(objectPath, 60 * 10);
+  if (error || !data?.signedUrl) return { url: '', error: error?.message || 'امکان دریافت تصویر فیش وجود ندارد. دسترسی Storage را بررسی کنید.' };
+  return { url: data.signedUrl };
 }
 
 /**

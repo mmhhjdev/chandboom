@@ -80,7 +80,7 @@ serve(async (req: Request) => {
     if (action === 'update_role_tier') {
       const { role, tier } = body;
       const validRoles = ['user', 'admin'];
-      const validTiers = ['free', 'pro', 'vip'];
+      const validTiers = ['free', 'bronze', 'pro', 'vip'];
 
       if (!validRoles.includes(role) || !validTiers.includes(tier)) {
         return new Response(
@@ -94,6 +94,7 @@ serve(async (req: Request) => {
         .update({
           role,
           tier,
+          ...(tier === 'free' ? { subscription_status: 'none', subscription_expires_at: null } : {}),
           updated_at: nowIso,
         })
         .eq('id', userId);
@@ -137,7 +138,7 @@ serve(async (req: Request) => {
         : 0;
       const baseTime = currentExpiry > Date.now() ? currentExpiry : Date.now();
       const newExpiry = new Date(baseTime + days * 24 * 60 * 60 * 1000).toISOString();
-      const newTier = days > 0 ? (targetUser.tier === 'vip' ? 'vip' : 'pro') : (new Date(newExpiry).getTime() > Date.now() ? targetUser.tier : 'free');
+      const newTier = days > 0 ? (targetUser.tier && targetUser.tier !== 'free' ? targetUser.tier : 'pro') : (new Date(newExpiry).getTime() > Date.now() ? targetUser.tier : 'free');
       const newStatus = newTier !== 'free' ? 'active' : 'none';
 
       await supabaseAdmin

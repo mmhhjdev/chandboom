@@ -26,7 +26,7 @@ interface AppContextType {
   goals: FinancialGoal[]; addGoal: (goal: Omit<FinancialGoal, 'id' | 'user_id' | 'created_at'>) => Promise<void>; updateGoal: (id: string, updates: Partial<FinancialGoal>) => Promise<void>; deleteGoal: (id: string) => Promise<void>; contributeToGoal: (id: string, amount: number) => Promise<void>;
   isSubscriptionModalOpen: boolean; openSubscriptionModal: () => void; closeSubscriptionModal: () => void;
   isAuthGuardOpen: boolean; authGuardMessage: string; openAuthGuard: (message?: string) => void; closeAuthGuard: () => void; requestSubscription: () => void;
-  allUsers: UserProfile[]; updateUserRoleAndTier: (userId: string, role: UserRole, tier: SubscriptionTier) => Promise<void>; updateUserSubscriptionDays: (userId: string, daysToAdd: number, reason?: string) => Promise<void>;
+  allUsers: UserProfile[]; updateUserRoleAndTier: (userId: string, role: UserRole, tier: SubscriptionTier) => Promise<boolean>; updateUserSubscriptionDays: (userId: string, daysToAdd: number, reason?: string) => Promise<void>;
   sendDirectUserMessage: (targetUserId: string, targetUserName: string, targetUserEmail: string, title: string, message: string, sendAsNotification?: boolean, sendAsTicket?: boolean) => Promise<boolean>;
   manualPayments: ManualPaymentSubmission[]; submitManualPayment: (data: Omit<ManualPaymentSubmission, 'id' | 'created_at' | 'status'>) => Promise<void>; approveManualPayment: (paymentId: string, adminNotes?: string) => Promise<void>; rejectManualPayment: (paymentId: string, adminNotes?: string) => Promise<void>;
   transactions: Transaction[]; addTransaction: (tx: Omit<Transaction, 'id' | 'user_id' | 'created_at'>) => Promise<void>; updateTransaction: (id: string, tx: Partial<Transaction>) => Promise<void>; deleteTransaction: (id: string) => Promise<void>;
@@ -138,13 +138,13 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     return (user.tier === 'bronze' || user.tier === 'pro' || user.tier === 'vip') && user.subscription_status === 'active';
   }, [isAdmin, user.tier, user.subscription_status, user.subscription_expires_at]);
 
-  // ✅ اصلاح: خواندن از دیتابیس
+  // مقدار سهمیه از پروفایل دیتابیس خوانده می‌شود؛ -1 یعنی نامحدود.
   const aiQueriesRemaining = useMemo(() => {
-    if (user.tier === 'free' || !hasAIAccess) return 0;
-    const limit = user.ai_queries_limit || (user.tier === 'bronze' ? 100 : user.tier === 'vip' ? -1 : 1000);
-    if (limit === -1) return -1; // نامحدود
-    return Math.max(0, limit - (user.ai_queries_used || 0));
-  }, [user.tier, user.ai_queries_limit, user.ai_queries_used, hasAIAccess]);
+    if (!hasAIAccess) return 0;
+    const limit = Number(user.ai_queries_limit ?? 0);
+    if (limit === -1) return -1;
+    return Math.max(0, limit - Number(user.ai_queries_used ?? 0));
+  }, [user.ai_queries_limit, user.ai_queries_used, hasAIAccess]);
 
   const fetchUserDataFromSupabase = async (userId: string, userEmail: string) => {
     const supabase = getSupabaseClient();
@@ -261,12 +261,13 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     await addNotification({ type: 'subscription', title: 'ارتقای حساب به اشتراک طلایی چندبوم', message: `حساب کاربری شما با موفقیت به سطح ${tier.toUpperCase()} ارتقا یافت.`, priority: 'normal', status: 'settled' });
   };
 
-  const updateUserRoleAndTier = async (userId: string, role: UserRole, tier: SubscriptionTier) => {
-    if (!isAdmin) { alert('دسترسی غیرمجاز: فقط مدیران ارشد مجاز به تغییر نقش و سطح اشتراک کاربران هستند.'); return; }
+  const updateUserRoleAndTier = async (userId: string, role: UserRole, tier: SubscriptionTier): Promise<boolean> => {
+    if (!isAdmin) { alert('دسترسی غیرمجاز: فقط مدیران ارشد مجاز به تغییر نقش و سطح اشتراک کاربران هستند.'); return false; }
     const res = await invokeAdminManageUserEdgeFunction({ action: 'update_role_tier', userId, role, tier });
-    if (!res.success) { alert(res.error || 'خطا در اعمال تغییرات سمت سرور'); return; }
-    setAllUsers((prev) => prev.map((u) => (u.id === userId ? { ...u, role, tier, updated_at: new Date().toISOString() } : u)));
-    if (user.id === userId) setUser((prev) => ({ ...prev, role, tier }));
+    if (!res.success) { alert(res.error || 'خطا در اعمال تغییرات سمت سرور'); return false; }
+    setAllUsers((prev) => prev.map((u) => (u.id === userId ? { ...u, role, tier, ...(tier === 'free' ? { subscription_status: 'none' as const, subscription_expires_at: null } : {}), updated_at: new Date().toISOString() } : u)));
+    if (user.id === userId) setUser((prev) => ({ ...prev, role, tier, ...(tier === 'free' ? { subscription_status: 'none', subscription_expires_at: null } : {}) }));
+    return true;
   };
 
   const updateUserSubscriptionDays = async (userId: string, daysToAdd: number, reason?: string) => {

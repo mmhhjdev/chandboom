@@ -113,6 +113,8 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
         const uploadRes = await uploadPaymentReceipt(receiptRawFile, user.id, receiptFileName);
         if (uploadRes.url) {
           finalReceiptUrl = uploadRes.url;
+        } else {
+          throw new Error(uploadRes.error || 'ذخیره تصویر فیش ناموفق بود. لطفاً دوباره تلاش کنید.');
         }
       }
 
@@ -161,7 +163,7 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
       setIsSubmittedSuccess(true);
     } catch (err) {
       console.error('Payment submission failed:', err);
-      alert('خطا در ثبت سفارش. لطفاً مجدداً تلاش کنید.');
+      alert(err instanceof Error ? err.message : 'خطا در ثبت سفارش. لطفاً مجدداً تلاش کنید.');
     } finally {
       setIsSubmitting(false);
     }

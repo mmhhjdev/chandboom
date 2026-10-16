@@ -20,6 +20,7 @@ export const TransactionsView: React.FC<TransactionsViewProps> = ({ onOpenTransa
   const [quickAiText, setQuickAiText] = useState('');
   const [isAiLoading, setIsAiLoading] = useState(false);
   const [aiError, setAiError] = useState<string | null>(null);
+  const [aiNotice, setAiNotice] = useState<string | null>(null);
   const [pendingDraft, setPendingDraft] = useState<{ amount: number; type: TransactionType; clean_title: string; category: TransactionCategory } | null>(null);
   const [pendingReply, setPendingReply] = useState('');
 
@@ -29,7 +30,7 @@ export const TransactionsView: React.FC<TransactionsViewProps> = ({ onOpenTransa
     if (!text || isAiLoading) return;
     if (!isAuthenticated) { setIsAuthModalOpen(true); return; }
     if (!hasAIAccess) { if (openSubscriptionModal) openSubscriptionModal(); else setActiveTab('subscription'); return; }
-    setIsAiLoading(true); setAiError(null); setPendingDraft(null);
+    setIsAiLoading(true); setAiError(null); setAiNotice(null); setPendingDraft(null);
     try {
       const historyPayload = [{ role: 'user' as const, content: text }];
       const response = await invokeAiAssistantEdgeFunction(text, historyPayload);
@@ -45,10 +46,14 @@ export const TransactionsView: React.FC<TransactionsViewProps> = ({ onOpenTransa
 
   const handleConfirmDraft = async () => {
     if (!pendingDraft) return;
-    await addTransaction({ type: pendingDraft.type, amount: pendingDraft.amount, category: pendingDraft.category, description: pendingDraft.clean_title, account: 'کارت اصلی', date: new Date().toISOString() });
-    setAiError(null);
-    setMessages?.((prev: any[]) => [...prev, { id: Date.now().toString(), sender: 'assistant', text: `${pendingReply}\n\n✅ تراکنش ثبت شد.`, time: 'هم‌اکنون' }]);
-    setPendingDraft(null); setPendingReply(''); setQuickAiText('');
+    try {
+      await addTransaction({ type: pendingDraft.type, amount: pendingDraft.amount, category: pendingDraft.category, description: pendingDraft.clean_title, account: 'کارت اصلی', date: new Date().toISOString() });
+      setAiError(null);
+      setAiNotice(`تراکنش «${pendingDraft.clean_title}» با موفقیت ثبت شد.`);
+      setPendingDraft(null); setPendingReply(''); setQuickAiText('');
+    } catch (error: any) {
+      setAiError(error?.message || 'ثبت تراکنش انجام نشد. لطفاً دوباره تلاش کنید.');
+    }
   };
 
   const filtered = useMemo(() => {
@@ -105,8 +110,10 @@ export const TransactionsView: React.FC<TransactionsViewProps> = ({ onOpenTransa
           <button type="submit" disabled={!quickAiText.trim() || isAiLoading} className="px-4 py-1.5 rounded-xl bg-emerald-700 hover:bg-emerald-800 text-white text-xs font-cairo font-bold transition cursor-pointer disabled:opacity-50 shrink-0 flex items-center gap-1.5">{isAiLoading ? (<><Loader2 className="w-3.5 h-3.5 animate-spin" /><span>در حال تحلیل...</span></>) : (<span>ثبت سریع</span>)}</button>
         </form>
         {aiError && (<div className="px-3.5 py-2 rounded-xl bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-900/50 text-amber-700 dark:text-amber-300 text-xs font-cairo flex items-center justify-between"><span>{aiError}</span><button onClick={() => setAiError(null)} className="text-amber-500 hover:text-amber-700 dark:hover:text-amber-200 text-xs px-1 cursor-pointer">✕</button></div>)}
+        {aiNotice && (<div role="status" className="px-3.5 py-2 rounded-xl bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-900/50 text-emerald-700 dark:text-emerald-300 text-xs font-cairo">{aiNotice}</div>)}
         {pendingDraft && (
           <div className="p-4 rounded-2xl bg-amber-50/70 dark:bg-[#16251E] border-2 border-amber-400/80 shadow-md space-y-3 animate-in fade-in zoom-in-95 font-cairo text-right">
+            {pendingReply && <p className="text-xs text-zinc-600 dark:text-zinc-300 leading-6">{pendingReply}</p>}
             <div className="flex items-center justify-between border-b border-amber-200 dark:border-emerald-800/40 pb-2">
               <div className="flex items-center gap-1.5 text-amber-800 dark:text-amber-300 font-bold text-xs"><Sparkles className="w-4 h-4 text-amber-500" /><span>پیش‌نویس تراکنش هوشمند</span></div>
               <span className="text-[10px] px-2 py-0.5 rounded-full font-bold bg-amber-400/20 text-amber-800 dark:text-amber-300 border border-amber-400/40">{pendingDraft.type === 'expense' ? 'هزینه' : 'درآمد'}</span>

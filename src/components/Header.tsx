@@ -3,6 +3,7 @@ import {
   Wallet,
   Shield,
   Crown,
+  Gem,
   LogIn,
   LogOut,
   Bell,
@@ -31,7 +32,6 @@ export const Header: React.FC<HeaderProps> = ({
     isAuthenticated,
     setIsAuthModalOpen,
     logout,
-    isProUser,
     requestSubscription,
     isAdmin,
     metrics,
@@ -42,6 +42,10 @@ export const Header: React.FC<HeaderProps> = ({
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
 
   const unpaidRemindersCount = reminders.filter((r) => !r.is_paid).length;
+  const tierIsActive = user.subscription_status === 'active' && (!user.subscription_expires_at || new Date(user.subscription_expires_at).getTime() > Date.now());
+  const tierLabel = user.tier === 'vip' ? 'اشتراک VIP' : user.tier === 'pro' ? 'اشتراک پرو' : user.tier === 'bronze' ? 'اشتراک برنزی' : 'اشتراک پایه';
+  const tierShortLabel = user.tier === 'vip' ? 'VIP' : user.tier === 'pro' ? 'پرو' : user.tier === 'bronze' ? 'برنزی' : 'پایه';
+  const tierBadgeClass = user.tier === 'vip' ? 'bg-purple-500/15 text-purple-900 dark:text-purple-200 border-purple-400/50' : user.tier === 'pro' ? 'bg-amber-500/15 text-amber-900 dark:text-amber-200 border-amber-400/50' : user.tier === 'bronze' ? 'bg-orange-500/15 text-orange-900 dark:text-orange-200 border-orange-400/50' : 'bg-zinc-100 text-zinc-700 dark:bg-zinc-800 dark:text-zinc-200 border-zinc-300 dark:border-zinc-700';
 
   return (
     <header className="sticky top-0 z-50 bg-white/95 dark:bg-[#0A100D]/95 backdrop-blur-md border-b border-[#E2E8E4] dark:border-[#1A2621] transition-colors font-cairo w-full">
@@ -135,11 +139,11 @@ export const Header: React.FC<HeaderProps> = ({
               )}
 
               {/* Golden Pro Subscription Button / Active Badge */}
-              {isProUser ? (
-                <div className="flex items-center gap-1 sm:gap-1.5 px-2.5 sm:px-3 py-1.5 sm:py-2 rounded-xl bg-amber-500/15 text-amber-900 dark:text-amber-200 border border-amber-400/50 text-[11px] sm:text-xs font-cairo font-bold shadow-xs shrink-0">
-                  <Crown className="w-3.5 h-3.5 text-amber-500 shrink-0" />
-                  <span className="hidden sm:inline whitespace-nowrap">حساب طلایی فعال</span>
-                  <span className="sm:hidden whitespace-nowrap">طلایی</span>
+              {tierIsActive && user.tier !== 'free' ? (
+                <div title={`${tierLabel} فعال`} className={`flex items-center gap-1 sm:gap-1.5 px-2.5 sm:px-3 py-1.5 sm:py-2 rounded-xl border text-[11px] sm:text-xs font-cairo font-bold shadow-xs shrink-0 ${tierBadgeClass}`}>
+                  {user.tier === 'vip' ? <Shield className="w-3.5 h-3.5 shrink-0" /> : user.tier === 'bronze' ? <Gem className="w-3.5 h-3.5 shrink-0" /> : <Crown className="w-3.5 h-3.5 shrink-0" />}
+                  <span className="hidden sm:inline whitespace-nowrap">{tierLabel} فعال</span>
+                  <span className="sm:hidden whitespace-nowrap">{tierShortLabel}</span>
                 </div>
               ) : (
                 <button
@@ -209,12 +213,12 @@ export const Header: React.FC<HeaderProps> = ({
                             <p className="text-[10px] text-zinc-400 font-mono truncate">{user.email}</p>
                           </div>
                         </div>
-                        {isProUser ? (
-                          <span className="inline-flex items-center gap-1 text-[10px] text-amber-600 dark:text-amber-400 font-bold">
-                            <Crown className="w-3 h-3" /> اشتراک طلایی فعال
+                        {tierIsActive && user.tier !== 'free' ? (
+                          <span className={`inline-flex items-center gap-1 text-[10px] font-bold ${user.tier === 'vip' ? 'text-purple-600 dark:text-purple-400' : user.tier === 'bronze' ? 'text-orange-600 dark:text-orange-400' : 'text-amber-600 dark:text-amber-400'}`}>
+                            {user.tier === 'vip' ? <Shield className="w-3 h-3" /> : user.tier === 'bronze' ? <Gem className="w-3 h-3" /> : <Crown className="w-3 h-3" />} {tierLabel} فعال
                           </span>
                         ) : (
-                          <span className="inline-block text-[10px] text-zinc-500">کاربر پایه چندبوم</span>
+                          <span className="inline-block text-[10px] text-zinc-500">اشتراک پایه / غیرفعال</span>
                         )}
                       </div>
 

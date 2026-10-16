@@ -62,7 +62,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({ onOpenTransactionM
   const handleRejectAction = () => { setChatMessages((prev) => [...prev, { id: Date.now().toString(), sender: 'assistant', text: '❌ عملیات لغو شد.', time: 'هم‌اکنون' }]); setPendingAction(null); setPendingReply(''); };
 
   const toggleVoiceRecognition = () => {
-    if (!isVipUser) { alert(' قابلیت ورودی صوتی فقط برای کاربران VIP فعال است.'); return; }
+    if (!isVipUser) { if (openSubscriptionModal) openSubscriptionModal(); else setActiveTab('subscription'); return; }
     const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
     if (!SpeechRecognition) { alert('مرورگر شما از ورودی صوتی پشتیبانی نمی‌کند.'); return; }
     if (isListening) { if (recognitionRef.current) recognitionRef.current.stop(); setIsListening(false); return; }
@@ -166,6 +166,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({ onOpenTransactionM
 
             {pendingDraft && (
               <div className="p-4 rounded-2xl bg-amber-50/70 dark:bg-[#16251E] border-2 border-amber-400/80 shadow-md space-y-3 animate-in fade-in zoom-in-95 font-cairo text-right">
+            {pendingReply && <p className="text-xs text-zinc-600 dark:text-zinc-300 leading-6">{pendingReply}</p>}
                 <div className="flex items-center justify-between border-b border-amber-200 dark:border-emerald-800/40 pb-2"><div className="flex items-center gap-1.5 text-amber-800 dark:text-amber-300 font-bold text-xs"><Sparkles className="w-4 h-4 text-amber-500" /><span>پیش‌نویس تراکنش هوشمند</span></div><span className="text-[10px] px-2 py-0.5 rounded-full font-bold bg-amber-400/20 text-amber-800 dark:text-amber-300 border border-amber-400/40">{pendingDraft.type === 'expense' ? 'هزینه' : 'درآمد'}</span></div>
                 <div className="grid grid-cols-2 gap-2 text-xs"><div><span className="text-zinc-500 text-[10px] block">عنوان استخراج‌شده:</span><span className="font-bold text-zinc-900 dark:text-white truncate block">{pendingDraft.clean_title}</span></div><div><span className="text-zinc-500 text-[10px] block">مبلغ دقیق:</span><span className="font-bold text-emerald-700 dark:text-emerald-400 font-mono">{formatToman(pendingDraft.amount)}</span></div></div>
                 <div className="space-y-1"><label className="text-xs font-bold text-zinc-800 dark:text-zinc-200 block">دسته‌بندی تراکنش را تایید یا انتخاب کنید:</label><select value={pendingDraft.category} onChange={(e) => setPendingDraft({ ...pendingDraft, category: e.target.value as TransactionCategory })} className="w-full px-3 py-1.5 rounded-xl bg-white dark:bg-[#0E1713] border border-zinc-300 dark:border-emerald-700/60 text-xs text-zinc-900 dark:text-white outline-none focus:ring-1 focus:ring-emerald-500 font-cairo">{(pendingDraft.type === 'income' ? INCOME_CATEGORIES : EXPENSE_CATEGORIES).map((cat) => (<option key={cat} value={cat}>{cat}</option>))}</select></div>
@@ -206,7 +207,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({ onOpenTransactionM
               {isVipUser ? (
                 <button type="button" onClick={toggleVoiceRecognition} disabled={isTyping} className={`p-2.5 rounded-xl transition cursor-pointer disabled:opacity-50 ${isListening ? 'bg-rose-600 hover:bg-rose-700 text-white animate-pulse' : 'bg-purple-600 hover:bg-purple-700 text-white'}`} title={isListening ? 'توقف ضبط صدا' : 'ورودی صوتی (ویژه VIP)'}>{isListening ? <MicOff className="w-4 h-4" /> : <Mic className="w-4 h-4" />}</button>
               ) : (
-                <button type="button" onClick={() => alert(' قابلیت ورودی صوتی فقط برای کاربران VIP فعال است.')} className="p-2.5 rounded-xl bg-zinc-200 dark:bg-zinc-700 text-zinc-400 cursor-not-allowed" title="ورودی صوتی (فقط VIP)"><Mic className="w-4 h-4" /></button>
+                <button type="button" onClick={() => { if (openSubscriptionModal) openSubscriptionModal(); else setActiveTab('subscription'); }} className="p-2.5 rounded-xl bg-zinc-200 dark:bg-zinc-700 text-zinc-400 cursor-pointer" title="برای ورودی صوتی به اشتراک VIP ارتقا دهید"><Mic className="w-4 h-4" /></button>
               )}
               <button type="submit" disabled={!aiInput.trim()} className="p-2.5 rounded-xl bg-emerald-700 hover:bg-emerald-800 text-white font-cairo font-bold transition flex items-center justify-center cursor-pointer disabled:opacity-50"><Send className="w-4 h-4 rotate-180" /></button>
             </form>
