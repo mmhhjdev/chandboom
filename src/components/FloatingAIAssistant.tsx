@@ -31,7 +31,7 @@ export const FloatingAIAssistant: React.FC = () => {
 
   const toggleVoiceRecognition = () => {
     if (!isVipVoiceEnabled) {
-      setNotice('ورودی و مکالمه صوتی فقط برای اشتراک VIP فعال است. برای ارتقا، پلن VIP را انتخاب کنید.');
+      setNotice('ورودی صوتی فقط برای اشتراک VIP فعال است. برای ارتقا، پلن VIP را انتخاب کنید.');
       setTimeout(() => setNotice(null), 3500);
       return;
     }
@@ -41,7 +41,7 @@ export const FloatingAIAssistant: React.FC = () => {
     try {
       const recognition = new SpeechRecognition(); recognitionRef.current = recognition; recognition.lang = 'fa-IR'; recognition.continuous = false; recognition.interimResults = false;
       recognition.onstart = () => { setIsListening(true); setNotice('🎙️ در حال گوش دادن...'); };
-      recognition.onresult = (event: any) => { const transcript = event.results?.[0]?.[0]?.transcript; if (transcript) { setInput(transcript); setNotice(`✅ «${transcript}»`); setTimeout(() => { setNotice(null); handleSendMessage(transcript); }, 500); } setIsListening(false); };
+      recognition.onresult = (event: any) => { const transcript = event.results?.[0]?.[0]?.transcript; if (transcript) { setInput(transcript); setNotice('متن گفتار در کادر پیام قرار گرفت؛ برای ارسال، دکمه ارسال را بزن.'); setTimeout(() => setNotice(null), 3500); } setIsListening(false); };
       recognition.onerror = () => { setIsListening(false); setNotice('متوجه صدا نشدم.'); setTimeout(() => setNotice(null), 3000); };
       recognition.onend = () => setIsListening(false);
       recognition.start();

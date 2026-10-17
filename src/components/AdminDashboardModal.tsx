@@ -587,7 +587,7 @@ export const AdminDashboardModal: React.FC<AdminDashboardModalProps> = ({ isOpen
                 احراز هویت مدیر سامانه چندبوم
               </h4>
               <p className="text-xs text-zinc-600 dark:text-zinc-400 leading-relaxed">
-                تطابق نام کاربری و رمز عبور با جدول <span className="font-mono font-bold text-emerald-600">admins</span> در سوپابیس جهت فعال‌سازی نشست امن
+                اطلاعات ورود شما به‌صورت امن بررسی می‌شود تا نشست مدیریت فعال شود
               </p>
             </div>
             {/* Auth Mode Toggle */}

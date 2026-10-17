@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Bot, Send, Sparkles, Crown, RotateCcw, CheckCircle2, AlertCircle, HelpCircle, Users, Target, Bell, X, MessageSquare, Loader2, Calendar, Mic, MicOff, Volume2, Lock } from 'lucide-react';
+import { Bot, Send, Sparkles, Crown, RotateCcw, CheckCircle2, AlertCircle, HelpCircle, Users, Target, Bell, X, MessageSquare, Loader2, Calendar, Mic, MicOff, Lock } from 'lucide-react';
 import { useApp } from '../context/AppContext';
 import { invokeAiAssistantEdgeFunction } from '../lib/supabase';
 import { trackAiQuerySent, trackAiQuotaExceeded } from '../lib/analytics';
@@ -10,7 +10,10 @@ import { EXPENSE_CATEGORIES, INCOME_CATEGORIES } from '../data/initialData';
 interface ChatMessage { id: string; role: 'user' | 'assistant'; content: string; timestamp: string; }
 interface PendingAction { type: string; params: any; description: string; }
 
-const STORAGE_KEY = 'cb_session_ai_chat';
+const STORAGE_KEYS = { agent: 'chandboom_ai_agent_chat', advisor: 'chandboom_ai_advisor_chat' } as const;
+const readModeMessages = (mode: 'agent' | 'advisor'): ChatMessage[] => {
+  try { const stored = localStorage.getItem(STORAGE_KEYS[mode]); const parsed = stored ? JSON.parse(stored) : []; return Array.isArray(parsed) ? parsed : []; } catch { return []; }
+};
 const QUICK_PROMPTS = [
   { icon: Users, label: 'ساخت گروه دنگ', prompt: 'یه گروه دنگ به اسم سفر شمال با اعضای علی، رضا و محمد بساز' },
   { icon: Target, label: 'تعریف هدف مالی', prompt: 'یه هدف مالی برای خرید لپ‌تاپ به مبلغ ۵۰ میلیون تومان تا ۶ ماه آینده بساز' },
@@ -20,7 +23,7 @@ const QUICK_PROMPTS = [
 
 export const AIAssistant: React.FC<{ isOpen?: boolean; onClose?: () => void; initialMode?: 'agent' | 'advisor' }> = ({ isOpen = true, onClose, initialMode = 'agent' }) => {
   const { user, hasAIAccess, isProUser, setActiveTab, openSubscriptionModal, addTransaction, createDongGroup, addGoal, addReminder } = useApp();
-  const [messages, setMessages] = useState<ChatMessage[]>([]);
+  const [messages, setMessages] = useState<ChatMessage[]>(() => readModeMessages(initialMode));
   const [mode, setMode] = useState<'agent' | 'advisor'>(initialMode);
   const [inputValue, setInputValue] = useState('');
   const [isLoading, setIsLoading] = useState(false);
@@ -34,10 +37,10 @@ export const AIAssistant: React.FC<{ isOpen?: boolean; onClose?: () => void; ini
   const [voiceError, setVoiceError] = useState<string | null>(null);
   const isVip = user?.tier === 'vip';
 
-  useEffect(() => { try { const stored = localStorage.getItem(STORAGE_KEY); if (stored) { const parsed = JSON.parse(stored); if (Array.isArray(parsed)) setMessages(parsed); } } catch {} const handleUnload = () => { localStorage.removeItem(STORAGE_KEY); }; window.addEventListener('beforeunload', handleUnload); return () => { window.removeEventListener('beforeunload', handleUnload); }; }, []);
-  useEffect(() => { try { if (messages.length > 0) localStorage.setItem(STORAGE_KEY, JSON.stringify(messages)); else localStorage.removeItem(STORAGE_KEY); } catch {} messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' }); }, [messages, pendingAction]);
+  useEffect(() => { try { if (messages.length > 0) localStorage.setItem(STORAGE_KEYS[mode], JSON.stringify(messages.slice(-100))); else localStorage.removeItem(STORAGE_KEYS[mode]); } catch {} messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' }); }, [messages, pendingAction, mode]);
 
-  const handleClearHistory = () => { setMessages([]); localStorage.removeItem(STORAGE_KEY); setErrorMessage(null); };
+  const switchMode = (nextMode: 'agent' | 'advisor') => { if (nextMode === mode) return; setMode(nextMode); setMessages(readModeMessages(nextMode)); setPendingAction(null); setPendingReply(''); setErrorMessage(null); setVoiceError(null); };
+  const handleClearHistory = () => { setMessages([]); localStorage.removeItem(STORAGE_KEYS[mode]); setErrorMessage(null); };
 
   const startVoiceInput = () => {
     if (!isVip) { setVoiceError('قابلیت گفت‌وگوی صوتی فقط برای اشتراک VIP فعال است.'); return; }
@@ -55,17 +58,7 @@ export const AIAssistant: React.FC<{ isOpen?: boolean; onClose?: () => void; ini
     try { recognition.start(); } catch { setIsListening(false); setVoiceError('میکروفون در حال استفاده است یا امکان شروع ضبط وجود ندارد.'); }
   };
 
-  const speakLatestReply = () => {
-    if (!isVip) { setVoiceError('پخش صوتی پاسخ‌ها فقط برای اشتراک VIP فعال است.'); return; }
-    if (!(window as any).speechSynthesis || typeof SpeechSynthesisUtterance === 'undefined') { setVoiceError('مرورگر شما از پخش صوتی پشتیبانی نمی‌کند.'); return; }
-    const latestReply = [...messages].reverse().find((m) => m.role === 'assistant')?.content;
-    if (!latestReply) { setVoiceError('هنوز پاسخی برای پخش وجود ندارد.'); return; }
-    window.speechSynthesis.cancel();
-    const utterance = new SpeechSynthesisUtterance(latestReply); utterance.lang = 'fa-IR'; utterance.rate = 0.95;
-    window.speechSynthesis.speak(utterance); setVoiceError(null);
-  };
-
-  useEffect(() => () => { try { recognitionRef.current?.stop(); window.speechSynthesis?.cancel(); } catch {} }, []);
+  useEffect(() => () => { try { recognitionRef.current?.stop(); } catch {} }, []);
 
   const handleSendMessage = async (textToSend?: string) => {
     const text = (textToSend || inputValue).trim();
@@ -126,10 +119,10 @@ export const AIAssistant: React.FC<{ isOpen?: boolean; onClose?: () => void; ini
       {isSubscriptionActive && (
         <div className="px-4 sm:px-5 pt-4 bg-white dark:bg-[#0E1612]">
           <div className="grid grid-cols-2 gap-2 rounded-2xl bg-zinc-100 dark:bg-[#101914] p-1.5 border border-[#E2E8E4] dark:border-[#1E2D24]" role="tablist" aria-label="حالت دستیار هوشمند">
-            <button type="button" role="tab" aria-selected={mode === 'agent'} onClick={() => { setMode('agent'); setMessages([]); setPendingAction(null); setPendingReply(''); setErrorMessage(null); localStorage.removeItem(STORAGE_KEY); }} className={`rounded-xl px-3 py-2.5 text-xs sm:text-sm font-bold flex items-center justify-center gap-2 transition ${mode === 'agent' ? 'bg-emerald-600 text-white shadow-sm' : 'text-zinc-600 dark:text-zinc-300 hover:bg-white/70 dark:hover:bg-white/5'}`}>
+            <button type="button" role="tab" aria-selected={mode === 'agent'} onClick={() => switchMode('agent')} className={`rounded-xl px-3 py-2.5 text-xs sm:text-sm font-bold flex items-center justify-center gap-2 transition ${mode === 'agent' ? 'bg-emerald-600 text-white shadow-sm' : 'text-zinc-600 dark:text-zinc-300 hover:bg-white/70 dark:hover:bg-white/5'}`}>
               <Bot className="w-4 h-4" /> دستیار اجرایی
             </button>
-            <button type="button" role="tab" aria-selected={mode === 'advisor'} onClick={() => { setMode('advisor'); setMessages([]); setPendingAction(null); setPendingReply(''); setErrorMessage(null); localStorage.removeItem(STORAGE_KEY); }} className={`rounded-xl px-3 py-2.5 text-xs sm:text-sm font-bold flex items-center justify-center gap-2 transition ${mode === 'advisor' ? 'bg-amber-500 text-zinc-950 shadow-sm' : 'text-zinc-600 dark:text-zinc-300 hover:bg-white/70 dark:hover:bg-white/5'}`}>
+            <button type="button" role="tab" aria-selected={mode === 'advisor'} onClick={() => switchMode('advisor')} className={`rounded-xl px-3 py-2.5 text-xs sm:text-sm font-bold flex items-center justify-center gap-2 transition ${mode === 'advisor' ? 'bg-amber-500 text-zinc-950 shadow-sm' : 'text-zinc-600 dark:text-zinc-300 hover:bg-white/70 dark:hover:bg-white/5'}`}>
               <Sparkles className="w-4 h-4" /> مشاور مالی هوشمند
             </button>
           </div>
@@ -188,14 +181,13 @@ export const AIAssistant: React.FC<{ isOpen?: boolean; onClose?: () => void; ini
               {isVip ? (
                 <button type="button" onClick={startVoiceInput} title={isListening ? 'توقف ضبط صدا' : 'گفتن پیام با صدا (VIP)'} aria-label={isListening ? 'توقف ضبط صدا' : 'گفتن پیام با صدا'} className={`p-3 rounded-2xl border transition cursor-pointer shrink-0 ${isListening ? 'bg-rose-600 border-rose-500 text-white animate-pulse' : 'bg-emerald-500/10 border-emerald-500/30 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-500/20'}`}>{isListening ? <MicOff className="w-4 h-4" /> : <Mic className="w-4 h-4" />}</button>
               ) : (
-                <button type="button" onClick={() => { setVoiceError('گفت‌وگوی صوتی و پخش پاسخ‌ها مخصوص اشتراک VIP است.'); if (openSubscriptionModal) openSubscriptionModal(); else setActiveTab('subscription'); }} title="ویژه اشتراک VIP" aria-label="قابلیت ویس ویژه VIP" className="p-3 rounded-2xl border border-amber-500/30 bg-amber-500/10 text-amber-600 hover:bg-amber-500/20 transition cursor-pointer shrink-0"><Lock className="w-4 h-4" /></button>
+                <button type="button" onClick={() => { setVoiceError('ورودی صوتی مخصوص اشتراک VIP است.'); if (openSubscriptionModal) openSubscriptionModal(); else setActiveTab('subscription'); }} title="ویژه اشتراک VIP" aria-label="قابلیت ویس ویژه VIP" className="p-3 rounded-2xl border border-amber-500/30 bg-amber-500/10 text-amber-600 hover:bg-amber-500/20 transition cursor-pointer shrink-0"><Lock className="w-4 h-4" /></button>
               )}
               <input type="text" value={inputValue} onChange={(e) => setInputValue(e.target.value)} placeholder={mode === "advisor" ? "درباره وضعیت مالی، هزینه‌ها یا برنامه آینده‌ات بپرس..." : "درباره دنگ، اهداف مالی، یادآورها یا ثبت تراکنش بپرس..."} disabled={isLoading || !!pendingAction} className="flex-1 min-w-0 px-4 py-3 bg-white dark:bg-[#14221B] border border-[#D5DDD7] dark:border-[#203328] rounded-2xl text-xs sm:text-sm text-zinc-900 dark:text-white placeholder-zinc-400 outline-none focus:border-emerald-500 transition font-cairo" />
-              {isVip && <button type="button" onClick={speakLatestReply} title="پخش آخرین پاسخ با صدا" aria-label="پخش آخرین پاسخ" className="p-3 rounded-2xl border border-emerald-500/30 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-500/20 transition cursor-pointer shrink-0"><Volume2 className="w-4 h-4" /></button>}
               <button type="submit" disabled={isLoading || !inputValue.trim() || !!pendingAction} className="p-3 rounded-2xl bg-emerald-600 hover:bg-emerald-500 disabled:opacity-50 text-white transition cursor-pointer shadow-md shrink-0"><Send className="w-4 h-4" /></button>
             </form>
             {voiceError && <div role="status" className="mt-2 rounded-xl border border-amber-500/30 bg-amber-500/10 px-3 py-2 text-[11px] text-amber-700 dark:text-amber-300">{voiceError}</div>}
-            <div className="mt-2 flex items-center justify-between text-[10px] text-zinc-400 px-1"><span>{isVip ? (isListening ? 'در حال شنیدن... صحبت کن؛ متن تشخیص‌داده‌شده در کادر پیام قرار می‌گیرد.' : 'ویس VIP: پیام را با میکروفون بگو و سپس ارسال کن؛ با دکمه بلندگو آخرین پاسخ پخش می‌شود.') : 'قابلیت ویس و پخش صوتی پاسخ‌ها مخصوص کاربران VIP است.'}</span><span className="hidden sm:inline">حفاظت شده توسط سوپابیس و امنیت چندبوم</span></div>
+            <div className="mt-2 flex items-center justify-between text-[10px] text-zinc-400 px-1"><span>{isVip ? (isListening ? 'در حال شنیدن... صحبت کن؛ متن تشخیص‌داده‌شده در کادر پیام قرار می‌گیرد.' : 'ویس VIP: پیام را با میکروفون بگو؛ متن در کادر قرار می‌گیرد و فقط با زدن ارسال فرستاده می‌شود.') : 'ورودی صوتی با میکروفون مخصوص کاربران VIP است.'}</span><span className="hidden sm:inline">گفت‌وگوی شما با سازوکارهای امنیتی چندبوم محافظت می‌شود.</span></div>
           </div>
         </>
       )}
