@@ -165,7 +165,7 @@ const AppContent: React.FC = () => {
         {activeTab === 'support' && (
           <SupportView onOpenTicketModal={() => setIsTicketModalOpen(true)} />
         )}
-        {activeTab === 'ai-assistant' && <AIAssistant />}
+        {activeTab === 'ai-assistant' && <AIAssistant initialMode="advisor" />}
         {activeTab === 'settings' && (
           <SettingsView onOpenAvatarModal={() => setIsAvatarModalOpen(true)} />
         )}

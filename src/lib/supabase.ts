@@ -459,7 +459,8 @@ Returns action proposals for user confirmation (Action Agent pattern).
 */
 export async function invokeAiAssistantEdgeFunction(
   message: string,
-  history: Array<{ role: 'user' | 'assistant'; content: string }> = []
+  history: Array<{ role: 'user' | 'assistant'; content: string }> = [],
+  mode: 'agent' | 'advisor' = 'agent'
 ): Promise<{
   success: boolean;
   reply?: string;
@@ -481,7 +482,7 @@ export async function invokeAiAssistantEdgeFunction(
     }
 
     const { data, error } = await supabase.functions.invoke('ai-assistant', {
-      body: { message, messages: history },
+      body: { message, messages: history, mode },
       headers: {
         Authorization: `Bearer ${token}`,
       },

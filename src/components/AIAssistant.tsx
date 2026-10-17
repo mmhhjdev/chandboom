@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Bot, Send, Sparkles, Crown, RotateCcw, CheckCircle2, AlertCircle, HelpCircle, Users, Target, Bell, X, MessageSquare, Loader2 } from 'lucide-react';
+import { Bot, Send, Sparkles, Crown, RotateCcw, CheckCircle2, AlertCircle, HelpCircle, Users, Target, Bell, X, MessageSquare, Loader2, Calendar } from 'lucide-react';
 import { useApp } from '../context/AppContext';
 import { invokeAiAssistantEdgeFunction } from '../lib/supabase';
 import { trackAiQuerySent, trackAiQuotaExceeded } from '../lib/analytics';
@@ -18,9 +18,10 @@ const QUICK_PROMPTS = [
   { icon: HelpCircle, label: 'ثبت تراکنش', prompt: 'ثبت هزینه ۵۰ هزار تومان برای ناهار امروز' },
 ];
 
-export const AIAssistant: React.FC<{ isOpen?: boolean; onClose?: () => void }> = ({ isOpen = true, onClose }) => {
+export const AIAssistant: React.FC<{ isOpen?: boolean; onClose?: () => void; initialMode?: 'agent' | 'advisor' }> = ({ isOpen = true, onClose, initialMode = 'agent' }) => {
   const { user, hasAIAccess, isProUser, setActiveTab, openSubscriptionModal, addTransaction, createDongGroup, addGoal, addReminder } = useApp();
   const [messages, setMessages] = useState<ChatMessage[]>([]);
+  const [mode, setMode] = useState<'agent' | 'advisor'>(initialMode);
   const [inputValue, setInputValue] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
@@ -44,12 +45,12 @@ export const AIAssistant: React.FC<{ isOpen?: boolean; onClose?: () => void }> =
     setInputValue(''); setErrorMessage(null);
     if (isProhibited) { const botMsg: ChatMessage = { id: `ast-${Date.now()}`, role: 'assistant', content: 'من دستیار راهنمای امکانات چندبوم (شامل دنگ گروهی، اهداف مالی، یادآورها و سوالات متداول) هستم. برای پیگیری پرداخت‌ها، بررسی فیش یا ورود به حساب، لطفاً از بخش پشتیبانی (ارسال تیکت) استفاده فرمایید.', timestamp: new Date().toISOString() }; setMessages((prev) => [...prev, botMsg]); return; }
     
-    setIsLoading(true); trackAiQuerySent('assistant_guide');
+    setIsLoading(true); trackAiQuerySent(mode === 'advisor' ? 'financial_advisor' : 'assistant_agent');
     try {
       const historyPayload = messages.slice(-6).map((m) => ({ role: m.role, content: m.content }));
-      const response = await invokeAiAssistantEdgeFunction(text, historyPayload);
+      const response = await invokeAiAssistantEdgeFunction(text, historyPayload, mode);
       if (response.success && response.reply) {
-        if (response.action && response.requires_confirmation) { setPendingReply(response.reply); setPendingAction({ type: response.action.type, params: response.action.params, description: response.action.description }); }
+        if (mode === 'agent' && response.action && response.requires_confirmation) { setPendingReply(response.reply); setPendingAction({ type: response.action.type, params: response.action.params, description: response.action.description }); }
         else { const botMsg: ChatMessage = { id: `ast-${Date.now()}`, role: 'assistant', content: response.reply, timestamp: new Date().toISOString() }; setMessages((prev) => [...prev, botMsg]); }
         if (typeof response.remaining_queries === 'number') setRemainingQueries(response.remaining_queries);
       } else { if (response.code === 'QUOTA_EXCEEDED') trackAiQuotaExceeded(); setErrorMessage(response.error || 'خطا در ارتباط با سرور هوش مصنوعی چندبوم.'); }
@@ -85,10 +86,26 @@ export const AIAssistant: React.FC<{ isOpen?: boolean; onClose?: () => void }> =
       <div className="p-4 sm:p-5 border-b border-[#E2E8E4] dark:border-[#1E2D24] bg-zinc-50 dark:bg-[#131F19] flex items-center justify-between">
         <div className="flex items-center gap-3">
           <div className="w-10 h-10 rounded-2xl bg-emerald-500/10 dark:bg-emerald-500/20 border border-emerald-500/30 flex items-center justify-center text-emerald-600 dark:text-emerald-400"><Bot className="w-5 h-5" /></div>
-          <div><div className="flex items-center gap-2"><h2 className="text-sm sm:text-base font-bold text-zinc-900 dark:text-white">دستیار هوشمند و راهنمای چندبوم</h2><span className="text-[10px] px-2 py-0.5 rounded-md bg-amber-400 text-zinc-950 font-black flex items-center gap-1"><Crown className="w-3 h-3" /><span>{user.tier === 'vip' ? 'اشتراک VIP' : user.tier === 'pro' ? 'اشتراک طلایی (Pro)' : user.tier === 'bronze' ? 'اشتراک برنزی' : 'ویژه کاربران اشتراکی'}</span></span></div><p className="text-[11px] text-zinc-500 dark:text-zinc-400">راهنمای تخصصی دنگ گروهی، اهداف مالی، یادآورها و اصول مدیریت مالی شخصی</p></div>
+          <div><div className="flex items-center gap-2"><h2 className="text-sm sm:text-base font-bold text-zinc-900 dark:text-white">{mode === 'advisor' ? 'مشاور مالی هوشمند چندبوم' : 'دستیار اجرایی چندبوم'}</h2><span className="text-[10px] px-2 py-0.5 rounded-md bg-amber-400 text-zinc-950 font-black flex items-center gap-1"><Crown className="w-3 h-3" /><span>{user.tier === 'vip' ? 'اشتراک VIP' : user.tier === 'pro' ? 'اشتراک طلایی (Pro)' : user.tier === 'bronze' ? 'اشتراک برنزی' : 'ویژه کاربران اشتراکی'}</span></span></div><p className="text-[11px] text-zinc-500 dark:text-zinc-400">{mode === 'advisor' ? 'تحلیل شخصی‌سازی‌شده درآمد، هزینه، بودجه و اهداف آینده' : 'دنگ گروهی، ثبت تراکنش، اهداف مالی و یادآورها'}</p></div>
         </div>
         <div className="flex items-center gap-2">{remainingQueries !== null && (<span className="hidden sm:inline-flex text-[11px] px-2.5 py-1 rounded-xl bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20 font-bold">{toPersianDigits(remainingQueries)} پرسش باقی‌مانده</span>)}{messages.length > 0 && (<button onClick={handleClearHistory} title="پاکسازی تاریخچه گفت‌وگو" className="p-2 rounded-xl text-zinc-400 hover:text-rose-500 hover:bg-rose-500/10 transition cursor-pointer"><RotateCcw className="w-4 h-4" /></button>)}{onClose && (<button onClick={onClose} className="p-2 rounded-xl text-zinc-400 hover:text-zinc-600 dark:hover:text-white hover:bg-zinc-200 dark:hover:bg-zinc-800 transition cursor-pointer"><X className="w-4 h-4" /></button>)}</div>
       </div>
+
+      {isSubscriptionActive && (
+        <div className="px-4 sm:px-5 pt-4 bg-white dark:bg-[#0E1612]">
+          <div className="grid grid-cols-2 gap-2 rounded-2xl bg-zinc-100 dark:bg-[#101914] p-1.5 border border-[#E2E8E4] dark:border-[#1E2D24]" role="tablist" aria-label="حالت دستیار هوشمند">
+            <button type="button" role="tab" aria-selected={mode === 'agent'} onClick={() => { setMode('agent'); setMessages([]); setPendingAction(null); setPendingReply(''); setErrorMessage(null); localStorage.removeItem(STORAGE_KEY); }} className={`rounded-xl px-3 py-2.5 text-xs sm:text-sm font-bold flex items-center justify-center gap-2 transition ${mode === 'agent' ? 'bg-emerald-600 text-white shadow-sm' : 'text-zinc-600 dark:text-zinc-300 hover:bg-white/70 dark:hover:bg-white/5'}`}>
+              <Bot className="w-4 h-4" /> دستیار اجرایی
+            </button>
+            <button type="button" role="tab" aria-selected={mode === 'advisor'} onClick={() => { setMode('advisor'); setMessages([]); setPendingAction(null); setPendingReply(''); setErrorMessage(null); localStorage.removeItem(STORAGE_KEY); }} className={`rounded-xl px-3 py-2.5 text-xs sm:text-sm font-bold flex items-center justify-center gap-2 transition ${mode === 'advisor' ? 'bg-amber-500 text-zinc-950 shadow-sm' : 'text-zinc-600 dark:text-zinc-300 hover:bg-white/70 dark:hover:bg-white/5'}`}>
+              <Sparkles className="w-4 h-4" /> مشاور مالی هوشمند
+            </button>
+          </div>
+          <p className="text-[11px] text-zinc-500 dark:text-zinc-400 mt-2 leading-relaxed">
+            {mode === 'advisor' ? 'تحلیل بر اساس تراکنش‌ها، اهداف و یادآورهای واقعی حساب شما؛ در این حالت هیچ عملیاتی ثبت نمی‌شود.' : 'برای ثبت تراکنش، ساخت گروه دنگ، تعریف هدف یا تنظیم یادآور؛ عملیات فقط با تأیید شما انجام می‌شود.'}
+          </p>
+        </div>
+      )}
 
       {!isSubscriptionActive ? (
         <div className="p-8 sm:p-12 flex flex-col items-center justify-center text-center bg-radial from-emerald-950/20 to-transparent">
@@ -106,7 +123,7 @@ export const AIAssistant: React.FC<{ isOpen?: boolean; onClose?: () => void }> =
                 <h4 className="text-sm font-bold text-zinc-800 dark:text-zinc-200 mb-1">چه کمکی از دست من برای شما برمی‌آید؟</h4>
                 <p className="text-xs text-zinc-500 dark:text-zinc-400 max-w-sm mb-6">یکی از موضوعات پرکاربرد زیر را انتخاب کنید یا سوال خود را در کادر زیر بپرسید:</p>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 w-full max-w-lg text-right">
-                  {QUICK_PROMPTS.map((qp, idx) => { const Icon = qp.icon; return (<button key={idx} onClick={() => handleSendMessage(qp.prompt)} className="p-3 rounded-2xl bg-zinc-50 dark:bg-[#121E18] border border-[#E2E8E4] dark:border-[#1E2E25] hover:border-emerald-500/50 hover:bg-emerald-500/5 transition text-right flex items-start gap-2.5 cursor-pointer group"><div className="p-1.5 rounded-lg bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 shrink-0 group-hover:scale-105 transition"><Icon className="w-3.5 h-3.5" /></div><div><p className="text-xs font-bold text-zinc-800 dark:text-zinc-200 group-hover:text-emerald-500 transition">{qp.label}</p><p className="text-[10px] text-zinc-500 dark:text-zinc-400 line-clamp-1">{qp.prompt}</p></div></button>); })}
+                  {(mode === 'advisor' ? [{ icon: Sparkles, label: 'برنامه سه‌ماهه', prompt: 'با توجه به اطلاعات مالی حسابم، یک برنامه واقع‌بینانه برای سه ماه آینده پیشنهاد بده.' }, { icon: HelpCircle, label: 'تحلیل هزینه‌ها', prompt: 'هزینه‌های من را بر اساس دسته‌بندی تحلیل کن و مهم‌ترین فرصت‌های کاهش هزینه را توضیح بده.' }, { icon: Target, label: 'بررسی اهداف', prompt: 'با توجه به اهداف مالی ثبت‌شده‌ام، وضعیت پیشرفت و موانع احتمالی را تحلیل کن.' }, { icon: Calendar, label: 'سناریوی پس‌انداز', prompt: 'اگر روند درآمد و هزینه‌ام ادامه پیدا کند، وضعیت مالی‌ام در شش ماه آینده چطور می‌شود؟ فرضیات را هم بگو.' }] : QUICK_PROMPTS).map((qp, idx) => { const Icon = qp.icon; return (<button key={idx} onClick={() => handleSendMessage(qp.prompt)} className="p-3 rounded-2xl bg-zinc-50 dark:bg-[#121E18] border border-[#E2E8E4] dark:border-[#1E2E25] hover:border-emerald-500/50 hover:bg-emerald-500/5 transition text-right flex items-start gap-2.5 cursor-pointer group"><div className="p-1.5 rounded-lg bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 shrink-0 group-hover:scale-105 transition"><Icon className="w-3.5 h-3.5" /></div><div><p className="text-xs font-bold text-zinc-800 dark:text-zinc-200 group-hover:text-emerald-500 transition">{qp.label}</p><p className="text-[10px] text-zinc-500 dark:text-zinc-400 line-clamp-1">{qp.prompt}</p></div></button>); })}
                 </div>
               </div>
             ) : (
@@ -136,7 +153,7 @@ export const AIAssistant: React.FC<{ isOpen?: boolean; onClose?: () => void }> =
           
           <div className="p-3 sm:p-4 border-t border-[#E2E8E4] dark:border-[#1E2D24] bg-zinc-50 dark:bg-[#101914]">
             <form onSubmit={(e) => { e.preventDefault(); handleSendMessage(); }} className="flex items-center gap-2">
-              <input type="text" value={inputValue} onChange={(e) => setInputValue(e.target.value)} placeholder="سوال خود درباره دنگ، اهداف مالی، یادآورها یا ثبت تراکنش را بپرسید..." disabled={isLoading || !!pendingAction} className="flex-1 px-4 py-3 bg-white dark:bg-[#14221B] border border-[#D5DDD7] dark:border-[#203328] rounded-2xl text-xs sm:text-sm text-zinc-900 dark:text-white placeholder-zinc-400 outline-none focus:border-emerald-500 transition font-cairo" />
+              <input type="text" value={inputValue} onChange={(e) => setInputValue(e.target.value)} placeholder={mode === "advisor" ? "درباره وضعیت مالی، هزینه‌ها یا برنامه آینده‌ات بپرس..." : "درباره دنگ، اهداف مالی، یادآورها یا ثبت تراکنش بپرس..."} disabled={isLoading || !!pendingAction} className="flex-1 px-4 py-3 bg-white dark:bg-[#14221B] border border-[#D5DDD7] dark:border-[#203328] rounded-2xl text-xs sm:text-sm text-zinc-900 dark:text-white placeholder-zinc-400 outline-none focus:border-emerald-500 transition font-cairo" />
               <button type="submit" disabled={isLoading || !inputValue.trim() || !!pendingAction} className="p-3 rounded-2xl bg-emerald-600 hover:bg-emerald-500 disabled:opacity-50 text-white transition cursor-pointer shadow-md shrink-0"><Send className="w-4 h-4" /></button>
             </form>
             <div className="mt-2 flex items-center justify-between text-[10px] text-zinc-400 px-1"><span>حافظه این گفت‌وگو به صورت موقت در مرورگر ذخیره شده و با بستن تب پاک می‌گردد.</span><span className="hidden sm:inline">حفاظت شده توسط سوپابیس و امنیت چندبوم</span></div>

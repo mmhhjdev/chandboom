@@ -345,6 +345,15 @@ export const AnalyticsView: React.FC = () => {
             </div>
           </div>
 
+          <button
+            type="button"
+            onClick={() => setActiveTab('ai-assistant')}
+            className="px-3.5 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-cairo font-bold text-xs flex items-center justify-center gap-1.5 shadow-xs transition cursor-pointer shrink-0"
+          >
+            <Bot className="w-3.5 h-3.5" />
+            <span>گفت‌وگو با مشاور مالی</span>
+          </button>
+
           {!isProUser && (
             <button
               onClick={() => setActiveTab('subscription')}
