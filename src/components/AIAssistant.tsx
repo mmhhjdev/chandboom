@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Bot, Send, Sparkles, Crown, RotateCcw, CheckCircle2, AlertCircle, HelpCircle, Users, Target, Bell, X, MessageSquare, Loader2, Calendar } from 'lucide-react';
+import { Bot, Send, Sparkles, Crown, RotateCcw, CheckCircle2, AlertCircle, HelpCircle, Users, Target, Bell, X, MessageSquare, Loader2, Calendar, Mic, MicOff, Volume2, Lock } from 'lucide-react';
 import { useApp } from '../context/AppContext';
 import { invokeAiAssistantEdgeFunction } from '../lib/supabase';
 import { trackAiQuerySent, trackAiQuotaExceeded } from '../lib/analytics';
@@ -29,11 +29,43 @@ export const AIAssistant: React.FC<{ isOpen?: boolean; onClose?: () => void; ini
   const [pendingAction, setPendingAction] = useState<PendingAction | null>(null);
   const [pendingReply, setPendingReply] = useState<string>('');
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const recognitionRef = useRef<any>(null);
+  const [isListening, setIsListening] = useState(false);
+  const [voiceError, setVoiceError] = useState<string | null>(null);
+  const isVip = user?.tier === 'vip';
 
   useEffect(() => { try { const stored = localStorage.getItem(STORAGE_KEY); if (stored) { const parsed = JSON.parse(stored); if (Array.isArray(parsed)) setMessages(parsed); } } catch {} const handleUnload = () => { localStorage.removeItem(STORAGE_KEY); }; window.addEventListener('beforeunload', handleUnload); return () => { window.removeEventListener('beforeunload', handleUnload); }; }, []);
   useEffect(() => { try { if (messages.length > 0) localStorage.setItem(STORAGE_KEY, JSON.stringify(messages)); else localStorage.removeItem(STORAGE_KEY); } catch {} messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' }); }, [messages, pendingAction]);
 
   const handleClearHistory = () => { setMessages([]); localStorage.removeItem(STORAGE_KEY); setErrorMessage(null); };
+
+  const startVoiceInput = () => {
+    if (!isVip) { setVoiceError('قابلیت گفت‌وگوی صوتی فقط برای اشتراک VIP فعال است.'); return; }
+    const SpeechRecognitionCtor = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
+    if (!SpeechRecognitionCtor) { setVoiceError('مرورگر شما از تشخیص گفتار پشتیبانی نمی‌کند. لطفاً از نسخه به‌روز Chrome یا Edge استفاده کنید.'); return; }
+    setVoiceError(null);
+    if (isListening && recognitionRef.current) { recognitionRef.current.stop(); setIsListening(false); return; }
+    const recognition = new SpeechRecognitionCtor();
+    recognition.lang = 'fa-IR'; recognition.continuous = false; recognition.interimResults = false;
+    recognition.onstart = () => setIsListening(true);
+    recognition.onend = () => setIsListening(false);
+    recognition.onerror = (event: any) => { setIsListening(false); setVoiceError(event?.error === 'not-allowed' ? 'برای استفاده از ویس، اجازه دسترسی به میکروفون را فعال کن.' : 'تشخیص صدا انجام نشد؛ دوباره تلاش کن.'); };
+    recognition.onresult = (event: any) => { const transcript = event?.results?.[0]?.[0]?.transcript; if (transcript) setInputValue((prev) => prev ? `${prev} ${transcript}` : transcript); };
+    recognitionRef.current = recognition;
+    try { recognition.start(); } catch { setIsListening(false); setVoiceError('میکروفون در حال استفاده است یا امکان شروع ضبط وجود ندارد.'); }
+  };
+
+  const speakLatestReply = () => {
+    if (!isVip) { setVoiceError('پخش صوتی پاسخ‌ها فقط برای اشتراک VIP فعال است.'); return; }
+    if (!(window as any).speechSynthesis || typeof SpeechSynthesisUtterance === 'undefined') { setVoiceError('مرورگر شما از پخش صوتی پشتیبانی نمی‌کند.'); return; }
+    const latestReply = [...messages].reverse().find((m) => m.role === 'assistant')?.content;
+    if (!latestReply) { setVoiceError('هنوز پاسخی برای پخش وجود ندارد.'); return; }
+    window.speechSynthesis.cancel();
+    const utterance = new SpeechSynthesisUtterance(latestReply); utterance.lang = 'fa-IR'; utterance.rate = 0.95;
+    window.speechSynthesis.speak(utterance); setVoiceError(null);
+  };
+
+  useEffect(() => () => { try { recognitionRef.current?.stop(); window.speechSynthesis?.cancel(); } catch {} }, []);
 
   const handleSendMessage = async (textToSend?: string) => {
     const text = (textToSend || inputValue).trim();
@@ -153,10 +185,17 @@ export const AIAssistant: React.FC<{ isOpen?: boolean; onClose?: () => void; ini
           
           <div className="p-3 sm:p-4 border-t border-[#E2E8E4] dark:border-[#1E2D24] bg-zinc-50 dark:bg-[#101914]">
             <form onSubmit={(e) => { e.preventDefault(); handleSendMessage(); }} className="flex items-center gap-2">
-              <input type="text" value={inputValue} onChange={(e) => setInputValue(e.target.value)} placeholder={mode === "advisor" ? "درباره وضعیت مالی، هزینه‌ها یا برنامه آینده‌ات بپرس..." : "درباره دنگ، اهداف مالی، یادآورها یا ثبت تراکنش بپرس..."} disabled={isLoading || !!pendingAction} className="flex-1 px-4 py-3 bg-white dark:bg-[#14221B] border border-[#D5DDD7] dark:border-[#203328] rounded-2xl text-xs sm:text-sm text-zinc-900 dark:text-white placeholder-zinc-400 outline-none focus:border-emerald-500 transition font-cairo" />
+              {isVip ? (
+                <button type="button" onClick={startVoiceInput} title={isListening ? 'توقف ضبط صدا' : 'گفتن پیام با صدا (VIP)'} aria-label={isListening ? 'توقف ضبط صدا' : 'گفتن پیام با صدا'} className={`p-3 rounded-2xl border transition cursor-pointer shrink-0 ${isListening ? 'bg-rose-600 border-rose-500 text-white animate-pulse' : 'bg-emerald-500/10 border-emerald-500/30 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-500/20'}`}>{isListening ? <MicOff className="w-4 h-4" /> : <Mic className="w-4 h-4" />}</button>
+              ) : (
+                <button type="button" onClick={() => { setVoiceError('گفت‌وگوی صوتی و پخش پاسخ‌ها مخصوص اشتراک VIP است.'); if (openSubscriptionModal) openSubscriptionModal(); else setActiveTab('subscription'); }} title="ویژه اشتراک VIP" aria-label="قابلیت ویس ویژه VIP" className="p-3 rounded-2xl border border-amber-500/30 bg-amber-500/10 text-amber-600 hover:bg-amber-500/20 transition cursor-pointer shrink-0"><Lock className="w-4 h-4" /></button>
+              )}
+              <input type="text" value={inputValue} onChange={(e) => setInputValue(e.target.value)} placeholder={mode === "advisor" ? "درباره وضعیت مالی، هزینه‌ها یا برنامه آینده‌ات بپرس..." : "درباره دنگ، اهداف مالی، یادآورها یا ثبت تراکنش بپرس..."} disabled={isLoading || !!pendingAction} className="flex-1 min-w-0 px-4 py-3 bg-white dark:bg-[#14221B] border border-[#D5DDD7] dark:border-[#203328] rounded-2xl text-xs sm:text-sm text-zinc-900 dark:text-white placeholder-zinc-400 outline-none focus:border-emerald-500 transition font-cairo" />
+              {isVip && <button type="button" onClick={speakLatestReply} title="پخش آخرین پاسخ با صدا" aria-label="پخش آخرین پاسخ" className="p-3 rounded-2xl border border-emerald-500/30 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-500/20 transition cursor-pointer shrink-0"><Volume2 className="w-4 h-4" /></button>}
               <button type="submit" disabled={isLoading || !inputValue.trim() || !!pendingAction} className="p-3 rounded-2xl bg-emerald-600 hover:bg-emerald-500 disabled:opacity-50 text-white transition cursor-pointer shadow-md shrink-0"><Send className="w-4 h-4" /></button>
             </form>
-            <div className="mt-2 flex items-center justify-between text-[10px] text-zinc-400 px-1"><span>حافظه این گفت‌وگو به صورت موقت در مرورگر ذخیره شده و با بستن تب پاک می‌گردد.</span><span className="hidden sm:inline">حفاظت شده توسط سوپابیس و امنیت چندبوم</span></div>
+            {voiceError && <div role="status" className="mt-2 rounded-xl border border-amber-500/30 bg-amber-500/10 px-3 py-2 text-[11px] text-amber-700 dark:text-amber-300">{voiceError}</div>}
+            <div className="mt-2 flex items-center justify-between text-[10px] text-zinc-400 px-1"><span>{isVip ? (isListening ? 'در حال شنیدن... صحبت کن؛ متن تشخیص‌داده‌شده در کادر پیام قرار می‌گیرد.' : 'ویس VIP: پیام را با میکروفون بگو و سپس ارسال کن؛ با دکمه بلندگو آخرین پاسخ پخش می‌شود.') : 'قابلیت ویس و پخش صوتی پاسخ‌ها مخصوص کاربران VIP است.'}</span><span className="hidden sm:inline">حفاظت شده توسط سوپابیس و امنیت چندبوم</span></div>
           </div>
         </>
       )}
