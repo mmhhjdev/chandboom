@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   User,
   Shield,
@@ -50,6 +50,8 @@ export const SettingsView: React.FC<SettingsViewProps> = ({ onOpenAvatarModal })
   const [gender, setGender] = useState<'مرد' | 'زن' | 'سایر'>(user.gender || 'مرد');
   const [currency, setCurrency] = useState<'تومان' | 'ریال'>(user.currency || 'تومان');
   const [isSaved, setIsSaved] = useState(false);
+  const [isSavingProfile, setIsSavingProfile] = useState(false);
+  const [profileSaveError, setProfileSaveError] = useState<string | null>(null);
   const [copiedCode, setCopiedCode] = useState<string | null>(null);
   const [selectedReceiptForPreview, setSelectedReceiptForPreview] = useState<string | null>(null);
 
@@ -105,20 +107,50 @@ export const SettingsView: React.FC<SettingsViewProps> = ({ onOpenAvatarModal })
     setTimeout(() => setCopiedCode(null), 2000);
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    const numCap = parseInt(budgetCap.replace(/,/g, ''), 10);
-    const numAge = age ? parseInt(age, 10) : undefined;
-    updateUserProfile({
-      full_name: fullName.trim() || user.full_name,
-      monthly_budget_cap: isNaN(numCap) ? user.monthly_budget_cap : numCap,
-      age: numAge !== undefined && !isNaN(numAge) ? numAge : user.age,
-      gender,
-      currency,
-    });
+  useEffect(() => {
+    setFullName(user.full_name || '');
+    setBudgetCap(String(user.monthly_budget_cap ?? 20000000));
+    setAge(user.age !== undefined && user.age !== null ? String(user.age) : '');
+    setGender(user.gender || 'مرد');
+    setCurrency(user.currency || 'تومان');
+  }, [user.id, user.full_name, user.monthly_budget_cap, user.age, user.gender, user.currency]);
 
-    setIsSaved(true);
-    setTimeout(() => setIsSaved(false), 2500);
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setProfileSaveError(null);
+    setIsSaved(false);
+    const numCap = Number(budgetCap.replace(/,/g, ''));
+    const numAge = age.trim() ? Number(age) : null;
+
+    if (!fullName.trim()) {
+      setProfileSaveError('نام و نام خانوادگی را وارد کنید.');
+      return;
+    }
+    if (!Number.isFinite(numCap) || numCap < 0) {
+      setProfileSaveError('سقف بودجه ماهانه باید عددی معتبر و صفر یا بیشتر باشد.');
+      return;
+    }
+    if (numAge !== null && (!Number.isInteger(numAge) || numAge < 10 || numAge > 115)) {
+      setProfileSaveError('سن باید عددی بین ۱۰ تا ۱۱۵ باشد.');
+      return;
+    }
+
+    setIsSavingProfile(true);
+    try {
+      await updateUserProfile({
+        full_name: fullName.trim(),
+        monthly_budget_cap: numCap,
+        age: numAge,
+        gender,
+        currency,
+      });
+      setIsSaved(true);
+      window.setTimeout(() => setIsSaved(false), 2500);
+    } catch (err: any) {
+      setProfileSaveError(err?.message || 'ذخیره تنظیمات در سرور ناموفق بود. لطفاً دوباره تلاش کنید.');
+    } finally {
+      setIsSavingProfile(false);
+    }
   };
 
   return (
@@ -136,6 +168,12 @@ export const SettingsView: React.FC<SettingsViewProps> = ({ onOpenAvatarModal })
         <div className="p-4 rounded-2xl bg-emerald-50 text-emerald-800 dark:bg-emerald-950/60 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800 text-xs flex items-center gap-2">
           <CheckCircle2 className="w-4 h-4 shrink-0" />
           <span>تنظیمات شما با موفقیت ذخیره گردید.</span>
+        </div>
+      )}
+      {profileSaveError && (
+        <div role="alert" className="p-4 rounded-2xl bg-rose-50 text-rose-800 dark:bg-rose-950/40 dark:text-rose-300 border border-rose-200 dark:border-rose-800 text-xs flex items-center gap-2">
+          <AlertCircle className="w-4 h-4 shrink-0" />
+          <span>{profileSaveError}</span>
         </div>
       )}
 
@@ -505,10 +543,11 @@ export const SettingsView: React.FC<SettingsViewProps> = ({ onOpenAvatarModal })
           <button
             id="save-profile-settings-btn"
             type="submit"
-            className="flex items-center gap-2 px-6 py-2.5 rounded-xl bg-emerald-700 hover:bg-emerald-800 text-white font-cairo font-bold text-xs shadow-xs transition cursor-pointer"
+            disabled={isSavingProfile}
+            className="flex items-center gap-2 px-6 py-2.5 rounded-xl bg-emerald-700 hover:bg-emerald-800 text-white font-cairo font-bold text-xs shadow-xs transition cursor-pointer disabled:opacity-60 disabled:cursor-not-allowed"
           >
             <Save className="w-4 h-4" />
-            <span>ذخیره تغییرات مشخصات</span>
+            <span>{isSavingProfile ? 'در حال ذخیره…' : 'ذخیره تغییرات مشخصات'}</span>
           </button>
         </div>
       </form>

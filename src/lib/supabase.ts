@@ -219,30 +219,18 @@ export async function sendPasswordResetOtp(email: string): Promise<{ success: bo
   }
 
   try {
+    // Use one recovery flow only. Sending a second sign-in OTP immediately afterwards
+    // can invalidate/confuse the recovery token the user is expected to enter.
     const redirectTo = typeof window !== 'undefined' ? `${window.location.origin}` : undefined;
-    const { error } = await supabase.auth.resetPasswordForEmail(normalizedEmail, {
-      redirectTo,
-    });
-
-    if (error) {
-      console.warn('Supabase resetPasswordForEmail returned error:', error.message);
-      return { success: false, error: error.message || 'خطا در ارسال ایمیل بازیابی رمز عبور.' };
-    }
-
-    // Also dispatch OTP code for users entering an OTP verification code
-    try {
-      await sendNativeOtp(normalizedEmail);
-    } catch {}
-
+    const { error } = await supabase.auth.resetPasswordForEmail(normalizedEmail, { redirectTo });
+    if (error) return { success: false, error: translateSupabaseError(error.message) };
     return { success: true };
   } catch (err: any) {
-    return { success: false, error: err?.message || 'خطا در ارتباط با سرور احراز هویت جهت بازیابی رمز عبور.' };
+    return { success: false, error: translateSupabaseError(err?.message || 'خطا در ارسال ایمیل بازیابی رمز عبور.') };
   }
 }
 
-/**
- * Resets user password after verifying email OTP code
- */
+/** Reset password using a recovery OTP delivered by the Supabase Auth recovery email template. */
 export async function resetUserPassword(
   email: string,
   code: string,
@@ -250,39 +238,33 @@ export async function resetUserPassword(
 ): Promise<{ success: boolean; error?: string }> {
   const normalizedEmail = email.toLowerCase().trim();
   const cleanCode = sanitizeVerificationCode(code);
+  if (!normalizedEmail || !normalizedEmail.includes('@')) {
+    return { success: false, error: 'آدرس ایمیل معتبر نیست.' };
+  }
+  if (!cleanCode || cleanCode.length < 6 || cleanCode.length > 8) {
+    return { success: false, error: 'کد بازیابی باید بین ۶ تا ۸ رقم باشد.' };
+  }
   if (!newPassword || newPassword.length < 6) {
     return { success: false, error: 'رمز عبور جدید باید حداقل ۶ کاراکتر باشد.' };
   }
 
-  // 1. Verify recovery OTP code with Supabase Auth
-  if (cleanCode) {
+  try {
     const { error: recoveryErr } = await supabase.auth.verifyOtp({
       email: normalizedEmail,
       token: cleanCode,
       type: 'recovery',
     });
-
     if (recoveryErr) {
-      const fallbackVerify = await verifyNativeOtp(normalizedEmail, cleanCode, 'email');
-      if (!fallbackVerify.success) {
-        return { success: false, error: translateSupabaseError(recoveryErr.message) };
-      }
+      return { success: false, error: translateSupabaseError(recoveryErr.message) };
     }
-  }
 
-  // 2. Update password in Supabase Auth
-  try {
-    const { error } = await supabase.auth.updateUser({
-      password: newPassword,
-    });
-
-    if (error) {
-      // If session not active or requires direct update
-      console.warn('Note on updateUser:', error.message);
+    const { error: updateErr } = await supabase.auth.updateUser({ password: newPassword });
+    if (updateErr) {
+      return { success: false, error: translateSupabaseError(updateErr.message) };
     }
     return { success: true };
   } catch (err: any) {
-    return { success: false, error: err?.message || 'خطا در به‌روزرسانی رمز عبور.' };
+    return { success: false, error: translateSupabaseError(err?.message || 'خطا در به‌روزرسانی رمز عبور.') };
   }
 }
 
@@ -317,6 +299,32 @@ export async function uploadPaymentReceipt(
   } catch (err: any) {
     return { url: '', error: err?.message || 'خطا در آپلود فیش' };
   }
+}
+
+/** Resolve either a full receipt URL or a Storage object path to a browser-viewable URL.
+ * Private buckets receive a short-lived signed URL; public buckets use their public URL.
+ */
+export async function resolvePaymentReceiptUrl(value?: string | null): Promise<string | null> {
+  if (!value?.trim()) return null;
+  const raw = value.trim();
+  const bucket = 'payment-receipts';
+  let path = raw;
+  const publicMarker = `/storage/v1/object/public/${bucket}/`;
+  const signedMarker = `/storage/v1/object/sign/${bucket}/`;
+  if (/^https?:\/\//i.test(raw)) {
+    try {
+      const parsed = new URL(raw);
+      if (parsed.pathname.includes(publicMarker)) path = decodeURIComponent(parsed.pathname.split(publicMarker)[1] || '');
+      else if (parsed.pathname.includes(signedMarker)) return raw;
+      else if (!parsed.pathname.includes('/storage/v1/object/')) return raw;
+    } catch { return null; }
+  }
+  path = path.replace(/^\/+/, '').replace(new RegExp(`^${bucket}/`), '');
+  if (!path) return null;
+  const { data: signedData, error: signedError } = await supabase.storage.from(bucket).createSignedUrl(path, 60 * 30);
+  if (!signedError && signedData?.signedUrl) return signedData.signedUrl;
+  const { data } = supabase.storage.from(bucket).getPublicUrl(path);
+  return data?.publicUrl || null;
 }
 
 /**

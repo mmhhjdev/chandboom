@@ -165,8 +165,8 @@ interface AppContextType {
   // Manual Card-to-Card Payment System
   manualPayments: ManualPaymentSubmission[];
   submitManualPayment: (data: Omit<ManualPaymentSubmission, 'id' | 'created_at' | 'status'>) => Promise<void>;
-  approveManualPayment: (paymentId: string, adminNotes?: string) => Promise<void>;
-  rejectManualPayment: (paymentId: string, adminNotes?: string) => Promise<void>;
+  approveManualPayment: (paymentId: string, adminNotes?: string, linkedOrderId?: string) => Promise<void>;
+  rejectManualPayment: (paymentId: string, adminNotes?: string, linkedOrderId?: string) => Promise<void>;
 
   // Transactions
   transactions: Transaction[];
@@ -318,7 +318,15 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     }
   }, [isDarkMode]);
 
-  const toggleDarkMode = () => setIsDarkMode((prev) => !prev);
+  const toggleDarkMode = () => {
+    const nextIsDark = !isDarkMode;
+    setIsDarkMode(nextIsDark);
+    if (isAuthenticated && user.id && user.id !== 'guest') {
+      void updateUserProfile({ theme_preference: nextIsDark ? 'dark' : 'light' }).catch((error) => {
+        console.error('Could not save theme preference:', error);
+      });
+    }
+  };
 
   const [activeTab, setActiveTabState] = useState<ActiveTab>(getInitialTab);
   const [adminMode, setAdminModeState] = useState<boolean>(false);
@@ -526,6 +534,9 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       };
 
       setUser(mergedUser);
+      if (profileData?.theme_preference === 'dark' || profileData?.theme_preference === 'light') {
+        setIsDarkMode(profileData.theme_preference === 'dark');
+      }
 
       // 2. Fetch User Transactions
       const { data: txData } = await supabase
@@ -801,39 +812,49 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     };
   }, []);
 
-  const updateUserProfile = async (updated: Partial<UserProfile>) => {
-    setUser((prev) => ({ ...prev, ...updated }));
-    setAllUsers((prev) =>
-      prev.map((u) => (u.id === user.id ? { ...u, ...updated, updated_at: new Date().toISOString() } : u))
-    );
-
+  const updateUserProfile = async (updated: Partial<UserProfile>): Promise<void> => {
     const supabase = getSupabaseClient();
-    if (supabase && isAuthenticated && user.id && user.id !== 'guest') {
-      try {
-        const nextUser = { ...user, ...updated };
-        const cleanPayload: Record<string, any> = {
-          email: nextUser.email || user.email,
-          full_name: nextUser.full_name || 'کاربر چندبوم',
-          avatar_url: nextUser.avatar_url ?? null,
-          role: nextUser.role || 'user',
-          subscription_status: nextUser.tier === 'free' ? 'none' : (nextUser.subscription_status || 'none'),
-          subscription_started_at: nextUser.tier === 'free' ? null : (nextUser.subscription_started_at ?? null),
-          subscription_expires_at: nextUser.tier === 'free' ? null : (nextUser.subscription_expires_at ?? null),
-          monthly_budget_cap: Number(nextUser.monthly_budget_cap) || 20000000,
-          theme_preference: nextUser.theme_preference || (isDarkMode ? 'dark' : 'light'),
-          currency: nextUser.currency || 'تومان',
-          updated_at: new Date().toISOString(),
-        };
-        // The additive Supabase patch supports all four subscription tiers.
-        if (nextUser.tier === 'free' || nextUser.tier === 'bronze' || nextUser.tier === 'pro' || nextUser.tier === 'vip') {
-          cleanPayload.tier = nextUser.tier;
-        }
-        const { error } = await supabase.from('users').update(cleanPayload).eq('id', user.id);
-        if (error) throw error;
-      } catch (err) {
-        console.warn('Could not sync user profile update to Supabase:', err);
-      }
+    if (!isAuthenticated || !user.id || user.id === 'guest') {
+      throw new Error('برای ذخیره تنظیمات، ابتدا وارد حساب کاربری خود شوید.');
     }
+    if (!supabase) throw new Error('اتصال Supabase در دسترس نیست.');
+
+    const cleanPayload: Record<string, any> = { updated_at: new Date().toISOString() };
+    // Explicit allow-list: user-editable profile fields and app-maintained quota/status fields.
+    if (updated.full_name !== undefined) cleanPayload.full_name = updated.full_name.trim();
+    if (updated.age !== undefined) cleanPayload.age = updated.age === null ? null : Number(updated.age);
+    if (updated.gender !== undefined) cleanPayload.gender = updated.gender;
+    if (updated.avatar_url !== undefined) cleanPayload.avatar_url = updated.avatar_url;
+    if (updated.monthly_budget_cap !== undefined) cleanPayload.monthly_budget_cap = Number(updated.monthly_budget_cap);
+    if (updated.theme_preference !== undefined) cleanPayload.theme_preference = updated.theme_preference;
+    if (updated.currency !== undefined) cleanPayload.currency = updated.currency;
+    if (updated.subscription_status !== undefined) cleanPayload.subscription_status = updated.subscription_status;
+    if (updated.subscription_started_at !== undefined) cleanPayload.subscription_started_at = updated.subscription_started_at;
+    if (updated.subscription_expires_at !== undefined) cleanPayload.subscription_expires_at = updated.subscription_expires_at;
+    if (updated.ai_queries_used !== undefined) cleanPayload.ai_queries_used = Number(updated.ai_queries_used);
+    if (updated.ai_queries_limit !== undefined) cleanPayload.ai_queries_limit = updated.ai_queries_limit === null ? null : Number(updated.ai_queries_limit);
+    if (updated.ai_requests_left !== undefined) cleanPayload.ai_requests_left = updated.ai_requests_left === null ? null : Number(updated.ai_requests_left);
+    if (updated.ai_queries_reset_date !== undefined) cleanPayload.ai_queries_reset_date = updated.ai_queries_reset_date;
+
+    if (cleanPayload.full_name !== undefined && !cleanPayload.full_name) {
+      throw new Error('نام و نام خانوادگی نمی‌تواند خالی باشد.');
+    }
+    if (cleanPayload.age !== undefined && cleanPayload.age !== null && (!Number.isInteger(cleanPayload.age) || cleanPayload.age < 1 || cleanPayload.age > 120)) {
+      throw new Error('سن واردشده معتبر نیست.');
+    }
+    if (cleanPayload.monthly_budget_cap !== undefined && (!Number.isFinite(cleanPayload.monthly_budget_cap) || cleanPayload.monthly_budget_cap < 0)) {
+      throw new Error('سقف بودجه باید عددی مثبت یا صفر باشد.');
+    }
+
+    const { error } = await supabase.from('users').update(cleanPayload).eq('id', user.id);
+    if (error) {
+      console.error('Could not sync user profile update to Supabase:', error);
+      throw new Error(translateSupabaseError(error.message));
+    }
+
+    const updatedAt = cleanPayload.updated_at;
+    setUser((prev) => ({ ...prev, ...updated, updated_at: updatedAt }));
+    setAllUsers((prev) => prev.map((u) => (u.id === user.id ? { ...u, ...updated, updated_at: updatedAt } : u)));
   };
 
   const changePassword = async (newPassword: string): Promise<{ success: boolean; error?: string }> => {
@@ -1410,210 +1431,104 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     }
   };
 
-  const approveManualPayment = async (paymentId: string, adminNotes?: string) => {
-    if (!isAdmin) {
-      alert('دسترسی غیرمجاز: فقط مدیران ارشد مجاز به تایید پرداخت هستند.');
-      return;
-    }
+  const approveManualPayment = async (paymentId: string, adminNotes?: string, linkedOrderId?: string) => {
+    if (!isAdmin) throw new Error('دسترسی غیرمجاز: فقط مدیران مجاز به تایید پرداخت هستند.');
+    const supabase = getSupabaseClient();
+    if (!supabase) throw new Error('اتصال Supabase در دسترس نیست.');
 
-    const targetPayment = manualPayments.find((p) => p.id === paymentId);
-    const targetUserId = targetPayment?.user_id;
-    const planId = targetPayment?.plan_id || 'pro-1m';
-    const durationMonths = (planId.endsWith('-3m') || planId === 'pro-3m') ? 3 : 1;
-    const targetTier: SubscriptionTier =
-      planId.startsWith('vip') ? 'vip' : planId.startsWith('bronze') ? 'bronze' : 'pro';
+    const now = new Date().toISOString();
+    const note = adminNotes?.trim() || 'پرداخت تایید شد و اشتراک فعال گردید.';
+    const localPayment = manualPayments.find((p) => p.id === paymentId);
+    const [paymentRes, orderRes] = await Promise.all([
+      supabase.from('manual_payments').select('*').eq('id', paymentId).maybeSingle(),
+      supabase.from('subscription_orders').select('*').eq('id', linkedOrderId || paymentId).maybeSingle(),
+    ]);
+    if (paymentRes.error && orderRes.error) throw new Error(`خواندن درخواست پرداخت ناموفق بود: ${paymentRes.error.message}`);
+    const payment = paymentRes.data;
+    const order = orderRes.data;
+    const targetUserId = payment?.user_id || order?.user_id || localPayment?.user_id;
+    const planId = String(payment?.plan_id || order?.plan_id || localPayment?.plan_id || 'pro-1m');
+    if (!targetUserId || targetUserId === 'guest') throw new Error('کاربر مربوط به این درخواست پیدا نشد؛ اشتراک فعال نشد.');
+    if (!payment && !order) throw new Error('درخواست پرداخت در Supabase پیدا نشد یا دسترسی لازم وجود ندارد.');
+    if (payment?.status === 'approved' || order?.status === 'approved') throw new Error('این درخواست قبلاً تایید شده است.');
+    if (payment?.status === 'rejected' || order?.status === 'rejected') throw new Error('درخواست ردشده را نمی‌توان مستقیم تایید کرد.');
 
     const targetUser = allUsers.find((u) => u.id === targetUserId) || (user.id === targetUserId ? user : null);
-    const currentExpiryTime = targetUser?.subscription_expires_at ? new Date(targetUser.subscription_expires_at).getTime() : 0;
-    const baseTime = currentExpiryTime > Date.now() ? currentExpiryTime : Date.now();
-    const finalExpiresAt = new Date(baseTime + durationMonths * 30 * 24 * 60 * 60 * 1000).toISOString();
+    const currentExpiry = targetUser?.subscription_expires_at ? new Date(targetUser.subscription_expires_at).getTime() : 0;
+    const baseTime = currentExpiry > Date.now() ? currentExpiry : Date.now();
+    let durationDays = /-3m$/.test(planId) ? 90 : /-6m$/.test(planId) ? 180 : /-12m$/.test(planId) ? 365 : 30;
+    // Prefer the configured plan duration in Supabase; use ID suffix only for legacy plans.
+    const { data: planRow, error: planLookupError } = await supabase.from('plans').select('duration_days').eq('id', planId).maybeSingle();
+    if (!planLookupError && Number(planRow?.duration_days) > 0) durationDays = Number(planRow?.duration_days);
+    const finalExpiresAt = new Date(baseTime + durationDays * 86400000).toISOString();
+    const targetTier: SubscriptionTier = planId.startsWith('vip') ? 'vip' : planId.startsWith('bronze') ? 'bronze' : 'pro';
+    const aiQuota = targetTier === 'vip' ? 500 : targetTier === 'bronze' ? 50 : 150;
 
-    const supabase = getSupabaseClient();
-    if (supabase) {
-      try {
-        await supabase
-          .from('manual_payments')
-          .update({
-            status: 'approved',
-            admin_notes: adminNotes || 'پرداخت تایید شد و اشتراک فعال گردید.',
-            reviewed_at: new Date().toISOString(),
-            reviewed_by: user.id,
-          })
-          .eq('id', paymentId);
-
-        await supabase
-          .from('subscription_orders')
-          .update({
-            status: 'approved',
-            reviewed_at: new Date().toISOString(),
-          })
-          .eq('id', paymentId);
-
-        if (targetUserId && targetUserId !== 'guest') {
-          const aiQuota = targetTier === 'vip' ? 500 : targetTier === 'bronze' ? 50 : 150;
-          await supabase
-            .from('users')
-            .update({
-              tier: targetTier,
-              subscription_status: 'active',
-              is_premium: true,
-              subscription_started_at: targetUser?.subscription_started_at || new Date().toISOString(),
-              subscription_expires_at: finalExpiresAt,
-              ai_requests_left: aiQuota,
-              ai_queries_limit: aiQuota,
-              updated_at: new Date().toISOString(),
-            })
-            .eq('id', targetUserId);
-        }
-      } catch (err: any) {
-        console.warn('Direct Supabase approve order note:', err?.message);
-      }
+    // Persist first; never show success in the UI when Supabase rejects the update.
+    let updatedAtLeastOne = false;
+    if (payment) {
+      const { data, error } = await supabase.from('manual_payments').update({ status: 'approved', admin_notes: note, reviewed_at: now, reviewed_by: user.id }).eq('id', paymentId).select('id');
+      if (error) throw new Error(`تایید فیش در manual_payments ناموفق بود: ${error.message}`);
+      updatedAtLeastOne = Boolean(data?.length);
     }
-
-    setManualPayments((prev) =>
-      prev.map((p) => {
-        if (p.id === paymentId) {
-          return {
-            ...p,
-            status: 'approved',
-            admin_notes: adminNotes || 'پرداخت تایید شد و اشتراک فعال گردید.',
-            reviewed_at: new Date().toISOString(),
-            reviewed_by: user.id,
-          };
-        }
-        return p;
-      })
-    );
-
-    if (targetUserId) {
-      const aiQuota = targetTier === 'vip' ? 500 : targetTier === 'bronze' ? 50 : 150;
-      setAllUsers((prev) =>
-        prev.map((u) =>
-          u.id === targetUserId
-            ? {
-                ...u,
-                tier: targetTier,
-                subscription_status: 'active',
-                is_premium: true,
-                subscription_expires_at: finalExpiresAt,
-                ai_requests_left: aiQuota,
-                ai_queries_limit: aiQuota,
-                updated_at: new Date().toISOString(),
-              }
-            : u
-        )
-      );
-
-      if (user.id === targetUserId) {
-        setUser((prev) => ({
-          ...prev,
-          tier: targetTier,
-          subscription_status: 'active',
-          is_premium: true,
-          subscription_expires_at: finalExpiresAt,
-          ai_requests_left: aiQuota,
-          ai_queries_limit: aiQuota,
-          updated_at: new Date().toISOString(),
-        }));
-      }
+    if (order) {
+      const { data, error } = await supabase.from('subscription_orders').update({ status: 'approved', reviewed_at: now, reviewed_by: user.id, updated_at: now }).eq('id', linkedOrderId || paymentId).select('id');
+      if (error) throw new Error(`تایید درخواست اشتراک ناموفق بود: ${error.message}`);
+      updatedAtLeastOne = updatedAtLeastOne || Boolean(data?.length);
     }
+    if (!updatedAtLeastOne) throw new Error('Supabase هیچ رکوردی را تغییر نداد؛ مجوزهای RLS و دسترسی ادمین را بررسی کنید.');
+
+    const { error: userError } = await supabase.from('users').update({ tier: targetTier, subscription_status: 'active', is_premium: true, subscription_started_at: targetUser?.subscription_started_at || now, subscription_expires_at: finalExpiresAt, ai_requests_left: aiQuota, ai_queries_limit: aiQuota, updated_at: now }).eq('id', targetUserId);
+    if (userError) throw new Error(`پرداخت تایید شد، اما فعال‌سازی پروفایل ناموفق بود: ${userError.message}`);
+
+    setManualPayments((prev) => prev.map((p) => p.id === paymentId ? { ...p, status: 'approved', admin_notes: note, reviewed_at: now, reviewed_by: user.id } : p));
+    setAllUsers((prev) => prev.map((u) => u.id === targetUserId ? { ...u, tier: targetTier, subscription_status: 'active', is_premium: true, subscription_started_at: u.subscription_started_at || now, subscription_expires_at: finalExpiresAt, ai_requests_left: aiQuota, ai_queries_limit: aiQuota, updated_at: now } : u));
+    if (user.id === targetUserId) setUser((prev) => ({ ...prev, tier: targetTier, subscription_status: 'active', is_premium: true, subscription_started_at: prev.subscription_started_at || now, subscription_expires_at: finalExpiresAt, ai_requests_left: aiQuota, ai_queries_limit: aiQuota, updated_at: now }));
   };
 
-  const rejectManualPayment = async (paymentId: string, adminNotes?: string) => {
-    if (!isAdmin) {
-      alert('دسترسی غیرمجاز: فقط مدیران ارشد مجاز به رد پرداخت هستند.');
-      return;
-    }
-
-    const targetPayment = manualPayments.find((p) => p.id === paymentId);
-    const targetUserId = targetPayment?.user_id;
-    const targetU = allUsers.find((u) => u.id === targetUserId);
-    const hasRemainingActivePlan = Boolean(
-      targetU?.subscription_expires_at &&
-      new Date(targetU.subscription_expires_at).getTime() > Date.now() &&
-      targetU.tier !== 'free'
-    );
-    const fallbackStatus: SubscriptionStatus = hasRemainingActivePlan ? 'active' : 'none';
-    const fallbackTier: SubscriptionTier = hasRemainingActivePlan && targetU ? targetU.tier : 'free';
-    const fallbackPremium = hasRemainingActivePlan;
-
+  const rejectManualPayment = async (paymentId: string, adminNotes?: string, linkedOrderId?: string) => {
+    if (!isAdmin) throw new Error('دسترسی غیرمجاز: فقط مدیران مجاز به رد پرداخت هستند.');
     const supabase = getSupabaseClient();
-    if (supabase) {
-      try {
-        await supabase
-          .from('manual_payments')
-          .update({
-            status: 'rejected',
-            admin_notes: adminNotes || 'اطلاعات واریزی مطابقت نداشت یا نامعتبر بود.',
-            reviewed_at: new Date().toISOString(),
-            reviewed_by: user.id,
-          })
-          .eq('id', paymentId);
+    if (!supabase) throw new Error('اتصال Supabase در دسترس نیست.');
+    const now = new Date().toISOString();
+    const note = adminNotes?.trim() || 'اطلاعات واریزی مطابقت نداشت یا نامعتبر بود.';
+    const localPayment = manualPayments.find((p) => p.id === paymentId);
+    const [paymentRes, orderRes] = await Promise.all([
+      supabase.from('manual_payments').select('*').eq('id', paymentId).maybeSingle(),
+      supabase.from('subscription_orders').select('*').eq('id', linkedOrderId || paymentId).maybeSingle(),
+    ]);
+    if (paymentRes.error && orderRes.error) throw new Error(`خواندن درخواست پرداخت ناموفق بود: ${paymentRes.error.message}`);
+    const payment = paymentRes.data;
+    const order = orderRes.data;
+    const targetUserId = payment?.user_id || order?.user_id || localPayment?.user_id;
+    if (!payment && !order) throw new Error('درخواست پرداخت در Supabase پیدا نشد یا دسترسی لازم وجود ندارد.');
+    if (payment?.status === 'approved' || order?.status === 'approved') throw new Error('پرداخت تاییدشده را نمی‌توان رد کرد.');
+    if (payment?.status === 'rejected' || order?.status === 'rejected') throw new Error('این درخواست قبلاً رد شده است.');
 
-        await supabase
-          .from('subscription_orders')
-          .update({
-            status: 'rejected',
-            reviewed_at: new Date().toISOString(),
-          })
-          .eq('id', paymentId);
-
-        if (targetUserId && targetUserId !== 'guest') {
-          await supabase
-            .from('users')
-            .update({
-              tier: fallbackTier,
-              subscription_status: fallbackStatus,
-              is_premium: fallbackPremium,
-              updated_at: new Date().toISOString(),
-            })
-            .eq('id', targetUserId);
-        }
-      } catch (err: any) {
-        console.warn('Direct Supabase reject order note:', err?.message);
-      }
+    let updatedAtLeastOne = false;
+    if (payment) {
+      const { data, error } = await supabase.from('manual_payments').update({ status: 'rejected', admin_notes: note, reviewed_at: now, reviewed_by: user.id }).eq('id', paymentId).select('id');
+      if (error) throw new Error(`رد فیش در manual_payments ناموفق بود: ${error.message}`);
+      updatedAtLeastOne = Boolean(data?.length);
     }
-
-    setManualPayments((prev) =>
-      prev.map((p) => {
-        if (p.id === paymentId) {
-          return {
-            ...p,
-            status: 'rejected',
-            admin_notes: adminNotes || 'اطلاعات واریزی مطابقت نداشت یا نامعتبر بود.',
-            reviewed_at: new Date().toISOString(),
-            reviewed_by: user.id,
-          };
-        }
-        return p;
-      })
-    );
-
-    if (targetUserId) {
-      setAllUsers((prev) =>
-        prev.map((u) =>
-          u.id === targetUserId
-            ? {
-                ...u,
-                tier: fallbackTier,
-                subscription_status: fallbackStatus,
-                is_premium: fallbackPremium,
-                updated_at: new Date().toISOString(),
-              }
-            : u
-        )
-      );
-
-      if (user.id === targetUserId) {
-        setUser((prev) => ({
-          ...prev,
-          tier: fallbackTier,
-          subscription_status: fallbackStatus,
-          is_premium: fallbackPremium,
-          updated_at: new Date().toISOString(),
-        }));
-      }
+    if (order) {
+      const { data, error } = await supabase.from('subscription_orders').update({ status: 'rejected', reject_reason: note, reviewed_at: now, reviewed_by: user.id, updated_at: now }).eq('id', linkedOrderId || paymentId).select('id');
+      if (error) throw new Error(`رد درخواست اشتراک ناموفق بود: ${error.message}`);
+      updatedAtLeastOne = updatedAtLeastOne || Boolean(data?.length);
     }
+    if (!updatedAtLeastOne) throw new Error('Supabase هیچ رکوردی را تغییر نداد؛ مجوزهای RLS و دسترسی ادمین را بررسی کنید.');
+
+    const targetUser = allUsers.find((u) => u.id === targetUserId) || (user.id === targetUserId ? user : null);
+    if (targetUserId && targetUserId !== 'guest') {
+      const hasActivePlan = Boolean(targetUser?.subscription_expires_at && new Date(targetUser.subscription_expires_at).getTime() > Date.now() && targetUser.tier !== 'free');
+      const fallbackTier: SubscriptionTier = hasActivePlan && targetUser ? targetUser.tier : 'free';
+      const fallbackStatus: SubscriptionStatus = hasActivePlan ? 'active' : 'none';
+      const { error } = await supabase.from('users').update({ tier: fallbackTier, subscription_status: fallbackStatus, is_premium: hasActivePlan, updated_at: now }).eq('id', targetUserId);
+      if (error) throw new Error(`درخواست رد شد، اما همگام‌سازی وضعیت کاربر ناموفق بود: ${error.message}`);
+      setAllUsers((prev) => prev.map((u) => u.id === targetUserId ? { ...u, tier: fallbackTier, subscription_status: fallbackStatus, is_premium: hasActivePlan, updated_at: now } : u));
+      if (user.id === targetUserId) setUser((prev) => ({ ...prev, tier: fallbackTier, subscription_status: fallbackStatus, is_premium: hasActivePlan, updated_at: now }));
+    }
+    setManualPayments((prev) => prev.map((p) => p.id === paymentId ? { ...p, status: 'rejected', admin_notes: note, reviewed_at: now, reviewed_by: user.id } : p));
   };
 
   // Transaction Actions

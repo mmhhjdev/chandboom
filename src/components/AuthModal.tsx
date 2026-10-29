@@ -66,7 +66,7 @@ export const AuthModal: React.FC = () => {
   // OTP Verification Step
   const [isOtpStep, setIsOtpStep] = useState(false);
   const [otpAction, setOtpAction] = useState<'register' | 'login' | 'reset_password'>('register');
-  const [otpDigits, setOtpDigits] = useState<string[]>(['', '', '', '', '', '']);
+  const [otpDigits, setOtpDigits] = useState<string[]>(['', '', '', '', '', '', '', '']);
   const otpInputRefs = useRef<(HTMLInputElement | null)[]>([]);
   const [timerSeconds, setTimerSeconds] = useState(120);
 
@@ -110,7 +110,7 @@ export const AuthModal: React.FC = () => {
   useEffect(() => {
     if (!isAuthModalOpen) {
       setIsOtpStep(false);
-      setOtpDigits(['', '', '', '', '', '']);
+      setOtpDigits(['', '', '', '', '', '', '', '']);
       setError(null);
       setSuccessMsg(null);
       setIsLoading(false);
@@ -133,12 +133,12 @@ export const AuthModal: React.FC = () => {
     const newDigits = [...otpDigits];
 
     if (cleaned.length > 1) {
-      const pasted = cleaned.slice(0, 6).split('');
-      for (let i = 0; i < 6; i++) {
+      const pasted = cleaned.slice(0, 8).split('');
+      for (let i = 0; i < 8; i++) {
         newDigits[i] = pasted[i] || '';
       }
       setOtpDigits(newDigits);
-      const nextFocus = Math.min(pasted.length, 5);
+      const nextFocus = Math.min(pasted.length, 7);
       otpInputRefs.current[nextFocus]?.focus();
       return;
     }
@@ -146,7 +146,7 @@ export const AuthModal: React.FC = () => {
     newDigits[index] = cleaned;
     setOtpDigits(newDigits);
 
-    if (cleaned && index < 5) {
+    if (cleaned && index < 7) {
       otpInputRefs.current[index + 1]?.focus();
     }
   };
@@ -160,14 +160,14 @@ export const AuthModal: React.FC = () => {
   const handleOtpPaste = (e: React.ClipboardEvent<HTMLInputElement>) => {
     e.preventDefault();
     const rawData = e.clipboardData.getData('text');
-    const pasteData = sanitizeVerificationCode(rawData).slice(0, 6);
+    const pasteData = sanitizeVerificationCode(rawData).slice(0, 8);
     if (!pasteData) return;
     const newDigits = [...otpDigits];
-    for (let i = 0; i < 6; i++) {
+    for (let i = 0; i < 8; i++) {
       newDigits[i] = pasteData[i] || '';
     }
     setOtpDigits(newDigits);
-    const focusTarget = Math.min(pasteData.length, 5);
+    const focusTarget = Math.min(pasteData.length, 7);
     otpInputRefs.current[focusTarget]?.focus();
   };
 
@@ -192,7 +192,7 @@ export const AuthModal: React.FC = () => {
         const res = await requestLoginOtp(cleanEmail);
         if (res.success) {
           setOtpAction('login');
-          setOtpDigits(['', '', '', '', '', '']);
+          setOtpDigits(['', '', '', '', '', '', '', '']);
           setIsOtpStep(true);
           setTimerSeconds(120);
           setSuccessMsg('کد ۶ رقمی ورود به آدرس ایمیل شما ارسال شد.');
@@ -235,9 +235,9 @@ export const AuthModal: React.FC = () => {
       try {
         const res = await requestPasswordResetOtp(cleanEmail);
         if (res.success) {
-          setSuccessMsg('کد ۶ رقمی بازیابی رمز عبور با موفقیت به ایمیل شما ارسال شد.');
+          setSuccessMsg('کد بازیابی رمز عبور به ایمیل شما ارسال شد.');
           setOtpAction('reset_password');
-          setOtpDigits(['', '', '', '', '', '']);
+          setOtpDigits(['', '', '', '', '', '', '', '']);
           setIsOtpStep(true);
           setTimerSeconds(120);
         } else {
@@ -291,7 +291,7 @@ export const AuthModal: React.FC = () => {
           } else if (res.requiresEmailConfirmation) {
             setSuccessMsg('حساب شما ایجاد شد! کد تایید ارسال شده به ایمیل را وارد فرمایید.');
             setOtpAction('register');
-            setOtpDigits(['', '', '', '', '', '']);
+            setOtpDigits(['', '', '', '', '', '', '', '']);
             setIsOtpStep(true);
             setTimerSeconds(120);
           } else {
@@ -317,7 +317,7 @@ export const AuthModal: React.FC = () => {
 
         if (res.success) {
           setOtpAction('register');
-          setOtpDigits(['', '', '', '', '', '']);
+          setOtpDigits(['', '', '', '', '', '', '', '']);
           setIsOtpStep(true);
           setTimerSeconds(120);
           setError(null);
@@ -334,8 +334,8 @@ export const AuthModal: React.FC = () => {
 
   const handleVerifyOtp = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (combinedOtp.length !== 6) {
-      setError('لطفاً کد ۶ رقمی تایید را به طور کامل وارد نمایید.');
+    if (combinedOtp.length < 6 || combinedOtp.length > 8) {
+      setError('لطفاً کد ۶ تا ۸ رقمی ارسال‌شده را کامل وارد نمایید.');
       return;
     }
 
@@ -352,7 +352,7 @@ export const AuthModal: React.FC = () => {
         } else {
           setIsAuthModalOpen(false);
           setIsOtpStep(false);
-          setOtpDigits(['', '', '', '', '', '']);
+          setOtpDigits(['', '', '', '', '', '', '', '']);
         }
         return;
       }
@@ -374,7 +374,7 @@ export const AuthModal: React.FC = () => {
         } else {
           setSuccessMsg('رمز عبور شما با موفقیت تغییر یافت. اکنون وارد شوید.');
           setIsOtpStep(false);
-          setOtpDigits(['', '', '', '', '', '']);
+          setOtpDigits(['', '', '', '', '', '', '', '']);
           setMode('login');
           setLoginType('password');
           setPassword(newPassword);
@@ -399,7 +399,7 @@ export const AuthModal: React.FC = () => {
       } else {
         setIsAuthModalOpen(false);
         setIsOtpStep(false);
-        setOtpDigits(['', '', '', '', '', '']);
+        setOtpDigits(['', '', '', '', '', '', '', '']);
       }
     } catch (err: any) {
       setError(err?.message || 'خطا در اعتبارسنجی کد امنیتی.');
@@ -568,7 +568,7 @@ export const AuthModal: React.FC = () => {
             <form onSubmit={handleVerifyOtp} className="space-y-4">
               <div className="text-center space-y-1 bg-zinc-50 dark:bg-zinc-900/60 p-3 rounded-2xl border border-zinc-200 dark:border-zinc-800">
                 <p className="text-xs text-zinc-600 dark:text-zinc-400">
-                  کد ۶ رقمی ارسال‌شده به نشانی ایمیل زیر را وارد نمایید:
+                  کد ۶ تا ۸ رقمی ارسال‌شده به نشانی ایمیل زیر را وارد نمایید:
                 </p>
                 <p className="font-mono text-sm font-black text-emerald-700 dark:text-emerald-400" dir="ltr">
                   {email}
@@ -578,7 +578,7 @@ export const AuthModal: React.FC = () => {
               {/* 6 Digit Inputs */}
               <div>
                 <label className="block text-xs font-bold text-zinc-700 dark:text-zinc-300 mb-2 text-center">
-                  کد تایید ۶ رقمی
+                  کد تایید ۶ تا ۸ رقمی
                 </label>
                 <div className="flex items-center justify-center gap-2" dir="ltr">
                   {otpDigits.map((digit, idx) => (
@@ -673,7 +673,7 @@ export const AuthModal: React.FC = () => {
               <div className="space-y-2 pt-2">
                 <button
                   type="submit"
-                  disabled={isLoading || combinedOtp.length !== 6}
+                  disabled={isLoading || combinedOtp.length < 6 || combinedOtp.length > 8}
                   className="w-full py-3 rounded-2xl bg-gradient-to-r from-emerald-600 to-teal-700 hover:from-emerald-700 hover:to-teal-800 text-white font-bold text-xs shadow-md transition cursor-pointer disabled:opacity-50 flex items-center justify-center gap-2"
                 >
                   {isLoading ? (
@@ -697,7 +697,7 @@ export const AuthModal: React.FC = () => {
                   type="button"
                   onClick={() => {
                     setIsOtpStep(false);
-                    setOtpDigits(['', '', '', '', '', '']);
+                    setOtpDigits(['', '', '', '', '', '', '', '']);
                     setError(null);
                   }}
                   className="w-full py-2 text-xs text-zinc-500 hover:text-zinc-800 dark:hover:text-zinc-200 transition cursor-pointer"
@@ -1109,7 +1109,7 @@ export const AuthModal: React.FC = () => {
                 ) : (
                   <>
                     <Mail className="w-4 h-4" />
-                    <span>دریافت کد تایید ۶ رقمی ایمیلی</span>
+                    <span>دریافت کد تایید ۶ تا ۸ رقمی ایمیلی</span>
                   </>
                 )}
               </button>
