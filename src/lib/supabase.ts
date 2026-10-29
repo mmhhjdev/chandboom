@@ -306,12 +306,7 @@ export async function uploadPaymentReceipt(
       });
 
     if (error) {
-      return new Promise((resolve) => {
-        const reader = new FileReader();
-        reader.onload = (e) => resolve({ url: (e.target?.result as string) || '' });
-        reader.onerror = () => resolve({ url: '', error: 'خطا در بارگذاری تصویر فیش' });
-        reader.readAsDataURL(file);
-      });
+      return { url: '', error: `بارگذاری فیش در فضای ذخیره‌سازی ناموفق بود: ${error.message}` };
     }
 
     const { data: publicUrlData } = supabase.storage

@@ -1310,59 +1310,103 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     return success;
   };
 
-  // Manual Card-to-Card Payment Actions
+  // Manual card-to-card payment submission.
+  // Persist both records first; only then update local UI/profile state.
   const submitManualPayment = async (data: Omit<ManualPaymentSubmission, 'id' | 'created_at' | 'status'>) => {
+    const supabase = getSupabaseClient();
+    if (!supabase) throw new Error('اتصال Supabase در دسترس نیست.');
+    if (!isAuthenticated || !user.id || user.id === 'guest') {
+      setIsAuthModalOpen(true);
+      throw new Error('برای ثبت درخواست اشتراک ابتدا وارد حساب کاربری شوید.');
+    }
+    if (data.user_id !== user.id) throw new Error('شناسه کاربر با حساب واردشده مطابقت ندارد.');
+    if (!data.plan_id?.trim()) throw new Error('پلن اشتراک انتخاب‌شده معتبر نیست.');
+    if (!Number.isFinite(Number(data.amount)) || Number(data.amount) <= 0) throw new Error('مبلغ پرداخت معتبر نیست.');
+    if (!data.receipt_url?.trim()) throw new Error('لطفاً ابتدا تصویر فیش واریزی را بارگذاری کنید.');
+    if (!data.tracking_code?.trim()) throw new Error('کد پیگیری پرداخت تولید نشده است.');
+
+    const createdAt = new Date().toISOString();
+    // Both tables use UUID identifiers. Sharing the same ID lets admin approval
+    // update the matching row in both tables reliably.
+    const paymentId = crypto.randomUUID();
     const newSubmission: ManualPaymentSubmission = {
       ...data,
-      id: `pay-${Date.now()}-${Math.random().toString(36).substr(2, 4)}`,
+      id: paymentId,
       status: 'pending',
-      created_at: new Date().toISOString(),
+      created_at: createdAt,
     };
+
+    const { error: paymentError } = await supabase.from('manual_payments').insert([{
+      id: paymentId,
+      user_id: user.id,
+      user_email: data.user_email || user.email || '',
+      user_name: data.user_name.trim(),
+      plan_id: data.plan_id,
+      plan_name: data.plan_name,
+      amount: Number(data.amount),
+      card_sender_name: data.card_sender_name || data.user_name.trim(),
+      card_sender_number: data.card_sender_number || 'واریز کارت به کارت',
+      reference_code: data.reference_code || data.tracking_code,
+      tracking_code: data.tracking_code,
+      payment_date: data.payment_date || createdAt,
+      receipt_url: data.receipt_url,
+      notes: data.notes || null,
+      status: 'pending',
+      created_at: createdAt,
+    }]);
+    if (paymentError) {
+      throw new Error(`ثبت فیش واریزی ناموفق بود: ${paymentError.message}`);
+    }
+
+    const { error: orderError } = await supabase.from('subscription_orders').insert([{
+      id: paymentId,
+      user_id: user.id,
+      plan_id: data.plan_id,
+      amount_toman: Math.round(Number(data.amount)),
+      receipt_path: data.receipt_url,
+      note: data.notes || null,
+      status: 'pending',
+      created_at: createdAt,
+      updated_at: createdAt,
+    }]);
+
+    if (orderError) {
+      // Keep the two admin-facing payment lists consistent if order creation fails.
+      const { error: rollbackError } = await supabase.from('manual_payments').delete().eq('id', paymentId);
+      const rollbackNote = rollbackError ? ` (حذف رکورد ناقص نیز ناموفق بود: ${rollbackError.message})` : '';
+      throw new Error(`ثبت درخواست اشتراک ناموفق بود: ${orderError.message}${rollbackNote}`);
+    }
 
     setManualPayments((prev) => [newSubmission, ...prev]);
 
-    // Instantly update user subscription_status to 'pending_approval' to display the golden review badge
-    await updateUserProfile({
-      subscription_status: 'pending_approval',
-    });
+    // Mark the request as pending only after both database inserts succeed.
+    await updateUserProfile({ subscription_status: 'pending_approval' });
 
-    // Immutably record in transactions history
-    await addTransaction({
-      amount: data.amount,
-      type: 'expense',
-      category: 'سایر',
-      description: `واریز وجه اشتراک طلایی ${data.plan_name} (کد رهگیری: ${data.tracking_code})`,
-      date: new Date().toISOString(),
-      account: 'بانک سامان (کارت به کارت)',
-    });
+    // Ancillary history and notification are created after the payment is persisted.
+    try {
+      await addTransaction({
+        amount: Number(data.amount),
+        type: 'expense',
+        category: 'سایر',
+        description: `ثبت درخواست اشتراک ${data.plan_name} (کد پیگیری: ${data.tracking_code})`,
+        date: createdAt,
+        account: 'بانک سامان (کارت به کارت)',
+      });
+    } catch (err) {
+      console.warn('Payment was saved, but transaction history could not be created:', err);
+    }
 
-    await addNotification({
-      type: 'subscription',
-      title: 'رسید پرداخت ثبت شد',
-      message: `اطلاعات واریزی کارت به کارت برای پلن «${data.plan_name}» ثبت و برای بررسی به مدیریت ارسال گردید.`,
-      amount: data.amount,
-      priority: 'normal',
-      status: 'pending',
-    });
-
-    const supabase = getSupabaseClient();
-    if (supabase) {
-      try {
-        await supabase.from('manual_payments').insert([newSubmission]);
-        // Also insert in subscription_orders if user is authenticated
-        if (data.user_id && data.user_id !== 'guest') {
-          await supabase.from('subscription_orders').insert([{
-            user_id: data.user_id,
-            plan_id: data.plan_id,
-            amount_toman: data.amount,
-            receipt_path: data.receipt_url || '',
-            note: data.notes || '',
-            status: 'pending',
-          }]);
-        }
-      } catch (err) {
-        console.error('Supabase manual_payment insert error:', err);
-      }
+    try {
+      await addNotification({
+        type: 'subscription',
+        title: 'رسید پرداخت ثبت شد',
+        message: `فیش پلن «${data.plan_name}» ثبت و برای بررسی مدیریت ارسال شد. کد پیگیری: ${data.tracking_code}`,
+        amount: Number(data.amount),
+        priority: 'normal',
+        status: 'pending',
+      });
+    } catch (err) {
+      console.warn('Payment was saved, but notification could not be created:', err);
     }
   };
 
@@ -1393,7 +1437,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
             status: 'approved',
             admin_notes: adminNotes || 'پرداخت تایید شد و اشتراک فعال گردید.',
             reviewed_at: new Date().toISOString(),
-            reviewed_by: user.email,
+            reviewed_by: user.id,
           })
           .eq('id', paymentId);
 
@@ -1434,7 +1478,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
             status: 'approved',
             admin_notes: adminNotes || 'پرداخت تایید شد و اشتراک فعال گردید.',
             reviewed_at: new Date().toISOString(),
-            reviewed_by: user.email,
+            reviewed_by: user.id,
           };
         }
         return p;
@@ -1502,7 +1546,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
             status: 'rejected',
             admin_notes: adminNotes || 'اطلاعات واریزی مطابقت نداشت یا نامعتبر بود.',
             reviewed_at: new Date().toISOString(),
-            reviewed_by: user.email,
+            reviewed_by: user.id,
           })
           .eq('id', paymentId);
 
@@ -1538,7 +1582,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
             status: 'rejected',
             admin_notes: adminNotes || 'اطلاعات واریزی مطابقت نداشت یا نامعتبر بود.',
             reviewed_at: new Date().toISOString(),
-            reviewed_by: user.email,
+            reviewed_by: user.id,
           };
         }
         return p;

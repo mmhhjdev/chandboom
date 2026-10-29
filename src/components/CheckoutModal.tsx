@@ -107,9 +107,10 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
       let finalReceiptUrl = receiptImage || '';
       if (receiptRawFile) {
         const uploadRes = await uploadPaymentReceipt(receiptRawFile, user.id, receiptFileName);
-        if (uploadRes.url) {
-          finalReceiptUrl = uploadRes.url;
+        if (uploadRes.error || !uploadRes.url) {
+          throw new Error(uploadRes.error || 'بارگذاری تصویر فیش انجام نشد. دوباره تلاش کنید.');
         }
+        finalReceiptUrl = uploadRes.url;
       }
 
       await submitManualPayment({
@@ -131,6 +132,7 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
       setIsSubmittedSuccess(true);
     } catch (err) {
       console.error('Payment submission failed:', err);
+      setErrorMessage(err instanceof Error ? err.message : 'ثبت درخواست ناموفق بود. لطفاً دوباره تلاش کنید.');
     } finally {
       setIsSubmitting(false);
     }
