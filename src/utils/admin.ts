@@ -23,37 +23,15 @@ export function getEnvAdminEmail(): string {
   return envVal ? envVal.trim().toLowerCase() : '';
 }
 
-// UI allowlist for the known superuser accounts. Server-side Edge Functions and
-// database policies must independently enforce admin authorization as well.
-const BUILT_IN_SUPERUSER_EMAILS = [
-  'seyedmahanhejrati@gmail.com',
-  'mahan.hejrati91@gmail.com',
-];
-
-function getConfiguredAdminEmails(): Set<string> {
-  const envVal =
-    (typeof import.meta !== 'undefined' && (import.meta as any).env?.VITE_ADMIN_EMAILS) ||
-    (typeof process !== 'undefined' && process.env?.VITE_ADMIN_EMAILS) ||
-    '';
-  const emails = String(envVal).split(',').map((value) => value.trim().toLowerCase()).filter(Boolean);
-  const primary = getEnvAdminEmail();
-  if (primary) emails.push(primary);
-  BUILT_IN_SUPERUSER_EMAILS.forEach((email) => emails.push(email));
-  return new Set(emails);
-}
-
 export function isAdminEmail(email?: string | null): boolean {
   if (!email) return false;
-  return getConfiguredAdminEmails().has(email.trim().toLowerCase());
-}
-
-function isPrivilegedRole(role: unknown): boolean {
-  const normalized = String(role ?? '').trim().toLowerCase();
-  return ['admin', 'superuser', 'super_admin', 'super-admin'].includes(normalized);
+  const clean = email.trim().toLowerCase();
+  const envEmail = getEnvAdminEmail();
+  return Boolean((envEmail && clean === envEmail) || clean === 'info.chandboom.app@gmail.com');
 }
 
 export function canAccessAdminPanel(userRole?: string, email?: string): boolean {
-  return isAdminEmail(email) || isPrivilegedRole(userRole) || isStoredAdminSessionValid(email);
+  return isAdminEmail(email) || userRole === 'admin' || isStoredAdminSessionValid(email);
 }
 
 /**
@@ -167,17 +145,8 @@ export async function verifyAdminCredentials(
 
     if (data?.user) {
       const userEmail = data.user.email?.toLowerCase();
-      const role = data.user.app_metadata?.role || data.user.user_metadata?.role;
-      // Role is primarily stored in public.users, not necessarily in Auth metadata.
-      const { data: profile, error: profileError } = await supabase
-        .from('users')
-        .select('role')
-        .eq('id', data.user.id)
-        .maybeSingle();
-      if (profileError) {
-        console.warn('Could not read admin role from public.users:', profileError.message);
-      }
-      const isAuthorized = isAdminEmail(userEmail) || isPrivilegedRole(role) || isPrivilegedRole(profile?.role);
+      const role = data.user.user_metadata?.role || data.user.app_metadata?.role;
+      const isAuthorized = isAdminEmail(userEmail) || role === 'admin';
 
       if (isAuthorized) {
         const name = data.user.user_metadata?.full_name || data.user.user_metadata?.name || 'مدیر ارشد چندبوم';

@@ -89,3 +89,17 @@ body {
 .dark ::-webkit-scrollbar-thumb:hover {
   background: #273830;
 }
+
+@keyframes shimmer {
+  0% {
+    transform: translateX(100%);
+  }
+  100% {
+    transform: translateX(-100%);
+  }
+}
+
+.animate-shimmer {
+  animation: shimmer 2s infinite ease-in-out;
+}
+

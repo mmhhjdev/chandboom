@@ -13,7 +13,7 @@ import {
   Info,
   Crown,
   Clock,
-  Sparkles,
+  Award,
   CreditCard,
   Copy,
   Check,
@@ -38,29 +38,65 @@ export const SettingsView: React.FC<SettingsViewProps> = ({ onOpenAvatarModal })
     resetToDefaults,
     manualPayments,
     setActiveTab,
+    isProUser,
     isAuthenticated,
     setIsAuthModalOpen,
+    changePassword,
   } = useApp();
 
-  // ✅ اصلاح خطای toString با استفاده از Optional Chaining (?.) و مقدار پیش‌فرض
-  const [fullName, setFullName] = useState(user?.full_name || '');
-  const [budgetCap, setBudgetCap] = useState(user?.monthly_budget_cap?.toString() || '0');
-  const [age, setAge] = useState<string>(user?.age?.toString() || '');
-  const [gender, setGender] = useState<'مرد' | 'زن' | 'سایر'>((user?.gender as any) || 'مرد');
-  
+  const [fullName, setFullName] = useState(user.full_name);
+  const [budgetCap, setBudgetCap] = useState(user.monthly_budget_cap.toString());
+  const [age, setAge] = useState<string>(user.age !== undefined && user.age !== null ? user.age.toString() : '');
+  const [gender, setGender] = useState<'مرد' | 'زن' | 'سایر'>(user.gender || 'مرد');
+  const [currency, setCurrency] = useState<'تومان' | 'ریال'>(user.currency || 'تومان');
   const [isSaved, setIsSaved] = useState(false);
   const [copiedCode, setCopiedCode] = useState<string | null>(null);
   const [selectedReceiptForPreview, setSelectedReceiptForPreview] = useState<string | null>(null);
 
-  // ✅ ایمن‌سازی فراخوانی تابع محاسبه روزهای باقی‌مانده
-  const remainingPro = calculateRemainingProDays(user?.subscription_expires_at);
-  const settingsTierIsActive = Boolean(user && user.subscription_status === 'active' && (!user.subscription_expires_at || new Date(user.subscription_expires_at).getTime() > Date.now()) && user.tier !== 'free');
-  const settingsTierLabel = user?.tier === 'vip' ? 'VIP' : user?.tier === 'pro' ? 'پرو' : user?.tier === 'bronze' ? 'برنزی' : 'پایه / رایگان';
-  const settingsTierDescription = user?.tier === 'vip' ? 'دسترسی کامل شامل قابلیت‌های صوتی دستیار هوشمند.' : user?.tier === 'pro' ? 'دسترسی به امکانات پلن پرو؛ قابلیت‌های صوتی فقط برای VIP فعال است.' : user?.tier === 'bronze' ? 'دسترسی پایه اشتراکی به امکانات مجاز پلن برنزی.' : 'برای استفاده از امکانات اشتراکی، یکی از پلن‌ها را انتخاب کنید.';
+  // Change Password State
+  const [newPassword, setNewPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
+  const [passwordLoading, setPasswordLoading] = useState(false);
+  const [passwordError, setPasswordError] = useState<string | null>(null);
+  const [passwordSuccess, setPasswordSuccess] = useState<string | null>(null);
 
-  // ✅ ایمن‌سازی فیلتر کردن پرداخت‌ها در صورت null بودن user
+  const remainingPro = calculateRemainingProDays(user.subscription_expires_at);
+
+  const handlePasswordSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setPasswordError(null);
+    setPasswordSuccess(null);
+
+    if (!newPassword || newPassword.length < 6) {
+      setPasswordError('رمز عبور جدید باید حداقل ۶ کاراکتر باشد.');
+      return;
+    }
+    if (newPassword !== confirmPassword) {
+      setPasswordError('تکرار رمز عبور جدید با رمز مطابقت ندارد.');
+      return;
+    }
+
+    setPasswordLoading(true);
+    try {
+      const res = await changePassword(newPassword);
+      if (res.success) {
+        setPasswordSuccess('کلمه عبور شما با موفقیت تغییر یافت.');
+        setNewPassword('');
+        setConfirmPassword('');
+      } else {
+        setPasswordError(res.error || 'خطایی در تغییر رمز عبور رخ داد.');
+      }
+    } catch (err: any) {
+      setPasswordError(err?.message || 'خطا در ارتباط با سرور.');
+    } finally {
+      setPasswordLoading(false);
+    }
+  };
+
+  // User's own payment submissions
   const userPayments = manualPayments.filter(
-    (p) => isAuthenticated && user && (p.user_id === user.id || p.user_email === user.email)
+    (p) => isAuthenticated && (p.user_id === user.id || p.user_email === user.email)
   );
 
   const handleCopy = (code: string) => {
@@ -73,12 +109,12 @@ export const SettingsView: React.FC<SettingsViewProps> = ({ onOpenAvatarModal })
     e.preventDefault();
     const numCap = parseInt(budgetCap.replace(/,/g, ''), 10);
     const numAge = age ? parseInt(age, 10) : undefined;
-    
     updateUserProfile({
-      full_name: fullName.trim() || user?.full_name || 'کاربر چندبوم',
-      monthly_budget_cap: isNaN(numCap) ? (user?.monthly_budget_cap || 0) : numCap,
-      age: numAge !== undefined && !isNaN(numAge) ? numAge : user?.age,
+      full_name: fullName.trim() || user.full_name,
+      monthly_budget_cap: isNaN(numCap) ? user.monthly_budget_cap : numCap,
+      age: numAge !== undefined && !isNaN(numAge) ? numAge : user.age,
       gender,
+      currency,
     });
 
     setIsSaved(true);
@@ -133,12 +169,12 @@ export const SettingsView: React.FC<SettingsViewProps> = ({ onOpenAvatarModal })
                 className="px-4 py-2.5 rounded-xl bg-gradient-to-r from-amber-500 to-yellow-500 hover:from-amber-600 text-zinc-950 font-cairo font-bold text-xs transition cursor-pointer shadow-md flex items-center gap-1.5"
               >
                 <Crown className="w-3.5 h-3.5" />
-                <span>مشاهده پلن‌های اشتراک</span>
+                <span>خرید اشتراک طلایی پرو</span>
               </button>
             </div>
           </div>
         </div>
-      ) : !settingsTierIsActive ? (
+      ) : !isProUser ? (
         <div className="p-6 rounded-3xl bg-gradient-to-br from-[#121B17] via-[#16221C] to-[#0D1512] border-2 border-emerald-600/40 shadow-xl text-white relative overflow-hidden">
           <div className="relative z-10 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
             <div className="flex items-start gap-3.5">
@@ -148,14 +184,14 @@ export const SettingsView: React.FC<SettingsViewProps> = ({ onOpenAvatarModal })
               <div>
                 <div className="flex items-center gap-2">
                   <h3 className="font-cairo font-bold text-lg text-white">
-                    وضعیت اشتراک: حساب پایه / غیرفعال
+                    وضعیت اشتراک: {user.subscription_status === 'pending_approval' ? 'در انتظار تأیید' : 'حساب پایه فعال (رایگان)'}
                   </h3>
                   <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-zinc-800 text-zinc-400">
-                    بدون اشتراک فعال
+                    بدون اشتراک پرو
                   </span>
                 </div>
                 <p className="text-xs text-zinc-300 mt-1">
-                  {settingsTierDescription}
+                  جهت دسترسی به هوش مصنوعی تحلیلی، پیش‌بینی ۳ ماهه و هشدار سرعت اتمام بودجه، اشتراک طلایی تهیه کنید.
                 </p>
               </div>
             </div>
@@ -165,8 +201,8 @@ export const SettingsView: React.FC<SettingsViewProps> = ({ onOpenAvatarModal })
                 onClick={() => setActiveTab('subscription')}
                 className="px-5 py-2.5 rounded-xl bg-gradient-to-r from-amber-500 via-amber-600 to-yellow-600 hover:from-amber-600 hover:to-yellow-700 text-zinc-950 font-cairo font-black text-xs transition cursor-pointer shadow-md flex items-center gap-1.5"
               >
-                <Sparkles className="w-3.5 h-3.5" />
-                <span>مشاهده پلن‌های اشتراک</span>
+                <Award className="w-3.5 h-3.5" />
+                <span>خرید اشتراک طلایی پرو</span>
               </button>
             </div>
           </div>
@@ -181,22 +217,22 @@ export const SettingsView: React.FC<SettingsViewProps> = ({ onOpenAvatarModal })
               <div>
                 <div className="flex items-center gap-2">
                   <h3 className="font-cairo font-bold text-lg text-white">
-                    وضعیت اشتراک: پلن {settingsTierLabel} فعال
+                    وضعیت اشتراک: {user.tier === 'vip' ? 'حساب VIP فعال' : user.tier === 'bronze' ? 'حساب برنزی فعال' : 'حساب پرو فعال'}
                   </h3>
                   <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-amber-400 text-zinc-950 font-black">
-                    {settingsTierLabel} فعال
+                    {user.tier === 'vip' ? 'VIP فعال' : user.tier === 'bronze' ? 'برنزی فعال' : 'پرو فعال'}
                   </span>
                 </div>
 
                 <div className="mt-2 space-y-1 text-xs">
                   <p className="text-amber-200 flex items-center gap-1.5 font-bold">
                     <Clock className="w-4 h-4 text-amber-400" />
-                    <span>زمان باقی‌مانده اشتراک:</span>
+                    <span>مانده اشتراک:</span>
                     <span className="font-cairo font-black text-sm text-white">
                       {remainingPro.humanText}
                     </span>
                   </p>
-                  {user?.subscription_expires_at && (
+                  {user.subscription_expires_at && (
                     <p className="text-[11px] text-zinc-400">
                       تاریخ انقضای اشتراک: {formatShamsiDate(user.subscription_expires_at)}
                     </p>
@@ -210,8 +246,8 @@ export const SettingsView: React.FC<SettingsViewProps> = ({ onOpenAvatarModal })
                 onClick={() => setActiveTab('subscription')}
                 className="px-4 py-2.5 rounded-xl bg-gradient-to-r from-amber-500 to-yellow-500 hover:from-amber-600 hover:to-yellow-600 text-zinc-950 font-cairo font-bold text-xs transition cursor-pointer shadow-md flex items-center gap-1.5"
               >
-                <Sparkles className="w-3.5 h-3.5" />
-                <span>مدیریت / تمدید اشتراک</span>
+                <Award className="w-3.5 h-3.5" />
+                <span>تمدید اشتراک طلایی</span>
               </button>
             </div>
           </div>
@@ -341,8 +377,8 @@ export const SettingsView: React.FC<SettingsViewProps> = ({ onOpenAvatarModal })
               className="relative group cursor-pointer"
             >
               <img
-                src={user?.avatar_url || '/default-avatar.png'}
-                alt={user?.full_name || 'کاربر'}
+                src={user.avatar_url || undefined}
+                alt={user.full_name}
                 className="w-14 h-14 rounded-2xl border-2 border-emerald-600 object-cover shadow-sm group-hover:opacity-80 transition"
               />
               <span className="absolute inset-0 flex items-center justify-center bg-black/40 rounded-2xl text-[10px] text-white opacity-0 group-hover:opacity-100 transition font-cairo">
@@ -352,9 +388,9 @@ export const SettingsView: React.FC<SettingsViewProps> = ({ onOpenAvatarModal })
 
             <div>
               <h4 className="font-cairo font-bold text-base text-zinc-900 dark:text-white">
-                {user?.full_name || 'کاربر چندبوم'}
+                {user.full_name}
               </h4>
-              <p className="text-xs text-zinc-400 font-mono">{user?.email || 'ثبت نشده'}</p>
+              <p className="text-xs text-zinc-400 font-mono">{user.email}</p>
             </div>
           </div>
 
@@ -393,7 +429,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({ onOpenAvatarModal })
             <div className="relative">
               <input
                 type="email"
-                value={user?.email || 'ثبت نشده'}
+                value={user.email || 'ثبت نشده'}
                 disabled
                 readOnly
                 title="تغییر آدرس ایمیل به دلیل امنیت حساب و تایید هویت مسدود است."
@@ -437,9 +473,23 @@ export const SettingsView: React.FC<SettingsViewProps> = ({ onOpenAvatarModal })
             </select>
           </div>
 
-          <div className="sm:col-span-2">
+          <div>
             <label className="block text-xs font-cairo font-bold text-zinc-700 dark:text-zinc-300 mb-1.5">
-              سقف بودجه ماهانه (تومان)
+              واحد پولی پیش‌فرض
+            </label>
+            <select
+              value={currency}
+              onChange={(e) => setCurrency(e.target.value as any)}
+              className="w-full px-4 py-2.5 bg-zinc-50 dark:bg-[#141E1A] border border-[#E2E8E4] dark:border-[#1F2E27] rounded-xl text-xs sm:text-sm text-zinc-900 dark:text-white outline-none focus:ring-2 focus:ring-emerald-600 font-cairo"
+            >
+              <option value="تومان">تومان (پیش‌فرض)</option>
+              <option value="ریال">ریال</option>
+            </select>
+          </div>
+
+          <div>
+            <label className="block text-xs font-cairo font-bold text-zinc-700 dark:text-zinc-300 mb-1.5">
+              سقف بودجه ماهانه ({currency})
             </label>
             <input
               type="text"
@@ -463,7 +513,94 @@ export const SettingsView: React.FC<SettingsViewProps> = ({ onOpenAvatarModal })
         </div>
       </form>
 
-      {/* 4. Theme & Appearance Settings */}
+      {/* 3.1 Change Password Section */}
+      {isAuthenticated && (
+        <form
+          onSubmit={handlePasswordSubmit}
+          className="p-6 bg-white dark:bg-[#0E1511] rounded-3xl border border-[#E2E8E4] dark:border-[#1F2E27] shadow-xs space-y-4"
+        >
+          <div className="pb-3 border-b border-[#E2E8E4] dark:border-[#1F2E27]">
+            <h4 className="font-cairo font-bold text-base text-zinc-900 dark:text-white flex items-center gap-2">
+              <Lock className="w-5 h-5 text-amber-500" />
+              <span>تغییر کلمه عبور حساب کاربری</span>
+            </h4>
+            <p className="text-xs text-zinc-500 mt-0.5">
+              برای افزایش امنیت حساب خود می‌توانید رمز عبور جدید تعیین کنید (حداقل ۶ کاراکتر)
+            </p>
+          </div>
+
+          {passwordSuccess && (
+            <div className="p-3.5 rounded-2xl bg-emerald-50 text-emerald-800 dark:bg-emerald-950/60 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800 text-xs flex items-center gap-2">
+              <CheckCircle2 className="w-4 h-4 shrink-0" />
+              <span>{passwordSuccess}</span>
+            </div>
+          )}
+
+          {passwordError && (
+            <div className="p-3.5 rounded-2xl bg-rose-50 text-rose-800 dark:bg-rose-950/60 dark:text-rose-300 border border-rose-200 dark:border-rose-800 text-xs flex items-center gap-2">
+              <AlertCircle className="w-4 h-4 shrink-0" />
+              <span>{passwordError}</span>
+            </div>
+          )}
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div>
+              <label className="block text-xs font-cairo font-bold text-zinc-700 dark:text-zinc-300 mb-1.5">
+                رمز عبور جدید
+              </label>
+              <div className="relative">
+                <input
+                  type={showPassword ? 'text' : 'password'}
+                  value={newPassword}
+                  onChange={(e) => setNewPassword(e.target.value)}
+                  placeholder="حداقل ۶ کاراکتر"
+                  className="w-full px-4 py-2.5 bg-zinc-50 dark:bg-[#141E1A] border border-[#E2E8E4] dark:border-[#1F2E27] rounded-xl text-xs sm:text-sm text-zinc-900 dark:text-white outline-none focus:ring-2 focus:ring-emerald-600 font-mono"
+                  dir="ltr"
+                />
+              </div>
+            </div>
+
+            <div>
+              <label className="block text-xs font-cairo font-bold text-zinc-700 dark:text-zinc-300 mb-1.5">
+                تکرار رمز عبور جدید
+              </label>
+              <div className="relative">
+                <input
+                  type={showPassword ? 'text' : 'password'}
+                  value={confirmPassword}
+                  onChange={(e) => setConfirmPassword(e.target.value)}
+                  placeholder="تکرار رمز عبور جدید"
+                  className="w-full px-4 py-2.5 bg-zinc-50 dark:bg-[#141E1A] border border-[#E2E8E4] dark:border-[#1F2E27] rounded-xl text-xs sm:text-sm text-zinc-900 dark:text-white outline-none focus:ring-2 focus:ring-emerald-600 font-mono"
+                  dir="ltr"
+                />
+              </div>
+            </div>
+          </div>
+
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pt-2">
+            <label className="flex items-center gap-2 text-xs text-zinc-600 dark:text-zinc-400 cursor-pointer select-none">
+              <input
+                type="checkbox"
+                checked={showPassword}
+                onChange={(e) => setShowPassword(e.target.checked)}
+                className="rounded text-emerald-600 focus:ring-emerald-500"
+              />
+              <span>نمایش رمزهای عبور</span>
+            </label>
+
+            <button
+              type="submit"
+              disabled={passwordLoading || !newPassword}
+              className="flex items-center justify-center gap-2 px-6 py-2.5 rounded-xl bg-amber-600 hover:bg-amber-700 disabled:opacity-50 text-white font-cairo font-bold text-xs shadow-xs transition cursor-pointer"
+            >
+              <Lock className="w-4 h-4" />
+              <span>{passwordLoading ? 'در حال ذخیره‌سازی...' : 'به‌روزرسانی رمز عبور در پایگاه داده'}</span>
+            </button>
+          </div>
+        </form>
+      )}
+
+      {/* 4. Theme & Appearance Settings (منتقل‌شده از هدر به تنظیمات پروفایل) */}
       <div className="p-6 bg-white dark:bg-[#0E1511] rounded-3xl border border-[#E2E8E4] dark:border-[#1F2E27] shadow-xs space-y-4">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-[#E2E8E4] dark:border-[#1F2E27]">
           <div>
@@ -600,3 +737,4 @@ export const SettingsView: React.FC<SettingsViewProps> = ({ onOpenAvatarModal })
     </div>
   );
 };
+

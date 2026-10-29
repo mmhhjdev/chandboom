@@ -45,6 +45,7 @@ export const DongView: React.FC = () => {
   const [activeGroupId, setActiveGroupId] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(null);
+  const [currentUserId, setCurrentUserId] = useState<string | null>(null);
 
   const [isNewGroupModalOpen, setIsNewGroupModalOpen] = useState(false);
   const [newGroupName, setNewGroupName] = useState('');
@@ -76,7 +77,8 @@ export const DongView: React.FC = () => {
       }
 
       const { data: { user } } = await supabase.auth.getUser();
-      setIsAuthenticated(true);
+      setCurrentUserId(user?.id || null);
+      setIsAuthenticated(Boolean(user?.id));
       await fetchGroups(supabase);
     };
 
@@ -136,9 +138,13 @@ export const DongView: React.FC = () => {
   const handleCreateGroup = async (e: React.FormEvent) => {
     e.preventDefault();
     const supabase = getSupabaseClient();
-    if (!supabase) return;
+    if (!supabase || !currentUserId) {
+      alert('برای ساخت گروه دنگ ابتدا وارد حساب کاربری شوید.');
+      return;
+    }
 
     let groupDataToSave: any = {
+      user_id: currentUserId,
       name: newGroupName,
       is_family_mode: isFamilyMode,
     };
@@ -161,10 +167,13 @@ export const DongView: React.FC = () => {
       .select()
       .single();
 
-    const createdId = data?.id || `grp_${Date.now()}`;
+    if (error || !data?.id) {
+      alert(`ساخت گروه در Supabase ناموفق بود: ${error?.message || 'شناسه گروه از پایگاه داده دریافت نشد.'}`);
+      return;
+    }
 
     const newGroup: Group = {
-      id: createdId,
+      id: data.id,
       name: newGroupName,
       isFamilyMode,
       families: groupDataToSave.families || [],
@@ -225,14 +234,18 @@ export const DongView: React.FC = () => {
       bill_items: formattedBillItems,
     };
 
-    const { data } = await supabase
+    const { data, error } = await supabase
       .from('dong_expenses')
       .insert([payload])
       .select()
       .single();
+    if (error || !data?.id) {
+      alert(`ذخیره خرج دنگ ناموفق بود: ${error?.message || 'شناسه هزینه از پایگاه داده دریافت نشد.'}`);
+      return;
+    }
 
     const newExpense: ExpenseItem = {
-      id: data?.id || `exp_${Date.now()}`,
+      id: data.id,
       title: expenseTitle,
       payer: expensePayer,
       amount: totalAmount,
@@ -258,8 +271,11 @@ export const DongView: React.FC = () => {
   const handleDeleteExpense = async (expenseId: string) => {
     if (!activeGroup) return;
     const supabase = getSupabaseClient();
-    if (supabase) {
-      await supabase.from('dong_expenses').delete().eq('id', expenseId);
+    if (!supabase) return;
+    const { error } = await supabase.from('dong_expenses').delete().eq('id', expenseId);
+    if (error) {
+      alert(`حذف هزینه انجام نشد: ${error.message}`);
+      return;
     }
 
     const updatedGroups = groups.map((g) => {
@@ -274,8 +290,11 @@ export const DongView: React.FC = () => {
   const handleDeleteGroup = async (groupId: string, e: React.MouseEvent) => {
     e.stopPropagation();
     const supabase = getSupabaseClient();
-    if (supabase) {
-      await supabase.from('dong_groups').delete().eq('id', groupId);
+    if (!supabase) return;
+    const { error } = await supabase.from('dong_groups').delete().eq('id', groupId);
+    if (error) {
+      alert(`حذف گروه انجام نشد: ${error.message}`);
+      return;
     }
 
     setGroups(groups.filter((g) => g.id !== groupId));

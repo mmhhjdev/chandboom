@@ -3,13 +3,19 @@ import { createRoot } from 'react-dom/client';
 import { BrowserRouter } from 'react-router-dom';
 import App from './App.tsx';
 import { AnalyticsTracker } from './components/AnalyticsTracker.tsx';
+import { ErrorBoundary } from './components/ErrorBoundary.tsx';
+import { ToastProvider } from './components/ui/Toast.tsx';
 import './index.css';
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
-    <BrowserRouter>
-      <AnalyticsTracker />
-      <App />
-    </BrowserRouter>
+    <ErrorBoundary>
+      <ToastProvider>
+        <BrowserRouter>
+          <AnalyticsTracker />
+          <App />
+        </BrowserRouter>
+      </ToastProvider>
+    </ErrorBoundary>
   </StrictMode>,
 );

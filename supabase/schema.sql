@@ -13,11 +13,17 @@ CREATE TABLE IF NOT EXISTS public.users (
   id UUID PRIMARY KEY REFERENCES auth.users(id) ON DELETE CASCADE,
   email TEXT UNIQUE NOT NULL,
   name TEXT,
+  full_name TEXT,
+  age INTEGER,
+  gender TEXT,
   phone TEXT,
   role TEXT DEFAULT 'user' CHECK (role IN ('user', 'admin')),
-  tier TEXT DEFAULT 'free' CHECK (tier IN ('free', 'pro', 'vip')),
-  subscription_status TEXT DEFAULT 'none' CHECK (subscription_status IN ('none', 'trial', 'active', 'expired')),
+  tier TEXT DEFAULT 'free' CHECK (tier IN ('free', 'bronze', 'pro', 'vip')),
+  subscription_status TEXT DEFAULT 'none' CHECK (subscription_status IN ('none', 'trial', 'active', 'expired', 'pending_approval')),
   subscription_expires_at TIMESTAMPTZ,
+  ai_queries_used INTEGER DEFAULT 0,
+  ai_queries_limit INTEGER DEFAULT 100,
+  ai_queries_reset_date TIMESTAMPTZ,
   avatar_url TEXT,
   settings JSONB DEFAULT '{}'::jsonb,
   created_at TIMESTAMPTZ DEFAULT NOW(),
@@ -146,15 +152,9 @@ LANGUAGE sql
 SECURITY DEFINER
 STABLE
 AS $$
-  SELECT (
-    EXISTS (
-      SELECT 1 FROM public.users
-      WHERE id = auth.uid() AND lower(coalesce(role, '')) IN ('admin', 'superuser', 'super_admin', 'super-admin')
-    )
-    OR lower(coalesce(auth.jwt() ->> 'email', '')) IN (
-      'seyedmahanhejrati@gmail.com',
-      'mahan.hejrati91@gmail.com'
-    )
+  SELECT EXISTS (
+    SELECT 1 FROM public.users
+    WHERE id = auth.uid() AND role = 'admin'
   );
 $$;
 

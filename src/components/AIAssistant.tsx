@@ -1,196 +1,782 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Bot, Send, Sparkles, Crown, RotateCcw, CheckCircle2, AlertCircle, HelpCircle, Users, Target, Bell, X, MessageSquare, Loader2, Calendar, Mic, MicOff, Lock } from 'lucide-react';
+import {
+  Bot,
+  Send,
+  Crown,
+  RotateCcw,
+  CheckCircle2,
+  AlertCircle,
+  HelpCircle,
+  Users,
+  Target,
+  Bell,
+  X,
+  CreditCard,
+  Zap,
+  ArrowRight,
+  PlusCircle,
+  Receipt,
+  Calendar,
+  Mic,
+  MicOff,
+  Sparkles,
+  Loader2,
+} from 'lucide-react';
 import { useApp } from '../context/AppContext';
-import { invokeAiAssistantEdgeFunction } from '../lib/supabase';
+import { useSubscription } from '../hooks/useSubscription';
+import { useSpeechRecognition } from '../hooks/useSpeechRecognition';
+import { ChatMessage, ChatMessageItem } from './ChatMessage';
+import {
+  invokeAiAssistantEdgeFunction,
+  getSupabaseClient,
+  AiAssistantAction,
+} from '../lib/supabase';
 import { trackAiQuerySent, trackAiQuotaExceeded } from '../lib/analytics';
 import { toPersianDigits, formatToman } from '../utils/formatters';
-import { TransactionCategory, TransactionType } from '../types';
-import { EXPENSE_CATEGORIES, INCOME_CATEGORIES } from '../data/initialData';
+import { TransactionType } from '../types';
 
-interface ChatMessage { id: string; role: 'user' | 'assistant'; content: string; timestamp: string; }
-interface PendingAction { type: string; params: any; description: string; }
+const STORAGE_KEY = 'cb_session_ai_chat';
 
-const STORAGE_KEYS = { agent: 'chandboom_ai_agent_chat', advisor: 'chandboom_ai_advisor_chat' } as const;
-const readModeMessages = (mode: 'agent' | 'advisor'): ChatMessage[] => {
-  try { const stored = localStorage.getItem(STORAGE_KEYS[mode]); const parsed = stored ? JSON.parse(stored) : []; return Array.isArray(parsed) ? parsed : []; } catch { return []; }
-};
 const QUICK_PROMPTS = [
-  { icon: Users, label: 'ساخت گروه دنگ', prompt: 'یه گروه دنگ به اسم سفر شمال با اعضای علی، رضا و محمد بساز' },
-  { icon: Target, label: 'تعریف هدف مالی', prompt: 'یه هدف مالی برای خرید لپ‌تاپ به مبلغ ۵۰ میلیون تومان تا ۶ ماه آینده بساز' },
-  { icon: Bell, label: 'تنظیم یادآور', prompt: 'یادآور پرداخت اجاره ماهانه ۱۵ میلیون تومان برای اول هر ماه' },
-  { icon: HelpCircle, label: 'ثبت تراکنش', prompt: 'ثبت هزینه ۵۰ هزار تومان برای ناهار امروز' },
+  {
+    icon: Receipt,
+    label: 'ثبت سریع هزینه کافه',
+    prompt: 'ثبت کن ۵۰ هزار تومن قهوه در دسته خوراک',
+  },
+  {
+    icon: Users,
+    label: 'ایجاد گروه دنگ سفر',
+    prompt: 'یک گروه دنگ به نام سفر شمال با اعضای علی و رضا بساز',
+  },
+  {
+    icon: Target,
+    label: 'تعریف هدف مالی و پس‌انداز',
+    prompt: 'هدف مالی خرید لپ‌تاپ به مبلغ ۴۰ میلیون تومان برای ۶ ماه آینده ایجاد کن',
+  },
+  {
+    icon: Bell,
+    label: 'تنظیم یادآور قسط و قبوض',
+    prompt: 'یادآور قسط وام مسکن به مبلغ ۳ میلیون تومان برای ۱۰ روز دیگر تنظیم کن',
+  },
 ];
 
-export const AIAssistant: React.FC<{ isOpen?: boolean; onClose?: () => void; initialMode?: 'agent' | 'advisor' }> = ({ isOpen = true, onClose, initialMode = 'agent' }) => {
-  const { user, hasAIAccess, isProUser, setActiveTab, openSubscriptionModal, addTransaction, createDongGroup, addGoal, addReminder } = useApp();
-  const [messages, setMessages] = useState<ChatMessage[]>(() => readModeMessages(initialMode));
-  const [mode, setMode] = useState<'agent' | 'advisor'>(initialMode);
+export const AIAssistant: React.FC<{ isOpen?: boolean; onClose?: () => void }> = ({
+  isOpen = true,
+  onClose,
+}) => {
+  const {
+    user,
+    hasAIAccess,
+    isProUser,
+    setActiveTab,
+    openSubscriptionModal,
+    addTransaction,
+    addGoal,
+    addReminder,
+  } = useApp();
+
+  const {
+    checkCanMakeAiRequest,
+    consumeAiRequest,
+    aiRequestsLeft,
+    isPremium,
+  } = useSubscription();
+
+  const [messages, setMessages] = useState<ChatMessageItem[]>([]);
   const [inputValue, setInputValue] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [remainingQueries, setRemainingQueries] = useState<number | null>(null);
-  const [pendingAction, setPendingAction] = useState<PendingAction | null>(null);
-  const [pendingReply, setPendingReply] = useState<string>('');
+  const [aiMode, setAiMode] = useState<'agent' | 'advisor'>('agent');
+
   const messagesEndRef = useRef<HTMLDivElement>(null);
-  const recognitionRef = useRef<any>(null);
-  const [isListening, setIsListening] = useState(false);
-  const [voiceError, setVoiceError] = useState<string | null>(null);
-  const isVip = user?.tier === 'vip';
 
-  useEffect(() => { try { if (messages.length > 0) localStorage.setItem(STORAGE_KEYS[mode], JSON.stringify(messages.slice(-100))); else localStorage.removeItem(STORAGE_KEYS[mode]); } catch {} messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' }); }, [messages, pendingAction, mode]);
+  // Voice Recognition Hook
+  const {
+    isListening,
+    isSupported: isVoiceSupported,
+    startListening,
+    stopListening,
+    toggleListening,
+    error: voiceError,
+  } = useSpeechRecognition({
+    lang: 'fa-IR',
+    continuous: false,
+    interimResults: true,
+    onResult: (transcript, isFinal) => {
+      setInputValue(transcript);
+    },
+    onError: (err) => {
+      setErrorMessage(err);
+      setTimeout(() => setErrorMessage(null), 5000);
+    },
+  });
 
-  const switchMode = (nextMode: 'agent' | 'advisor') => { if (nextMode === mode) return; setMode(nextMode); setMessages(readModeMessages(nextMode)); setPendingAction(null); setPendingReply(''); setErrorMessage(null); setVoiceError(null); };
-  const handleClearHistory = () => { setMessages([]); localStorage.removeItem(STORAGE_KEYS[mode]); setErrorMessage(null); };
+  // Load chat session from storage
+  useEffect(() => {
+    try {
+      const stored = localStorage.getItem(STORAGE_KEY);
+      if (stored) {
+        const parsed = JSON.parse(stored);
+        if (Array.isArray(parsed)) {
+          setMessages(parsed);
+        }
+      }
+    } catch {}
 
-  const startVoiceInput = () => {
-    if (!isVip) { setVoiceError('قابلیت گفت‌وگوی صوتی فقط برای اشتراک VIP فعال است.'); return; }
-    const SpeechRecognitionCtor = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
-    if (!SpeechRecognitionCtor) { setVoiceError('مرورگر شما از تشخیص گفتار پشتیبانی نمی‌کند. لطفاً از نسخه به‌روز Chrome یا Edge استفاده کنید.'); return; }
-    setVoiceError(null);
-    if (isListening && recognitionRef.current) { recognitionRef.current.stop(); setIsListening(false); return; }
-    const recognition = new SpeechRecognitionCtor();
-    recognition.lang = 'fa-IR'; recognition.continuous = false; recognition.interimResults = false;
-    recognition.onstart = () => setIsListening(true);
-    recognition.onend = () => setIsListening(false);
-    recognition.onerror = (event: any) => { setIsListening(false); setVoiceError(event?.error === 'not-allowed' ? 'برای استفاده از ویس، اجازه دسترسی به میکروفون را فعال کن.' : 'تشخیص صدا انجام نشد؛ دوباره تلاش کن.'); };
-    recognition.onresult = (event: any) => { const transcript = event?.results?.[0]?.[0]?.transcript; if (transcript) setInputValue((prev) => prev ? `${prev} ${transcript}` : transcript); };
-    recognitionRef.current = recognition;
-    try { recognition.start(); } catch { setIsListening(false); setVoiceError('میکروفون در حال استفاده است یا امکان شروع ضبط وجود ندارد.'); }
+    const handleUnload = () => {
+      localStorage.removeItem(STORAGE_KEY);
+    };
+    window.addEventListener('beforeunload', handleUnload);
+    return () => window.removeEventListener('beforeunload', handleUnload);
+  }, []);
+
+  // Sync to storage
+  useEffect(() => {
+    try {
+      if (messages.length > 0) {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(messages));
+      } else {
+        localStorage.removeItem(STORAGE_KEY);
+      }
+    } catch {}
+    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+  }, [messages]);
+
+  const handleClearHistory = () => {
+    setMessages([]);
+    localStorage.removeItem(STORAGE_KEY);
+    setErrorMessage(null);
   };
 
-  useEffect(() => () => { try { recognitionRef.current?.stop(); } catch {} }, []);
+  /**
+   * Executes a proposed AI Action directly into Supabase/Context
+   */
+  const handleExecuteAction = async (
+    messageId: string,
+    action: AiAssistantAction
+  ): Promise<boolean> => {
+    try {
+      const { type } = action;
+      const params = action.data || action.params || {};
 
+      // 1. Transaction
+      if (type === 'create_transaction' || type === 'add_transaction') {
+        const txType: TransactionType = String(params.type || '').toLowerCase().includes('income')
+          ? 'income'
+          : 'expense';
+        const amount = Math.round(Number(params.amount) || 0);
+
+        await addTransaction({
+          type: txType,
+          amount,
+          category: params.category || (txType === 'income' ? 'حقوق و دستمزد' : 'خوراک و غذا'),
+          description:
+            params.description ||
+            (txType === 'income' ? 'درآمد ثبت شده توسط هوش مصنوعی' : 'هزینه ثبت شده توسط هوش مصنوعی'),
+          account: 'کارت اصلی',
+          date: params.date || new Date().toISOString(),
+        });
+
+        const successMsg = `تراکنش ${txType === 'income' ? 'درآمد' : 'هزینه'} با مبلغ ${formatToman(
+          amount
+        )} با موفقیت ثبت گردید.`;
+
+        setMessages((prev) =>
+          prev.map((m) =>
+            m.id === messageId
+              ? {
+                  ...m,
+                  actionExecuted: true,
+                  actionSuccessMessage: successMsg,
+                  actionError: null,
+                }
+              : m
+          )
+        );
+        return true;
+      }
+
+      // 2. Deng Group Creation
+      if (type === 'create_dong_group' || type === 'create_group') {
+        const supabase = getSupabaseClient();
+        const membersList: string[] =
+          Array.isArray(params.members) && params.members.length > 0 ? [...params.members] : ['من'];
+        if (!membersList.includes('من') && user?.full_name && !membersList.includes(user.full_name)) {
+          membersList.unshift(user.full_name);
+        }
+
+        if (!supabase || !user?.id || user.id === 'guest') {
+          throw new Error('برای ساخت گروه دنگ، اتصال پایگاه داده و ورود به حساب کاربری الزامی است.');
+        }
+        const groupName = String(params.name || '').trim();
+        if (!groupName) throw new Error('نام گروه دنگ مشخص نشده است.');
+        const { data: createdGroup, error: groupErr } = await supabase
+          .from('dong_groups')
+          .insert({
+            user_id: user.id,
+            name: groupName,
+            members: membersList,
+            is_family_mode: false,
+            families: [],
+          })
+          .select('id,name,members')
+          .single();
+        if (groupErr) throw groupErr;
+        if (!createdGroup?.id) throw new Error('گروه در پایگاه داده تأیید نشد؛ لطفاً دوباره تلاش کنید.');
+
+        const successMsg = `گروه دنگ «${createdGroup.name}» با اعضای (${(createdGroup.members || membersList).join(
+          '، '
+        )}) در پایگاه داده ساخته شد.`;
+
+        setMessages((prev) =>
+          prev.map((m) =>
+            m.id === messageId
+              ? {
+                  ...m,
+                  actionExecuted: true,
+                  actionSuccessMessage: successMsg,
+                  actionError: null,
+                }
+              : m
+          )
+        );
+        return true;
+      }
+
+      // 3. Add Deng Expense
+      if (type === 'add_deng_expense') {
+        const supabase = getSupabaseClient();
+        const amount = Math.round(Number(params.amount) || 0);
+        const groupName = params.group_name || 'سفر دوستانه';
+        const title = params.title || 'هزینه مشترک دنگ';
+        const payer = params.payer || user?.full_name || 'من';
+        const participants = Array.isArray(params.participants) && params.participants.length > 0
+          ? params.participants
+          : ['من', 'علی', 'رضا'];
+
+        if (!supabase || !user?.id || user.id === 'guest') {
+          throw new Error('برای ثبت خرج دنگ، اتصال پایگاه داده و ورود به حساب کاربری الزامی است.');
+        }
+        if (!Number.isFinite(amount) || amount <= 0) throw new Error('مبلغ خرج دنگ باید بیشتر از صفر باشد.');
+        let groupId: string | null = null;
+        const { data: existingGroup, error: findGroupError } = await supabase
+          .from('dong_groups').select('id').eq('name', groupName).maybeSingle();
+        if (findGroupError) throw findGroupError;
+        if (existingGroup) {
+          groupId = existingGroup.id;
+        } else {
+          const { data: newG, error: createGroupError } = await supabase
+            .from('dong_groups')
+            .insert({ user_id: user.id, name: groupName, members: participants, is_family_mode: false, families: [] })
+            .select('id').single();
+          if (createGroupError) throw createGroupError;
+          groupId = newG?.id || null;
+        }
+        if (!groupId) throw new Error('گروه دنگ در پایگاه داده پیدا یا ساخته نشد.');
+        const { error: expenseError } = await supabase.from('dong_expenses').insert({
+          group_id: groupId, title, payer, amount, participants, is_itemized: false, bill_items: [],
+        });
+        if (expenseError) throw expenseError;
+
+        const successMsg = `خرج دنگ «${title}» به مبلغ ${formatToman(amount)} پرداخت شده توسط ${payer} در پایگاه داده ثبت شد.`;
+
+        setMessages((prev) =>
+          prev.map((m) =>
+            m.id === messageId
+              ? {
+                  ...m,
+                  actionExecuted: true,
+                  actionSuccessMessage: successMsg,
+                  actionError: null,
+                }
+              : m
+          )
+        );
+        return true;
+      }
+
+      // 4. Financial Goal
+      if (type === 'create_goal') {
+        const targetAmount = Math.round(Number(params.target_amount) || 0);
+        await addGoal({
+          title: params.title || 'هدف مالی هوشمند',
+          target_amount: targetAmount,
+          current_amount: 0,
+          deadline:
+            params.deadline || new Date(Date.now() + 90 * 86400000).toISOString().split('T')[0],
+          category: params.category || 'سایر',
+          status: 'in_progress',
+        });
+
+        const successMsg = `هدف مالی «${params.title}» با سقف ${formatToman(
+          targetAmount
+        )} در اهداف شما ذخیره گردید.`;
+
+        setMessages((prev) =>
+          prev.map((m) =>
+            m.id === messageId
+              ? {
+                  ...m,
+                  actionExecuted: true,
+                  actionSuccessMessage: successMsg,
+                  actionError: null,
+                }
+              : m
+          )
+        );
+        return true;
+      }
+
+      // 5. Reminder
+      if (type === 'create_reminder') {
+        const remAmount = Math.round(Number(params.amount) || 0);
+        await addReminder({
+          title: params.title || 'یادآور مالی هوشمند',
+          amount: remAmount,
+          due_date: params.due_date || new Date().toISOString().split('T')[0],
+          recurrence: params.recurrence || 'once',
+          category: params.category || 'قبوض',
+          is_paid: false,
+        });
+
+        const successMsg = `یادآور «${params.title}» به مبلغ ${formatToman(
+          remAmount
+        )} در تقویم یادآورها ثبت شد.`;
+
+        setMessages((prev) =>
+          prev.map((m) =>
+            m.id === messageId
+              ? {
+                  ...m,
+                  actionExecuted: true,
+                  actionSuccessMessage: successMsg,
+                  actionError: null,
+                }
+              : m
+          )
+        );
+        return true;
+      }
+
+      // 6. Financial Analysis (informational)
+      if (type === 'financial_analysis' || type === 'analysis_report') {
+        setMessages((prev) =>
+          prev.map((m) =>
+            m.id === messageId
+              ? {
+                  ...m,
+                  actionExecuted: true,
+                  actionSuccessMessage: 'شاخص‌های تحلیلی با موفقیت در داشبورد بررسی شدند.',
+                  actionError: null,
+                }
+              : m
+          )
+        );
+        return true;
+      }
+
+      return false;
+    } catch (err: any) {
+      console.error('Error executing action:', err);
+      setMessages((prev) =>
+        prev.map((m) =>
+          m.id === messageId
+            ? {
+                ...m,
+                actionError: err?.message || 'خطا در اعمال تغییرات بر روی پایگاه داده.',
+              }
+            : m
+        )
+      );
+      return false;
+    }
+  };
+
+  const handleDismissAction = (messageId: string) => {
+    setMessages((prev) =>
+      prev.map((m) => (m.id === messageId ? { ...m, action: null } : m))
+    );
+  };
+
+  /**
+   * Handles sending message with Quota Guard & RPC Synchronization
+   */
   const handleSendMessage = async (textToSend?: string) => {
+    if (isListening) {
+      stopListening();
+    }
+
     const text = (textToSend || inputValue).trim();
     if (!text || isLoading) return;
-    const lower = text.toLowerCase();
-    const isProhibited = lower.includes('فیش') || lower.includes('رسید') || lower.includes('واریز') || lower.includes('ادمین') || lower.includes('رمز عبور') || lower.includes('پسورد') || lower.includes('پرداخت من');
-    const userMsg: ChatMessage = { id: `usr-${Date.now()}`, role: 'user', content: text, timestamp: new Date().toISOString() };
-    setMessages((prev) => [...prev, userMsg]);
-    setInputValue(''); setErrorMessage(null);
-    if (isProhibited) { const botMsg: ChatMessage = { id: `ast-${Date.now()}`, role: 'assistant', content: 'من دستیار راهنمای امکانات چندبوم (شامل دنگ گروهی، اهداف مالی، یادآورها و سوالات متداول) هستم. برای پیگیری پرداخت‌ها، بررسی فیش یا ورود به حساب، لطفاً از بخش پشتیبانی (ارسال تیکت) استفاده فرمایید.', timestamp: new Date().toISOString() }; setMessages((prev) => [...prev, botMsg]); return; }
-    
-    setIsLoading(true); trackAiQuerySent(mode === 'advisor' ? 'financial_advisor' : 'assistant_agent');
-    try {
-      const historyPayload = messages.slice(-6).map((m) => ({ role: m.role, content: m.content }));
-      const response = await invokeAiAssistantEdgeFunction(text, historyPayload, mode);
-      if (response.success && response.reply) {
-        if (mode === 'agent' && response.action && response.requires_confirmation) { setPendingReply(response.reply); setPendingAction({ type: response.action.type, params: response.action.params, description: response.action.description }); }
-        else { const botMsg: ChatMessage = { id: `ast-${Date.now()}`, role: 'assistant', content: response.reply, timestamp: new Date().toISOString() }; setMessages((prev) => [...prev, botMsg]); }
-        if (typeof response.remaining_queries === 'number') setRemainingQueries(response.remaining_queries);
-      } else { if (response.code === 'QUOTA_EXCEEDED') trackAiQuotaExceeded(); setErrorMessage(response.error || 'خطا در ارتباط با سرور هوش مصنوعی چندبوم.'); }
-    } catch (err: any) { setErrorMessage(err?.message || 'برقراری ارتباط با هوش مصنوعی میسر نشد.'); }
-    finally { setIsLoading(false); }
-  };
 
-  const handleConfirmAction = async () => {
-    if (!pendingAction) return;
-    setIsLoading(true);
-    try {
-      let success = false; let successMessage = '';
-      switch (pendingAction.type) {
-        case 'create_transaction': { const { amount, category, type, description, date } = pendingAction.params; await addTransaction({ amount: Number(amount), category: category || 'سایر و متفرقه', type: type || 'expense', description: description || pendingAction.description, date: date || new Date().toISOString(), account: 'ثبت توسط AI' }); success = true; successMessage = `✅ تراکنش با موفقیت ثبت شد.`; break; }
-        case 'create_dong_group': { const { name, members } = pendingAction.params; const result = await createDongGroup(name, members || [], false); if (result.success) { success = true; successMessage = `✅ گروه دنگ «${name}» با ${members?.length || 0} عضو ساخته شد.`; } else throw new Error(result.error || 'خطا در ساخت گروه'); break; }
-        case 'create_goal': { const { title, target_amount, deadline, category, notes } = pendingAction.params; await addGoal({ title: title || pendingAction.description, target_amount: Number(target_amount) || 0, current_amount: 0, deadline: deadline || null, category: category || 'سایر', status: 'in_progress', notes: notes || '' }); success = true; successMessage = `✅ هدف مالی «${title}» ساخته شد.`; break; }
-        case 'create_reminder': { const { title, amount, due_date, category, recurrence } = pendingAction.params; await addReminder({ title: title || pendingAction.description, amount: Number(amount) || 0, due_date: due_date || new Date().toISOString(), category: category || 'سایر', is_paid: false, recurrence: recurrence || 'once' }); success = true; successMessage = `✅ یادآور «${title}» تنظیم شد.`; break; }
-        default: throw new Error(`نوع action ناشناخته: ${pendingAction.type}`);
+    // 1. Quota Guard: Verify client status first
+    const clientCheck = checkCanMakeAiRequest();
+    if (!clientCheck.allowed) {
+      setErrorMessage(clientCheck.reason || 'سهمیه هوش مصنوعی شما به پایان رسیده است.');
+      trackAiQuotaExceeded();
+      if (openSubscriptionModal) {
+        openSubscriptionModal();
       }
-      if (success) { const successMsg: ChatMessage = { id: `msg-${Date.now()}-ok`, role: 'assistant', content: `${pendingReply}\n\n${successMessage}`, timestamp: new Date().toISOString() }; setMessages((prev) => [...prev, successMsg]); setPendingAction(null); setPendingReply(''); }
-    } catch (err: any) { const errorMsg: ChatMessage = { id: `msg-${Date.now()}-fail`, role: 'assistant', content: `❌ خطا در انجام عملیات: ${err.message}`, timestamp: new Date().toISOString() }; setMessages((prev) => [...prev, errorMsg]); setPendingAction(null); }
-    finally { setIsLoading(false); }
+      return;
+    }
+
+    // 2. Prohibited Topics Check (Password/Deposit queries directed to tickets)
+    const lower = text.toLowerCase();
+    const isProhibited =
+      lower.includes('فیش') ||
+      lower.includes('رسید') ||
+      lower.includes('واریز') ||
+      lower.includes('ادمین') ||
+      lower.includes('رمز عبور') ||
+      lower.includes('پسورد') ||
+      lower.includes('پرداخت من');
+
+    const userMsg: ChatMessageItem = {
+      id: `usr-${Date.now()}`,
+      role: 'user',
+      content: text,
+      timestamp: new Date().toISOString(),
+    };
+
+    setMessages((prev) => [...prev, userMsg]);
+    setInputValue('');
+    setErrorMessage(null);
+
+    if (isProhibited) {
+      const botMsg: ChatMessageItem = {
+        id: `ast-${Date.now()}`,
+        role: 'assistant',
+        content:
+          'من دستیار مدیریت مالی چندبوم هستم. برای پیگیری پرداخت‌ها، بررسی وضعیت فیش‌های بانکی یا تغییر رمز عبور، لطفاً مستقیماً از بخش «پروفایل و اشتراک» یا ارسال «تیکت به پشتیبانی» استفاده فرمایید.',
+        timestamp: new Date().toISOString(),
+      };
+      setMessages((prev) => [...prev, botMsg]);
+      return;
+    }
+
+    // The Edge Function is the single authority for persisted quota.
+    // Do not decrement it here; this avoids charging twice.
+
+    setIsLoading(true);
+    trackAiQuerySent('assistant_guide');
+
+    try {
+      const historyPayload = messages.slice(-4).map((m) => ({
+        role: m.role,
+        content: m.content,
+      }));
+
+      const response = await invokeAiAssistantEdgeFunction(text, historyPayload, aiMode);
+
+      if (response.success && response.reply) {
+        // Mirror quota in client-only UI state after the server succeeds.
+        // The persisted quota has already been handled by the Edge Function.
+        await consumeAiRequest();
+        const proposedAction = response.action || null;
+        const proposedData = proposedAction?.data || proposedAction?.params || {};
+        let safeReply = response.reply;
+        // Never display an AI-generated claim that an operation is already running/done before the user confirms it.
+        if (proposedAction && (proposedAction.type === 'create_dong_group' || proposedAction.type === 'create_group')) {
+          const proposedName = String(proposedData.name || 'گروه جدید');
+          const proposedMembers = Array.isArray(proposedData.members) ? proposedData.members : [];
+          safeReply = `پیشنهاد ساخت گروه دنگ «${proposedName}»${proposedMembers.length ? ` با اعضای ${proposedMembers.join('، ')}` : ''} آماده است. هنوز چیزی در پایگاه داده ذخیره نشده؛ برای ساخت واقعی، جزئیات را بررسی و دکمه تأیید را بزن.`;
+        }
+        const botMsg: ChatMessageItem = {
+          id: `ast-${Date.now()}`,
+          role: 'assistant',
+          content: safeReply || 'پیشنهاد آماده شد؛ جزئیات را در کارت عملیات بررسی کنید.',
+          timestamp: new Date().toISOString(),
+          action: proposedAction,
+        };
+        setMessages((prev) => [...prev, botMsg]);
+
+        if (typeof response.remaining_queries === 'number') {
+          setRemainingQueries(response.remaining_queries);
+        }
+      } else {
+        if (response.code === 'QUOTA_EXCEEDED') {
+          trackAiQuotaExceeded();
+          if (openSubscriptionModal) openSubscriptionModal();
+        }
+        setErrorMessage(
+          response.error || 'خطا در ارتباط با هوش مصنوعی چندبوم. لطفاً مجدداً تلاش فرمایید.'
+        );
+      }
+    } catch (err: any) {
+      setErrorMessage(err?.message || 'برقراری ارتباط با هوش مصنوعی میسر نشد.');
+    } finally {
+      setIsLoading(false);
+    }
   };
 
-  const handleRejectAction = () => { const rejectMsg: ChatMessage = { id: `msg-${Date.now()}-rej`, role: 'assistant', content: ' عملیات لغو شد. اگر سوال دیگری دارید، در خدمتم.', timestamp: new Date().toISOString() }; setMessages((prev) => [...prev, rejectMsg]); setPendingAction(null); setPendingReply(''); };
-  const getActionIcon = (type: string) => { switch (type) { case 'create_transaction': return MessageSquare; case 'create_dong_group': return Users; case 'create_goal': return Target; case 'create_reminder': return Bell; default: return Sparkles; } };
-  const getActionTitle = (type: string) => { switch (type) { case 'create_transaction': return 'ثبت تراکنش'; case 'create_dong_group': return 'ساخت گروه دنگ'; case 'create_goal': return 'تعریف هدف مالی'; case 'create_reminder': return 'تنظیم یادآور'; default: return 'انجام عملیات'; } };
   const isSubscriptionActive = hasAIAccess;
+
   if (!isOpen) return null;
 
   return (
     <div className="w-full max-w-4xl mx-auto bg-white dark:bg-[#0E1612] border border-[#E2E8E4] dark:border-[#1E2D24] rounded-3xl shadow-xl overflow-hidden flex flex-col font-cairo">
+      {/* Header */}
       <div className="p-4 sm:p-5 border-b border-[#E2E8E4] dark:border-[#1E2D24] bg-zinc-50 dark:bg-[#131F19] flex items-center justify-between">
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-2xl bg-emerald-500/10 dark:bg-emerald-500/20 border border-emerald-500/30 flex items-center justify-center text-emerald-600 dark:text-emerald-400"><Bot className="w-5 h-5" /></div>
-          <div><div className="flex items-center gap-2"><h2 className="text-sm sm:text-base font-bold text-zinc-900 dark:text-white">{mode === 'advisor' ? 'مشاور مالی هوشمند چندبوم' : 'دستیار اجرایی چندبوم'}</h2><span className="text-[10px] px-2 py-0.5 rounded-md bg-amber-400 text-zinc-950 font-black flex items-center gap-1"><Crown className="w-3 h-3" /><span>{user.tier === 'vip' ? 'اشتراک VIP' : user.tier === 'pro' ? 'اشتراک طلایی (Pro)' : user.tier === 'bronze' ? 'اشتراک برنزی' : 'ویژه کاربران اشتراکی'}</span></span></div><p className="text-[11px] text-zinc-500 dark:text-zinc-400">{mode === 'advisor' ? 'تحلیل شخصی‌سازی‌شده درآمد، هزینه، بودجه و اهداف آینده' : 'دنگ گروهی، ثبت تراکنش، اهداف مالی و یادآورها'}</p></div>
+          <div className="w-10 h-10 rounded-2xl bg-emerald-500/10 dark:bg-emerald-500/20 border border-emerald-500/30 flex items-center justify-center text-emerald-600 dark:text-emerald-400">
+            <Bot className="w-5 h-5" />
+          </div>
+          <div>
+            <div className="flex items-center gap-2">
+              <h2 className="text-sm sm:text-base font-bold text-zinc-900 dark:text-white">
+                دستیار هوشمند و راهنمای <span className="font-brand text-emerald-700 dark:text-emerald-400">چندبوم</span>
+              </h2>
+              <span className="text-[10px] px-2 py-0.5 rounded-md bg-amber-400 text-zinc-950 font-black flex items-center gap-1">
+                <Crown className="w-3 h-3" />
+                <span>
+                  {user.tier === 'vip'
+                    ? 'اشتراک ۳ ماهه VIP'
+                    : user.tier === 'pro'
+                    ? 'اشتراک ۱ ماهه طلایی'
+                    : user.tier === 'bronze'
+                    ? 'اشتراک ۱ ماهه برنزی'
+                    : 'ویژه کاربران دارای اشتراک'}
+                </span>
+              </span>
+            </div>
+            <p className="text-[11px] text-zinc-500 dark:text-zinc-400">
+              ورودی صوتی و متنی فارسی، ثبت تراکنش‌ها، گروه‌های دنگ، اهداف مالی و یادآورها
+            </p>
+          </div>
         </div>
-        <div className="flex items-center gap-2">{remainingQueries !== null && (<span className="hidden sm:inline-flex text-[11px] px-2.5 py-1 rounded-xl bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20 font-bold">{toPersianDigits(remainingQueries)} پرسش باقی‌مانده</span>)}{messages.length > 0 && (<button onClick={handleClearHistory} title="پاکسازی تاریخچه گفت‌وگو" className="p-2 rounded-xl text-zinc-400 hover:text-rose-500 hover:bg-rose-500/10 transition cursor-pointer"><RotateCcw className="w-4 h-4" /></button>)}{onClose && (<button onClick={onClose} className="p-2 rounded-xl text-zinc-400 hover:text-zinc-600 dark:hover:text-white hover:bg-zinc-200 dark:hover:bg-zinc-800 transition cursor-pointer"><X className="w-4 h-4" /></button>)}</div>
-      </div>
 
-      {isSubscriptionActive && (
-        <div className="px-4 sm:px-5 pt-4 bg-white dark:bg-[#0E1612]">
-          <div className="grid grid-cols-2 gap-2 rounded-2xl bg-zinc-100 dark:bg-[#101914] p-1.5 border border-[#E2E8E4] dark:border-[#1E2D24]" role="tablist" aria-label="حالت دستیار هوشمند">
-            <button type="button" role="tab" aria-selected={mode === 'agent'} onClick={() => switchMode('agent')} className={`rounded-xl px-3 py-2.5 text-xs sm:text-sm font-bold flex items-center justify-center gap-2 transition ${mode === 'agent' ? 'bg-emerald-600 text-white shadow-sm' : 'text-zinc-600 dark:text-zinc-300 hover:bg-white/70 dark:hover:bg-white/5'}`}>
-              <Bot className="w-4 h-4" /> دستیار اجرایی
+        <div className="flex items-center gap-2">
+          {/* Mode Switcher */}
+          <div className="hidden sm:inline-flex items-center p-0.5 rounded-xl bg-zinc-200/80 dark:bg-zinc-800 text-[11px] font-bold">
+            <button
+              type="button"
+              onClick={() => setAiMode('agent')}
+              className={`px-2.5 py-1 rounded-lg transition cursor-pointer ${
+                aiMode === 'agent'
+                  ? 'bg-emerald-700 text-white shadow-xs'
+                  : 'text-zinc-600 dark:text-zinc-300'
+              }`}
+            >
+              دستیار اجرایی
             </button>
-            <button type="button" role="tab" aria-selected={mode === 'advisor'} onClick={() => switchMode('advisor')} className={`rounded-xl px-3 py-2.5 text-xs sm:text-sm font-bold flex items-center justify-center gap-2 transition ${mode === 'advisor' ? 'bg-amber-500 text-zinc-950 shadow-sm' : 'text-zinc-600 dark:text-zinc-300 hover:bg-white/70 dark:hover:bg-white/5'}`}>
-              <Sparkles className="w-4 h-4" /> مشاور مالی هوشمند
+            <button
+              type="button"
+              onClick={() => setAiMode('advisor')}
+              className={`px-2.5 py-1 rounded-lg transition cursor-pointer ${
+                aiMode === 'advisor'
+                  ? 'bg-emerald-700 text-white shadow-xs'
+                  : 'text-zinc-600 dark:text-zinc-300'
+              }`}
+            >
+              مشاور مالی
             </button>
           </div>
-          <p className="text-[11px] text-zinc-500 dark:text-zinc-400 mt-2 leading-relaxed">
-            {mode === 'advisor' ? 'تحلیل بر اساس تراکنش‌ها، اهداف و یادآورهای واقعی حساب شما؛ در این حالت هیچ عملیاتی ثبت نمی‌شود.' : 'برای ثبت تراکنش، ساخت گروه دنگ، تعریف هدف یا تنظیم یادآور؛ عملیات فقط با تأیید شما انجام می‌شود.'}
-          </p>
-        </div>
-      )}
 
+          {typeof remainingQueries === 'number' && (
+            <span className="hidden sm:inline-flex text-[11px] px-2.5 py-1 rounded-xl bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20 font-bold">
+              {toPersianDigits(remainingQueries)} سهمیه باقی‌مانده
+            </span>
+          )}
+
+          {messages.length > 0 && (
+            <button
+              onClick={handleClearHistory}
+              title="پاکسازی تاریخچه گفت‌وگو"
+              className="p-2 rounded-xl text-zinc-400 hover:text-rose-500 hover:bg-rose-500/10 transition cursor-pointer"
+            >
+              <RotateCcw className="w-4 h-4" />
+            </button>
+          )}
+
+          {onClose && (
+            <button
+              onClick={onClose}
+              className="p-2 rounded-xl text-zinc-400 hover:text-zinc-600 dark:hover:text-white hover:bg-zinc-200 dark:hover:bg-zinc-800 transition cursor-pointer"
+            >
+              <X className="w-4 h-4" />
+            </button>
+          )}
+        </div>
+      </div>
+
+      {/* Access Gate: Subscription Requirement */}
       {!isSubscriptionActive ? (
         <div className="p-8 sm:p-12 flex flex-col items-center justify-center text-center bg-radial from-emerald-950/20 to-transparent">
-          <div className="w-16 h-16 rounded-3xl bg-amber-500/10 border border-amber-500/30 text-amber-500 flex items-center justify-center mb-4"><Crown className="w-8 h-8" /></div>
-          <h3 className="text-base sm:text-lg font-bold text-zinc-900 dark:text-white mb-2">ویژه کاربران دارای اشتراک برنزی، طلایی و VIP چندبوم</h3>
-          <p className="text-xs sm:text-sm text-zinc-500 dark:text-zinc-400 max-w-md mb-6 leading-relaxed">پلن پایه (رایگان) فاقد هوش مصنوعی است. برای بهره‌مندی از دستیار هوشمند اختصاصی، ثبت سریع پیامک‌ها و تحلیل تراز مالی، لطفاً اشتراک خود را به یکی از پلن‌های برنزی، طلایی (Pro) یا VIP ارتقا دهید.</p>
-          <button onClick={() => { if (openSubscriptionModal) openSubscriptionModal(); else setActiveTab('subscription'); }} className="px-6 py-3 rounded-2xl bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-zinc-950 font-bold text-xs sm:text-sm flex items-center gap-2 shadow-lg transition cursor-pointer"><Crown className="w-4 h-4" /><span>مشاهده پلن‌ها و فعال‌سازی اشتراک هوش مصنوعی</span></button>
+          <div className="w-16 h-16 rounded-3xl bg-amber-500/10 border border-amber-500/30 text-amber-500 flex items-center justify-center mb-4">
+            <Crown className="w-8 h-8" />
+          </div>
+          <h3 className="text-base sm:text-lg font-bold text-zinc-900 dark:text-white mb-2">
+            ویژه کاربران دارای اشتراک ۱ ماهه و ۳ ماهه چندبوم
+          </h3>
+          <p className="text-xs sm:text-sm text-zinc-500 dark:text-zinc-400 max-w-md mb-6 leading-relaxed">
+            طرح پایه فاقد هوش مصنوعی است. برای بهره‌مندی از پردازش صوتی، ثبت سریع تراکنش‌ها، گروه‌های دنگ، اهداف مالی و مشاور هوشمند، اشتراک ۱ ماهه یا ۳ ماهه خود را فعال کنید.
+          </p>
+          <button
+            onClick={() => {
+              if (openSubscriptionModal) openSubscriptionModal();
+              else setActiveTab('subscription');
+            }}
+            className="px-6 py-3 rounded-2xl bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-zinc-950 font-bold text-xs sm:text-sm flex items-center gap-2 shadow-lg transition cursor-pointer"
+          >
+            <Crown className="w-4 h-4" />
+            <span>مشاهده پلن‌های ۱ و ۳ ماهه و ارتقای حساب</span>
+          </button>
         </div>
       ) : (
         <>
+          {/* Messages Area */}
           <div className="flex-1 p-4 sm:p-6 overflow-y-auto max-h-[500px] min-h-[350px] space-y-4">
             {messages.length === 0 ? (
               <div className="h-full flex flex-col items-center justify-center py-6 text-center">
-                <div className="w-12 h-12 rounded-2xl bg-emerald-500/10 text-emerald-500 flex items-center justify-center mb-3"><Sparkles className="w-6 h-6" /></div>
-                <h4 className="text-sm font-bold text-zinc-800 dark:text-zinc-200 mb-1">چه کمکی از دست من برای شما برمی‌آید؟</h4>
-                <p className="text-xs text-zinc-500 dark:text-zinc-400 max-w-sm mb-6">یکی از موضوعات پرکاربرد زیر را انتخاب کنید یا سوال خود را در کادر زیر بپرسید:</p>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 w-full max-w-lg text-right">
-                  {(mode === 'advisor' ? [{ icon: Sparkles, label: 'برنامه سه‌ماهه', prompt: 'با توجه به اطلاعات مالی حسابم، یک برنامه واقع‌بینانه برای سه ماه آینده پیشنهاد بده.' }, { icon: HelpCircle, label: 'تحلیل هزینه‌ها', prompt: 'هزینه‌های من را بر اساس دسته‌بندی تحلیل کن و مهم‌ترین فرصت‌های کاهش هزینه را توضیح بده.' }, { icon: Target, label: 'بررسی اهداف', prompt: 'با توجه به اهداف مالی ثبت‌شده‌ام، وضعیت پیشرفت و موانع احتمالی را تحلیل کن.' }, { icon: Calendar, label: 'سناریوی پس‌انداز', prompt: 'اگر روند درآمد و هزینه‌ام ادامه پیدا کند، وضعیت مالی‌ام در شش ماه آینده چطور می‌شود؟ فرضیات را هم بگو.' }] : QUICK_PROMPTS).map((qp, idx) => { const Icon = qp.icon; return (<button key={idx} onClick={() => handleSendMessage(qp.prompt)} className="p-3 rounded-2xl bg-zinc-50 dark:bg-[#121E18] border border-[#E2E8E4] dark:border-[#1E2E25] hover:border-emerald-500/50 hover:bg-emerald-500/5 transition text-right flex items-start gap-2.5 cursor-pointer group"><div className="p-1.5 rounded-lg bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 shrink-0 group-hover:scale-105 transition"><Icon className="w-3.5 h-3.5" /></div><div><p className="text-xs font-bold text-zinc-800 dark:text-zinc-200 group-hover:text-emerald-500 transition">{qp.label}</p><p className="text-[10px] text-zinc-500 dark:text-zinc-400 line-clamp-1">{qp.prompt}</p></div></button>); })}
+                <div className="w-12 h-12 rounded-2xl bg-emerald-500/10 text-emerald-500 flex items-center justify-center mb-3">
+                  <Zap className="w-6 h-6" />
+                </div>
+                <h4 className="text-sm font-bold text-zinc-800 dark:text-zinc-200 mb-1">
+                  سلام! چطور می‌تونم در مدیریت مالی یا ثبت عملیات به شما کمک کنم؟
+                </h4>
+                <p className="text-xs text-zinc-500 dark:text-zinc-400 max-w-sm mb-6">
+                  کافیست پیام صوتی دهید یا بنویسید؛ هوش مصنوعی آن را شناسایی و پیشنهاد ثبت می‌دهد:
+                </p>
+
+                {/* Quick Prompts Grid */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 w-full max-w-lg">
+                  {QUICK_PROMPTS.map((qp, idx) => {
+                    const IconComponent = qp.icon;
+                    return (
+                      <button
+                        key={idx}
+                        type="button"
+                        onClick={() => handleSendMessage(qp.prompt)}
+                        className="flex items-center gap-2.5 p-3 rounded-2xl bg-zinc-50 dark:bg-[#14231B] border border-[#E2E8E4] dark:border-[#22352B] hover:border-emerald-500/50 hover:bg-emerald-50/40 dark:hover:bg-[#182C22] text-right transition cursor-pointer group"
+                      >
+                        <div className="w-8 h-8 rounded-xl bg-white dark:bg-[#101914] border border-[#E2E8E4] dark:border-[#22352B] flex items-center justify-center text-emerald-600 dark:text-emerald-400 shrink-0 group-hover:scale-105 transition">
+                          <IconComponent className="w-4 h-4" />
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <p className="text-xs font-bold text-zinc-800 dark:text-zinc-200 group-hover:text-emerald-600 dark:group-hover:text-emerald-400 transition truncate">
+                            {qp.label}
+                          </p>
+                          <p className="text-[10px] text-zinc-400 truncate">
+                            {qp.prompt}
+                          </p>
+                        </div>
+                      </button>
+                    );
+                  })}
                 </div>
               </div>
             ) : (
-              <>
-                {messages.map((m) => { const isUser = m.role === 'user'; return (<div key={m.id} className={`flex items-start gap-2.5 ${isUser ? 'flex-row-reverse' : 'flex-row'}`}><div className={`w-8 h-8 rounded-xl flex items-center justify-center text-xs shrink-0 ${isUser ? 'bg-zinc-800 text-white font-bold' : 'bg-emerald-600 text-white'}`}>{isUser ? 'شما' : <Bot className="w-4 h-4" />}</div><div className={`max-w-[85%] sm:max-w-[75%] rounded-2xl p-3.5 text-xs sm:text-sm leading-relaxed ${isUser ? 'bg-emerald-600 text-white rounded-tl-xs' : 'bg-zinc-100 dark:bg-[#15231C] text-zinc-900 dark:text-zinc-100 border border-[#E2E8E4] dark:border-[#22352B] rounded-tr-xs'}`}><div className="whitespace-pre-wrap">{m.content}</div></div></div>); })}
-                
-                {pendingAction && (
-                  <div className="flex items-start gap-2.5 flex-row">
-                    <div className="w-8 h-8 rounded-xl flex items-center justify-center text-xs shrink-0 bg-amber-500 text-white">{React.createElement(getActionIcon(pendingAction.type), { className: 'w-4 h-4' })}</div>
-                    <div className="max-w-[85%] sm:max-w-[75%] rounded-2xl p-4 bg-gradient-to-br from-amber-50 to-yellow-50 dark:from-amber-950/30 dark:to-yellow-950/30 border-2 border-amber-400/60 dark:border-amber-500/40 shadow-lg">
-                      <div className="flex items-center gap-2 mb-2"><Sparkles className="w-4 h-4 text-amber-600 dark:text-amber-400" /><span className="text-xs font-bold text-amber-800 dark:text-amber-300">{getActionTitle(pendingAction.type)} - نیاز به تأیید شما</span></div>
-                      <p className="text-xs text-zinc-700 dark:text-zinc-300 mb-3 leading-relaxed">{pendingReply}</p>
-                      <p className="text-[11px] font-bold text-zinc-600 dark:text-zinc-400 bg-white/60 dark:bg-black/20 p-2 rounded-lg mb-3">📋 {pendingAction.description}</p>
-                      <div className="flex items-center gap-2">
-                        <button onClick={handleConfirmAction} disabled={isLoading} className="flex-1 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 disabled:opacity-50 text-white text-xs font-bold flex items-center justify-center gap-1.5 transition cursor-pointer">{isLoading ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <CheckCircle2 className="w-3.5 h-3.5" />} <span>{isLoading ? 'در حال انجام...' : 'بله، انجام بده'}</span></button>
-                        <button onClick={handleRejectAction} disabled={isLoading} className="flex-1 py-2 rounded-xl bg-rose-500 hover:bg-rose-600 disabled:opacity-50 text-white text-xs font-bold flex items-center justify-center gap-1.5 transition cursor-pointer"><X className="w-3.5 h-3.5" /><span>انصراف</span></button>
-                      </div>
-                    </div>
-                  </div>
-                )}
-                {isLoading && !pendingAction && (<div className="flex items-center gap-2.5 text-xs text-zinc-400 animate-pulse"><div className="w-8 h-8 rounded-xl bg-emerald-600/20 flex items-center justify-center"><Loader2 className="w-4 h-4 animate-spin text-emerald-600" /></div><span>در حال تفکر...</span></div>)}
-                <div ref={messagesEndRef} />
-              </>
+              messages.map((m) => (
+                <ChatMessage
+                  key={m.id}
+                  message={m}
+                  onExecuteAction={handleExecuteAction}
+                  onDismissAction={handleDismissAction}
+                />
+              ))
             )}
-            {errorMessage && (<div className="p-3 rounded-xl bg-rose-500/10 border border-rose-500/30 text-rose-500 text-xs flex items-center gap-2"><AlertCircle className="w-4 h-4 shrink-0" /><span>{errorMessage}</span></div>)}
+
+            {isLoading && (
+              <div className="flex items-center gap-2.5 text-xs text-zinc-400 animate-pulse">
+                <div className="w-8 h-8 rounded-xl bg-emerald-600/20 text-emerald-500 flex items-center justify-center">
+                  <Bot className="w-4 h-4 animate-spin" />
+                </div>
+                <span>در حال تحلیل و تدوین پاسخ...</span>
+              </div>
+            )}
+
+            {errorMessage && (
+              <div className="p-3 rounded-xl bg-rose-500/10 border border-rose-500/30 text-rose-500 text-xs flex items-center gap-2">
+                <AlertCircle className="w-4 h-4 shrink-0" />
+                <span>{errorMessage}</span>
+              </div>
+            )}
+
+            <div ref={messagesEndRef} />
           </div>
-          
+
+          {/* Voice Input Live Indicator Bar */}
+          {isListening && (
+            <div className="px-4 py-2 bg-emerald-500/15 border-t border-emerald-500/30 flex items-center justify-between text-xs text-emerald-600 dark:text-emerald-400 animate-pulse">
+              <div className="flex items-center gap-2">
+                <span className="relative flex h-2.5 w-2.5">
+                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                  <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-emerald-500"></span>
+                </span>
+                <span className="font-bold">در حال شنیدن صدای شما به زبان فارسی... صحبت کنید</span>
+              </div>
+              <button
+                type="button"
+                onClick={stopListening}
+                className="text-[11px] underline text-emerald-700 dark:text-emerald-300 cursor-pointer font-bold"
+              >
+                پایان ضبط
+              </button>
+            </div>
+          )}
+
+          {/* Input Box */}
           <div className="p-3 sm:p-4 border-t border-[#E2E8E4] dark:border-[#1E2D24] bg-zinc-50 dark:bg-[#101914]">
-            <form onSubmit={(e) => { e.preventDefault(); handleSendMessage(); }} className="flex items-center gap-2">
-              {isVip ? (
-                <button type="button" onClick={startVoiceInput} title={isListening ? 'توقف ضبط صدا' : 'گفتن پیام با صدا (VIP)'} aria-label={isListening ? 'توقف ضبط صدا' : 'گفتن پیام با صدا'} className={`p-3 rounded-2xl border transition cursor-pointer shrink-0 ${isListening ? 'bg-rose-600 border-rose-500 text-white animate-pulse' : 'bg-emerald-500/10 border-emerald-500/30 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-500/20'}`}>{isListening ? <MicOff className="w-4 h-4" /> : <Mic className="w-4 h-4" />}</button>
-              ) : (
-                <button type="button" onClick={() => { setVoiceError('ورودی صوتی مخصوص اشتراک VIP است.'); if (openSubscriptionModal) openSubscriptionModal(); else setActiveTab('subscription'); }} title="ویژه اشتراک VIP" aria-label="قابلیت ویس ویژه VIP" className="p-3 rounded-2xl border border-amber-500/30 bg-amber-500/10 text-amber-600 hover:bg-amber-500/20 transition cursor-pointer shrink-0"><Lock className="w-4 h-4" /></button>
-              )}
-              <input type="text" value={inputValue} onChange={(e) => setInputValue(e.target.value)} placeholder={mode === "advisor" ? "درباره وضعیت مالی، هزینه‌ها یا برنامه آینده‌ات بپرس..." : "درباره دنگ، اهداف مالی، یادآورها یا ثبت تراکنش بپرس..."} disabled={isLoading || !!pendingAction} className="flex-1 min-w-0 px-4 py-3 bg-white dark:bg-[#14221B] border border-[#D5DDD7] dark:border-[#203328] rounded-2xl text-xs sm:text-sm text-zinc-900 dark:text-white placeholder-zinc-400 outline-none focus:border-emerald-500 transition font-cairo" />
-              <button type="submit" disabled={isLoading || !inputValue.trim() || !!pendingAction} className="p-3 rounded-2xl bg-emerald-600 hover:bg-emerald-500 disabled:opacity-50 text-white transition cursor-pointer shadow-md shrink-0"><Send className="w-4 h-4" /></button>
+            <form
+              onSubmit={(e) => {
+                e.preventDefault();
+                handleSendMessage();
+              }}
+              className="flex items-center gap-2"
+            >
+              {/* Voice Input Mic Button */}
+              <button
+                type="button"
+                onClick={toggleListening}
+                title={isListening ? 'پایان ضبط و نگه‌داشتن متن' : 'گفتار به متن فارسی؛ ارسال فقط با دکمه ارسال'}
+                className={`p-3 rounded-2xl transition cursor-pointer shrink-0 relative ${
+                  isListening
+                    ? 'bg-rose-500 hover:bg-rose-600 text-white ring-4 ring-rose-500/30 animate-pulse'
+                    : 'bg-zinc-200 dark:bg-[#182820] hover:bg-emerald-500/20 text-zinc-700 dark:text-zinc-300 hover:text-emerald-500'
+                }`}
+              >
+                {isListening ? (
+                  <MicOff className="w-4 h-4" />
+                ) : (
+                  <Mic className="w-4 h-4" />
+                )}
+              </button>
+
+              <input
+                type="text"
+                value={inputValue}
+                onChange={(e) => setInputValue(e.target.value)}
+                placeholder="دستور مالی خود را بگویید یا بنویسید (مثلاً: ثبت کن ۵۰ تومن قهوه، یا گروه دنگ بساز...)"
+                disabled={isLoading}
+                className="flex-1 px-4 py-3 bg-white dark:bg-[#14221B] border border-[#D5DDD7] dark:border-[#203328] rounded-2xl text-xs sm:text-sm text-zinc-900 dark:text-white placeholder-zinc-400 outline-none focus:border-emerald-500 transition font-cairo"
+              />
+
+              <button
+                type="submit"
+                disabled={isLoading || !inputValue.trim()}
+                className="p-3 rounded-2xl bg-emerald-700 hover:bg-emerald-600 disabled:opacity-50 text-white transition cursor-pointer shadow-md shrink-0 flex items-center justify-center"
+              >
+                {isLoading ? (
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                ) : (
+                  <Send className="w-4 h-4" />
+                )}
+              </button>
             </form>
-            {voiceError && <div role="status" className="mt-2 rounded-xl border border-amber-500/30 bg-amber-500/10 px-3 py-2 text-[11px] text-amber-700 dark:text-amber-300">{voiceError}</div>}
-            <div className="mt-2 flex items-center justify-between text-[10px] text-zinc-400 px-1"><span>{isVip ? (isListening ? 'در حال شنیدن... صحبت کن؛ متن تشخیص‌داده‌شده در کادر پیام قرار می‌گیرد.' : 'ویس VIP: پیام را با میکروفون بگو؛ متن در کادر قرار می‌گیرد و فقط با زدن ارسال فرستاده می‌شود.') : 'ورودی صوتی با میکروفون مخصوص کاربران VIP است.'}</span><span className="hidden sm:inline">گفت‌وگوی شما با سازوکارهای امنیتی چندبوم محافظت می‌شود.</span></div>
+
+            <div className="mt-2 flex items-center justify-between text-[10px] text-zinc-400 px-1">
+              <div className="flex items-center gap-1.5">
+                <Sparkles className="w-3 h-3 text-emerald-500" />
+                <span>دستیار هوشمند چندبوم با ورودی صوت فارسی (fa-IR)</span>
+              </div>
+              <span className="hidden sm:inline">حفاظت شده توسط سهمیه هوشمند ابری</span>
+            </div>
           </div>
         </>
       )}
     </div>
   );
 };
+
+export default AIAssistant;

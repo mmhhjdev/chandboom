@@ -3,7 +3,6 @@ import {
   Wallet,
   Shield,
   Crown,
-  Gem,
   LogIn,
   LogOut,
   Bell,
@@ -32,6 +31,7 @@ export const Header: React.FC<HeaderProps> = ({
     isAuthenticated,
     setIsAuthModalOpen,
     logout,
+    isProUser,
     requestSubscription,
     isAdmin,
     metrics,
@@ -42,10 +42,6 @@ export const Header: React.FC<HeaderProps> = ({
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
 
   const unpaidRemindersCount = reminders.filter((r) => !r.is_paid).length;
-  const tierIsActive = user.subscription_status === 'active' && (!user.subscription_expires_at || new Date(user.subscription_expires_at).getTime() > Date.now());
-  const tierLabel = user.tier === 'vip' ? 'اشتراک VIP' : user.tier === 'pro' ? 'اشتراک پرو' : user.tier === 'bronze' ? 'اشتراک برنزی' : 'اشتراک پایه';
-  const tierShortLabel = user.tier === 'vip' ? 'VIP' : user.tier === 'pro' ? 'پرو' : user.tier === 'bronze' ? 'برنزی' : 'پایه';
-  const tierBadgeClass = user.tier === 'vip' ? 'bg-gradient-to-r from-amber-300/25 via-yellow-400/20 to-amber-500/25 text-amber-800 dark:text-amber-200 border-amber-400/70 shadow-[0_0_12px_rgba(234,179,8,0.18)]' : user.tier === 'pro' ? 'bg-amber-500/15 text-amber-900 dark:text-amber-200 border-amber-400/50' : user.tier === 'bronze' ? 'bg-orange-500/15 text-orange-900 dark:text-orange-200 border-orange-400/50' : 'bg-zinc-100 text-zinc-700 dark:bg-zinc-800 dark:text-zinc-200 border-zinc-300 dark:border-zinc-700';
 
   return (
     <header className="sticky top-0 z-50 bg-white/95 dark:bg-[#0A100D]/95 backdrop-blur-md border-b border-[#E2E8E4] dark:border-[#1A2621] transition-colors font-cairo w-full">
@@ -55,7 +51,7 @@ export const Header: React.FC<HeaderProps> = ({
           <button
             onClick={() => setActiveTab('dashboard')}
             className="flex items-center gap-2 sm:gap-2.5 cursor-pointer group text-right"
-            title="مشاهده داشبورد چندبوم"
+            title="داشبورد مدیریت چندبوم"
           >
             <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl sm:rounded-2xl overflow-hidden shadow-md group-hover:scale-105 transition flex items-center justify-center bg-white dark:bg-[#0E1512] border border-emerald-500/40 p-1 shrink-0">
               <img
@@ -139,11 +135,11 @@ export const Header: React.FC<HeaderProps> = ({
               )}
 
               {/* Golden Pro Subscription Button / Active Badge */}
-              {tierIsActive && user.tier !== 'free' ? (
-                <div title={`${tierLabel} فعال`} className={`flex items-center gap-1 sm:gap-1.5 px-2.5 sm:px-3 py-1.5 sm:py-2 rounded-xl border text-[11px] sm:text-xs font-cairo font-bold shadow-xs shrink-0 ${tierBadgeClass}`}>
-                  {user.tier === 'vip' ? <Shield className="w-3.5 h-3.5 shrink-0" /> : user.tier === 'bronze' ? <Gem className="w-3.5 h-3.5 shrink-0" /> : <Crown className="w-3.5 h-3.5 shrink-0" />}
-                  <span className="hidden sm:inline whitespace-nowrap">{tierLabel} فعال</span>
-                  <span className="sm:hidden whitespace-nowrap">{tierShortLabel}</span>
+              {isProUser ? (
+                <div className="flex items-center gap-1 sm:gap-1.5 px-2.5 sm:px-3 py-1.5 sm:py-2 rounded-xl bg-amber-500/15 text-amber-900 dark:text-amber-200 border border-amber-400/50 text-[11px] sm:text-xs font-cairo font-bold shadow-xs shrink-0">
+                  <Crown className="w-3.5 h-3.5 text-amber-500 shrink-0" />
+                  <span className="hidden sm:inline whitespace-nowrap">حساب طلایی فعال</span>
+                  <span className="sm:hidden whitespace-nowrap">طلایی</span>
                 </div>
               ) : (
                 <button
@@ -178,7 +174,7 @@ export const Header: React.FC<HeaderProps> = ({
                   title="منوی حساب کاربری"
                 >
                   <img
-                    src={user.avatar_url}
+                    src={user.avatar_url || undefined}
                     alt={user.full_name}
                     className="w-7 h-7 sm:w-8 sm:h-8 rounded-xl object-cover border border-emerald-600 shadow-xs shrink-0"
                   />
@@ -204,7 +200,7 @@ export const Header: React.FC<HeaderProps> = ({
                       <div className="px-3 py-2.5 border-b border-[#E2E8E4] dark:border-[#1A2621] bg-zinc-50/80 dark:bg-[#141E1A]/80 rounded-xl mb-1">
                         <div className="flex items-center gap-2 mb-1">
                           <img
-                            src={user.avatar_url}
+                            src={user.avatar_url || undefined}
                             alt={user.full_name}
                             className="w-8 h-8 rounded-lg object-cover border border-emerald-500 shrink-0"
                           />
@@ -213,12 +209,14 @@ export const Header: React.FC<HeaderProps> = ({
                             <p className="text-[10px] text-zinc-400 font-mono truncate">{user.email}</p>
                           </div>
                         </div>
-                        {tierIsActive && user.tier !== 'free' ? (
-                          <span className={`inline-flex items-center gap-1 text-[10px] font-bold ${user.tier === 'vip' ? 'text-amber-600 dark:text-amber-300' : user.tier === 'bronze' ? 'text-orange-600 dark:text-orange-400' : 'text-amber-600 dark:text-amber-400'}`}>
-                            {user.tier === 'vip' ? <Shield className="w-3 h-3" /> : user.tier === 'bronze' ? <Gem className="w-3 h-3" /> : <Crown className="w-3 h-3" />} {tierLabel} فعال
+                        {isProUser ? (
+                          <span className={`inline-flex items-center gap-1 text-[10px] font-bold ${user.tier === 'vip' ? 'text-purple-600 dark:text-purple-300' : user.tier === 'bronze' ? 'text-orange-700 dark:text-orange-300' : 'text-amber-600 dark:text-amber-400'}`}>
+                            <Crown className="w-3 h-3" /> {user.tier === 'vip' ? 'حساب VIP فعال' : user.tier === 'bronze' ? 'حساب برنزی فعال' : 'حساب پرو فعال'}
                           </span>
+                        ) : user.subscription_status === 'pending_approval' ? (
+                          <span className="inline-block text-[10px] text-amber-600 dark:text-amber-400">در انتظار تأیید اشتراک</span>
                         ) : (
-                          <span className="inline-block text-[10px] text-zinc-500">اشتراک پایه / غیرفعال</span>
+                          <span className="inline-block text-[10px] text-zinc-500">حساب پایه فعال</span>
                         )}
                       </div>
 
@@ -261,8 +259,8 @@ export const Header: React.FC<HeaderProps> = ({
                           }}
                           className="w-full text-right px-2.5 py-2 rounded-xl text-zinc-700 dark:text-zinc-300 hover:bg-emerald-50 dark:hover:bg-[#16261E] hover:text-emerald-700 dark:hover:text-emerald-400 transition flex items-center gap-2 cursor-pointer"
                         >
-                          <LifeBuoy className="w-4 h-4 text-cyan-600 shrink-0" />
-                          <span>بخش پشتیبانی</span>
+                          <LifeBuoy className="w-4 h-4 text-emerald-600 shrink-0" />
+                          <span>بخش پشتیبانی و تیکت‌ها</span>
                         </button>
                       </div>
 

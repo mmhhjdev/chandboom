@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react';
 import {
-  Sparkles,
   Shield,
   ArrowRight,
   ArrowLeft,
@@ -13,7 +12,7 @@ import {
   Lock,
   Star,
   ChevronDown,
-  Crown,
+  ChevronUp,
   Laptop,
   CreditCard,
   HelpCircle,
@@ -21,6 +20,24 @@ import {
   Check,
   LogIn,
   Mic,
+  Target,
+  BarChart3,
+  Calendar,
+  Wallet,
+  Clock,
+  Award,
+  Globe,
+  Smartphone,
+  Eye,
+  Plus,
+  ArrowUp,
+  Headphones,
+  FileText,
+  X,
+  Share2,
+  Bookmark,
+  TrendingDown,
+  Activity,
 } from 'lucide-react';
 import { useApp } from '../context/AppContext';
 
@@ -30,1140 +47,1163 @@ interface LandingPageProps {
   onOpenSubscription?: () => void;
 }
 
+interface ArticleData {
+  id: string;
+  title: string;
+  slug: string;
+  date: string;
+  readTime: string;
+  category: string;
+  image: string;
+  summary: string;
+  content: string[];
+  keyTakeaways: string[];
+}
+
 export const LandingPage: React.FC<LandingPageProps> = ({
   onEnterApp,
   onOpenAuth,
   onOpenSubscription,
 }) => {
-  const { isAuthenticated, openAuthGuard, openSubscriptionModal } = useApp();
+  const { isAuthenticated, openAuthGuard, openSubscriptionModal, setActiveTab } = useApp();
   const [openFaq, setOpenFaq] = useState<number | null>(0);
-  const [interactiveInput, setInteractiveInput] = useState('');
-  const [demoParsed, setDemoParsed] = useState<{ amount: string; cat: string; desc: string } | null>(null);
+  const [showScrollTop, setShowScrollTop] = useState(false);
+  const [selectedArticle, setSelectedArticle] = useState<ArticleData | null>(null);
 
-  // Sync document attributes for Persian RTL
+  // Scroll listener for back-to-top button
   useEffect(() => {
-    const html = document.documentElement;
-    html.lang = 'fa';
-    html.dir = 'rtl';
-    document.title = 'چندبوم | مدیریت مالی شخصی با هوش مصنوعی پیشرفته';
+    const handleScroll = () => {
+      setShowScrollTop(window.scrollY > 400);
+    };
+    window.addEventListener('scroll', handleScroll, { passive: true });
+    return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
-  const handleSubscriptionClick = () => {
-    if (!isAuthenticated) {
-      openAuthGuard('برای خرید اشتراک و استفاده از امکانات، لطفاً ابتدا ثبت‌نام کنید یا وارد حساب خود شوید.');
-    } else {
-      if (onOpenSubscription) {
-        onOpenSubscription();
-      } else {
-        openSubscriptionModal();
-      }
-    }
+  const scrollToTop = () => {
+    window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
-  const handleTestDemoAI = (sampleText?: string) => {
-    const text = sampleText || interactiveInput;
-    if (!text) return;
-    if (text.includes('گوشت') || text.includes('غذا') || text.includes('شام')) {
-      setDemoParsed({ amount: '۳۵۰,۰۰۰ تومان', cat: 'خوراک و غذا 🥩', desc: text });
-    } else if (text.includes('بنزین') || text.includes('اسنپ') || text.includes('کرایه')) {
-      setDemoParsed({ amount: '۸۵,۰۰۰ تومان', cat: 'حمل و نقل 🚗', desc: text });
-    } else {
-      setDemoParsed({ amount: '۱۲۰,۰۰۰ تومان', cat: 'خرید روزمره 🛍️', desc: text });
+  const handleLaunchApp = () => {
+    if (setActiveTab) {
+      setActiveTab('dashboard');
     }
+    onEnterApp();
   };
 
-  const isRtl = true;
-  const ArrowIcon = ArrowLeft;
+  const handleLaunchDong = () => {
+    if (setActiveTab) {
+      setActiveTab('dong');
+    }
+    onEnterApp();
+  };
+
+  const handleOpenSupport = () => {
+    if (setActiveTab) {
+      setActiveTab('support');
+    }
+    onEnterApp();
+  };
+
+  const faqItems = [
+    {
+      q: 'چطور در چندبوم ثبت‌نام کنم؟',
+      a: 'خیلی ساده! سامانه چندبوم کاملاً تحت وب و ابری است. بدون نیاز به نصب هرگونه فایل یا اپلیکیشن، فقط کافی است با ایمیل خود در چند ثانیه ثبت‌نام کرده و بلافاصله مدیریت مالی خود را آغاز کنید.',
+    },
+    {
+      q: 'آیا برای استفاده نیاز به دانلود و نصب اپلیکیشن داریم؟',
+      a: 'خیر، به هیچ وجه! چندبوم یک وب‌اپلیکیشن (Web Application) فوق‌پیشرفته و ابری است که در مرورگر تمام دستگاه‌ها (موبایل اندروید و آیفون، تبلت و کامپیوتر) بدون اشغال حافظه گوشی یا نیاز به دانلود کار می‌کند.',
+    },
+    {
+      q: 'می‌توانم با دوستان یا اعضای خانواده خرج مشترک داشته باشم؟',
+      a: 'بله! بخش «دنگ و خرج جمعی» چندبوم دقیقاً برای همین طراحی شده است. می‌توانید برای سفر، کافه، خانه یا برنامه‌های گروهی گروه‌های هم‌خرج بسازید و تراز سهم هر فرد را با دقت حسابداری مشاهده و تسویه کنید.',
+    },
+    {
+      q: 'آیا استفاده از چندبوم هزینه دارد؟',
+      a: 'امکانات پایه شامل ثبت نامحدود درآمدها و هزینه‌ها، دسته‌بندی و محاسبه دنگ کاملاً رایگان است. برای ابزارهای پیشرفته مانند تحلیل پیش‌بینی ۳ ماهه، ثبت صوتی و مشاور هوشمند، پلن‌های اقتصادی برنزی، پرو و VIP در دسترس هستند.',
+    },
+    {
+      q: 'امنیت داده‌های مالی من چگونه تامین می‌شود؟',
+      a: 'داده‌های شما روی زیرساخت امن ابری و پایگاه داده رمزنگاری‌شده Supabase نگهداری می‌شوند. تمام تبادلات داده با استانداردهای حفاظتی چندلایه امن شده و کاملاً محرمانه هستند.',
+    },
+    {
+      q: 'در صورت نیاز به راهنمایی چگونه با پشتیبانی در ارتباط باشم؟',
+      a: 'می‌توانید با کلیک روی دکمه پشتیبانی در پایین صفحه یا منوی پنل کاربری، مستقیماً تیکت رسمی پشتیبانی ثبت فرمایید تا کارشناسان چندبوم در کوتاه‌ترین زمان به شما پاسخ دهند.',
+    },
+  ];
+
+  const articles: ArticleData[] = [
+    {
+      id: 'financial-movies',
+      title: '۷ فیلم برتر اقتصادی و مالی که نگرش شما به پول را تغییر می‌دهند',
+      slug: 'best-financial-movies',
+      date: '۲۲ تیر ۱۴۰۴',
+      readTime: '۶ دقیقه مطالعه',
+      category: 'هوش مالی و سرمایه',
+      image: 'https://images.unsplash.com/photo-1489599849927-2ee91cede3ba?w=600&auto=format&fit=crop&q=80',
+      summary: 'آشنایی با برترین فیلم‌های تاریخ سینما در زمینه وال‌استریت، بحران‌های اقتصادی و هوش مالی که هر فرد برای موفقیت مالی باید ببیند.',
+      content: [
+        'سینما همواره یکی از جذاب‌ترین ابزارها برای درک مفاهیم پیچیده اقتصادی و روان‌شناسی بازار بوده است. فیلم‌هایی چون «گرگ وال استریت»، «رکود بزرگ (The Big Short)» و «در جستجوی خوشبختی» زوایای پنهان قدرت پول و اشتباهات مهلک مالی را نمایش می‌دهند.',
+        'در این فیلم‌ها می‌آموزیم که چگونه حرص، ترس و تصمیم‌گیری‌های شتاب‌زده می‌توانند بزرگ‌ترین دارایی‌ها را نابود کنند، در حالی که برنامه‌ریزی منضبط و مدیریت بودجه تضمین‌کننده بقا و رشد پایدار مالی است.',
+        'چندبوم با تکیه بر اصول مدیریت بودجه و الگوریتم‌های هوشمند، به شما کمک می‌کند رفتارهای هیجانی مالی خود را مهار کنید و همانند یک مدیر دارایی حرفه‌ای حساب‌هایتان را کنترل نمایید.',
+      ],
+      keyTakeaways: [
+        'شناخت سوگیری‌های هیجانی در هنگام خرید یا سرمایه‌گذاری',
+        'اهمیت پایبندی به بودجه ماهانه در دوران بحران اقتصادی',
+        'لزوم تنوع‌بخشی به دارایی‌ها و جلوگیری از تمرکز ریسک',
+      ],
+    },
+    {
+      id: 'dong-guide',
+      title: 'راهنمای کامل محاسبه دنگ و مدیریت هزینه‌های گروهی در سفر',
+      slug: 'dong-and-group-expense-guide',
+      date: '۱۸ تیر ۱۴۰۴',
+      readTime: '۴ دقیقه مطالعه',
+      category: 'دنگ و خرج جمعی',
+      image: 'https://images.unsplash.com/photo-1556742049-0a67c5574f73?w=600&auto=format&fit=crop&q=80',
+      summary: 'چگونه بدون دلخوری و با شفافیت کامل، مخارج سفرها، کافه‌ها و خریدهای مشترک را بین دوستان تقسیم و تسویه کنیم.',
+      content: [
+        'یکی از دغدغه‌های همیشگی در سفرهای دوستانه یا خانوادگی، نحوه یادداشت خرج‌ها، مشخص کردن فرد خریدار و در نهایت تراز بدهی‌ها و طلب‌هاست.',
+        'استفاده از ابزار دنگ گروهی چندبوم به شما امکان می‌دهد با ثبت ساده هر هزینه، سهم هر نفر را به صورت مساوی یا سفارشی تفکیک کنید و در پایان سفر تنها با یک کلیک، کمترین تعداد تراکنش لازم برای تسویه حساب را دریافت نمایید.',
+      ],
+      keyTakeaways: [
+        'ثبت آنی و لحظه‌ای هزینه‌ها مانع از فراموشی اقلام ریز می‌شود',
+        'شفافیت مالی دوستی‌ها را عمیق‌تر و سفرها را لذت‌بخش‌تر می‌کند',
+        'کاهش نقل و انتقالات مالی با محاسبه خودکار تراز بدهی/طلب',
+      ],
+    },
+    {
+      id: 'personal-budget-rule',
+      title: 'قانون طلایی ۵۰/۳۰/۲۰ برای بودجه‌بندی هوشمند درآمد ماهانه',
+      slug: '50-30-20-budgeting-rule',
+      date: '۱۲ تیر ۱۴۰۴',
+      readTime: '۵ دقیقه مطالعه',
+      category: 'آموزش بودجه‌بندی',
+      image: 'https://images.unsplash.com/photo-1551288049-bebda4e38f71?w=600&auto=format&fit=crop&q=80',
+      summary: 'فرمول استاندارد جهانی برای تقسیم حقوق ماهانه بین نیازهای ضروری، تفریحات و پس‌انداز بلندمدت.',
+      content: [
+        'قانون ۵۰/۳۰/۲۰ یکی از ساده‌ترین و کارآمدترین روش‌های بودجه‌بندی شخصی در دنیاست: ۵۰ درصد از درآمد خالص به نیازهای اولیه (اجاره، خوراک، قبوض)، ۳۰ درصد به خواسته‌ها (رستوران، تفریح، خرید شخصی) و ۲۰ درصد به پس‌انداز و سرمایه‌گذاری اختصاص می‌یابد.',
+        'در پنل چندبوم، این نسبت‌ها به طور پیوسته روی تراکنش‌های واقعی شما تحلیل شده و هرگاه هزینه‌ای از حد تعیین‌شده فراتر رود، هشدارهای هوشمند برای شما ارسال می‌شود.',
+      ],
+      keyTakeaways: [
+        'تفکیک دقیق مرز بین «نیاز» و «خواسته»',
+        'تثبیت سهم ۲۰ درصدی پس‌انداز پیش از شروع هزینه‌کرد ماهانه',
+        'ایجاد آرامش روانی و آمادگی کامل برای هزینه‌های پیش‌بینی‌نشده',
+      ],
+    },
+  ];
 
   return (
     <div
-      className={`min-h-screen bg-[#070B09] text-zinc-100 selection:bg-emerald-500 selection:text-black overflow-x-hidden ${
-        isRtl ? 'font-cairo' : 'font-inter'
-      }`}
-      dir={isRtl ? 'rtl' : 'ltr'}
+      className="min-h-screen bg-white text-zinc-900 selection:bg-emerald-600 selection:text-white overflow-x-hidden font-cairo"
+      dir="rtl"
     >
-      {/* Dynamic Background Glows */}
+      {/* Soft Emerald Atmospheric Ambient Light Orbs */}
       <div className="fixed inset-0 pointer-events-none z-0 overflow-hidden">
-        <div className="absolute -top-40 -left-40 w-96 md:w-[600px] h-96 md:h-[600px] bg-emerald-600/15 rounded-full blur-[140px]" />
-        <div className="absolute top-1/3 -right-40 w-80 md:w-[500px] h-80 md:h-[500px] bg-amber-500/10 rounded-full blur-[150px]" />
-        <div className="absolute bottom-20 left-1/4 w-96 md:w-[600px] h-96 md:h-[600px] bg-teal-500/10 rounded-full blur-[160px]" />
-        <div className="absolute inset-0 bg-[radial-gradient(#10B981_1px,transparent_1px)] [background-size:32px_32px] opacity-[0.03]" />
+        <div className="absolute -top-32 -right-32 w-[520px] h-[520px] bg-emerald-200/25 rounded-full blur-[140px]" />
+        <div className="absolute top-1/3 -left-32 w-[480px] h-[480px] bg-teal-200/20 rounded-full blur-[160px]" />
+        <div className="absolute bottom-10 right-1/4 w-[600px] h-[600px] bg-emerald-100/30 rounded-full blur-[180px]" />
       </div>
 
-      {/* 1. TOP NAVBAR */}
-      <header className="sticky top-0 z-50 backdrop-blur-xl bg-[#070B09]/85 border-b border-emerald-950/60 transition-all font-cairo w-full overflow-x-hidden">
-        <div className="max-w-7xl mx-auto px-3 sm:px-6 h-16 sm:h-20 flex items-center justify-between gap-1.5 sm:gap-4 flex-nowrap w-full">
-          {/* Logo with Bahman Font */}
-          <div className="flex items-center gap-2 sm:gap-3 shrink-0 min-w-0">
-            <div className="w-9 h-9 sm:w-11 sm:h-11 rounded-xl sm:rounded-2xl bg-gradient-to-br from-emerald-500 to-teal-800 p-0.5 shadow-lg shadow-emerald-950/50 flex items-center justify-center shrink-0">
-              <div className="w-full h-full bg-[#090F0C] rounded-[10px] sm:rounded-[14px] flex items-center justify-center overflow-hidden">
-                <img
-                  src="./logo.png"
-                  alt={isRtl ? 'لوگوی رسمی چندبوم' : 'Chandboom Official Logo'}
-                  className="w-6 h-6 sm:w-8 sm:h-8 object-contain"
-                  onError={(e) => {
-                    (e.currentTarget as HTMLImageElement).src = './assets/logo.png';
-                  }}
-                />
-              </div>
+      {/* TOP NAVIGATION BAR */}
+      <header className="sticky top-0 z-40 bg-white/95 backdrop-blur-md border-b border-emerald-100/80 shadow-xs transition-all">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-20 flex items-center justify-between">
+          {/* Right: Brand Logo */}
+          <div className="flex items-center gap-3 cursor-pointer group" onClick={handleLaunchApp}>
+            <div className="w-11 h-11 rounded-2xl bg-white border border-emerald-500/40 p-1 flex items-center justify-center shadow-md shadow-emerald-700/10 group-hover:scale-105 transition shrink-0">
+              <img
+                src="./logo.png"
+                alt="لوگوی رسمی چندبوم"
+                onError={(e) => {
+                  (e.currentTarget as HTMLImageElement).src = './assets/logo.png';
+                }}
+                className="w-full h-full object-contain"
+              />
             </div>
-            <div className="flex flex-col min-w-0">
-              <span className="font-brand text-lg sm:text-2xl font-black tracking-tight text-white flex items-center gap-1 sm:gap-1.5 whitespace-nowrap">
-                {isRtl ? 'چندبوم' : 'Chandboom'}
-                <span className="w-1.5 h-1.5 sm:w-2 sm:h-2 rounded-full bg-amber-400 inline-block animate-pulse shrink-0" />
+            <div className="flex flex-col">
+              <span className="font-brand font-bold text-2xl tracking-tight text-emerald-950">
+                چندبوم
               </span>
-              <span className="hidden md:block text-[10px] font-bold text-emerald-400 tracking-wider uppercase whitespace-nowrap">
-                {isRtl ? 'سامانه هوشمند مالی و بودجه' : 'AI Financial Operating System'}
+              <span className="text-[10px] font-cairo font-bold text-emerald-700 -mt-1 tracking-wider">
+                سامانه هوشمند مالی و بودجه
               </span>
             </div>
           </div>
 
-          {/* Center Navigation Links (Desktop) */}
-          <nav className="hidden lg:flex items-center gap-7 text-xs sm:text-sm font-semibold text-zinc-300">
-            <a
-              href="#features"
-              className="hover:text-emerald-400 transition-colors cursor-pointer py-1"
-            >
-              {isRtl ? 'امکانات هوشمند' : 'Features'}
+          {/* Center: Navigation Links */}
+          <nav className="hidden md:flex items-center gap-8 text-sm font-bold text-zinc-600 font-cairo">
+            <a href="#features" className="hover:text-emerald-700 transition-colors">
+              ویژگی‌ها
             </a>
-            <a
-              href="#mockup"
-              className="hover:text-emerald-400 transition-colors cursor-pointer py-1"
-            >
-              {isRtl ? 'پیش‌نمایش اپ' : 'Preview'}
+            <a href="#how-it-works" className="hover:text-emerald-700 transition-colors">
+              نحوه کار
             </a>
-            <a
-              href="#pricing"
-              className="hover:text-emerald-400 transition-colors cursor-pointer py-1"
-            >
-              {isRtl ? 'تعرفه‌ها' : 'Pricing'}
+            <a href="#dong" className="hover:text-emerald-700 transition-colors">
+              مدیریت دنگ
             </a>
-            <a
-              href="#faq"
-              className="hover:text-emerald-400 transition-colors cursor-pointer py-1"
-            >
-              {isRtl ? 'پرسش‌های متداول' : 'FAQ'}
+            <a href="#web-app" className="hover:text-emerald-700 transition-colors">
+              نسخه تحت وب
+            </a>
+            <a href="#blog" className="hover:text-emerald-700 transition-colors">
+              بلاگ
+            </a>
+            <a href="#faq" className="hover:text-emerald-700 transition-colors">
+              سوالات متداول
             </a>
           </nav>
 
-          {/* Left Action Buttons in RTL */}
-          <div className="flex items-center gap-1.5 sm:gap-2.5 shrink-0 flex-nowrap">
-            {!isAuthenticated ? (
-              /* Guest State: Golden subscription hidden, show elegant ورود / ثبت‌نام button */
-              <button
-                onClick={onOpenAuth}
-                className="flex items-center gap-1.5 px-3 sm:px-4 py-1.5 sm:py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-zinc-950 font-black text-xs sm:text-xs shadow-lg shadow-emerald-500/20 hover:shadow-emerald-500/40 transition-all cursor-pointer shrink-0"
-              >
-                <LogIn className="w-4 h-4 text-zinc-950 shrink-0" />
-                <span className="whitespace-nowrap">ورود / ثبت‌نام</span>
-              </button>
-            ) : (
-              /* Logged-in State */
-              <>
-                {/* Prominent Golden Pro Button in Navbar */}
-                <button
-                  onClick={handleSubscriptionClick}
-                  className="flex items-center gap-1 sm:gap-1.5 px-2.5 sm:px-4 py-1.5 sm:py-2 rounded-xl bg-gradient-to-r from-amber-400 via-amber-500 to-yellow-500 hover:from-amber-300 hover:to-yellow-400 text-zinc-950 font-black text-[11px] sm:text-xs transition cursor-pointer shadow-md hover:shadow-amber-500/20 active:scale-95 shrink-0"
-                  title="خرید اشتراک طلایی"
-                >
-                  <Crown className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-zinc-950 shrink-0" />
-                  <span className="hidden sm:inline whitespace-nowrap">خرید اشتراک طلایی</span>
-                  <span className="sm:hidden whitespace-nowrap">اشتراک طلایی</span>
-                </button>
-
-                {/* Enter App Button */}
-                <button
-                  onClick={onEnterApp}
-                  className="flex items-center gap-1.5 px-3 py-1.5 sm:py-2 rounded-xl text-xs font-bold bg-zinc-900/90 text-white hover:bg-zinc-800 transition cursor-pointer border border-zinc-800 shrink-0"
-                >
-                  <span>ورود به سامانه</span>
-                </button>
-              </>
-            )}
+          {/* Left: Auth CTA Button */}
+          <div className="flex items-center gap-3">
+            <button
+              onClick={onOpenAuth}
+              className="px-6 py-2.5 rounded-full bg-emerald-700 hover:bg-emerald-800 text-white font-bold text-sm shadow-md shadow-emerald-700/20 transition-all hover:scale-[1.02] active:scale-[0.98] cursor-pointer"
+            >
+              {isAuthenticated ? 'ورود به پنل' : 'ورود / ثبت‌نام'}
+            </button>
           </div>
         </div>
       </header>
 
-      {/* MAIN CONTENT */}
-      <main className="relative z-10">
-        {/* 2. HERO SECTION */}
-        <section className="pt-12 sm:pt-20 pb-16 px-4 sm:px-6 max-w-7xl mx-auto text-center">
-          {/* Top Pill Announcement */}
-          <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-emerald-950/60 border border-emerald-500/30 text-emerald-300 text-xs font-medium mb-6 backdrop-blur-md shadow-xs animate-in fade-in slide-in-from-top-4">
-            <span className="flex h-2 w-2 rounded-full bg-emerald-400 animate-ping" />
-            <span className="font-semibold">
-              {isRtl ? 'سامانه مدیریت مالی هوشمند و تسلط بر جریان پول' : 'Next-Generation AI Wealth Operating System'}
-            </span>
-            <span className="text-zinc-600">|</span>
-            <span className="text-amber-400 font-bold flex items-center gap-1">
-              <Sparkles className="w-3.5 h-3.5 inline" />
-              {isRtl ? 'هوش مصنوعی چندبوم' : 'Chandboom AI'}
-            </span>
-          </div>
+      {/* SECTION 1: HERO */}
+      <section className="relative z-10 pt-10 pb-20 md:py-24 overflow-hidden">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 lg:gap-8 items-center">
+            
+            {/* Visual Interactive Layered Phone & Widgets (Left in RTL, cols 7) */}
+            <div className="order-2 lg:order-1 lg:col-span-7 relative flex items-center justify-center">
+              {/* Soft Radial Backlight */}
+              <div className="absolute w-[440px] h-[440px] bg-gradient-to-tr from-emerald-200/40 via-teal-200/40 to-emerald-100/40 rounded-full blur-[80px] pointer-events-none" />
 
-          {/* Main Headline with Bahman Font */}
-          <h1 className="font-bahman text-4xl sm:text-5xl lg:text-6xl font-black text-white tracking-tight leading-[1.25] sm:leading-[1.2] max-w-5xl mx-auto mb-6">
-            {isRtl ? (
-              <>
-                مدیریت مالی شخصی با <span className="text-transparent bg-clip-text bg-gradient-to-r from-emerald-400 via-teal-300 to-amber-300">هوش مصنوعی</span> چندبوم
-              </>
-            ) : (
-              <>
-                Master Your Wealth with <span className="text-transparent bg-clip-text bg-gradient-to-r from-emerald-400 via-teal-300 to-amber-300">Chandboom AI</span> Intelligence
-              </>
-            )}
-          </h1>
+              {/* Central Phone Mockup Container */}
+              <div className="relative z-10 w-[300px] sm:w-[320px] bg-white rounded-[40px] p-3 shadow-2xl border-4 border-emerald-50 ring-1 ring-emerald-200/60">
+                {/* Phone Speaker Notch */}
+                <div className="w-24 h-4 bg-zinc-200/70 rounded-full mx-auto mb-3" />
 
-          {/* Subheadline */}
-          <p className="text-zinc-400 text-base sm:text-lg lg:text-xl max-w-3xl mx-auto leading-relaxed mb-10 font-medium">
-            {isRtl
-              ? 'سامانه مدیریت مالی هوشمند: ثبت تراکنش با صدا و پیامک بانکی، تحلیل هوشمند هزینه‌ها و درآمدها، پیش‌بینی ۳ ماهه جریان نقدینگی و سپر ضد خرید هیجانی.'
-              : 'Smart personal finance management: natural voice transaction entry, bank SMS parsing, AI cash flow insights, 3-month forecasting, and impulse buy shield.'}
-          </p>
-
-          {/* Primary CTA Buttons */}
-          <div className="flex flex-col sm:flex-row items-center justify-center gap-4 max-w-md mx-auto mb-12">
-            <button
-              onClick={onOpenAuth}
-              className="w-full sm:w-auto flex items-center justify-center gap-2.5 px-7 py-4 rounded-2xl bg-gradient-to-r from-emerald-500 via-teal-500 to-emerald-600 hover:from-emerald-400 hover:to-teal-400 text-zinc-950 font-black text-base shadow-xl shadow-emerald-500/25 hover:shadow-emerald-500/40 transition-all transform hover:-translate-y-1 active:translate-y-0 cursor-pointer"
-            >
-              <Zap className="w-5 h-5 fill-current" />
-              <span>{isRtl ? 'شروع رایگان و ثبت پیامک بانکی' : 'Start Free in 1 Minute'}</span>
-              <ArrowIcon className="w-4 h-4 shrink-0" />
-            </button>
-
-            <button
-              onClick={onEnterApp}
-              className="w-full sm:w-auto flex items-center justify-center gap-2 px-6 py-4 rounded-2xl bg-zinc-900/90 hover:bg-zinc-800 text-white font-bold text-sm border border-emerald-900/40 hover:border-emerald-600 transition shadow-lg cursor-pointer"
-            >
-              <Laptop className="w-4 h-4 text-emerald-400" />
-              <span>{isRtl ? 'مشاهده دموی زنده اپلیکیشن' : 'Explore Live App'}</span>
-            </button>
-          </div>
-
-          {/* Trust Badges */}
-          <div className="flex flex-wrap items-center justify-center gap-6 sm:gap-10 text-xs text-zinc-400 pb-4 border-b border-emerald-950/40 max-w-3xl mx-auto mb-12">
-            <div className="flex items-center gap-2">
-              <ShieldCheck className="w-4 h-4 text-emerald-400" />
-              <span>{isRtl ? 'امنیت ابری پیشرفته و رمزنگاری بانکی' : 'Bank-Grade Encryption & Cloud Security'}</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <Star className="w-4 h-4 text-amber-400 fill-amber-400" />
-              <span>{isRtl ? 'امتیاز ۴.۹ از ۵ (بیش از ۵۰,۰۰۰ تراکنش)' : '4.9/5 Rating (50K+ Transactions)'}</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <Lock className="w-4 h-4 text-teal-400" />
-              <span>{isRtl ? 'حفظ کامل حریم خصوصی' : '100% Private & Anonymous'}</span>
-            </div>
-          </div>
-
-          {/* Hero Campaign Visual Showcase */}
-          <div className="relative max-w-5xl mx-auto rounded-3xl p-1 bg-gradient-to-b from-emerald-500/30 via-emerald-900/20 to-transparent shadow-2xl shadow-emerald-950/80 overflow-hidden group">
-            <div className="relative rounded-[22px] bg-[#0A100D] border border-emerald-900/60 overflow-hidden backdrop-blur-xl">
-              <picture>
-                <source srcSet="./assets/chandboom-smart-personal-finance-hero.webp" type="image/webp" />
-                <source srcSet="./assets/chandboom-smart-personal-finance-hero.jpg" type="image/jpeg" />
-                <img
-                  src="./assets/chandboom-smart-personal-finance-hero.webp"
-                  alt="داشبورد مدیریت مالی هوشمند چندبوم با هوش مصنوعی و نمودارهای تحلیلی ثروت و جریان نقدینگی"
-                  width={1376}
-                  height={768}
-                  loading="eager"
-                  decoding="async"
-                  referrerPolicy="no-referrer"
-                  className="w-full h-auto object-cover rounded-[22px] transition-transform duration-700 group-hover:scale-[1.01]"
-                />
-              </picture>
-              <div className="absolute inset-0 bg-gradient-to-t from-[#0A100D]/90 via-[#0A100D]/20 to-transparent pointer-events-none" />
-              <div className="absolute bottom-3 sm:bottom-6 right-3 sm:right-6 left-3 sm:left-6 flex flex-wrap items-center justify-between gap-3 bg-[#070B09]/85 backdrop-blur-md px-4 py-3 rounded-2xl border border-emerald-900/60 text-xs">
-                <div className="flex items-center gap-2 text-right">
-                  <span className="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-pulse shrink-0" />
-                  <span className="font-bold text-white">مدیریت مالی هوشمند با تحلیل آینده‌نگر چندبوم</span>
-                  <span className="hidden md:inline text-zinc-500">•</span>
-                  <span className="hidden md:inline text-zinc-300">ثبت تراکنش با صدا و تحلیل هوشمند هزینه‌ها و درآمدها</span>
-                </div>
-                <button
-                  onClick={onEnterApp}
-                  className="px-3.5 py-1.5 rounded-xl bg-emerald-600/90 hover:bg-emerald-500 text-zinc-950 font-bold transition flex items-center gap-1.5 cursor-pointer text-xs shrink-0"
-                >
-                  <span>ورود به سامانه</span>
-                  <ArrowIcon className="w-3.5 h-3.5" />
-                </button>
-              </div>
-            </div>
-          </div>
-        </section>
-
-        {/* 2.1 INTERACTIVE DASHBOARD MOCKUP */}
-        <section id="mockup" className="max-w-6xl mx-auto px-4 sm:px-6 mb-24">
-          <div className="relative rounded-3xl p-1 bg-gradient-to-b from-emerald-500/30 via-emerald-900/20 to-transparent shadow-2xl shadow-emerald-950/60">
-            <div className="rounded-[22px] bg-[#0A100D] border border-emerald-900/50 overflow-hidden backdrop-blur-xl p-4 sm:p-7">
-              {/* Mockup Header Bar */}
-              <div className="flex items-center justify-between border-b border-emerald-950/80 pb-4 mb-6">
-                <div className="flex items-center gap-3">
-                  <div className="flex items-center gap-1.5">
-                    <div className="w-3 h-3 rounded-full bg-rose-500/80" />
-                    <div className="w-3 h-3 rounded-full bg-amber-500/80" />
-                    <div className="w-3 h-3 rounded-full bg-emerald-500/80" />
+                {/* Inside Phone Screen */}
+                <div className="space-y-3.5 text-right font-cairo">
+                  {/* Month Header */}
+                  <div className="flex items-center justify-between text-xs font-bold text-zinc-500 border-b border-zinc-100 pb-2">
+                    <span className="text-zinc-400">‹ خرداد</span>
+                    <span className="text-emerald-950 font-extrabold text-sm">تیر ۱۴۰۴</span>
+                    <span className="text-zinc-400">مرداد ›</span>
                   </div>
-                  <span className="text-xs text-zinc-500 font-mono hidden sm:inline">
-                    chandboom.ir/app/dashboard
-                  </span>
-                </div>
-                <div className="flex items-center gap-2 text-xs text-emerald-400 font-bold bg-emerald-950/60 px-3 py-1 rounded-full border border-emerald-800/40">
-                  <Sparkles className="w-3.5 h-3.5" />
-                  <span>{isRtl ? 'موتور زنده هوش مصنوعی چندبوم' : 'Live Chandboom AI Engine'}</span>
-                </div>
-              </div>
 
-              {/* Mockup Grid Inside */}
-              <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
-                {/* Balance & Overview Card */}
-                <div className="rounded-2xl bg-zinc-950/80 border border-emerald-900/40 p-5 flex flex-col justify-between">
-                  <div>
-                    <span className="text-xs text-zinc-400 font-medium">
-                      {isRtl ? 'موجودی خالص دارایی‌ها' : 'Total Net Balance'}
-                    </span>
-                    <div className="flex items-baseline gap-2 mt-2">
-                      <span className="font-bahman text-3xl font-black text-white">
-                        {isRtl ? '۴۸,۳۵۰,۰۰۰' : '$1,208.50'}
-                      </span>
-                      <span className="text-xs text-emerald-400 font-bold">
-                        {isRtl ? 'تومان' : 'USD'}
-                      </span>
+                  {/* Expense & Budget Mini Summary */}
+                  <div className="bg-emerald-50/60 p-3 rounded-2xl border border-emerald-100 space-y-1.5">
+                    <div className="flex items-center justify-between text-xs">
+                      <span className="text-zinc-600">مجموع هزینه‌ها:</span>
+                      <span className="font-extrabold text-emerald-950 font-mono">۵۱,۰۹۷,۸۸۰ <span className="text-[10px] text-zinc-400 font-normal">تومان</span></span>
                     </div>
-                    <div className="mt-3 flex items-center gap-2 text-xs text-emerald-400 bg-emerald-950/50 px-2.5 py-1 rounded-lg w-fit border border-emerald-800/30">
-                      <TrendingUp className="w-3.5 h-3.5" />
-                      <span>{isRtl ? '+۱۲.۴٪ رشد پس‌انداز این ماه' : '+12.4% Net Savings Growth'}</span>
+                    <div className="flex items-center justify-between text-xs">
+                      <span className="text-zinc-600">سقف بودجه ماهانه:</span>
+                      <span className="font-extrabold text-emerald-700 font-mono">۲۰,۰۰۰,۰۰۰ <span className="text-[10px] text-zinc-400 font-normal">تومان</span></span>
                     </div>
                   </div>
 
-                  {/* Cash Flow mini bars */}
-                  <div className="mt-6 pt-4 border-t border-zinc-900">
-                    <div className="flex justify-between text-xs text-zinc-400 mb-1.5 font-medium">
-                      <span>{isRtl ? 'درآمد این ماه' : 'Monthly Income'}</span>
-                      <span className="text-emerald-400 font-bold">{isRtl ? '۳۵,۰۰۰,۰۰۰ ت' : '$875'}</span>
-                    </div>
-                    <div className="w-full bg-zinc-900 h-2 rounded-full overflow-hidden mb-3">
-                      <div className="bg-emerald-500 h-full rounded-full w-[78%]" />
-                    </div>
-
-                    <div className="flex justify-between text-xs text-zinc-400 mb-1.5 font-medium">
-                      <span>{isRtl ? 'مخارج ثبت‌شده' : 'Expenses'}</span>
-                      <span className="text-amber-400 font-bold">{isRtl ? '۱۹,۴۰۰,۰۰۰ ت' : '$485'}</span>
-                    </div>
-                    <div className="w-full bg-zinc-900 h-2 rounded-full overflow-hidden">
-                      <div className="bg-amber-500 h-full rounded-full w-[44%]" />
-                    </div>
-                  </div>
-                </div>
-
-                {/* AI Predictive Insight Banner */}
-                <div className="rounded-2xl bg-gradient-to-br from-emerald-950/60 to-zinc-950 border border-emerald-500/40 p-5 flex flex-col justify-between shadow-lg">
-                  <div>
-                    <div className="flex items-center gap-2 text-amber-300 text-xs font-bold mb-3">
-                      <Sparkles className="w-4 h-4 text-amber-400" />
-                      <span>{isRtl ? 'پیش‌بینی هوشمند بودجه (هوش مصنوعی چندبوم)' : 'AI Budget Forecast (Chandboom AI)'}</span>
-                    </div>
-                    <h3 className="font-bahman text-base font-bold text-white mb-2 leading-relaxed">
-                      {isRtl
-                        ? 'بودجه شما با الگوی فعلی تا ۲۶ روز آینده کاملاً پایدار است.'
-                        : 'Your cash flow is safely on track for the next 26 days.'}
-                    </h3>
-                    <p className="text-xs text-zinc-300 leading-relaxed">
-                      {isRtl
-                        ? 'بیشترین سهم هزینه مربوط به دسته‌بندی «خوراک و خرید» بوده است. با کاهش ۱۰ درصدی هزینه‌های تفریح، می‌توانید سقف پس‌انداز طلایی خود را لمس کنید.'
-                        : 'Dining expenses accounted for 38% of outflows. Trimming leisure by 10% secures your quarterly savings target.'}
-                    </p>
-                  </div>
-
-                  <div className="mt-4 pt-3 border-t border-emerald-900/50 flex items-center justify-between text-xs">
-                    <span className="text-emerald-400 font-bold">
-                      {isRtl ? 'وضعیت پایداری: عالی (۹۴٪)' : 'Stability Score: 94%'}
-                    </span>
-                    <button
-                      onClick={onEnterApp}
-                      className="text-amber-300 hover:text-amber-200 font-bold flex items-center gap-1 cursor-pointer"
-                    >
-                      <span>{isRtl ? 'مشاهده جزئیات' : 'View Deep Dive'}</span>
-                      <ArrowIcon className="w-3 h-3" />
-                    </button>
-                  </div>
-                </div>
-
-                {/* Interactive AI Transaction Quick Logger Test */}
-                <div className="rounded-2xl bg-zinc-950/80 border border-emerald-900/40 p-5 flex flex-col justify-between">
-                  <div>
-                    <div className="flex items-center justify-between mb-3">
-                      <span className="text-xs text-zinc-400 font-bold flex items-center gap-1.5">
-                        <Zap className="w-3.5 h-3.5 text-emerald-400" />
-                        {isRtl ? 'تست زنده ثبت تراکنش با هوش مصنوعی' : 'Live AI Natural Entry'}
-                      </span>
-                      <span className="text-[10px] text-emerald-400 bg-emerald-950/60 px-2 py-0.5 rounded border border-emerald-800/40">
-                        {isRtl ? 'فقط تایپ کن' : 'Natural Text'}
-                      </span>
-                    </div>
-
-                    <div className="space-y-2 mb-3">
-                      <input
-                        type="text"
-                        value={interactiveInput}
-                        onChange={(e) => setInteractiveInput(e.target.value)}
-                        placeholder={
-                          isRtl
-                            ? 'مثال: ۲۵۰ تومن خرید سوپرمارکت و میوه'
-                            : 'e.g. $45 groceries at Trader Joe\'s'
-                        }
-                        className="w-full px-3.5 py-2.5 rounded-xl bg-zinc-900 border border-emerald-900/60 text-xs text-white placeholder-zinc-500 focus:outline-none focus:border-emerald-500 transition font-cairo"
-                      />
-                      <button
-                        onClick={() => handleTestDemoAI()}
-                        className="w-full py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-zinc-950 font-bold text-xs transition cursor-pointer flex items-center justify-center gap-1.5"
-                      >
-                        <Sparkles className="w-3.5 h-3.5" />
-                        <span>{isRtl ? 'تحلیل با هوش مصنوعی چندبوم' : 'Parse with Chandboom AI'}</span>
-                      </button>
-                    </div>
-
-                    {/* Quick sample chips */}
-                    <div className="flex flex-wrap gap-1.5 mb-2">
-                      <button
-                        onClick={() => {
-                          const txt = isRtl ? '۱۵۰ تومن بنزین ماشین' : '$35 gas station fuel';
-                          setInteractiveInput(txt);
-                          handleTestDemoAI(txt);
-                        }}
-                        className="text-[11px] px-2 py-1 rounded-lg bg-zinc-900 hover:bg-zinc-800 text-zinc-400 hover:text-zinc-200 border border-zinc-800 transition cursor-pointer"
-                      >
-                        {isRtl ? 'بنزین ماشین' : 'Gas Fill'}
-                      </button>
-                      <button
-                        onClick={() => {
-                          const txt = isRtl ? '۴۲۰ تومن شام فست‌فود با بچه‌ها' : '$60 family dinner';
-                          setInteractiveInput(txt);
-                          handleTestDemoAI(txt);
-                        }}
-                        className="text-[11px] px-2 py-1 rounded-lg bg-zinc-900 hover:bg-zinc-800 text-zinc-400 hover:text-zinc-200 border border-zinc-800 transition cursor-pointer"
-                      >
-                        {isRtl ? 'شام رستوران' : 'Dinner Out'}
-                      </button>
-                    </div>
-
-                    {/* Result Card */}
-                    {demoParsed && (
-                      <div className="mt-2 p-2.5 rounded-xl bg-emerald-950/70 border border-emerald-500/50 text-xs animate-in fade-in">
-                        <div className="flex justify-between items-center text-white font-bold mb-1">
-                          <span>{demoParsed.cat}</span>
-                          <span className="text-emerald-400">{demoParsed.amount}</span>
-                        </div>
-                        <div className="text-[11px] text-zinc-400 truncate">
-                          {demoParsed.desc}
+                  {/* Donut Chart Visual */}
+                  <div className="p-3 bg-white rounded-2xl border border-zinc-100 shadow-2xs">
+                    <p className="text-[11px] font-extrabold text-zinc-700 mb-2">توزیع مخارج تیرماه</p>
+                    <div className="flex items-center justify-between gap-2">
+                      {/* Donut graphic */}
+                      <div className="relative w-28 h-28 shrink-0 flex items-center justify-center">
+                        <svg className="w-full h-full -rotate-90" viewBox="0 0 36 36">
+                          <circle cx="18" cy="18" r="14" fill="none" stroke="#E2E8F0" strokeWidth="4" />
+                          <circle cx="18" cy="18" r="14" fill="none" stroke="#059669" strokeWidth="4" strokeDasharray="38, 100" />
+                          <circle cx="18" cy="18" r="14" fill="none" stroke="#0D9488" strokeWidth="4" strokeDasharray="28, 100" strokeDashoffset="-38" />
+                          <circle cx="18" cy="18" r="14" fill="none" stroke="#F59E0B" strokeWidth="4" strokeDasharray="14, 100" strokeDashoffset="-66" />
+                          <circle cx="18" cy="18" r="14" fill="none" stroke="#10B981" strokeWidth="4" strokeDasharray="20, 100" strokeDashoffset="-80" />
+                        </svg>
+                        <div className="absolute text-center">
+                          <span className="text-[10px] font-bold text-zinc-400 block">خوراک</span>
+                          <span className="text-xs font-black text-emerald-700">۴۱.۸٪</span>
                         </div>
                       </div>
-                    )}
+
+                      {/* Legend */}
+                      <div className="text-[10px] space-y-1 text-zinc-600">
+                        <div className="flex items-center gap-1.5"><span className="w-2 h-2 rounded-full bg-emerald-600" /> غذا و خوراکی</div>
+                        <div className="flex items-center gap-1.5"><span className="w-2 h-2 rounded-full bg-teal-600" /> حمل و نقل</div>
+                        <div className="flex items-center gap-1.5"><span className="w-2 h-2 rounded-full bg-amber-500" /> مسکن و قبوض</div>
+                        <div className="flex items-center gap-1.5"><span className="w-2 h-2 rounded-full bg-emerald-400" /> پس‌انداز و رشد</div>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Category snippet */}
+                  <div className="p-2.5 rounded-2xl bg-zinc-50 border border-zinc-100 flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <div className="w-8 h-8 rounded-xl bg-emerald-100 text-emerald-700 flex items-center justify-center font-bold text-xs">
+                        🍔
+                      </div>
+                      <div>
+                        <p className="text-xs font-bold text-zinc-800">غذا و خوراکی</p>
+                        <p className="text-[10px] text-zinc-400">مواد غذایی، کافه و رستوران</p>
+                      </div>
+                    </div>
+                    <span className="text-xs font-extrabold font-mono text-zinc-800">۴۱.۸٪</span>
+                  </div>
+                </div>
+              </div>
+
+              {/* FLOATING CARD 1: Top-Left "حمل و نقل" */}
+              <div className="absolute -top-6 -left-4 sm:left-4 z-20 w-56 p-3.5 bg-white/95 backdrop-blur-md rounded-3xl shadow-xl border border-emerald-100/90 hidden sm:block animate-in fade-in zoom-in duration-300">
+                <div className="flex items-center justify-between mb-2">
+                  <div className="text-right">
+                    <h5 className="font-bold text-xs text-zinc-900">حمل و نقل</h5>
+                    <p className="text-[9px] text-zinc-400">تاکسی، اتوبوس، بنزین، اسنپ</p>
+                  </div>
+                  {/* Circular gauge */}
+                  <div className="relative w-11 h-11 flex items-center justify-center">
+                    <svg className="w-full h-full -rotate-90" viewBox="0 0 36 36">
+                      <circle cx="18" cy="18" r="14" fill="none" stroke="#FEE2E2" strokeWidth="4" />
+                      <circle cx="18" cy="18" r="14" fill="none" stroke="#EF4444" strokeWidth="4" strokeDasharray="100, 100" />
+                    </svg>
+                    <span className="absolute text-[10px] font-black text-rose-600">۱۲۰٪</span>
+                  </div>
+                </div>
+                <div className="space-y-1 text-[10px] text-zinc-600 border-t border-zinc-100 pt-1.5">
+                  <div className="flex justify-between"><span>بودجه:</span><span className="font-mono font-bold">۱۰۰,۰۰۰</span></div>
+                  <div className="flex justify-between text-rose-600 font-bold"><span>هزینه:</span><span className="font-mono">۱۲۰,۰۰۰</span></div>
+                </div>
+                <div className="mt-2.5 flex items-center gap-1.5 text-[9px] font-bold">
+                  <button onClick={handleLaunchApp} className="flex-1 py-1 rounded-lg bg-emerald-50 text-emerald-800 hover:bg-emerald-100 text-center transition">
+                    مشاهده تراکنش‌ها
+                  </button>
+                </div>
+              </div>
+
+              {/* FLOATING CARD 2: Bottom-Left "دونگ" screen preview */}
+              <div className="absolute -bottom-10 -left-6 sm:left-0 z-20 w-64 p-4 bg-white/95 backdrop-blur-md rounded-3xl shadow-2xl border border-emerald-100 hidden md:block">
+                <div className="flex items-center justify-between pb-2 border-b border-zinc-100">
+                  <div className="flex items-center gap-1.5">
+                    <Users className="w-4 h-4 text-emerald-700" />
+                    <span className="font-extrabold text-xs text-zinc-900">دونگ و خرج گروهی</span>
+                  </div>
+                  <span className="px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800 text-[10px] font-bold">فعال</span>
+                </div>
+                <div className="grid grid-cols-3 gap-1 py-2 text-center text-[10px]">
+                  <div className="p-1.5 rounded-xl bg-rose-50 text-rose-700">
+                    <span className="block text-[8px] text-zinc-400">بدهی</span>
+                    <span className="font-bold font-mono">۲,۲۰۸,۴۵۷</span>
+                  </div>
+                  <div className="p-1.5 rounded-xl bg-emerald-50 text-emerald-700">
+                    <span className="block text-[8px] text-zinc-400">طلب</span>
+                    <span className="font-bold font-mono">۱,۳۰۹,۲۳۲</span>
+                  </div>
+                  <div className="p-1.5 rounded-xl bg-teal-50 text-teal-800">
+                    <span className="block text-[8px] text-zinc-400">تراز کل</span>
+                    <span className="font-bold font-mono">۸۹۹,۲۲۵</span>
+                  </div>
+                </div>
+                <div className="space-y-1.5 text-[10px]">
+                  <div className="flex items-center justify-between p-1.5 rounded-xl bg-zinc-50">
+                    <span className="font-bold text-zinc-700">بچه‌های شرکت</span>
+                    <span className="text-zinc-400 text-[9px]">۶ نفر</span>
+                  </div>
+                  <div className="flex items-center justify-between p-1.5 rounded-xl bg-zinc-50">
+                    <span className="font-bold text-zinc-700">تولد سجاد</span>
+                    <span className="font-mono font-bold text-emerald-700">۶۹۹,۳۷۵ ت</span>
+                  </div>
+                </div>
+              </div>
+
+              {/* FLOATING CARD 3: Bottom-Right "غذا و خوراکی" Circular Gauge */}
+              <div className="absolute -bottom-6 right-2 sm:right-6 z-20 w-44 p-3 bg-white/95 backdrop-blur-md rounded-3xl shadow-xl border border-emerald-100 hidden sm:block">
+                <div className="text-center">
+                  <p className="text-[11px] font-bold text-zinc-800">غذا و خوراکی</p>
+                  <p className="text-[9px] text-zinc-400 mb-1.5">مواد غذایی، رستوران</p>
+                  <div className="relative w-14 h-14 mx-auto flex items-center justify-center">
+                    <svg className="w-full h-full -rotate-90" viewBox="0 0 36 36">
+                      <circle cx="18" cy="18" r="14" fill="none" stroke="#E0F2FE" strokeWidth="4" />
+                      <circle cx="18" cy="18" r="14" fill="none" stroke="#059669" strokeWidth="4" strokeDasharray="60.27, 100" />
+                    </svg>
+                    <span className="absolute text-[10px] font-black text-emerald-800">۶۰.۲۷٪</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Content Text & Hero CTA (Right in RTL, cols 5) */}
+            <div className="order-1 lg:order-2 lg:col-span-5 text-right space-y-6">
+              {/* Badge */}
+              <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-emerald-50 text-emerald-800 text-xs font-bold border border-emerald-200/80 shadow-2xs">
+                <Award className="w-3.5 h-3.5 text-emerald-600" />
+                <span>نسخه جدید چندبوم با هوش مالی پیشرفته</span>
+              </div>
+
+              {/* Main Headline */}
+              <h1 className="text-4xl sm:text-5xl lg:text-5xl font-black text-emerald-950 leading-[1.3] tracking-tight">
+                مدیریت <span className="text-emerald-700">هوشمندانه</span> مالی
+              </h1>
+
+              {/* Subtitle */}
+              <p className="text-base sm:text-lg text-zinc-600 font-medium leading-relaxed">
+                مدیریت هزینه‌ها، اولین قدم بهبود وضعیت مالی شماست؛ همین حالا با نسخه تحت وب شروع کنید:
+              </p>
+
+              {/* Dual Action Buttons (No app downloads!) */}
+              <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3.5 pt-2">
+                <button
+                  onClick={handleLaunchApp}
+                  className="flex items-center justify-center gap-2 px-8 py-3.5 rounded-2xl bg-emerald-700 hover:bg-emerald-800 text-white font-bold text-sm shadow-lg shadow-emerald-700/25 transition-all duration-200 hover:scale-[1.02] cursor-pointer"
+                >
+                  <Laptop className="w-4 h-4" />
+                  <span>ورود به نسخه تحت وب (رایگان)</span>
+                </button>
+
+                <a
+                  href="#features"
+                  className="flex items-center justify-center gap-2 px-6 py-3.5 rounded-2xl border-2 border-emerald-700 text-emerald-800 hover:bg-emerald-50 font-bold text-sm transition-all duration-200 cursor-pointer"
+                >
+                  <ArrowLeft className="w-4 h-4" />
+                  <span>آشنایی با امکانات</span>
+                </a>
+              </div>
+
+              {/* Social Proof Avatars */}
+              <div className="pt-4 flex items-center gap-3">
+                <div className="flex -space-x-2.5 space-x-reverse">
+                  <img src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100&h=100&fit=crop&crop=faces" alt="کاربر چندبوم" className="w-10 h-10 rounded-full border-2 border-white object-cover shadow-sm" />
+                  <img src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100&h=100&fit=crop&crop=faces" alt="کاربر چندبوم" className="w-10 h-10 rounded-full border-2 border-white object-cover shadow-sm" />
+                  <img src="https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=100&h=100&fit=crop&crop=faces" alt="کاربر چندبوم" className="w-10 h-10 rounded-full border-2 border-white object-cover shadow-sm" />
+                  <img src="https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=100&h=100&fit=crop&crop=faces" alt="کاربر چندبوم" className="w-10 h-10 rounded-full border-2 border-white object-cover shadow-sm" />
+                </div>
+                <div>
+                  <span className="font-extrabold text-sm text-emerald-950 block">+۱۲ هزار</span>
+                  <span className="text-xs text-zinc-500 font-medium">کاربر فعال ماهانه</span>
+                </div>
+              </div>
+            </div>
+
+          </div>
+        </div>
+      </section>
+
+      {/* SECTION 2: ویژگی‌های برتر چندبوم (Features Section) */}
+      <section id="features" className="relative z-10 py-20 bg-gradient-to-b from-transparent via-emerald-50/40 to-transparent">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          
+          {/* Section Header */}
+          <div className="text-center max-w-2xl mx-auto mb-16 space-y-3">
+            <h2 className="text-3xl sm:text-4xl font-black text-emerald-950">
+              ویژگی‌های <span className="text-emerald-700">برتر</span> چندبوم
+            </h2>
+            <p className="text-sm sm:text-base text-zinc-600 font-medium">
+              دلایلی که چندبوم را به انتخابی متفاوت و برتر برای مدیریت بودجه تبدیل می‌کند:
+            </p>
+          </div>
+
+          {/* 3-Column Grid: Left Cards | Center Phone | Right Cards */}
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-center">
+            
+            {/* Right Cards in RTL (2 items) */}
+            <div className="lg:col-span-4 space-y-6">
+              {/* Card 1: امنیت داده‌ها */}
+              <div className="p-6 bg-white/95 backdrop-blur-md rounded-3xl shadow-lg border border-emerald-100 hover:shadow-xl transition-all duration-300 text-right space-y-3 group">
+                <div className="w-14 h-14 rounded-2xl bg-gradient-to-tr from-emerald-600 to-teal-700 text-white flex items-center justify-center shadow-md shadow-emerald-700/20 group-hover:scale-105 transition-transform">
+                  <ShieldCheck className="w-7 h-7" />
+                </div>
+                <h3 className="font-extrabold text-lg text-emerald-950">
+                  امنیت داده‌ها
+                </h3>
+                <p className="text-xs sm:text-sm text-zinc-600 leading-relaxed">
+                  با استفاده از استانداردهای امنیتی پیشرفته و رمزنگاری چندلایه، اطلاعات مالی شما کاملاً محرمانه نگه داشته می‌شود.
+                </p>
+              </div>
+
+              {/* Card 2: کاربردی برای همه */}
+              <div className="p-6 bg-white/95 backdrop-blur-md rounded-3xl shadow-lg border border-emerald-100 hover:shadow-xl transition-all duration-300 text-right space-y-3 group">
+                <div className="w-14 h-14 rounded-2xl bg-gradient-to-tr from-teal-500 to-emerald-600 text-white flex items-center justify-center shadow-md shadow-teal-600/20 group-hover:scale-105 transition-transform">
+                  <Users className="w-7 h-7" />
+                </div>
+                <h3 className="font-extrabold text-lg text-emerald-950">
+                  کاربردی برای همه
+                </h3>
+                <p className="text-xs sm:text-sm text-zinc-600 leading-relaxed">
+                  رابط کاربری کاملاً فارسی و روان؛ مناسب برای تمام اقشار بدون نیاز به دانش تخصصی حسابداری یا مهارت‌های پیچیده.
+                </p>
+              </div>
+            </div>
+
+            {/* Center Phone Mockup (cols 4) */}
+            <div className="lg:col-span-4 flex justify-center">
+              <div className="w-[300px] sm:w-[320px] bg-zinc-950 rounded-[48px] p-4 shadow-2xl border-4 border-zinc-900 ring-2 ring-emerald-200">
+                {/* Notch */}
+                <div className="w-24 h-4 bg-zinc-800 rounded-full mx-auto mb-4" />
+
+                {/* Inner Screen */}
+                <div className="bg-gradient-to-b from-emerald-800 to-teal-900 rounded-[36px] p-5 text-white text-center space-y-4 font-cairo shadow-inner">
+                  <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-white/20 text-white text-[11px] font-bold">
+                    <Zap className="w-3.5 h-3.5" />
+                    <span>دستیار هوش مالی</span>
+                  </div>
+
+                  <h4 className="font-extrabold text-xl leading-tight">
+                    مدیریت مالی شخصی
+                  </h4>
+
+                  <p className="text-xs text-emerald-100 leading-relaxed">
+                    مدیریت هزینه‌ها، اولین قدم بهبود وضعیت مالی شماست؛ همین حالا شروع کنید.
+                  </p>
+
+                  <button
+                    onClick={handleLaunchApp}
+                    className="w-full py-2.5 rounded-xl bg-white text-emerald-800 font-extrabold text-xs shadow-md hover:bg-emerald-50 transition cursor-pointer flex items-center justify-center gap-1.5"
+                  >
+                    <ArrowLeft className="w-3.5 h-3.5" />
+                    <span>شروع کنید</span>
+                  </button>
+
+                  {/* Nested White Phone Screen Card */}
+                  <div className="bg-white rounded-2xl p-3 text-zinc-900 text-right space-y-2 shadow-lg">
+                    <div className="flex justify-between items-center text-[11px] font-bold text-zinc-500 border-b border-zinc-100 pb-1">
+                      <span>اردیبهشت ۱۴۰۴</span>
+                      <span className="font-mono text-emerald-800">۳۵,۰۰۰,۰۰۰ ت</span>
+                    </div>
+                    <div className="flex items-center justify-between text-[10px]">
+                      <span className="text-zinc-600">مسکن و اجاره:</span>
+                      <span className="font-bold text-rose-600 font-mono">۹۴.۷۴٪</span>
+                    </div>
+                    <div className="w-full h-1.5 rounded-full bg-zinc-100 overflow-hidden">
+                      <div className="w-[94%] h-full bg-rose-500 rounded-full" />
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Left Cards in RTL (2 items) */}
+            <div className="lg:col-span-4 space-y-6">
+              {/* Card 3: نسخه تحت وب و بدون نصب */}
+              <div className="p-6 bg-white/95 backdrop-blur-md rounded-3xl shadow-lg border border-emerald-100 hover:shadow-xl transition-all duration-300 text-right space-y-3 group">
+                <div className="w-14 h-14 rounded-2xl bg-gradient-to-tr from-emerald-600 to-teal-600 text-white flex items-center justify-center shadow-md shadow-emerald-600/20 group-hover:scale-105 transition-transform">
+                  <Laptop className="w-7 h-7" />
+                </div>
+                <h3 className="font-extrabold text-lg text-emerald-950">
+                  دسترسی تحت وب از همه‌جا
+                </h3>
+                <p className="text-xs sm:text-sm text-zinc-600 leading-relaxed">
+                  بدون نیاز به دانلود یا نصب، از طریق مرورگر انواع گوشی‌ها، تبلت و لپ‌تاپ به صورت پایدار و سریع در دسترس است.
+                </p>
+              </div>
+
+              {/* Card 4: تحلیل مالی و هوش مصنوعی */}
+              <div className="p-6 bg-white/95 backdrop-blur-md rounded-3xl shadow-lg border border-emerald-100 hover:shadow-xl transition-all duration-300 text-right space-y-3 group">
+                <div className="w-14 h-14 rounded-2xl bg-gradient-to-tr from-teal-600 to-emerald-700 text-white flex items-center justify-center shadow-md shadow-emerald-700/20 group-hover:scale-105 transition-transform">
+                  <BarChart3 className="w-7 h-7" />
+                </div>
+                <h3 className="font-extrabold text-lg text-emerald-950">
+                  تحلیل مالی و پیش‌بینی هوشمند
+                </h3>
+                <p className="text-xs sm:text-sm text-zinc-600 leading-relaxed">
+                  گزارش‌های دقیق تراز ماهانه، پیش‌بینی هوشمند جریان نقدینگی و تحلیل بودجه برای تصمیم‌گیری آگاهانه و پس‌انداز مستمر.
+                </p>
+              </div>
+            </div>
+
+          </div>
+        </div>
+      </section>
+
+      {/* SECTION 3: مدیریت خرج‌های جمعی و دونگی (Dong Management) */}
+      <section id="dong" className="relative z-10 py-20 overflow-hidden">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 items-center">
+            
+            {/* Visual Dong Phone & Breakdown (Left in RTL, cols 6) */}
+            <div className="order-2 lg:order-1 lg:col-span-6 flex justify-center relative">
+              {/* Backlight orb */}
+              <div className="absolute w-80 h-80 bg-emerald-200/40 rounded-full blur-[90px] pointer-events-none" />
+
+              {/* Mobile Dong Mockup */}
+              <div className="relative z-10 w-[290px] sm:w-[310px] bg-white rounded-[44px] p-3 shadow-2xl border-4 border-emerald-50">
+                <div className="w-20 h-3.5 bg-zinc-200 rounded-full mx-auto mb-3" />
+                <div className="space-y-3 text-right">
+                  <div className="flex items-center justify-between pb-2 border-b border-zinc-100 text-xs font-bold text-zinc-800">
+                    <span>گروه‌های هم‌خرج من</span>
+                    <Users className="w-4 h-4 text-emerald-700" />
+                  </div>
+
+                  {/* List of groups */}
+                  <div className="space-y-2 text-xs">
+                    <div className="p-3 rounded-2xl bg-zinc-50 border border-zinc-100 flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <span className="text-lg">☕️</span>
+                        <div>
+                          <p className="font-bold text-zinc-900">کافه و رستوران</p>
+                          <p className="text-[10px] text-zinc-400">۲ نفر</p>
+                        </div>
+                      </div>
+                      <span className="font-mono text-[11px] text-zinc-500">۱۴۰۳/۱۰/۲۳</span>
+                    </div>
+
+                    <div className="p-3 rounded-2xl bg-zinc-50 border border-zinc-100 flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <span className="text-lg">🏖️</span>
+                        <div>
+                          <p className="font-bold text-zinc-900">سفر شمال دوستانه</p>
+                          <p className="text-[10px] text-zinc-400">۴ نفر</p>
+                        </div>
+                      </div>
+                      <span className="font-mono text-[11px] text-zinc-500">۱۴۰۳/۱۰/۱۵</span>
+                    </div>
+
+                    <div className="p-3 rounded-2xl bg-zinc-50 border border-zinc-100 flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <span className="text-lg">🏠</span>
+                        <div>
+                          <p className="font-bold text-zinc-900">شارژ و قبوض ساختمان</p>
+                          <p className="text-[10px] text-zinc-400">۸ نفر</p>
+                        </div>
+                      </div>
+                      <span className="font-mono text-[11px] text-zinc-500">۱۴۰۳/۱۰/۰۱</span>
+                    </div>
                   </div>
 
                   <button
-                    onClick={onEnterApp}
-                    className="w-full mt-3 py-2 rounded-xl bg-zinc-900 hover:bg-zinc-800 text-zinc-300 text-xs font-semibold border border-zinc-800 transition cursor-pointer"
+                    onClick={handleLaunchDong}
+                    className="w-full py-2.5 rounded-2xl bg-emerald-700 hover:bg-emerald-800 text-white font-bold text-xs shadow-md transition cursor-pointer flex items-center justify-center gap-1.5"
                   >
-                    {isRtl ? 'ورود به پنل و همگام‌سازی ابری' : 'Sync with Secure Cloud'}
+                    <Plus className="w-4 h-4" />
+                    <span>ثبت گروه دنگ جدید</span>
                   </button>
                 </div>
               </div>
             </div>
-          </div>
-        </section>
 
-        {/* 3. FEATURES GRID (بخش ویژگی‌ها و قابلیت‌ها) */}
-        <section id="features" className="max-w-7xl mx-auto px-4 sm:px-6 py-20 border-t border-emerald-950/40">
-          <div className="text-center max-w-3xl mx-auto mb-16">
-            <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-950/70 border border-emerald-500/30 text-emerald-400 text-xs font-bold mb-4">
-              <Zap className="w-3.5 h-3.5" />
-              <span>{isRtl ? 'امکانات مدیریت مالی هوشمند' : 'Built for Effortless Financial Mastery'}</span>
-            </div>
-            <h2 className="font-bahman text-3xl sm:text-4xl lg:text-5xl font-black text-white mb-4">
-              {isRtl
-                ? 'مدیریت مالی شخصی با هوش مصنوعی چندبوم'
-                : 'Everything You Need for Total Financial Control'}
-            </h2>
-            <p className="text-zinc-400 text-base leading-relaxed">
-              {isRtl
-                ? 'چندبوم فراتر از یک حسابداری ساده است؛ یک دستیار هوشمند و سیستم جامع تصمیم‌گیری مالی برای آرامش خاطر شما.'
-                : 'Replace confusing spreadsheets and dated accounting tools with intuitive, AI-driven automation.'}
-            </p>
-          </div>
+            {/* Dong Description & Stats Grid (Right in RTL, cols 6) */}
+            <div className="order-1 lg:order-2 lg:col-span-6 text-right space-y-6">
+              <h2 className="text-3xl sm:text-4xl font-black text-emerald-950">
+                مدیریت <span className="text-emerald-700">خرج‌های جمعی</span> و دونگی
+              </h2>
 
-          {/* Visual Spotlight A: Voice Transaction Entry */}
-          <div className="mb-14 rounded-3xl p-1 bg-gradient-to-r from-emerald-500/20 via-teal-900/20 to-zinc-900 border border-emerald-900/40 shadow-xl overflow-hidden">
-            <div className="rounded-[22px] bg-[#0A100D] p-6 sm:p-10 grid grid-cols-1 lg:grid-cols-2 gap-8 items-center">
-              {/* Text / Copy Column */}
-              <div className="space-y-4 text-right">
-                <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-950/80 border border-emerald-800/40 text-emerald-400 text-xs font-bold">
-                  <Mic className="w-3.5 h-3.5 text-emerald-400 animate-pulse" />
-                  <span>{isRtl ? 'ثبت تراکنش با صدا' : 'Voice-Powered Entry'}</span>
-                </div>
-                <h3 className="font-bahman text-2xl sm:text-3xl font-black text-white leading-tight">
-                  {isRtl ? 'تنها با صدا صحبت کنید؛ هوش مصنوعی ثبت می‌کند' : 'Speak Naturally. Chandboom AI Logs the Rest.'}
-                </h3>
-                <p className="text-zinc-400 text-sm leading-relaxed">
-                  {isRtl
-                    ? 'بدون اتلاف وقت برای پر کردن فرم‌های خسته‌کننده یا انتخاب دستی دسته‌بندی‌ها؛ کافیست بگویید «خرید میوه ۲۰۰ تومن و کرایه تاکسی ۴۵ تومن». موتور چندبوم در کسری از ثانیه مبلغ، نوع هزینه و دسته‌بندی دقیق را استخراج کرده و حساب شما را به‌روز می‌کند.'
-                    : 'Skip the friction of tedious dropdowns. Just speak or write freely. Our fine-tuned AI extracts precise amounts in Toman, auto-categorizes, and registers transactions seamlessly.'}
-                </p>
-                <ul className="space-y-2.5 text-xs text-zinc-300 pt-2">
-                  <li className="flex items-center gap-2.5">
-                    <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
-                    <span>{isRtl ? 'تبدیل مستقیم گفتار فارسی به تراکنش معتبر به تومان' : 'Accurate Persian speech-to-transaction parsing'}</span>
-                  </li>
-                  <li className="flex items-center gap-2.5">
-                    <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
-                    <span>{isRtl ? 'شناسایی و ثبت گروهی چند تراکنش هم‌زمان در یک پیام' : 'Batch multi-transaction extraction from single voice message'}</span>
-                  </li>
-                  <li className="flex items-center gap-2.5">
-                    <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
-                    <span>{isRtl ? 'بدون نیاز به دسترسی‌های ناامن و بدون اتصال به رمز بانک' : '100% private with zero insecure banking access'}</span>
-                  </li>
-                </ul>
-              </div>
-
-              {/* Visual Asset Column */}
-              <div className="relative rounded-2xl overflow-hidden border border-emerald-900/50 shadow-2xl bg-zinc-950">
-                <picture>
-                  <source srcSet="./assets/chandboom-voice-transaction-entry.webp" type="image/webp" />
-                  <source srcSet="./assets/chandboom-voice-transaction-entry.jpg" type="image/jpeg" />
-                  <img
-                    src="./assets/chandboom-voice-transaction-entry.webp"
-                    alt="مفهوم پردازش صوت و تبدیل پیام صوتی به تراکنش مالی هوشمند در چندبوم"
-                    width={1200}
-                    height={896}
-                    loading="lazy"
-                    decoding="async"
-                    referrerPolicy="no-referrer"
-                    className="w-full h-auto object-cover rounded-2xl transition-transform duration-500 hover:scale-[1.02]"
-                  />
-                </picture>
-                <div className="absolute bottom-3 right-3 bg-[#070B09]/85 backdrop-blur-md px-3 py-1.5 rounded-xl border border-emerald-900/60 text-[11px] font-bold text-emerald-300 flex items-center gap-1.5">
-                  <Mic className="w-3 h-3 text-emerald-400" />
-                  <span>{isRtl ? 'ثبت تراکنش با صدا و هوش مصنوعی' : 'Voice Transaction Flow'}</span>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          {/* Visual Spotlight B: AI Financial Insights & Spending Analysis */}
-          <div className="mb-16 rounded-3xl p-1 bg-gradient-to-l from-emerald-500/20 via-amber-900/15 to-zinc-900 border border-emerald-900/40 shadow-xl overflow-hidden">
-            <div className="rounded-[22px] bg-[#0A100D] p-6 sm:p-10 grid grid-cols-1 lg:grid-cols-2 gap-8 items-center">
-              {/* Visual Asset Column (Shown first on desktop in LTR / second in RTL) */}
-              <div className="order-2 lg:order-1 relative rounded-2xl overflow-hidden border border-emerald-900/50 shadow-2xl bg-zinc-950">
-                <picture>
-                  <source srcSet="./assets/chandboom-ai-financial-insights.webp" type="image/webp" />
-                  <source srcSet="./assets/chandboom-ai-financial-insights.jpg" type="image/jpeg" />
-                  <img
-                    src="./assets/chandboom-ai-financial-insights.webp"
-                    alt="تحلیل بصری دسته‌بندی مخارج، جریان نقدینگی و بینش‌های مالی هوش مصنوعی چندبوم"
-                    width={1200}
-                    height={896}
-                    loading="lazy"
-                    decoding="async"
-                    referrerPolicy="no-referrer"
-                    className="w-full h-auto object-cover rounded-2xl transition-transform duration-500 hover:scale-[1.02]"
-                  />
-                </picture>
-                <div className="absolute bottom-3 left-3 bg-[#070B09]/85 backdrop-blur-md px-3 py-1.5 rounded-xl border border-emerald-900/60 text-[11px] font-bold text-amber-300 flex items-center gap-1.5">
-                  <TrendingUp className="w-3 h-3 text-amber-400" />
-                  <span>{isRtl ? 'تحلیل هوشمند هزینه‌ها و درآمدها' : 'Predictive Financial Insights'}</span>
-                </div>
-              </div>
-
-              {/* Text / Copy Column */}
-              <div className="order-1 lg:order-2 space-y-4 text-right">
-                <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-amber-500/10 border border-amber-500/30 text-amber-300 text-xs font-bold">
-                  <TrendingUp className="w-3.5 h-3.5 text-amber-400" />
-                  <span>{isRtl ? 'تحلیل هوشمند هزینه‌ها و درآمدها' : 'Predictive Financial Intelligence'}</span>
-                </div>
-                <h3 className="font-bahman text-2xl sm:text-3xl font-black text-white leading-tight">
-                  {isRtl ? 'پیش‌بینی ۳ ماهه جریان نقدینگی و رادار کنترل بودجه' : '3-Month Cash Flow Forecasting & Budget Guardrails'}
-                </h3>
-                <p className="text-zinc-400 text-sm leading-relaxed">
-                  {isRtl
-                    ? 'چندبوم به جای نگاه به گذشته، آینده مالی شما را ترسیم می‌کند. هوش مصنوعی با شبیه‌سازی نرخ مصرف روزانه به شما هشدار می‌دهد که تا چه تاریخی پول شما پایدار است و چگونه با مهار خریدهای احساسی، تا ۳۰ درصد به پس‌انداز ماهانه خود بیفزایید.'
-                    : 'Move from reactive bookkeeping to proactive wealth protection. Chandboom calculates your exact cash runway, highlights burn rates, and helps shield against emotional impulse spending.'}
-                </p>
-                <ul className="space-y-2.5 text-xs text-zinc-300 pt-2">
-                  <li className="flex items-center gap-2.5">
-                    <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
-                    <span>{isRtl ? 'رادار تصویری مخارج بر اساس دسته‌بندی‌های استاندارد' : 'Visual categorical breakdown across essentials and leisure'}</span>
-                  </li>
-                  <li className="flex items-center gap-2.5">
-                    <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
-                    <span>{isRtl ? 'سپر ضد خرید تکانه‌ای و تبدیل قیمت کالا به ساعات کار مفید' : 'Impulse buy shield converting price tags into work hours'}</span>
-                  </li>
-                  <li className="flex items-center gap-2.5">
-                    <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
-                    <span>{isRtl ? 'خروجی اکسل استاندارد و پیش‌بینی هوشمند روز اتمام بودجه' : 'Automated styled Excel exports with runway forecasting'}</span>
-                  </li>
-                </ul>
-              </div>
-            </div>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {/* Feature 1: Bank SMS & Receipt Parser */}
-            <div className="rounded-3xl p-7 bg-zinc-950/70 border border-emerald-900/30 hover:border-emerald-500/50 transition-all group backdrop-blur-sm hover:-translate-y-1">
-              <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-blue-500/20 to-teal-500/10 border border-blue-500/30 flex items-center justify-center mb-6 group-hover:scale-110 transition shadow-lg">
-                <CreditCard className="w-7 h-7 text-blue-400" />
-              </div>
-              <h3 className="font-bahman text-xl font-bold text-white mb-3">
-                {isRtl ? 'پردازش هوشمند پیامک بانکی و فیش' : 'Instant Bank SMS & Receipt Parser'}
-              </h3>
-              <p className="text-zinc-400 text-sm leading-relaxed">
-                {isRtl
-                  ? 'پیامک واریز یا برداشت هر بانکی را پیست کنید؛ سامانه مبلغ، نوع، بانک و تاریخ را استخراج کرده و دسته‌بندی را با تأیید دستی شما نهایی می‌کند.'
-                  : 'Paste any banking notification or receipt. Our parser deterministically extracts amount, type, bank, and date with zero intrusive phone permissions.'}
+              <p className="text-sm sm:text-base text-zinc-600 font-medium leading-relaxed">
+                چه برای یک سفر دوستانه، چه برای خرید گروهی یا تقسیم هزینه‌های روزمره، مدیریت خرج‌های جمعی را ساده و شفاف کنید. با ابزارهای هوشمند چندبوم، به‌راحتی هزینه‌ها را تقسیم کنید، تراکنش‌ها را ثبت نمایید و از درگیری‌های مالی دور بمانید.
               </p>
-            </div>
 
-            {/* Feature 2: 30-Day Daily Quests */}
-            <div className="rounded-3xl p-7 bg-zinc-950/70 border border-emerald-900/30 hover:border-emerald-500/50 transition-all group backdrop-blur-sm hover:-translate-y-1">
-              <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-amber-500/20 to-yellow-500/10 border border-amber-500/30 flex items-center justify-center mb-6 group-hover:scale-110 transition shadow-lg">
-                <Star className="w-7 h-7 text-amber-400" />
-              </div>
-              <h3 className="font-bahman text-xl font-bold text-white mb-3">
-                {isRtl ? 'چالش ۳۰ روزه مدیریت پول و تسک‌های روزانه' : '30-Day Daily Financial Quests & Streaks'}
-              </h3>
-              <p className="text-zinc-400 text-sm leading-relaxed">
-                {isRtl
-                  ? 'تقویم گیمیفای شده ماهانه با ریزاهداف کاربردی روزانه (مثل روز بدون هزینه غیرضروری)، ویجت تسک امروز در داشبورد و شمارنده زنجیره تداوم (Streak).'
-                  : 'An interactive 30-day quest calendar with micro-habits, dashboard Today’s Quest widget, celebratory animations, and active streak counters.'}
-              </p>
-            </div>
-
-            {/* Feature 3: Impulse Buy Shield */}
-            <div className="rounded-3xl p-7 bg-zinc-950/70 border border-emerald-900/30 hover:border-emerald-500/50 transition-all group backdrop-blur-sm hover:-translate-y-1">
-              <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-rose-500/20 to-amber-500/10 border border-rose-500/30 flex items-center justify-center mb-6 group-hover:scale-110 transition shadow-lg">
-                <ShieldCheck className="w-7 h-7 text-rose-400" />
-              </div>
-              <h3 className="font-bahman text-xl font-bold text-white mb-3">
-                {isRtl ? 'سپر ضد خرید تکانه‌ای (Impulse Buy Shield)' : 'Subtle Impulse Buy Shield'}
-              </h3>
-              <p className="text-zinc-400 text-sm leading-relaxed">
-                {isRtl
-                  ? 'محاسبه خودکار ساعت کار معادل برای هر هدف خرید بر اساس درآمد ساعتی شما، و مشاوره‌های هوشمندانه تامل ۴۸ ساعته پیش از خریدهای هیجانی.'
-                  : 'Translates any purchase target into equivalent working hours based on your hourly wage, preventing emotional gadget purchases.'}
-              </p>
-            </div>
-
-            {/* Feature 4: Smart Timeline & 3-Month View */}
-            <div className="rounded-3xl p-7 bg-zinc-950/70 border border-emerald-900/30 hover:border-emerald-500/50 transition-all group backdrop-blur-sm hover:-translate-y-1">
-              <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-emerald-500/20 to-teal-500/10 border border-emerald-500/30 flex items-center justify-center mb-6 group-hover:scale-110 transition shadow-lg">
-                <TrendingUp className="w-7 h-7 text-emerald-400" />
-              </div>
-              <h3 className="font-bahman text-xl font-bold text-white mb-3">
-                {isRtl ? 'تایم‌لاین ۳ ماهه و گروه‌بندی روزانه' : 'Smart Timeline & Quarterly Views'}
-              </h3>
-              <p className="text-zinc-400 text-sm leading-relaxed">
-                {isRtl
-                  ? 'نمایش پیش‌فرض تمیز ماه جاری با تب‌های سریع ماه گذشته و ۳ ماه اخیر، به همراه گروه‌بندی روزانه و سرجمع سود و زیان هر روز.'
-                  : 'Clean monthly default view with 1-click quarterly filters, grouped by exact dates with daily subtotal headers and totals.'}
-              </p>
-            </div>
-
-            {/* Feature 5: AI Advisor */}
-            <div className="rounded-3xl p-7 bg-zinc-950/70 border border-emerald-900/30 hover:border-emerald-500/50 transition-all group backdrop-blur-sm hover:-translate-y-1">
-              <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-teal-500/20 to-emerald-500/10 border border-teal-500/30 flex items-center justify-center mb-6 group-hover:scale-110 transition shadow-lg">
-                <Sparkles className="w-7 h-7 text-teal-400" />
-              </div>
-              <h3 className="font-bahman text-xl font-bold text-white mb-3">
-                {isRtl ? 'تحلیل و مشاوره مالی با دستیار هوشمند چندبوم' : 'Chandboom AI Financial Advisor'}
-              </h3>
-              <p className="text-zinc-400 text-sm leading-relaxed">
-                {isRtl
-                  ? 'تحلیل عمیق دخل و خرج، پیش‌بینی روز اتمام بودجه، ارائه راهکارهای افزایش پس‌انداز و پاسخ به سوالات مالی شما با هوش مصنوعی.'
-                  : 'AI-powered budgeting insights, cash flow runway calculations, and custom financial advice tailored to your goals.'}
-              </p>
-            </div>
-
-            {/* Feature 6: Group Dong & Bill Splitting */}
-            <div className="rounded-3xl p-7 bg-zinc-950/70 border border-emerald-900/30 hover:border-emerald-500/50 transition-all group backdrop-blur-sm hover:-translate-y-1">
-              <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-purple-500/20 to-teal-500/10 border border-purple-500/30 flex items-center justify-center mb-6 group-hover:scale-110 transition shadow-lg">
-                <Users className="w-7 h-7 text-purple-400" />
-              </div>
-              <h3 className="font-bahman text-xl font-bold text-white mb-3">
-                {isRtl ? 'محاسبه عادلانه دنگ سفر و رستوران' : 'Group Bill & Travel Expense Splitting'}
-              </h3>
-              <p className="text-zinc-400 text-sm leading-relaxed">
-                {isRtl
-                  ? 'محاسبه بدون دلخوری دنگ دورهمی‌ها و سفر با فرمول بهینه حداقل تراکنش، بدون نیاز به کاغذ و ماشین‌حساب.'
-                  : 'Split group trips and dining bills fairly with minimized transactions and clear individual balances.'}
-              </p>
-            </div>
-          </div>
-        </section>
-
-        {/* 4. PRICING SECTION (بخش معرفی پلن‌های اشتراک) */}
-        <section id="pricing" className="max-w-7xl mx-auto px-4 sm:px-6 py-20 border-t border-emerald-950/40">
-          <div className="text-center max-w-3xl mx-auto mb-16">
-            <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-amber-500/15 border border-amber-500/30 text-amber-300 text-xs font-bold mb-4">
-              <Crown className="w-3.5 h-3.5 text-amber-400" />
-              <span>{isRtl ? 'تعرفه‌های اشتراک طلایی پرو' : 'Flexible Pro & VIP Plans'}</span>
-            </div>
-            <h2 className="font-bahman text-3xl sm:text-4xl lg:text-5xl font-black text-white mb-4">
-              {isRtl ? 'سرمایه‌گذاری روی آرامش و انضباط مالی' : 'Invest in Clarity and Financial Freedom'}
-            </h2>
-            <p className="text-zinc-400 text-base leading-relaxed">
-              {isRtl
-                ? 'پلن مورد نظرتان را انتخاب کنید و به قدرتمندترین امکانات هوش مصنوعی چندبوم دسترسی نامحدود پیدا کنید.'
-                : 'Select the right plan for your workflow and unlock unlimited Chandboom AI intelligence.'}
-            </p>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-5xl mx-auto items-stretch">
-            {/* Plan 1: 1 Month */}
-            <div className="rounded-3xl bg-zinc-950/80 border border-zinc-800 p-8 flex flex-col justify-between hover:border-emerald-600 transition shadow-lg">
-              <div>
-                <div className="flex items-center justify-between mb-4">
-                  <span className="font-bahman text-2xl font-bold text-white">
-                    {isRtl ? 'اشتراک ۱ ماهه' : '1 Month Pass'}
-                  </span>
-                  <span className="text-xs px-2.5 py-1 rounded-lg bg-zinc-800 text-zinc-300 font-bold">
-                    {isRtl ? 'شروع هوشمند' : 'Starter'}
-                  </span>
-                </div>
-                <p className="text-xs text-zinc-400 mb-6">
-                  {isRtl ? 'مناسب برای تست و شروع تسلط بر مخارج روزمره' : 'Ideal for testing out automated tracking and budgeting.'}
-                </p>
-
-                <div className="flex items-baseline gap-2 mb-8">
-                  <span className="font-bahman text-4xl font-black text-white">
-                    {isRtl ? '۹۹,۰۰۰' : '$2.99'}
-                  </span>
-                  <span className="text-xs text-zinc-400 font-bold">
-                    {isRtl ? 'تومان / ماهانه' : '/ month'}
-                  </span>
-                </div>
-
-                <ul className="space-y-3.5 text-xs text-zinc-300 mb-8">
-                  <li className="flex items-center gap-2.5">
-                    <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
-                    <span>{isRtl ? 'ثبت هوشمند با هوش مصنوعی چندبوم (۵۰ در روز)' : '50 Chandboom AI entries per day'}</span>
-                  </li>
-                  <li className="flex items-center gap-2.5">
-                    <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
-                    <span>{isRtl ? 'تحلیل و پیش‌بینی ۱ ماهه بودجه' : '1-Month cash flow forecast'}</span>
-                  </li>
-                  <li className="flex items-center gap-2.5">
-                    <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
-                    <span>{isRtl ? 'ثبت نامحدود یادآور اقساط و چک' : 'Unlimited reminders for loans & checks'}</span>
-                  </li>
-                  <li className="flex items-center gap-2.5">
-                    <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
-                    <span>{isRtl ? 'محاسبه دنگ سفر و رستوران' : 'Group bill splitting module'}</span>
-                  </li>
-                </ul>
-              </div>
-
-              {/* Requirement 4: Auth Guard triggered if not logged in */}
-              <button
-                onClick={handleSubscriptionClick}
-                className="w-full py-3.5 rounded-2xl bg-zinc-900 hover:bg-zinc-800 text-white font-bold text-xs border border-zinc-700 hover:border-emerald-500 transition cursor-pointer"
-              >
-                {isRtl ? 'انتخاب اشتراک ۱ ماهه' : 'Select 1 Month'}
-              </button>
-            </div>
-
-            {/* Plan 2: 3 Months (POPULAR - GOLD / BLACK LUXURY) */}
-            <div className="rounded-3xl bg-gradient-to-b from-zinc-950 via-[#0E1511] to-zinc-950 border-2 border-amber-500/80 p-8 flex flex-col justify-between shadow-2xl shadow-amber-500/10 relative transform md:-translate-y-2">
-              {/* Popular Badge */}
-              <div className="absolute -top-4 left-1/2 -translate-x-1/2 px-4 py-1 rounded-full bg-gradient-to-r from-amber-400 via-amber-500 to-yellow-500 text-zinc-950 font-black text-xs shadow-md uppercase tracking-wider flex items-center gap-1.5">
-                <Crown className="w-3.5 h-3.5" />
-                <span>{isRtl ? 'محبوب‌ترین انتخاب' : 'Most Popular'}</span>
-              </div>
-
-              <div>
-                <div className="flex items-center justify-between mb-4 mt-2">
-                  <span className="font-bahman text-2xl font-black text-white flex items-center gap-2">
-                    {isRtl ? 'اشتراک ۳ ماهه' : '3 Months Pro'}
-                    <span className="text-[11px] px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-300 border border-amber-500/40 font-bold">
-                      {isRtl ? '۱۶٪ تخفیف' : '16% Off'}
-                    </span>
-                  </span>
-                </div>
-                <p className="text-xs text-zinc-300 mb-6">
-                  {isRtl ? 'بهترین دوره برای شکل‌گیری عادت انضباط مالی پایدار' : 'The sweet spot for establishing lifelong money discipline.'}
-                </p>
-
-                <div className="flex items-baseline gap-2 mb-8">
-                  <span className="font-bahman text-4xl font-black text-amber-400">
-                    {isRtl ? '۲۴۹,۰۰۰' : '$6.99'}
-                  </span>
-                  <span className="text-xs text-zinc-400 font-bold">
-                    {isRtl ? 'تومان / کل دوره ۳ ماه' : '/ 3 months'}
-                  </span>
-                </div>
-
-                <ul className="space-y-3.5 text-xs text-zinc-200 mb-8">
-                  <li className="flex items-center gap-2.5">
-                    <CheckCircle2 className="w-4 h-4 text-amber-400 shrink-0" />
-                    <span className="font-bold text-white">{isRtl ? 'دسترسی نامحدود به هوش مصنوعی چندبوم' : 'Unlimited Chandboom AI Assistant'}</span>
-                  </li>
-                  <li className="flex items-center gap-2.5">
-                    <CheckCircle2 className="w-4 h-4 text-amber-400 shrink-0" />
-                    <span>{isRtl ? 'پیش‌بینی هوشمند ۳ ماهه جریان نقدینگی' : 'Full 3-Month cash flow forecast'}</span>
-                  </li>
-                  <li className="flex items-center gap-2.5">
-                    <CheckCircle2 className="w-4 h-4 text-amber-400 shrink-0" />
-                    <span>{isRtl ? 'هشدار لحظه‌ای عبور از سقف بودجه' : 'Instant budget cap trigger alerts'}</span>
-                  </li>
-                  <li className="flex items-center gap-2.5">
-                    <CheckCircle2 className="w-4 h-4 text-amber-400 shrink-0" />
-                    <span>{isRtl ? 'تفکیک دسته‌بندی‌های اختصاصی نامحدود' : 'Custom unlimited categories & tags'}</span>
-                  </li>
-                  <li className="flex items-center gap-2.5">
-                    <CheckCircle2 className="w-4 h-4 text-amber-400 shrink-0" />
-                    <span>{isRtl ? 'پشتیبانی تیکتی دارای اولویت' : 'Priority support response'}</span>
-                  </li>
-                </ul>
-              </div>
-
-              {/* Requirement 4: Auth Guard triggered if not logged in */}
-              <button
-                onClick={handleSubscriptionClick}
-                className="w-full py-4 rounded-2xl bg-gradient-to-r from-amber-400 via-amber-500 to-yellow-500 hover:from-amber-300 hover:to-yellow-400 text-zinc-950 font-black text-sm shadow-xl shadow-amber-500/25 transition-all transform hover:-translate-y-0.5 cursor-pointer"
-              >
-                {isRtl ? 'خرید اشتراک ۳ ماهه طلایی' : 'Get 3 Months Golden Pro'}
-              </button>
-            </div>
-
-            {/* Plan 3: 6 Months VIP */}
-            <div className="rounded-3xl bg-zinc-950/80 border border-emerald-900/40 p-8 flex flex-col justify-between hover:border-emerald-500 transition shadow-lg">
-              <div>
-                <div className="flex items-center justify-between mb-4">
-                  <span className="font-bahman text-2xl font-bold text-white flex items-center gap-2">
-                    {isRtl ? 'اشتراک ۶ ماهه VIP' : '6 Months VIP'}
-                    <span className="text-[11px] px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 font-bold">
-                      {isRtl ? '۲۵٪ تخفیف ویژه' : '25% Max Savings'}
-                    </span>
-                  </span>
-                </div>
-                <p className="text-xs text-zinc-400 mb-6">
-                  {isRtl ? 'حداکثر صرفه‌جویی مالی با تمام قابلیت‌های سازمانی' : 'Ultimate value pass with VIP status and custom advisory tools.'}
-                </p>
-
-                <div className="flex items-baseline gap-2 mb-8">
-                  <span className="font-bahman text-4xl font-black text-white">
-                    {isRtl ? '۴۴۹,۰۰۰' : '$11.99'}
-                  </span>
-                  <span className="text-xs text-zinc-400 font-bold">
-                    {isRtl ? 'تومان / کل دوره ۶ ماه' : '/ 6 months'}
-                  </span>
-                </div>
-
-                <ul className="space-y-3.5 text-xs text-zinc-300 mb-8">
-                  <li className="flex items-center gap-2.5">
-                    <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
-                    <span>{isRtl ? 'تمام امکانات طلایی بدون محدودیت' : 'Everything in Golden Pro unrestricted'}</span>
-                  </li>
-                  <li className="flex items-center gap-2.5">
-                    <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
-                    <span>{isRtl ? 'نشان افتخاری VIP در پروفایل کاربری' : 'VIP Badge across all community tools'}</span>
-                  </li>
-                  <li className="flex items-center gap-2.5">
-                    <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
-                    <span>{isRtl ? 'تحلیل‌های عمیق ۶ ماهه روند دارایی' : '6-Month deep financial trajectory report'}</span>
-                  </li>
-                  <li className="flex items-center gap-2.5">
-                    <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
-                    <span>{isRtl ? 'پشتیبانی اختصاصی مستقیم در تیکت' : 'Direct VIP channel assistance'}</span>
-                  </li>
-                </ul>
-              </div>
-
-              {/* Requirement 4: Auth Guard triggered if not logged in */}
-              <button
-                onClick={handleSubscriptionClick}
-                className="w-full py-3.5 rounded-2xl bg-zinc-900 hover:bg-zinc-800 text-white font-bold text-xs border border-emerald-800/60 hover:border-emerald-500 transition cursor-pointer"
-              >
-                {isRtl ? 'انتخاب اشتراک ۶ ماهه VIP' : 'Select 6 Months VIP'}
-              </button>
-            </div>
-          </div>
-        </section>
-
-        {/* 5. TESTIMONIALS & STATS (نظرات و اعتماد کاربران) */}
-        <section className="max-w-7xl mx-auto px-4 sm:px-6 py-20 border-t border-emerald-950/40">
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-6 text-center mb-16">
-            <div className="p-6 rounded-2xl bg-zinc-950/60 border border-emerald-950/60">
-              <span className="font-bahman text-3xl sm:text-4xl font-black text-emerald-400 block mb-1">
-                +۵۰,۰۰۰
-              </span>
-              <span className="text-xs text-zinc-400 font-semibold">
-                {isRtl ? 'تراکنش امن ثبت‌شده' : 'Transactions Securely Logged'}
-              </span>
-            </div>
-            <div className="p-6 rounded-2xl bg-zinc-950/60 border border-emerald-950/60">
-              <span className="font-bahman text-3xl sm:text-4xl font-black text-amber-400 block mb-1">
-                ۹۹.۸٪
-              </span>
-              <span className="text-xs text-zinc-400 font-semibold">
-                {isRtl ? 'دقت هوش مصنوعی چندبوم' : 'Chandboom AI Accuracy'}
-              </span>
-            </div>
-            <div className="p-6 rounded-2xl bg-zinc-950/60 border border-emerald-950/60">
-              <span className="font-bahman text-3xl sm:text-4xl font-black text-teal-400 block mb-1">
-                ۴.۹ / ۵
-              </span>
-              <span className="text-xs text-zinc-400 font-semibold">
-                {isRtl ? 'رضایت کاربران فعال' : 'User Satisfaction'}
-              </span>
-            </div>
-            <div className="p-6 rounded-2xl bg-zinc-950/60 border border-emerald-950/60">
-              <span className="font-bahman text-3xl sm:text-4xl font-black text-white block mb-1">
-                ۱۰۰٪
-              </span>
-              <span className="text-xs text-zinc-400 font-semibold">
-                {isRtl ? 'محرمانگی اطلاعات مالی' : 'Private & Secure'}
-              </span>
-            </div>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            <div className="rounded-3xl p-6 bg-zinc-950/70 border border-zinc-900">
-              <div className="flex items-center gap-1 text-amber-400 mb-4">
-                {[...Array(5)].map((_, i) => (
-                  <Star key={i} className="w-4 h-4 fill-amber-400" />
-                ))}
-              </div>
-              <p className="text-xs text-zinc-300 leading-relaxed mb-6 font-medium">
-                {isRtl
-                  ? '«فوق‌العاده است! فقط می‌نویسم چقدر خرج کردم و هوش مصنوعی همه‌چیز رو تمیز دسته‌بندی می‌کنه. در پایان ماه برای اولین بار متوجه شدم چقدر پولم هدر می‌رفت.»'
-                  : '"Incredible experience. I just write down my expense as a text and Chandboom organizes everything. Found over 20% savings in my first month."'}
-              </p>
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-full bg-emerald-900/60 border border-emerald-500/40 flex items-center justify-center font-bold text-white text-xs">
-                  ام
-                </div>
-                <div>
-                  <span className="font-bold text-xs text-white block">
-                    {isRtl ? 'امید رادمنش' : 'Omid Rad'}
-                  </span>
-                  <span className="text-[11px] text-zinc-500">
-                    {isRtl ? 'برنامه‌نویس و فریلنسر' : 'Senior Software Engineer'}
-                  </span>
-                </div>
-              </div>
-            </div>
-
-            <div className="rounded-3xl p-6 bg-zinc-950/70 border border-zinc-900">
-              <div className="flex items-center gap-1 text-amber-400 mb-4">
-                {[...Array(5)].map((_, i) => (
-                  <Star key={i} className="w-4 h-4 fill-amber-400" />
-                ))}
-              </div>
-              <p className="text-xs text-zinc-300 leading-relaxed mb-6 font-medium">
-                {isRtl
-                  ? '«قابلیت پیش‌بینی ۳ ماهه جریان نقدینگی چندبوم بی‌نظیره. قبل از اینکه به مشکل بخورم بهم اطلاع میده تا هزینه‌هام رو کنترل کنم.»'
-                  : '"The 3-month forecast gives me immense peace of mind. It tells me weeks in advance if my burn rate is creeping too high."'}
-              </p>
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-full bg-amber-900/60 border border-amber-500/40 flex items-center justify-center font-bold text-white text-xs">
-                  سم
-                </div>
-                <div>
-                  <span className="font-bold text-xs text-white block">
-                    {isRtl ? 'سارا محمدی' : 'Sara Mohammadi'}
-                  </span>
-                  <span className="text-[11px] text-zinc-500">
-                    {isRtl ? 'مدیر محصول استارتاپ' : 'Startup Product Lead'}
-                  </span>
-                </div>
-              </div>
-            </div>
-
-            <div className="rounded-3xl p-6 bg-zinc-950/70 border border-zinc-900">
-              <div className="flex items-center gap-1 text-amber-400 mb-4">
-                {[...Array(5)].map((_, i) => (
-                  <Star key={i} className="w-4 h-4 fill-amber-400" />
-                ))}
-              </div>
-              <p className="text-xs text-zinc-300 leading-relaxed mb-6 font-medium">
-                {isRtl
-                  ? '«محاسبه دنگ سفر برای گروه ما همیشه دردسر بود. با چندبوم در سفر شمال بدون حتی یک بحث، سهم هر نفر با کمترین تعداد تراکنش حل شد.»'
-                  : '"Bill splitting on our road trip was effortless. Zero math arguments, zero confusion, settled instantly."'}
-              </p>
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-full bg-teal-900/60 border border-teal-500/40 flex items-center justify-center font-bold text-white text-xs">
-                  پک
-                </div>
-                <div>
-                  <span className="font-bold text-xs text-white block">
-                    {isRtl ? 'پرهام کمالی' : 'Parham Kamali'}
-                  </span>
-                  <span className="text-[11px] text-zinc-500">
-                    {isRtl ? 'مشاور کسب‌وکار' : 'Management Consultant'}
-                  </span>
-                </div>
-              </div>
-            </div>
-          </div>
-        </section>
-
-        {/* 6. FAQ (پرسش‌های متداول) */}
-        <section id="faq" className="max-w-4xl mx-auto px-4 sm:px-6 py-20 border-t border-emerald-950/40">
-          <div className="text-center mb-12">
-            <h2 className="font-bahman text-3xl font-black text-white mb-3">
-              {isRtl ? 'پرسش‌های متداول' : 'Frequently Asked Questions'}
-            </h2>
-            <p className="text-zinc-400 text-xs sm:text-sm font-medium">
-              {isRtl ? 'پاسخ به سوالات متداول کاربران چندبوم' : 'Everything you need to know about getting started.'}
-            </p>
-          </div>
-
-          <div className="space-y-3">
-            {[
-              {
-                q: isRtl ? 'آیا استفاده از چندبوم نیاز به اتصال به حساب بانکی دارد؟' : 'Does Chandboom require access to my bank account credentials?',
-                a: isRtl
-                  ? 'خیر، به هیچ وجه! امنیت و حریم خصوصی شما خط قرمز ماست. شما نیازی به ارائه رمز یا اطلاعات حساس بانکی ندارید. ثبت تراکنش‌ها از طریق تایپ متن ساده یا ثبت دستی انجام می‌شود.'
-                  : 'No, absolutely not. We never ask for your banking passwords or credentials. Transactions are tracked safely through natural text logging or manual input.',
-              },
-              {
-                q: isRtl ? 'هوش مصنوعی چگونه جملات من را به تراکنش تبدیل می‌کند؟' : 'How does the AI parse my natural language statements?',
-                a: isRtl
-                  ? 'چندبوم مجهز به موتور هوش مصنوعی اختصاصی چندبوم (Chandboom AI) است که با درک پیشرفته زبان فارسی و انگلیسی، مبلغ، نوع هزینه، دسته‌بندی و توضیحات را در کسری از ثانیه استخراج می‌کند.'
-                  : 'We utilize proprietary Chandboom AI fine-tuned to extract amounts, dates, and spending categories from unstructured natural sentences.',
-              },
-              {
-                q: isRtl ? 'اشتراک طلایی (پرو) چه مزیتی نسبت به حساب عادی دارد؟' : 'What is the key advantage of the Pro / VIP subscription?',
-                a: isRtl
-                  ? 'کاربران پرو به هوش مصنوعی چندبوم، پیش‌بینی ۳ ماهه جریان نقدینگی، ثبت نامحدود دنگ و اقساط، و پشتیبانی اختصاصی دسترسی نامحدود دارند.'
-                  : 'Pro members enjoy unlimited Chandboom AI queries, 3-month predictive cash runway forecasting, and unlimited group splitting.',
-              },
-              {
-                q: isRtl ? 'آیا می‌توانم روی چند دستگاه همزمان استفاده کنم؟' : 'Can I use Chandboom across multiple devices?',
-                a: isRtl
-                  ? 'بله، چندبوم متصل به پایگاه داده ابری امن و مقیاس‌پذیر است و به عنوان یک وب‌اپلیکیشن فوق‌العاده مدرن (PWA) روی گوشی‌های اندروید، آیفون، تبلت و کامپیوتر بدون نیاز به نصب هیچ برنامه جانبی همگام می‌شود.'
-                  : 'Yes! Chandboom is backed by high-speed secure cloud architecture and runs as a progressive web app (PWA) syncing across iOS, Android, macOS, and Windows.',
-              },
-            ].map((faq, idx) => (
-              <div
-                key={idx}
-                className="rounded-2xl bg-zinc-950/70 border border-zinc-900 overflow-hidden"
-              >
-                <button
-                  onClick={() => setOpenFaq(openFaq === idx ? null : idx)}
-                  className="w-full p-5 text-right flex items-center justify-between text-xs sm:text-sm font-bold text-white hover:text-emerald-400 transition cursor-pointer"
-                >
-                  <span className="flex items-center gap-2">
-                    <HelpCircle className="w-4 h-4 text-emerald-500 shrink-0" />
-                    <span>{faq.q}</span>
-                  </span>
-                  <ChevronDown
-                    className={`w-4 h-4 text-zinc-500 transition-transform ${
-                      openFaq === idx ? 'rotate-180 text-emerald-400' : ''
-                    }`}
-                  />
-                </button>
-                {openFaq === idx && (
-                  <div className="px-5 pb-5 text-xs text-zinc-400 leading-relaxed border-t border-zinc-900/60 pt-3 font-medium">
-                    {faq.a}
+              {/* 4 Stats Grid */}
+              <div className="grid grid-cols-2 gap-4 pt-2">
+                <div className="p-4 bg-white rounded-2xl shadow-sm border border-emerald-100 flex items-center justify-between">
+                  <div className="text-right">
+                    <span className="text-2xl font-black text-emerald-950 block font-mono">+۱۲۵</span>
+                    <span className="text-xs text-zinc-500 font-bold">گروه هم‌خرج</span>
                   </div>
-                )}
+                  <div className="w-10 h-10 rounded-xl bg-emerald-100 text-emerald-800 flex items-center justify-center">
+                    <Users className="w-5 h-5" />
+                  </div>
+                </div>
+
+                <div className="p-4 bg-white rounded-2xl shadow-sm border border-emerald-100 flex items-center justify-between">
+                  <div className="text-right">
+                    <span className="text-2xl font-black text-emerald-950 block font-mono">+۶۸۰</span>
+                    <span className="text-xs text-zinc-500 font-bold">کاربران هم‌خرج</span>
+                  </div>
+                  <div className="w-10 h-10 rounded-xl bg-teal-100 text-teal-800 flex items-center justify-center">
+                    <Award className="w-5 h-5" />
+                  </div>
+                </div>
+
+                <div className="p-4 bg-white rounded-2xl shadow-sm border border-emerald-100 flex items-center justify-between">
+                  <div className="text-right">
+                    <span className="text-2xl font-black text-emerald-950 block font-mono">+۲۳۰۰</span>
+                    <span className="text-xs text-zinc-500 font-bold">تراکنش ثبت‌شده</span>
+                  </div>
+                  <div className="w-10 h-10 rounded-xl bg-emerald-100 text-emerald-800 flex items-center justify-center">
+                    <CreditCard className="w-5 h-5" />
+                  </div>
+                </div>
+
+                <div className="p-4 bg-white rounded-2xl shadow-sm border border-emerald-100 flex items-center justify-between">
+                  <div className="text-right">
+                    <span className="text-2xl font-black text-emerald-950 block font-mono">۸۷٪</span>
+                    <span className="text-xs text-zinc-500 font-bold">تسویه موفق</span>
+                  </div>
+                  <div className="w-10 h-10 rounded-xl bg-teal-100 text-teal-800 flex items-center justify-center">
+                    <CheckCircle2 className="w-5 h-5" />
+                  </div>
+                </div>
+              </div>
+
+              {/* Action Button */}
+              <div className="pt-2">
+                <button
+                  onClick={handleLaunchDong}
+                  className="px-8 py-3.5 rounded-full bg-emerald-700 hover:bg-emerald-800 text-white font-bold text-sm shadow-md shadow-emerald-700/20 transition-all hover:scale-[1.02] cursor-pointer"
+                >
+                  شروع محاسبه دنگ
+                </button>
+              </div>
+            </div>
+
+          </div>
+        </div>
+      </section>
+
+      {/* SECTION 4: نحوه کار – سه قدم آسان (How it Works) */}
+      <section id="how-it-works" className="relative z-10 py-20 bg-gradient-to-b from-transparent via-emerald-50/30 to-transparent">
+        <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
+          
+          <div className="text-center max-w-xl mx-auto mb-16 space-y-3">
+            <h2 className="text-3xl sm:text-4xl font-black text-emerald-950">
+              نحوه کار – <span className="text-emerald-700">سه قدم آسان</span>
+            </h2>
+            <p className="text-sm sm:text-base text-zinc-600 font-medium">
+              شروع سریع و آسان برای مدیریت هوشمندانه مالی در سه گام ساده
+            </p>
+          </div>
+
+          {/* Timeline */}
+          <div className="relative space-y-12 before:absolute before:inset-0 before:right-1/2 before:w-0.5 before:bg-emerald-200 before:hidden md:before:block">
+            
+            {/* Step 1 */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-8 items-center relative">
+              <div className="text-right space-y-2 md:pl-12 order-2 md:order-1">
+                <div className="inline-flex items-center justify-center w-12 h-12 rounded-full bg-emerald-100 text-emerald-900 font-black text-lg mb-2">
+                  ۰۱
+                </div>
+                <h3 className="font-extrabold text-xl text-emerald-950">ورود مستقیم به نسخه تحت وب</h3>
+                <p className="text-xs sm:text-sm text-zinc-600 leading-relaxed">
+                  وارد سامانه ابری چندبوم شوید؛ بدون نیاز به دانلود یا نصب هرگونه نرم‌افزار اضافی.
+                </p>
+              </div>
+
+              <div className="order-1 md:order-2 flex justify-center">
+                <div className="p-4 bg-white rounded-3xl shadow-xl border border-emerald-100 max-w-xs w-full text-center space-y-2">
+                  <div className="w-16 h-16 rounded-2xl bg-emerald-50 text-emerald-700 mx-auto flex items-center justify-center">
+                    <Laptop className="w-8 h-8" />
+                  </div>
+                  <span className="text-xs font-bold text-zinc-800 block">دسترسی لحظه‌ای ابری</span>
+                </div>
+              </div>
+            </div>
+
+            {/* Step 2 */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-8 items-center relative">
+              <div className="order-1 flex justify-center">
+                <div className="p-4 bg-white rounded-3xl shadow-xl border border-emerald-100 max-w-xs w-full text-center space-y-2">
+                  <div className="w-16 h-16 rounded-2xl bg-teal-50 text-teal-700 mx-auto flex items-center justify-center">
+                    <CreditCard className="w-8 h-8" />
+                  </div>
+                  <span className="text-xs font-bold text-zinc-800 block">ثبت هوشمند یا پیامکی</span>
+                </div>
+              </div>
+
+              <div className="text-right space-y-2 md:pr-12 order-2">
+                <div className="inline-flex items-center justify-center w-12 h-12 rounded-full bg-teal-100 text-teal-900 font-black text-lg mb-2">
+                  ۰۲
+                </div>
+                <h3 className="font-extrabold text-xl text-emerald-950">ایجاد حساب و ثبت هزینه‌ها</h3>
+                <p className="text-xs sm:text-sm text-zinc-600 leading-relaxed">
+                  با ایمیل خود ثبت‌نام کنید و هزینه‌های روزانه را صوتی، متنی یا با پیامک‌های بانکی با دقت وارد کنید.
+                </p>
+              </div>
+            </div>
+
+            {/* Step 3 */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-8 items-center relative">
+              <div className="text-right space-y-2 md:pl-12 order-2 md:order-1">
+                <div className="inline-flex items-center justify-center w-12 h-12 rounded-full bg-emerald-100 text-emerald-900 font-black text-lg mb-2">
+                  ۰۳
+                </div>
+                <h3 className="font-extrabold text-xl text-emerald-950">تحلیل هوشمند و پس‌انداز</h3>
+                <p className="text-xs sm:text-sm text-zinc-600 leading-relaxed">
+                  گزارش‌های جامع مالی را دریافت کنید، بودجه‌بندی خود را بهینه نمایید و به اهداف مالی خود برسید.
+                </p>
+              </div>
+
+              <div className="order-1 md:order-2 flex justify-center">
+                <div className="p-4 bg-white rounded-3xl shadow-xl border border-emerald-100 max-w-xs w-full text-center space-y-2">
+                  <div className="w-16 h-16 rounded-2xl bg-emerald-50 text-emerald-700 mx-auto flex items-center justify-center">
+                    <TrendingUp className="w-8 h-8" />
+                  </div>
+                  <span className="text-xs font-bold text-zinc-800 block">پیش‌بینی هوشمند بودجه ۳ ماهه</span>
+                </div>
+              </div>
+            </div>
+
+          </div>
+        </div>
+      </section>
+
+      {/* SECTION 5: نسخه تحت وب و سامانه ابری چندبوم (Vibrant Emerald Banner - Pure Web Platform) */}
+      <section id="web-app" className="relative z-10 py-16">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="bg-gradient-to-tr from-[#064E3B] via-[#047857] to-[#059669] rounded-[44px] p-8 sm:p-12 lg:p-16 text-white shadow-2xl overflow-hidden relative">
+            
+            {/* Background patterns */}
+            <div className="absolute -top-24 -left-24 w-96 h-96 bg-white/10 rounded-full blur-3xl pointer-events-none" />
+            <div className="absolute -bottom-24 -right-24 w-96 h-96 bg-emerald-950/40 rounded-full blur-3xl pointer-events-none" />
+
+            <div className="relative z-10 grid grid-cols-1 lg:grid-cols-12 gap-10 items-center">
+              
+              {/* Left Side: Web App Interface Preview */}
+              <div className="order-2 lg:order-1 lg:col-span-6 flex justify-center relative">
+                {/* Screen Card 1 */}
+                <div className="w-56 sm:w-64 bg-white rounded-[36px] p-2.5 text-zinc-900 shadow-2xl transform -rotate-3 hover:rotate-0 transition-transform duration-300">
+                  <div className="w-16 h-3 bg-zinc-200 rounded-full mx-auto mb-2" />
+                  <div className="bg-emerald-50/70 p-3 rounded-2xl text-right space-y-2 text-xs">
+                    <p className="text-[10px] text-zinc-500">امروز چهارشنبه، ۲۵ تیر</p>
+                    <p className="text-xs font-bold text-zinc-700">امروز چقدر خرج کردی؟</p>
+                    <p className="text-lg font-black text-emerald-800 font-mono">۱,۲۱۶,۰۰۰ ت</p>
+                    <div className="grid grid-cols-3 gap-1 pt-1 text-[9px] font-bold text-center">
+                      <span className="p-1 rounded bg-white shadow-2xs">تراکنش‌ها</span>
+                      <span className="p-1 rounded bg-white shadow-2xs">بودجه‌بندی</span>
+                      <span className="p-1 rounded bg-white shadow-2xs">دونگ‌ها</span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Screen Card 2 Overlay */}
+                <div className="w-52 sm:w-60 bg-white rounded-[36px] p-2.5 text-zinc-900 shadow-2xl absolute -bottom-6 -left-2 sm:left-4 hidden sm:block transform rotate-6 hover:rotate-0 transition-transform duration-300">
+                  <div className="w-16 h-3 bg-zinc-200 rounded-full mx-auto mb-2" />
+                  <div className="p-3 text-right space-y-1.5 text-xs">
+                    <span className="font-extrabold text-xs block text-zinc-800">بودجه تیرماه</span>
+                    <div className="flex justify-between text-[10px]">
+                      <span className="text-zinc-500">سقف مجاز:</span>
+                      <span className="font-bold font-mono">۲۰,۰۰۰,۰۰۰ ت</span>
+                    </div>
+                    <div className="w-full h-2 rounded-full bg-zinc-100 overflow-hidden">
+                      <div className="w-[68%] h-full bg-emerald-600 rounded-full" />
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Right Side: Text & Pure Web Badges */}
+              <div className="order-1 lg:order-2 lg:col-span-6 text-right space-y-6">
+                <h2 className="text-3xl sm:text-4xl lg:text-5xl font-black leading-tight text-white">
+                  سامانه ابری و نسخه تحت وب چندبوم
+                </h2>
+
+                <p className="text-emerald-100 text-sm sm:text-base font-medium leading-relaxed">
+                  چندبوم کاملاً مبتنی بر وب و بدون نیاز به نصب هرگونه فایل طراحی شده است؛ از طریق مرورگر انواع گوشی‌ها، تبلت و کامپیوتر همیشه و در هر زمان به حساب مالی خود دسترسی دارید.
+                </p>
+
+                {/* 4 Feature Badges (Pure Web - No app installation) */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5 pt-2">
+                  <button
+                    onClick={handleLaunchApp}
+                    className="flex items-center justify-between p-3.5 rounded-2xl bg-white/10 hover:bg-white/20 backdrop-blur-md border border-white/20 transition-all text-right cursor-pointer"
+                  >
+                    <div>
+                      <span className="text-[10px] text-emerald-200 block">دسترسی ابری و تحت وب</span>
+                      <span className="font-extrabold text-xs text-white">ورود بدون نیاز به نصب فایل</span>
+                    </div>
+                    <Laptop className="w-6 h-6 text-white" />
+                  </button>
+
+                  <button
+                    onClick={handleLaunchApp}
+                    className="flex items-center justify-between p-3.5 rounded-2xl bg-white/10 hover:bg-white/20 backdrop-blur-md border border-white/20 transition-all text-right cursor-pointer"
+                  >
+                    <div>
+                      <span className="text-[10px] text-emerald-200 block">سازگار با مرورگرها</span>
+                      <span className="font-extrabold text-xs text-white">موبایل، تبلت و کامپیوتر</span>
+                    </div>
+                    <Globe className="w-6 h-6 text-white" />
+                  </button>
+
+                  <button
+                    onClick={handleLaunchApp}
+                    className="flex items-center justify-between p-3.5 rounded-2xl bg-white/10 hover:bg-white/20 backdrop-blur-md border border-white/20 transition-all text-right cursor-pointer"
+                  >
+                    <div>
+                      <span className="text-[10px] text-emerald-200 block">همگام‌سازی لحظه‌ای</span>
+                      <span className="font-extrabold text-xs text-white">پایگاه داده ابری و ایمن</span>
+                    </div>
+                    <ShieldCheck className="w-6 h-6 text-white" />
+                  </button>
+
+                  <button
+                    onClick={handleLaunchApp}
+                    className="flex items-center justify-between p-3.5 rounded-2xl bg-white text-zinc-900 shadow-lg hover:bg-emerald-50 transition-all text-right cursor-pointer"
+                  >
+                    <div>
+                      <span className="text-[10px] text-emerald-700 font-bold block">شروع فوری</span>
+                      <span className="font-black text-xs text-emerald-950">ورود به نسخه تحت وب</span>
+                    </div>
+                    <ArrowLeft className="w-5 h-5 text-emerald-800" />
+                  </button>
+                </div>
+              </div>
+
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* SECTION 6: سوالات متداول (FAQ Accordion) */}
+      <section id="faq" className="relative z-10 py-20 bg-gradient-to-b from-transparent via-emerald-50/20 to-transparent">
+        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+          
+          <div className="text-center max-w-xl mx-auto mb-14 space-y-3">
+            <h2 className="text-3xl sm:text-4xl font-black text-emerald-950">
+              سوالات متداول – <span className="text-emerald-700">پاسخ به سوالات شما</span>
+            </h2>
+            <p className="text-sm sm:text-base text-zinc-600 font-medium">
+              پاسخ به رایج‌ترین پرسش‌های کاربران درباره سامانه تحت وب چندبوم
+            </p>
+          </div>
+
+          <div className="space-y-3.5">
+            {faqItems.map((item, idx) => {
+              const isOpen = openFaq === idx;
+              return (
+                <div
+                  key={idx}
+                  className="bg-white rounded-2xl shadow-xs border border-emerald-100 overflow-hidden transition-all duration-200"
+                >
+                  <button
+                    onClick={() => setOpenFaq(isOpen ? null : idx)}
+                    className="w-full p-5 text-right flex items-center justify-between gap-4 font-bold text-sm sm:text-base text-emerald-950 hover:text-emerald-700 transition-colors cursor-pointer"
+                  >
+                    <span className="leading-snug">{item.q}</span>
+                    <div className="w-7 h-7 rounded-full bg-emerald-50 flex items-center justify-center shrink-0 text-emerald-700">
+                      {isOpen ? (
+                        <span className="text-xl font-bold leading-none">−</span>
+                      ) : (
+                        <span className="text-xl font-bold leading-none">+</span>
+                      )}
+                    </div>
+                  </button>
+
+                  {isOpen && (
+                    <div className="px-5 pb-5 pt-1 text-xs sm:text-sm text-zinc-600 leading-relaxed border-t border-emerald-50 animate-in fade-in duration-150">
+                      {item.a}
+                    </div>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+
+        </div>
+      </section>
+
+      {/* SECTION 7: خواندن آخرین مطالب اقتصادی و مدیریت مالی (Blog / Articles) */}
+      <section id="blog" className="relative z-10 py-20">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          
+          <div className="text-center max-w-2xl mx-auto mb-16 space-y-3">
+            <h2 className="text-3xl sm:text-4xl font-black text-emerald-950">
+              خواندن آخرین <span className="text-emerald-700">مطالب اقتصادی</span> و مدیریت مالی
+            </h2>
+            <p className="text-sm sm:text-base text-zinc-600 font-medium">
+              جدیدترین مقالات و راهنمایی‌ها در زمینه مدیریت مالی شخصی، سرمایه‌گذاری و پس‌انداز
+            </p>
+          </div>
+
+          {/* 3 Articles Grid */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+            {articles.map((art) => (
+              <div
+                key={art.id}
+                className="bg-white rounded-3xl overflow-hidden shadow-lg border border-emerald-100 hover:shadow-xl transition-all duration-300 flex flex-col group text-right"
+              >
+                {/* Article Header Image Graphic */}
+                <div className="h-48 bg-gradient-to-tr from-emerald-100 to-teal-100 relative overflow-hidden flex items-center justify-center">
+                  <div className="absolute inset-0 bg-black/5 group-hover:bg-transparent transition-colors" />
+                  
+                  {art.id === 'financial-movies' ? (
+                    <div className="w-full h-full bg-cover bg-center flex items-end p-4 text-white relative" style={{ backgroundImage: `url('https://images.unsplash.com/photo-1489599849927-2ee91cede3ba?w=600&auto=format&fit=crop&q=80')` }}>
+                      <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent" />
+                      <span className="relative z-10 text-xs font-bold px-2.5 py-1 rounded-full bg-black/50 backdrop-blur-md">
+                        {art.date}
+                      </span>
+                    </div>
+                  ) : art.id === 'dong-guide' ? (
+                    <div className="w-full h-full bg-cover bg-center flex items-end p-4 text-white relative" style={{ backgroundImage: `url('https://images.unsplash.com/photo-1556742049-0a67c5574f73?w=600&auto=format&fit=crop&q=80')` }}>
+                      <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent" />
+                      <span className="relative z-10 text-xs font-bold px-2.5 py-1 rounded-full bg-black/50 backdrop-blur-md">
+                        {art.date}
+                      </span>
+                    </div>
+                  ) : (
+                    <div className="w-full h-full bg-cover bg-center flex items-end p-4 text-white relative" style={{ backgroundImage: `url('https://images.unsplash.com/photo-1551288049-bebda4e38f71?w=600&auto=format&fit=crop&q=80')` }}>
+                      <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent" />
+                      <span className="relative z-10 text-xs font-bold px-2.5 py-1 rounded-full bg-black/50 backdrop-blur-md">
+                        {art.date}
+                      </span>
+                    </div>
+                  )}
+
+                  <span className="absolute top-3 right-3 px-3 py-1 rounded-full bg-white/95 backdrop-blur-md text-emerald-800 text-[10px] font-extrabold shadow-sm border border-emerald-100">
+                    {art.category}
+                  </span>
+                </div>
+
+                {/* Article Content */}
+                <div className="p-6 flex-1 flex flex-col justify-between space-y-4">
+                  <div className="space-y-2">
+                    <h3 className="font-extrabold text-base text-emerald-950 group-hover:text-emerald-700 transition-colors leading-snug">
+                      {art.title}
+                    </h3>
+                    <p className="text-xs text-zinc-500 leading-relaxed line-clamp-3">
+                      {art.summary}
+                    </p>
+                  </div>
+
+                  <div className="pt-3 border-t border-zinc-100 flex items-center justify-between text-xs">
+                    <span className="text-zinc-400 text-[11px] font-medium">{art.readTime}</span>
+                    <button
+                      onClick={() => setSelectedArticle(art)}
+                      className="text-emerald-700 font-bold hover:text-emerald-800 transition flex items-center gap-1 cursor-pointer"
+                    >
+                      <span>ادامه مطلب</span>
+                      <ArrowLeft className="w-3.5 h-3.5" />
+                    </button>
+                  </div>
+                </div>
               </div>
             ))}
           </div>
-        </section>
 
-        {/* 7. BOTTOM CALL TO ACTION */}
-        <section className="max-w-5xl mx-auto px-4 sm:px-6 py-20 text-center">
-          <div className="rounded-3xl p-8 sm:p-14 bg-gradient-to-br from-emerald-950/70 via-zinc-950 to-zinc-950 border border-emerald-500/30 relative overflow-hidden shadow-2xl">
-            <div className="absolute top-0 right-0 w-80 h-80 bg-emerald-500/10 rounded-full blur-[100px] pointer-events-none" />
-            <div className="relative z-10">
-              <h2 className="font-bahman text-3xl sm:text-4xl lg:text-5xl font-black text-white mb-4">
-                {isRtl ? 'آماده‌اید کنترل پول خود را در دست بگیرید؟' : 'Ready to Take Full Control of Your Wealth?'}
-              </h2>
-              <p className="text-zinc-300 text-sm sm:text-base max-w-xl mx-auto mb-8 leading-relaxed font-medium">
-                {isRtl
-                  ? 'همین حالا در چندبوم شروع کنید و در کمتر از یک دقیقه اولین تراکنش هوشمند خود را به ثبت برسانید.'
-                  : 'Join Chandboom today and experience the future of personal wealth management.'}
-              </p>
-              <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
-                <button
-                  onClick={onOpenAuth}
-                  className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-8 py-4 rounded-2xl bg-gradient-to-r from-emerald-500 via-teal-500 to-emerald-600 hover:from-emerald-400 hover:to-teal-400 text-zinc-950 font-black text-base shadow-xl shadow-emerald-500/30 transition transform hover:-translate-y-1 cursor-pointer"
-                >
-                  <Sparkles className="w-5 h-5 text-zinc-950" />
-                  <span>{isRtl ? 'شروع رایگان و پیوستن به چندبوم' : 'Join Chandboom Free Today'}</span>
-                </button>
-                <button
-                  onClick={handleSubscriptionClick}
-                  className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-7 py-4 rounded-2xl bg-gradient-to-r from-amber-400 via-amber-500 to-yellow-500 hover:from-amber-300 hover:to-yellow-400 text-zinc-950 font-black text-base shadow-xl shadow-amber-500/25 transition transform hover:-translate-y-1 cursor-pointer"
-                >
-                  <Crown className="w-5 h-5 text-zinc-950" />
-                  <span>{isRtl ? 'خرید اشتراک طلایی' : 'Buy Pro Pass'}</span>
-                </button>
-              </div>
-            </div>
-          </div>
-        </section>
-      </main>
+        </div>
+      </section>
 
-      {/* 8. FOOTER */}
-      <footer className="border-t border-emerald-950/60 bg-[#060A08] py-12 px-4 sm:px-6 text-xs text-zinc-400 font-cairo">
-        <div className="max-w-7xl mx-auto flex flex-col md:flex-row items-center justify-between gap-8">
-          <div className="flex items-center gap-3">
-            <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-emerald-600 to-teal-800 p-0.5 flex items-center justify-center">
-              <div className="w-full h-full bg-[#0A100D] rounded-[10px] flex items-center justify-center">
+      {/* FOOTER */}
+      <footer className="relative z-10 bg-white border-t border-emerald-100 py-12 text-right">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-8">
+          <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-6 pb-8 border-b border-zinc-100">
+            <div className="flex items-center gap-3">
+              <div className="w-11 h-11 rounded-2xl bg-white border border-emerald-500/40 p-1 flex items-center justify-center shadow-md shadow-emerald-700/10 shrink-0">
                 <img
                   src="./logo.png"
-                  alt="Chandboom"
-                  className="w-6 h-6 object-contain"
+                  alt="لوگوی رسمی چندبوم"
                   onError={(e) => {
                     (e.currentTarget as HTMLImageElement).src = './assets/logo.png';
                   }}
+                  className="w-full h-full object-contain"
                 />
               </div>
+              <div>
+                <span className="font-brand font-bold text-2xl text-emerald-950 block">چندبوم</span>
+                <span className="text-xs text-zinc-500 font-medium">سامانه هوشمند مدیریت مالی شخصی، بودجه‌بندی و دنگ گروهی</span>
+              </div>
             </div>
-            <div>
-              <span className="font-brand text-lg font-bold text-white block">
-                {isRtl ? 'چندبوم (Chandboom)' : 'Chandboom Technologies'}
-              </span>
-              <span className="text-[10px] text-zinc-500">
-                {isRtl ? 'سامانه نسل بعد مدیریت هوشمند مالی و بودجه' : 'Next-Gen Financial Intelligence Operating System'}
-              </span>
+
+            <div className="flex flex-wrap items-center gap-6 text-xs font-bold text-zinc-600">
+              <a href="#features" className="hover:text-emerald-700 transition">ویژگی‌ها</a>
+              <a href="#how-it-works" className="hover:text-emerald-700 transition">نحوه کار</a>
+              <a href="#dong" className="hover:text-emerald-700 transition">مدیریت دنگ</a>
+              <a href="#web-app" className="hover:text-emerald-700 transition">نسخه تحت وب</a>
+              <a href="#blog" className="hover:text-emerald-700 transition">بلاگ</a>
+              <a href="#faq" className="hover:text-emerald-700 transition">سوالات متداول</a>
             </div>
           </div>
 
-          <div className="flex flex-wrap items-center justify-center gap-6 text-xs font-semibold">
-            <button
-              onClick={onEnterApp}
-              className="hover:text-emerald-400 transition cursor-pointer"
-            >
-              {isRtl ? 'داشبورد اپلیکیشن' : 'App Dashboard'}
-            </button>
-            <button
-              onClick={handleSubscriptionClick}
-              className="text-amber-400 hover:text-amber-300 transition cursor-pointer font-bold flex items-center gap-1"
-            >
-              <Crown className="w-3.5 h-3.5" />
-              <span>{isRtl ? 'خرید اشتراک طلایی' : 'Buy Pro Pass'}</span>
-            </button>
-            <a href="#features" className="hover:text-emerald-400 transition">
-              {isRtl ? 'امکانات' : 'Features'}
-            </a>
-            <a href="#pricing" className="hover:text-emerald-400 transition">
-              {isRtl ? 'تعرفه‌ها' : 'Pricing'}
-            </a>
-            <a href="#faq" className="hover:text-emerald-400 transition">
-              {isRtl ? 'پرسش‌های متداول' : 'FAQ'}
-            </a>
-          </div>
-
-          <div className="text-center md:text-left text-[11px] text-zinc-500 font-mono" dir="ltr">
-            Chandboom © {new Date().getFullYear()} • AI Wealth & Finance System
+          <div className="flex flex-col sm:flex-row items-center justify-between text-xs text-zinc-500 gap-4">
+            <p>© {new Date().toLocaleDateString('fa-IR')} تمامی حقوق مادی و معنوی متعلق به سامانه چندبوم می‌باشد.</p>
+            <div className="flex items-center gap-2 text-zinc-600 font-mono" dir="ltr">
+              <span className="text-[11px] text-zinc-400 font-sans">پشتیبانی و ارتباط مستقیم:</span>
+              <a href="mailto:info.chandboom.app@gmail.com" className="hover:text-emerald-700 font-bold">
+                info.chandboom.app@gmail.com
+              </a>
+            </div>
           </div>
         </div>
       </footer>
+
+      {/* FLOATING ACTION BUTTONS */}
+
+      {/* 1. Back to Top Button (Bottom-Left) */}
+      {showScrollTop && (
+        <button
+          onClick={scrollToTop}
+          className="fixed bottom-6 left-6 z-50 w-12 h-12 rounded-full bg-emerald-700 hover:bg-emerald-800 text-white flex items-center justify-center shadow-2xl transition-all duration-200 hover:scale-110 active:scale-95 cursor-pointer"
+          title="بازگشت به ابتدای صفحه"
+        >
+          <ArrowUp className="w-5 h-5" />
+        </button>
+      )}
+
+      {/* 2. Floating Online Support Button (Bottom-Right) -> Opens Support/Tickets */}
+      <button
+        onClick={handleOpenSupport}
+        className="fixed bottom-6 right-6 z-50 p-2.5 rounded-full bg-white hover:bg-emerald-50 shadow-2xl border-2 border-emerald-600/30 flex items-center gap-2.5 transition-all duration-200 hover:scale-105 active:scale-95 cursor-pointer group"
+        title="ارسال تیکت و ارتباط مستقیم با پشتیبانی چندبوم"
+      >
+        <div className="w-10 h-10 rounded-full bg-gradient-to-tr from-emerald-600 to-teal-700 flex items-center justify-center text-white shadow-md">
+          <Headphones className="w-5 h-5" />
+        </div>
+        <div className="hidden sm:block text-right pr-1 pl-3">
+          <span className="text-[10px] text-zinc-400 block font-bold leading-none">تیکت و راهنما</span>
+          <span className="text-xs font-black text-emerald-950">پشتیبانی چندبوم</span>
+        </div>
+      </button>
+
+      {/* ARTICLE READER MODAL */}
+      {selectedArticle && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-150">
+          <div className="relative max-w-2xl w-full bg-white rounded-3xl overflow-hidden shadow-2xl border border-emerald-100 max-h-[85vh] flex flex-col text-right font-cairo">
+            
+            {/* Header */}
+            <div className="p-6 border-b border-zinc-100 flex items-center justify-between">
+              <button
+                onClick={() => setSelectedArticle(null)}
+                className="p-2 rounded-xl text-zinc-400 hover:bg-zinc-100 hover:text-zinc-700 transition cursor-pointer"
+              >
+                <X className="w-5 h-5" />
+              </button>
+              <div className="flex items-center gap-2">
+                <span className="text-xs font-bold text-zinc-500">{selectedArticle.readTime}</span>
+                <span className="px-3 py-1 rounded-full bg-emerald-100 text-emerald-800 text-xs font-bold">
+                  {selectedArticle.category}
+                </span>
+              </div>
+            </div>
+
+            {/* Scrollable Body */}
+            <div className="p-6 overflow-y-auto space-y-4">
+              <h2 className="text-xl sm:text-2xl font-black text-emerald-950 leading-snug">
+                {selectedArticle.title}
+              </h2>
+
+              <p className="text-xs sm:text-sm text-emerald-800 font-bold bg-emerald-50 p-3.5 rounded-2xl border border-emerald-100">
+                {selectedArticle.summary}
+              </p>
+
+              <div className="space-y-3 pt-2 text-xs sm:text-sm text-zinc-700 leading-relaxed">
+                {selectedArticle.content.map((p, i) => (
+                  <p key={i}>{p}</p>
+                ))}
+              </div>
+
+              {/* Key takeaways */}
+              <div className="p-4 rounded-2xl bg-zinc-50 border border-zinc-200/80 space-y-2 mt-4">
+                <h4 className="font-extrabold text-xs text-emerald-950 flex items-center gap-1.5">
+                  <CheckCircle2 className="w-4 h-4 text-emerald-600" />
+                  <span>نکات کلیدی این مقاله برای مدیریت مالی شما:</span>
+                </h4>
+                <ul className="space-y-1.5 text-xs text-zinc-600 pr-5 list-disc">
+                  {selectedArticle.keyTakeaways.map((tip, i) => (
+                    <li key={i}>{tip}</li>
+                  ))}
+                </ul>
+              </div>
+            </div>
+
+            {/* Footer */}
+            <div className="p-4 bg-zinc-50 border-t border-zinc-100 flex items-center justify-between">
+              <button
+                onClick={() => {
+                  setSelectedArticle(null);
+                  handleLaunchApp();
+                }}
+                className="px-5 py-2.5 rounded-xl bg-emerald-700 hover:bg-emerald-800 text-white font-bold text-xs shadow-md transition cursor-pointer"
+              >
+                شروع مدیریت مالی با چندبوم
+              </button>
+              <button
+                onClick={() => setSelectedArticle(null)}
+                className="px-4 py-2.5 rounded-xl border border-zinc-200 text-zinc-600 font-bold text-xs hover:bg-zinc-100 transition cursor-pointer"
+              >
+                بستن
+              </button>
+            </div>
+
+          </div>
+        </div>
+      )}
     </div>
   );
 };

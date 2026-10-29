@@ -2,20 +2,27 @@ import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { SEOLayout } from '../components/SEOLayout';
 import { SEOHead } from '../components/SEOHead';
-import { Crown, Check, Sparkles, CreditCard, ShieldCheck, ArrowRight } from 'lucide-react';
+import { Crown, Check, CreditCard, ShieldCheck, ArrowRight, Award, Zap } from 'lucide-react';
 import { formatToman } from '../utils/formatters';
 
 export const PricingPage: React.FC = () => {
   const [billingCycle, setBillingCycle] = useState<'monthly' | 'annual'>('monthly');
 
-  const monthlyPrice = 89000;
-  const annualMonthlyEquivalent = 59000;
+  // Exact pricing per user's voice instructions
+  const bronzePrice = billingCycle === 'monthly' ? 50000 : 540000;
+  const bronzeOriginal = billingCycle === 'monthly' ? 80000 : 960000;
+
+  const proPrice = billingCycle === 'monthly' ? 80000 : 864000;
+  const proOriginal = billingCycle === 'monthly' ? 100000 : 1200000;
+
+  const vipPrice = billingCycle === 'monthly' ? 150000 : 1620000;
+  const vipOriginal = billingCycle === 'monthly' ? 200000 : 2400000;
 
   return (
     <SEOLayout>
       <SEOHead
         title="تعرفه‌ها و قیمت اشتراک | چندبوم - سامانه مدیریت مالی هوشمند"
-        description="پلن‌های کاربری چندبوم: حساب رایگان همیشگی و اشتراک طلایی (Pro) با دستیار نامحدود هوش مصنوعی و تحلیل پیش‌بینی بودجه."
+        description="پلن‌های کاربری چندبوم: حساب رایگان همیشگی، اشتراک برنزی، طلایی (Pro) و VIP با امکانات مالی پیشرفته."
         canonicalPath="/pricing"
       />
 
@@ -30,7 +37,7 @@ export const PricingPage: React.FC = () => {
             پلن مناسب با نیازهای مالی خود را انتخاب کنید
           </h1>
           <p className="text-xs sm:text-sm text-zinc-600 dark:text-zinc-400">
-            امکان استفاده رایگان برای همیشه، یا ارتقا به اشتراک طلایی برای تسلط کامل با قدرت هوش مصنوعی
+            امکان استفاده رایگان برای همیشه، یا ارتقا به اشتراک‌های ویژه برای دسترسی نامحدود به هوش مالی
           </p>
 
           {/* Billing switcher */}
@@ -55,8 +62,8 @@ export const PricingPage: React.FC = () => {
                 }`}
               >
                 <span>سالانه</span>
-                <span className="text-[10px] px-1.5 py-0.2 rounded-md bg-emerald-500 text-white font-bold">
-                  ۳۵٪ تخفیف
+                <span className="text-[10px] px-1.5 py-0.5 rounded-md bg-emerald-500 text-white font-bold">
+                  ۱۰٪ تخفیف مازاد
                 </span>
               </button>
             </div>
@@ -115,7 +122,7 @@ export const PricingPage: React.FC = () => {
             <div>
               <div className="flex items-center justify-between mb-2">
                 <h2 className="text-base font-bold text-zinc-900 dark:text-white">اشتراک برنزی</h2>
-                <span className="text-[10px] px-2.5 py-1 rounded-xl bg-amber-100 text-amber-800 dark:bg-amber-950 dark:text-amber-300 font-bold">
+                <span className="text-[10px] px-2.5 py-1 rounded-xl bg-orange-100 text-orange-800 dark:bg-orange-950 dark:text-orange-300 font-bold">
                   اقتصادی
                 </span>
               </div>
@@ -124,8 +131,17 @@ export const PricingPage: React.FC = () => {
               </p>
 
               <div className="mb-4">
-                <span className="text-2xl font-black text-amber-600 dark:text-amber-400">۳۹,۰۰۰</span>
-                <span className="text-xs text-zinc-500 mr-2">تومان / ماهانه</span>
+                <div className="flex items-baseline gap-2">
+                  <span className="text-2xl font-black text-orange-600 dark:text-orange-400">
+                    {formatToman(bronzePrice).replace(' تومان', '')}
+                  </span>
+                  <span className="text-xs line-through text-zinc-400">
+                    {formatToman(bronzeOriginal)}
+                  </span>
+                </div>
+                <span className="text-xs text-zinc-500 block mt-0.5">
+                  تومان / {billingCycle === 'monthly' ? 'ماهانه' : 'سالانه'}
+                </span>
               </div>
 
               <ul className="space-y-2.5 text-xs text-zinc-600 dark:text-zinc-300">
@@ -150,7 +166,7 @@ export const PricingPage: React.FC = () => {
 
             <Link
               to="/"
-              className="w-full py-2.5 rounded-2xl bg-amber-50 dark:bg-amber-950/40 hover:bg-amber-100 text-amber-800 dark:text-amber-300 text-xs font-bold text-center border border-amber-300 dark:border-amber-800 transition cursor-pointer"
+              className="w-full py-2.5 rounded-2xl bg-orange-50 dark:bg-orange-950/40 hover:bg-orange-100 text-orange-800 dark:text-orange-300 text-xs font-bold text-center border border-orange-300 dark:border-orange-800 transition cursor-pointer"
             >
               انتخاب پلن برنزی
             </Link>
@@ -174,12 +190,17 @@ export const PricingPage: React.FC = () => {
               </p>
 
               <div className="mb-4">
-                <span className="text-2xl font-black text-white">
-                  {billingCycle === 'monthly'
-                    ? formatToman(monthlyPrice).replace(' تومان', '')
-                    : formatToman(annualMonthlyEquivalent).replace(' تومان', '')}
+                <div className="flex items-baseline gap-2">
+                  <span className="text-2xl font-black text-white">
+                    {formatToman(proPrice).replace(' تومان', '')}
+                  </span>
+                  <span className="text-xs line-through text-emerald-300/60">
+                    {formatToman(proOriginal)}
+                  </span>
+                </div>
+                <span className="text-xs text-emerald-300 block mt-0.5">
+                  تومان / {billingCycle === 'monthly' ? 'ماهانه' : 'سالانه'}
                 </span>
-                <span className="text-xs text-emerald-300 mr-2">تومان / ماهانه</span>
               </div>
 
               <ul className="space-y-2.5 text-xs text-zinc-200">
@@ -215,22 +236,31 @@ export const PricingPage: React.FC = () => {
           <div className="p-6 rounded-3xl bg-gradient-to-b from-[#1F1A07] to-[#120F05] border-2 border-amber-500/90 shadow-xl flex flex-col justify-between space-y-6 relative overflow-hidden">
             <div className="absolute top-3 left-3">
               <span className="text-[9px] px-2 py-0.5 rounded-full bg-gradient-to-r from-amber-400 to-yellow-400 text-zinc-950 font-black flex items-center gap-1">
-                <Sparkles className="w-3 h-3" />
+                <Award className="w-3 h-3" />
                 <span>حداکثر سهمیه</span>
               </span>
             </div>
 
             <div>
               <div className="flex items-center gap-2 mb-2">
-                <h2 className="text-base font-bold text-white">اشتراک ۶ ماهه VIP</h2>
+                <h2 className="text-base font-bold text-white">اشتراک VIP ویژه</h2>
               </div>
               <p className="text-xs text-amber-200/70 mb-4">
                 سقف ۵۰۰ پرسش هوش مصنوعی با اولویت تایید فوری
               </p>
 
               <div className="mb-4">
-                <span className="text-2xl font-black text-amber-400">۳۹۰,۰۰۰</span>
-                <span className="text-xs text-amber-200/70 mr-2">تومان / ۶ ماهه</span>
+                <div className="flex items-baseline gap-2">
+                  <span className="text-2xl font-black text-amber-400">
+                    {formatToman(vipPrice).replace(' تومان', '')}
+                  </span>
+                  <span className="text-xs line-through text-amber-200/50">
+                    {formatToman(vipOriginal)}
+                  </span>
+                </div>
+                <span className="text-xs text-amber-200/70 block mt-0.5">
+                  تومان / {billingCycle === 'monthly' ? 'ماهانه' : 'سالانه'}
+                </span>
               </div>
 
               <ul className="space-y-2.5 text-xs text-zinc-200">
@@ -240,7 +270,7 @@ export const PricingPage: React.FC = () => {
                 </li>
                 <li className="flex items-center gap-2">
                   <Check className="w-3.5 h-3.5 text-amber-400 shrink-0" />
-                  <span>پیش‌بینی جامع ۶ ماهه جریان نقدینگی</span>
+                  <span>پیش‌بینی جامع جریان نقدینگی</span>
                 </li>
                 <li className="flex items-center gap-2">
                   <Check className="w-3.5 h-3.5 text-amber-400 shrink-0" />

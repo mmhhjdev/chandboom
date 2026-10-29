@@ -16,7 +16,7 @@ import {
 } from 'lucide-react';
 import { useApp } from '../context/AppContext';
 import { Transaction, TransactionCategory, TransactionType } from '../types';
-import { invokeAiAssistantEdgeFunction } from '../lib/supabase'; // ✅ جایگزین aiService
+import { processFinancialAI } from '../services/aiService';
 import { formatToman, formatToShamsiInput, parseShamsiDate } from '../utils/formatters';
 
 interface TransactionModalProps {
@@ -25,6 +25,7 @@ interface TransactionModalProps {
   editingTransaction?: Transaction | null;
 }
 
+// Category configs matching image.png with specific colored dots
 interface CategoryOption {
   name: TransactionCategory;
   dotColor: string;
@@ -52,6 +53,22 @@ const INCOME_CATEGORY_OPTIONS: CategoryOption[] = [
 
 const ACCOUNT_OPTIONS = ['کارت اصلی', 'کارت دوم', 'حساب پس‌انداز', 'صندوق نقدی'];
 
+// Helper for Shamsi date string e.g. "1405/07/15"
+function getInitialShamsiDate(): string {
+  try {
+    const formatter = new Intl.DateTimeFormat('fa-IR-u-nu-latn', {
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit',
+    });
+    const parts = formatter.format(new Date()).split('/');
+    if (parts.length === 3) {
+      return `${parts[0]}/${parts[1]}/${parts[2]}`;
+    }
+  } catch {}
+  return '1405/07/15';
+}
+
 export const TransactionModal: React.FC<TransactionModalProps> = ({
   isOpen,
   onClose,
@@ -62,6 +79,7 @@ export const TransactionModal: React.FC<TransactionModalProps> = ({
     updateTransaction,
     isAuthenticated,
     isProUser,
+    hasAIAccess,
     setIsAuthModalOpen,
     setActiveTab,
   } = useApp();
@@ -74,7 +92,7 @@ export const TransactionModal: React.FC<TransactionModalProps> = ({
   const [description, setDescription] = useState<string>('');
   const [tags, setTags] = useState<string[]>([]);
   const [tagInput, setTagInput] = useState<string>('');
-  
+
   // Integrated AI text/voice auto-fill state
   const [aiPrompt, setAiPrompt] = useState<string>('');
   const [aiFeedback, setAiFeedback] = useState<string | null>(null);
@@ -105,7 +123,8 @@ export const TransactionModal: React.FC<TransactionModalProps> = ({
 
   if (!isOpen) return null;
 
-  const activeCategoryOptions = type === 'expense' ? EXPENSE_CATEGORY_OPTIONS : INCOME_CATEGORY_OPTIONS;
+  const activeCategoryOptions =
+    type === 'expense' ? EXPENSE_CATEGORY_OPTIONS : INCOME_CATEGORY_OPTIONS;
 
   const handleTypeChange = (newType: TransactionType) => {
     setType(newType);
@@ -127,30 +146,44 @@ export const TransactionModal: React.FC<TransactionModalProps> = ({
     }
   };
 
-  const handleRemoveTag = (tToRemove: string) => {
-    setTags(tags.filter((t) => t !== tToRemove));
+  const handleRemoveTag = (tagToRemove: string) => {
+    setTags(tags.filter((t) => t !== tagToRemove));
   };
 
   const toggleVoiceRecognition = () => {
-    const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
-    if (!SpeechRecognition) {
-      setAiFeedback('مرورگر شما از ورودی صوتی پشتیبانی نمی‌کند.');
-      setTimeout(() => setAiFeedback(null), 3000);
+    if (typeof window !== 'undefined' && window.location.protocol !== 'https:' && window.location.hostname !== 'localhost') {
+      setAiFeedback('⚠️ استفاده از میکروفون نیازمند پروتکل امن HTTPS است.');
+      setTimeout(() => setAiFeedback(null), 4000);
       return;
     }
+
+    const SpeechRecognition =
+      (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
+    if (!SpeechRecognition) {
+      setAiFeedback('مرورگر شما از ورودی صوتی پشتیبانی نمی‌کند. لطفاً متن را تایپ کنید.');
+      setTimeout(() => setAiFeedback(null), 4000);
+      return;
+    }
+
     if (isListening) {
       setIsListening(false);
+      setAiFeedback('⏹️ ضبط صدا متوقف شد.');
+      setTimeout(() => setAiFeedback(null), 2000);
       return;
     }
+
     try {
       const recognition = new SpeechRecognition();
       recognition.lang = 'fa-IR';
       recognition.continuous = false;
       recognition.interimResults = false;
+      recognition.maxAlternatives = 1;
+
       recognition.onstart = () => {
         setIsListening(true);
         setAiFeedback('🎙️ در حال گوش دادن به پیام صوتی شما... صحبت کنید');
       };
+
       recognition.onresult = (e: any) => {
         const transcript = e.results?.[0]?.[0]?.transcript;
         if (transcript) {
@@ -159,58 +192,86 @@ export const TransactionModal: React.FC<TransactionModalProps> = ({
         }
         setIsListening(false);
       };
-      recognition.onerror = () => {
+
+      recognition.onerror = (event: any) => {
         setIsListening(false);
-        setAiFeedback('متوجه صدا نشدم، لطفاً پیام را تایپ نمایید.');
+        const errType = event?.error;
+        if (errType === 'not-allowed' || errType === 'permission-denied') {
+          setAiFeedback('🚫 دسترسی به میکروفون رد شد. لطفاً در مرورگر، دسترسی به میکروفون را مجاز نمایید.');
+        } else if (errType === 'network') {
+          setAiFeedback('🌐 خطای اتصال به سرور تبدیل گفتار مرورگر (Network Error). لطفاً متن تراکنش را در کادر تایپ فرمایید.');
+        } else if (errType === 'no-speech') {
+          setAiFeedback('صدایی دریافت نشد. لطفاً نزدیک‌تر به میکروفون صحبت کنید یا پیام را تایپ نمایید.');
+        } else if (errType === 'audio-capture') {
+          setAiFeedback('میکروفونی بر روی این دستگاه شناسایی نشد.');
+        } else {
+          setAiFeedback(`خطا در دریافت صدا (${errType || 'نامشخص'}). لطفاً متن تراکنش را تایپ نمایید.`);
+        }
+        setTimeout(() => setAiFeedback(null), 5000);
       };
+
       recognition.onend = () => setIsListening(false);
       recognition.start();
     } catch {
       setIsListening(false);
+      setAiFeedback('خطا در دسترسی به میکروفون دستگاه.');
+      setTimeout(() => setAiFeedback(null), 4000);
     }
   };
 
-  // ✅ Smart Typing AI Assistant Auto-Fill (Updated to use Edge Function)
+  // Smart Typing AI Assistant Auto-Fill and Auto-Submit
   const handleAiAutoFill = async (overrideText?: string) => {
     const textToProcess = (overrideText || aiPrompt).trim();
     if (!textToProcess) return;
-    
+
     if (!isAuthenticated) {
       setAiFeedback('⚠️ لطفاً ابتدا وارد حساب کاربری خود در چندبوم شوید.');
       setTimeout(() => setIsAuthModalOpen(true), 1200);
       return;
     }
-    if (!isProUser) {
-      setAiFeedback('🔒 هوش مصنوعی چندبوم منحصراً ویژه کاربران اشتراک طلایی (پرو) است.');
+
+    if (!hasAIAccess) {
+      setAiFeedback('🔒 دسترسی به هوش مصنوعی چندبوم نیازمند اشتراک برنزی، پرو یا VIP است.');
       return;
     }
 
     setIsAiLoading(true);
     setAiFeedback('در حال تحلیل هوشمند متن با هوش مصنوعی...');
-    
-    try {
-      const historyPayload = [{ role: 'user' as const, content: textToProcess }];
-      const response = await invokeAiAssistantEdgeFunction(textToProcess, historyPayload);
 
-      if (response.success && response.reply) {
-        // اگر هوش مصنوعی پیشنهاد ثبت تراکنش داد، فرم را پر می‌کنیم (نه ثبت خودکار)
-        if (response.requires_confirmation && response.action && response.action.type === 'create_transaction') {
-          const tx = response.action.params;
-          
-          setType(tx.type);
-          setAmount(tx.amount.toString());
-          setCategory(tx.category);
-          setDescription(tx.description || tx.title || '');
-          if (tx.date) setShamsiDate(tx.date);
-          
-          setAiFeedback(`✅ اطلاعات «${tx.description || tx.title}» به مبلغ ${formatToman(tx.amount)} استخراج شد. لطفاً بررسی و دکمه ثبت نهایی را بزنید.`);
-          setAiPrompt(''); // پاک کردن پرامپت چون داده‌ها استخراج شدند
-        } else {
-          // پاسخ مکالمه‌ای یا ابهام
-          setAiFeedback(response.reply);
-        }
+    try {
+      const result = await processFinancialAI(textToProcess);
+
+      if (result.is_ambiguous) {
+        setAiFeedback(`⚠️ ${result.clarification_message || 'مبلغ دقیق یا نوع تراکنش مشخص نیست، لطفاً بفرمایید درآمد است یا هزینه؟'}`);
+        return;
+      }
+
+      if (result.is_transaction && result.transaction) {
+        const tx = result.transaction;
+        // 1. Auto-fill form fields with structured JSON output
+        setType(tx.type);
+        setAmount(tx.amount.toString());
+        setCategory(tx.category);
+        setDescription(tx.title);
+        if (tx.date) setShamsiDate(tx.date);
+
+        // 2. Automatically register final transaction in database without manual guesswork
+        await addTransaction({
+          type: tx.type,
+          amount: tx.amount,
+          category: tx.category,
+          account: account || 'کارت اصلی',
+          description: tx.title,
+          tags: tags.length > 0 ? tags : undefined,
+          date: new Date().toISOString(),
+        });
+
+        setAiFeedback(`✅ تراکنش «${tx.title}» (${formatToman(tx.amount)}) تکمیل و در دیتابیس ثبت نهایی شد!`);
+        setTimeout(() => {
+          onClose();
+        }, 1300);
       } else {
-        setAiFeedback(response.error || 'متن وارد شده شامل تراکنش مالی معتبر نمی‌باشد.');
+        setAiFeedback(result.clarification_message || 'متن وارد شده شامل تراکنش مالی معتبر نمی‌باشد.');
       }
     } catch (err: any) {
       setAiFeedback(err?.message || 'خطا در برقراری ارتباط با هوش مصنوعی چندبوم');
@@ -251,6 +312,7 @@ export const TransactionModal: React.FC<TransactionModalProps> = ({
         date: targetDate,
       });
     }
+
     onClose();
   };
 
@@ -261,17 +323,18 @@ export const TransactionModal: React.FC<TransactionModalProps> = ({
         className="w-full max-w-lg bg-[#0C1411] rounded-3xl shadow-2xl border border-[#1A2822] overflow-hidden animate-in fade-in zoom-in-95 duration-150 text-white my-auto max-h-[95vh] flex flex-col"
         dir="rtl"
       >
-        {/* Modal Header */}
+        {/* Modal Header matching image.png */}
         <div className="flex items-center justify-between px-6 py-4 border-b border-[#1A2822] bg-[#0E1714]">
           <div className="flex items-center gap-2.5">
             <div className="w-9 h-9 rounded-xl bg-[#15231D] border border-[#21352C] flex items-center justify-center text-zinc-300">
               <ArrowDownLeft className="w-5 h-5 text-emerald-400" />
             </div>
             <h3 className="font-cairo text-base sm:text-lg font-bold text-white flex items-center gap-1.5">
-              <span>ثبت تراکنش جدید در </span>
+              <span>ثبت تراکنش جدید در</span>
               <span className="text-emerald-400 font-brand font-black">چندبوم</span>
             </h3>
           </div>
+
           <button
             id="close-transaction-modal-btn"
             onClick={onClose}
@@ -283,7 +346,7 @@ export const TransactionModal: React.FC<TransactionModalProps> = ({
 
         {/* Form Body */}
         <div className="flex-1 overflow-y-auto p-5 sm:p-6 space-y-5">
-          {/* 1. Type Switcher Tabs */}
+          {/* 1. Type Switcher Tabs matching image.png */}
           <div className="grid grid-cols-2 gap-2 p-1 bg-[#13201A] rounded-2xl border border-[#1F3128]">
             <button
               type="button"
@@ -297,6 +360,7 @@ export const TransactionModal: React.FC<TransactionModalProps> = ({
               <ArrowDownLeft className="w-4 h-4" />
               <span>هزینه (پرداخت / خرج)</span>
             </button>
+
             <button
               type="button"
               onClick={() => handleTypeChange('income')}
@@ -321,6 +385,7 @@ export const TransactionModal: React.FC<TransactionModalProps> = ({
                   Pro
                 </span>
               </div>
+
               {!isProUser && (
                 <button
                   type="button"
@@ -335,6 +400,7 @@ export const TransactionModal: React.FC<TransactionModalProps> = ({
                 </button>
               )}
             </div>
+
             <div className="flex items-center gap-2">
               <input
                 type="text"
@@ -372,9 +438,10 @@ export const TransactionModal: React.FC<TransactionModalProps> = ({
                 className="px-3 py-2 rounded-xl bg-emerald-700 hover:bg-emerald-600 disabled:opacity-50 text-white text-xs font-cairo font-bold transition flex items-center gap-1 shrink-0 cursor-pointer shadow-xs"
               >
                 <Sparkles className="w-3.5 h-3.5" />
-                <span>{isAiLoading ? 'در حال تحلیل...' : 'استخراج هوشمند'}</span>
+                <span>{isAiLoading ? 'در حال تحلیل...' : 'تشخیص و ثبت خودکار'}</span>
               </button>
             </div>
+
             {aiFeedback && (
               <p className="text-[11px] text-amber-300 font-bold animate-in fade-in duration-150">
                 {aiFeedback}
@@ -382,7 +449,7 @@ export const TransactionModal: React.FC<TransactionModalProps> = ({
             )}
           </div>
 
-          {/* 3. Amount Field */}
+          {/* 3. Amount Field matching image.png */}
           <div>
             <label className="block text-xs font-cairo font-bold text-zinc-300 mb-1.5">
               مبلغ تراکنش (تومان) *
@@ -405,7 +472,7 @@ export const TransactionModal: React.FC<TransactionModalProps> = ({
             </div>
           </div>
 
-          {/* 4. Category Grid Pills */}
+          {/* 4. Category Grid Pills matching image.png */}
           <div>
             <label className="block text-xs font-cairo font-bold text-zinc-300 mb-2">
               دسته‌بندی تراکنش *
@@ -432,7 +499,7 @@ export const TransactionModal: React.FC<TransactionModalProps> = ({
             </div>
           </div>
 
-          {/* 5. Row: Account & Shamsi Date */}
+          {/* 5. Row: Account & Shamsi Date matching image.png */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div>
               <label className="block text-xs font-cairo font-bold text-zinc-300 mb-1.5 flex items-center gap-1.5">
@@ -451,6 +518,7 @@ export const TransactionModal: React.FC<TransactionModalProps> = ({
                 ))}
               </select>
             </div>
+
             <div>
               <label className="block text-xs font-cairo font-bold text-zinc-300 mb-1.5 flex items-center gap-1.5">
                 <CalendarIcon className="w-3.5 h-3.5 text-zinc-400" />
@@ -467,7 +535,7 @@ export const TransactionModal: React.FC<TransactionModalProps> = ({
             </div>
           </div>
 
-          {/* 6. Description / Notes */}
+          {/* 6. Description / Notes matching image.png */}
           <div>
             <label className="block text-xs font-cairo font-bold text-zinc-300 mb-1.5">
               توضیحات و یادداشت
@@ -481,7 +549,7 @@ export const TransactionModal: React.FC<TransactionModalProps> = ({
             />
           </div>
 
-          {/* 7. Tags */}
+          {/* 7. Tags matching image.png */}
           <div>
             <label className="block text-xs font-cairo font-bold text-zinc-300 mb-1.5 flex items-center gap-1.5">
               <TagIcon className="w-3.5 h-3.5 text-zinc-400" />
@@ -495,6 +563,7 @@ export const TransactionModal: React.FC<TransactionModalProps> = ({
               placeholder="تگ جدید بنویسید و Enter بزنید..."
               className="w-full px-3.5 py-2.5 bg-[#13201A] border border-[#1F3128] rounded-xl text-xs text-white placeholder-zinc-500 outline-none focus:border-emerald-500 font-cairo"
             />
+
             {tags.length > 0 && (
               <div className="flex flex-wrap gap-1.5 mt-2">
                 {tags.map((t) => (
@@ -517,7 +586,7 @@ export const TransactionModal: React.FC<TransactionModalProps> = ({
           </div>
         </div>
 
-        {/* Modal Footer Buttons */}
+        {/* Modal Footer Buttons matching image.png */}
         <div className="flex items-center justify-between p-5 border-t border-[#1A2822] bg-[#0E1714]">
           <button
             id="submit-transaction-btn"
@@ -528,6 +597,7 @@ export const TransactionModal: React.FC<TransactionModalProps> = ({
             <Plus className="w-4 h-4" />
             <span>ثبت نهایی تراکنش</span>
           </button>
+
           <button
             type="button"
             onClick={onClose}

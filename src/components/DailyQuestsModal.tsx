@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useState } from 'react';
 import {
   X,
   Trophy,
@@ -10,8 +10,6 @@ import {
   Target,
   Shield,
   Coins,
-  LockKeyhole,
-  CalendarCheck,
 } from 'lucide-react';
 import {
   MONTHLY_QUESTS,
@@ -19,38 +17,30 @@ import {
   getCompletedQuests,
   toggleQuestCompletion,
   calculateStreak,
-  getAccountQuestDay,
 } from '../utils/dailyQuests';
 import { toPersianDigits } from '../utils/formatters';
 
 interface DailyQuestsModalProps {
   isOpen: boolean;
   onClose: () => void;
-  currentDayOfMonth?: number;
-  userId?: string;
-  accountCreatedAt?: string | null;
+  currentDayOfMonth: number;
 }
 
 export const DailyQuestsModal: React.FC<DailyQuestsModalProps> = ({
   isOpen,
   onClose,
-  currentDayOfMonth = 1,
-  userId,
-  accountCreatedAt,
+  currentDayOfMonth,
 }) => {
-  const effectiveDay = useMemo(() => accountCreatedAt ? getAccountQuestDay(accountCreatedAt) : Math.min(60, Math.max(1, currentDayOfMonth)), [accountCreatedAt, currentDayOfMonth]);
-  const [completedDays, setCompletedDays] = useState<number[]>(() => getCompletedQuests(userId));
-  useEffect(() => { setCompletedDays(getCompletedQuests(userId)); }, [userId]);
+  const [completedDays, setCompletedDays] = useState<number[]>(() => getCompletedQuests());
   const [celebrationDay, setCelebrationDay] = useState<number | null>(null);
 
   if (!isOpen) return null;
 
-  const currentStreak = calculateStreak(completedDays, effectiveDay);
-  const completionPercent = Math.round((completedDays.filter((day) => day <= effectiveDay).length / 60) * 100);
+  const currentStreak = calculateStreak(completedDays, currentDayOfMonth);
+  const completionPercent = Math.round((completedDays.length / 30) * 100);
 
   const handleToggle = (day: number) => {
-    if (day !== effectiveDay) return;
-    const result = toggleQuestCompletion(day, userId);
+    const result = toggleQuestCompletion(day);
     setCompletedDays(result.allDays);
     if (result.completed) {
       setCelebrationDay(day);
@@ -73,14 +63,14 @@ export const DailyQuestsModal: React.FC<DailyQuestsModalProps> = ({
             <div>
               <div className="flex items-center gap-2">
                 <h3 className="font-cairo text-base sm:text-lg font-bold text-zinc-900 dark:text-white">
-                  چالش ۶۰ روزه مدیریت هوشمند پول و پس‌انداز
+                  چالش ۳۰ روزه مدیریت هوشمند پول و پس‌انداز
                 </h3>
                 <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-100 text-amber-800 dark:bg-amber-950 dark:text-amber-300 border border-amber-300">
-                  برنامه شخصی
+                  ماه جاری
                 </span>
               </div>
               <p className="text-xs text-zinc-500">
-                از روز ثبت‌نام شما شروع می‌شود؛ هر روز فقط تسک همان روز فعال است.
+                هر روز یک گام کوچک برای ساختن عادات مالی میلیاردی در سبک زندگی شما
               </p>
             </div>
           </div>
@@ -113,7 +103,7 @@ export const DailyQuestsModal: React.FC<DailyQuestsModalProps> = ({
             <div>
               <span className="text-[11px] text-zinc-500 block">تسک‌های انجام شده</span>
               <span className="font-cairo text-base font-black text-emerald-700 dark:text-emerald-400">
-                {toPersianDigits(completedDays.filter((day) => day <= effectiveDay).length)} از ۶۰ روز ({toPersianDigits(completionPercent)}٪)
+                {toPersianDigits(completedDays.length)} از ۳۰ روز ({toPersianDigits(completionPercent)}٪)
               </span>
             </div>
           </div>
@@ -125,7 +115,7 @@ export const DailyQuestsModal: React.FC<DailyQuestsModalProps> = ({
             <div>
               <span className="text-[11px] text-zinc-500 block">موقعیت فعلی در ماه</span>
               <span className="font-cairo text-base font-black text-zinc-900 dark:text-white">
-                روز {toPersianDigits(effectiveDay)} از ۶۰
+                روز {toPersianDigits(currentDayOfMonth)} از ماه
               </span>
             </div>
           </div>
@@ -137,7 +127,7 @@ export const DailyQuestsModal: React.FC<DailyQuestsModalProps> = ({
             <div className="flex items-center gap-2">
               <Sparkles className="w-4 h-4 text-emerald-600" />
               <span className="font-bold">
-                آفرین! تسک روز {toPersianDigits(celebrationDay)} با موفقیت انجام شد!
+                آفرین! تسک روز {toPersianDigits(celebrationDay)} با موفقیت انجام شد و به زنجیره تداوم افزوده گردید!
               </span>
             </div>
             <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-emerald-200 dark:bg-emerald-800 font-bold">
@@ -146,15 +136,12 @@ export const DailyQuestsModal: React.FC<DailyQuestsModalProps> = ({
           </div>
         )}
 
-        {/* Scrollable 60-day personalized quest journey */}
+        {/* Scrollable Quests Grid (1 to 31) */}
         <div className="flex-1 overflow-y-auto p-6 space-y-4">
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
             {MONTHLY_QUESTS.map((quest) => {
               const isDone = completedDays.includes(quest.day);
-              const isToday = quest.day === effectiveDay;
-              const isFuture = quest.day > effectiveDay;
-              const isMissed = quest.day < effectiveDay && !isDone;
-              const isLocked = isFuture || isMissed;
+              const isToday = quest.day === currentDayOfMonth;
 
               return (
                 <div
@@ -164,8 +151,6 @@ export const DailyQuestsModal: React.FC<DailyQuestsModalProps> = ({
                       ? 'bg-emerald-50/40 dark:bg-emerald-950/20 border-emerald-300 dark:border-emerald-800/80 shadow-xs'
                       : isToday
                       ? 'bg-amber-50/40 dark:bg-amber-950/20 border-amber-400 dark:border-amber-600 shadow-md ring-2 ring-amber-400/40'
-                      : isLocked
-                      ? 'bg-zinc-100/80 dark:bg-[#0F1512] border-zinc-200 dark:border-[#202923] opacity-75' 
                       : 'bg-zinc-50/60 dark:bg-[#121B17] border-[#E2E8E4] dark:border-[#1F2E26] hover:border-emerald-500/40'
                   }`}
                 >
@@ -189,8 +174,6 @@ export const DailyQuestsModal: React.FC<DailyQuestsModalProps> = ({
                             تسک امروز
                           </span>
                         )}
-                        {isFuture && <LockKeyhole className="w-3.5 h-3.5 text-zinc-400" aria-label="قفل" />}
-                        {isDone && <CalendarCheck className="w-3.5 h-3.5 text-emerald-600" aria-label="تکمیل شده" />}
                       </div>
 
                       <span className="text-[10px] font-bold text-zinc-500 dark:text-zinc-400">
@@ -224,18 +207,16 @@ export const DailyQuestsModal: React.FC<DailyQuestsModalProps> = ({
                     <button
                       type="button"
                       onClick={() => handleToggle(quest.day)}
-                      disabled={!isToday}
-                      title={isFuture ? 'این تسک در روز خودش باز می‌شود' : isMissed ? 'زمان انجام این تسک گذشته است' : undefined}
-                      className={`px-3 py-1 rounded-xl text-xs font-bold transition flex items-center gap-1.5 ${
+                      className={`px-3 py-1 rounded-xl text-xs font-bold transition cursor-pointer flex items-center gap-1.5 ${
                         isDone
-                          ? 'bg-emerald-700 text-white shadow-xs cursor-not-allowed'
+                          ? 'bg-emerald-700 text-white shadow-xs'
                           : isToday
-                          ? 'bg-amber-500 hover:bg-amber-600 text-zinc-950 font-black shadow-xs cursor-pointer'
-                          : 'bg-zinc-200 dark:bg-zinc-800 text-zinc-500 dark:text-zinc-500 cursor-not-allowed'
+                          ? 'bg-amber-500 hover:bg-amber-600 text-zinc-950 font-black shadow-xs'
+                          : 'bg-zinc-200 dark:bg-zinc-800 hover:bg-emerald-600 hover:text-white text-zinc-700 dark:text-zinc-300'
                       }`}
                     >
-                      {isLocked ? <LockKeyhole className="w-3.5 h-3.5" /> : <CheckCircle2 className="w-3.5 h-3.5" />}
-                      <span>{isDone ? 'انجام شد ✓' : isFuture ? 'قفل است' : isMissed ? 'مهلت گذشته' : 'انجام دادم'}</span>
+                      <CheckCircle2 className="w-3.5 h-3.5" />
+                      <span>{isDone ? 'انجام شد ✓' : 'انجام دادم'}</span>
                     </button>
                   </div>
                 </div>

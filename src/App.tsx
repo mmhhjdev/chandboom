@@ -46,8 +46,6 @@ const AppContent: React.FC = () => {
     closeAuthGuard,
     addTicket,
     addTransaction,
-    user,
-    isAuthenticated,
   } = useApp();
 
   // Modals state
@@ -76,11 +74,17 @@ const AppContent: React.FC = () => {
 
   const handleTicketSubmit = (data: {
     subject: string;
-    department: any;
-    priority: any;
+    department?: any;
+    category?: any;
+    priority?: any;
     initialMessage: string;
   }) => {
-    addTicket(data.subject, data.department, data.priority, data.initialMessage);
+    return addTicket(
+      data.subject,
+      data.department || 'پشتیبانی مالی',
+      data.priority || 'medium',
+      data.initialMessage
+    );
   };
 
   if (activeTab === 'landing') {
@@ -165,7 +169,7 @@ const AppContent: React.FC = () => {
         {activeTab === 'support' && (
           <SupportView onOpenTicketModal={() => setIsTicketModalOpen(true)} />
         )}
-        {activeTab === 'ai-assistant' && <AIAssistant initialMode="advisor" />}
+        {activeTab === 'ai-assistant' && <AIAssistant />}
         {activeTab === 'settings' && (
           <SettingsView onOpenAvatarModal={() => setIsAvatarModalOpen(true)} />
         )}
@@ -211,8 +215,6 @@ const AppContent: React.FC = () => {
         isOpen={isDailyQuestsModalOpen}
         onClose={() => setIsDailyQuestsModalOpen(false)}
         currentDayOfMonth={new Date().getDate()}
-        userId={isAuthenticated ? user.id : 'guest'}
-        accountCreatedAt={isAuthenticated ? user.created_at : undefined}
       />
 
       <TransactionModal

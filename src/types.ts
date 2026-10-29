@@ -1,7 +1,11 @@
 export type UserRole = 'user' | 'admin';
+
 export type SubscriptionTier = 'free' | 'bronze' | 'pro' | 'vip';
+
 export type SubscriptionStatus = 'active' | 'expired' | 'pending_approval' | 'none';
+
 export type TransactionType = 'income' | 'expense';
+
 export type TransactionCategory =
   | 'خوراک و رستوران'
   | 'خوراک و غذا'
@@ -29,18 +33,22 @@ export interface UserProfile {
   id: string;
   email: string;
   full_name: string;
-  age?: number;
-  gender?: 'مرد' | 'زن' | 'سایر';
-  avatar_url?: string;
+  age?: number | null;
+  gender?: 'مرد' | 'زن' | 'سایر' | null;
+  avatar_url?: string | null;
   role: UserRole;
   tier: SubscriptionTier;
+  is_premium?: boolean;
   subscription_status: SubscriptionStatus;
+  subscription_started_at?: string | null;
   subscription_expires_at?: string | null;
   monthly_budget_cap: number;
   theme_preference: 'dark' | 'light' | 'system';
   currency: 'تومان' | 'ریال';
   ai_queries_used?: number;
-  ai_queries_limit?: number;
+  ai_queries_limit?: number | null;
+  ai_requests_left?: number | null;
+  ai_queries_reset_date?: string | null;
   created_at?: string;
   updated_at?: string;
 }
@@ -72,27 +80,32 @@ export interface NotificationItem {
 }
 
 export type TicketDepartment = 'پشتیبانی مالی' | 'پشتیبانی فنی' | 'انتقادات و پیشنهادات' | 'عمومی';
+
 export type TicketPriority = 'low' | 'medium' | 'high' | 'urgent';
+
 export type TicketStatus = 'open' | 'in_progress' | 'resolved' | 'closed';
 
 export interface TicketMessage {
   id: string;
   ticket_id: string;
   sender_id: string;
-  sender_name: string;
-  sender_role: 'user' | 'admin';
-  content: string;
+  sender_name?: string;
+  sender_role?: 'user' | 'admin';
+  message?: string;
+  content?: string;
+  attachment_url?: string | null;
   created_at: string;
 }
 
 export interface Ticket {
   id: string;
   user_id: string;
-  user_name: string;
-  user_email: string;
+  user_name?: string;
+  user_email?: string;
   subject: string;
-  department: TicketDepartment;
-  priority: TicketPriority;
+  category?: string;
+  department?: TicketDepartment;
+  priority?: TicketPriority;
   status: TicketStatus;
   created_at: string;
   updated_at: string;
@@ -114,7 +127,6 @@ export type ActiveTab =
 
 export type NavTab = ActiveTab;
 
-// ✅ اصلاح: وضعیت هدف باید با مقادیر DB مطابقت داشته باشد
 export interface FinancialGoal {
   id: string;
   user_id: string;
@@ -123,7 +135,7 @@ export interface FinancialGoal {
   current_amount: number;
   deadline: string;
   category?: string;
-  status: 'in_progress' | 'achieved' | 'paused'; // حذف 'active'
+  status: 'in_progress' | 'achieved' | 'paused';
   notes?: string;
   created_at: string;
   updated_at?: string;
@@ -161,17 +173,18 @@ export interface SubscriptionPlan {
   name: string;
   nameFa: string;
   price: number;
+  originalPrice?: number;
   durationMonths: number;
+  billingCycle?: 'monthly' | 'yearly';
   description: string;
   features: string[];
   tier?: SubscriptionTier;
   aiAccess?: boolean;
-  monthlyAiLimit?: number | string; // ✅ اصلاح: پذیرش string برای "نامحدود"
+  monthlyAiLimit?: number;
   isPopular?: boolean;
   badge?: string;
 }
 
-// ✅ اضافه شدن فیلدهای گمشده برای رفع خطای TS2339/TS2353
 export interface ManualPaymentSubmission {
   id: string;
   user_id: string;
@@ -182,19 +195,18 @@ export interface ManualPaymentSubmission {
   amount: number;
   card_sender_name?: string;
   card_sender_number?: string;
+  card_last4?: string;
   reference_code?: string;
   tracking_code: string;
   payment_date?: string;
   receipt_url?: string;
+  receipt_image_url?: string;
   notes?: string;
   status: 'pending' | 'approved' | 'rejected';
   admin_notes?: string;
   created_at: string;
   reviewed_at?: string;
   reviewed_by?: string;
-  // فیلدهای جدید مورد نیاز AppContext و AdminDashboardModal
-  receipt_image_url?: string;
-  card_last4?: string;
   alt_id?: string;
 }
 

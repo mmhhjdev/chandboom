@@ -57,21 +57,33 @@
     <priority>0.7</priority>
   </url>
   <url>
-    <loc>https://chandboom.ir/#dashboard</loc>
-    <lastmod>2026-10-10</lastmod>
+    <loc>https://chandboom.ir/dashboard</loc>
+    <lastmod>2026-10-22</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://chandboom.ir/#goals</loc>
-    <lastmod>2026-10-10</lastmod>
+    <loc>https://chandboom.ir/transactions</loc>
+    <lastmod>2026-10-22</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://chandboom.ir/goals</loc>
+    <lastmod>2026-10-22</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://chandboom.ir/#dong</loc>
-    <lastmod>2026-10-10</lastmod>
+    <loc>https://chandboom.ir/dong</loc>
+    <lastmod>2026-10-22</lastmod>
     <changefreq>daily</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://chandboom.ir/analytics</loc>
+    <lastmod>2026-10-22</lastmod>
+    <changefreq>weekly</changefreq>
     <priority>0.8</priority>
   </url>
 </urlset>
