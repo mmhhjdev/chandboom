@@ -165,8 +165,8 @@ interface AppContextType {
   // Manual Card-to-Card Payment System
   manualPayments: ManualPaymentSubmission[];
   submitManualPayment: (data: Omit<ManualPaymentSubmission, 'id' | 'created_at' | 'status'>) => Promise<void>;
-  approveManualPayment: (paymentId: string, adminNotes?: string, linkedOrderId?: string) => Promise<void>;
-  rejectManualPayment: (paymentId: string, adminNotes?: string, linkedOrderId?: string) => Promise<void>;
+  approveManualPayment: (paymentId: string, adminNotes?: string) => Promise<void>;
+  rejectManualPayment: (paymentId: string, adminNotes?: string) => Promise<void>;
 
   // Transactions
   transactions: Transaction[];
@@ -318,15 +318,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     }
   }, [isDarkMode]);
 
-  const toggleDarkMode = () => {
-    const nextIsDark = !isDarkMode;
-    setIsDarkMode(nextIsDark);
-    if (isAuthenticated && user.id && user.id !== 'guest') {
-      void updateUserProfile({ theme_preference: nextIsDark ? 'dark' : 'light' }).catch((error) => {
-        console.error('Could not save theme preference:', error);
-      });
-    }
-  };
+  const toggleDarkMode = () => setIsDarkMode((prev) => !prev);
 
   const [activeTab, setActiveTabState] = useState<ActiveTab>(getInitialTab);
   const [adminMode, setAdminModeState] = useState<boolean>(false);
@@ -481,7 +473,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
   const isProUser = useMemo(() => {
     if (isAdmin) return true;
-    if (user.tier === 'bronze' || user.tier === 'pro' || user.tier === 'vip') {
+    if (user.tier === 'pro' || user.tier === 'vip') {
       if (user.subscription_expires_at) {
         return new Date(user.subscription_expires_at).getTime() > Date.now();
       }
@@ -534,9 +526,6 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       };
 
       setUser(mergedUser);
-      if (profileData?.theme_preference === 'dark' || profileData?.theme_preference === 'light') {
-        setIsDarkMode(profileData.theme_preference === 'dark');
-      }
 
       // 2. Fetch User Transactions
       const { data: txData } = await supabase
@@ -568,46 +557,14 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         setNotifications(notifData);
       }
 
-      // 5. Fetch tickets and their messages from the normalized tables.
+      // 5. Fetch Support Tickets
       let ticketQuery = supabase.from('tickets').select('*').order('updated_at', { ascending: false });
-      if (!isAdm) ticketQuery = ticketQuery.eq('user_id', userId);
-      const { data: ticketData, error: ticketFetchError } = await ticketQuery;
-      if (ticketFetchError) {
-        console.error('Supabase ticket fetch failed:', ticketFetchError.message);
-      } else {
-        const rows = ticketData || [];
-        const ids = rows.map((ticket: any) => ticket.id).filter(Boolean);
-        let messagesByTicket = new Map<string, TicketMessage[]>();
-        if (ids.length) {
-          const { data: messageRows, error: messagesError } = await supabase
-            .from('ticket_messages')
-            .select('*')
-            .in('ticket_id', ids)
-            .order('created_at', { ascending: true });
-          if (messagesError) {
-            console.error('Supabase ticket messages fetch failed:', messagesError.message);
-          } else {
-            for (const row of messageRows || []) {
-              const message = {
-                ...row,
-                content: row.message,
-                sender_name: row.sender_id === userId ? (user.full_name || 'کاربر چندبوم') : 'پشتیبانی چندبوم',
-                sender_role: row.sender_id === userId ? 'user' : 'admin',
-              } as TicketMessage;
-              messagesByTicket.set(row.ticket_id, [...(messagesByTicket.get(row.ticket_id) || []), message]);
-            }
-          }
-        }
-        const mappedTickets = rows.map((row: any) => ({
-          ...row,
-          user_name: row.user_id === userId ? (user.full_name || 'کاربر چندبوم') : (row.user_name || 'کاربر چندبوم'),
-          user_email: row.user_id === userId ? userEmail : (row.user_email || ''),
-          department: row.category === 'technical' ? 'پشتیبانی فنی' : 'پشتیبانی مالی',
-          priority: row.priority || 'medium',
-          messages: messagesByTicket.get(row.id) || [],
-        })) as Ticket[];
-        setTickets(mappedTickets);
-        setSelectedTicket((current) => current ? mappedTickets.find((ticket) => ticket.id === current.id) || null : null);
+      if (!isAdm) {
+        ticketQuery = ticketQuery.eq('user_id', userId);
+      }
+      const { data: ticketData } = await ticketQuery;
+      if (ticketData && ticketData.length > 0) {
+        setTickets(ticketData);
       }
 
       // 6. Fetch Manual Payments & Subscription Orders simultaneously and merge
@@ -812,49 +769,52 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     };
   }, []);
 
-  const updateUserProfile = async (updated: Partial<UserProfile>): Promise<void> => {
+  const updateUserProfile = async (updated: Partial<UserProfile>) => {
+    setUser((prev) => ({ ...prev, ...updated }));
+    setAllUsers((prev) =>
+      prev.map((u) => (u.id === user.id ? { ...u, ...updated, updated_at: new Date().toISOString() } : u))
+    );
+
     const supabase = getSupabaseClient();
-    if (!isAuthenticated || !user.id || user.id === 'guest') {
-      throw new Error('برای ذخیره تنظیمات، ابتدا وارد حساب کاربری خود شوید.');
-    }
-    if (!supabase) throw new Error('اتصال Supabase در دسترس نیست.');
+    if (supabase && isAuthenticated && user.id && user.id !== 'guest') {
+      try {
+        const nextUser = { ...user, ...updated };
+        const isFree = nextUser.tier === 'free';
+        const finalStatus: SubscriptionStatus = isFree ? 'none' : (nextUser.subscription_status || 'none');
+        const isPrem = !isFree && finalStatus === 'active';
 
-    const cleanPayload: Record<string, any> = { updated_at: new Date().toISOString() };
-    // Explicit allow-list: user-editable profile fields and app-maintained quota/status fields.
-    if (updated.full_name !== undefined) cleanPayload.full_name = updated.full_name.trim();
-    if (updated.age !== undefined) cleanPayload.age = updated.age === null ? null : Number(updated.age);
-    if (updated.gender !== undefined) cleanPayload.gender = updated.gender;
-    if (updated.avatar_url !== undefined) cleanPayload.avatar_url = updated.avatar_url;
-    if (updated.monthly_budget_cap !== undefined) cleanPayload.monthly_budget_cap = Number(updated.monthly_budget_cap);
-    if (updated.theme_preference !== undefined) cleanPayload.theme_preference = updated.theme_preference;
-    if (updated.currency !== undefined) cleanPayload.currency = updated.currency;
-    if (updated.subscription_status !== undefined) cleanPayload.subscription_status = updated.subscription_status;
-    if (updated.subscription_started_at !== undefined) cleanPayload.subscription_started_at = updated.subscription_started_at;
-    if (updated.subscription_expires_at !== undefined) cleanPayload.subscription_expires_at = updated.subscription_expires_at;
-    if (updated.ai_queries_used !== undefined) cleanPayload.ai_queries_used = Number(updated.ai_queries_used);
-    if (updated.ai_queries_limit !== undefined) cleanPayload.ai_queries_limit = updated.ai_queries_limit === null ? null : Number(updated.ai_queries_limit);
-    if (updated.ai_requests_left !== undefined) cleanPayload.ai_requests_left = updated.ai_requests_left === null ? null : Number(updated.ai_requests_left);
-    if (updated.ai_queries_reset_date !== undefined) cleanPayload.ai_queries_reset_date = updated.ai_queries_reset_date;
-
-    if (cleanPayload.full_name !== undefined && !cleanPayload.full_name) {
-      throw new Error('نام و نام خانوادگی نمی‌تواند خالی باشد.');
+        const cleanPayload = {
+          id: user.id,
+          email: nextUser.email || user.email,
+          full_name: nextUser.full_name || 'کاربر چندبوم',
+          avatar_url: nextUser.avatar_url ?? null,
+          role: nextUser.role || 'user',
+          tier: nextUser.tier || 'free',
+          subscription_status: finalStatus,
+          is_premium: nextUser.is_premium !== undefined ? nextUser.is_premium : isPrem,
+          subscription_started_at: isFree ? null : (nextUser.subscription_started_at ?? null),
+          subscription_expires_at: isFree ? null : (nextUser.subscription_expires_at ?? null),
+          monthly_budget_cap: Number(nextUser.monthly_budget_cap) || 20000000,
+          theme_preference: nextUser.theme_preference || (isDarkMode ? 'dark' : 'light'),
+          currency: nextUser.currency || 'تومان',
+          created_at: nextUser.created_at || new Date().toISOString(),
+          updated_at: new Date().toISOString(),
+          age: nextUser.age !== undefined && nextUser.age !== null ? Number(nextUser.age) : null,
+          gender: nextUser.gender ?? null,
+          ai_requests_left: nextUser.ai_requests_left !== undefined && nextUser.ai_requests_left !== null
+            ? Number(nextUser.ai_requests_left)
+            : (isFree ? 5 : nextUser.tier === 'bronze' ? 50 : nextUser.tier === 'pro' ? 150 : 500),
+          ai_queries_used: nextUser.ai_queries_used !== undefined ? Number(nextUser.ai_queries_used) : 0,
+          ai_queries_limit: nextUser.ai_queries_limit !== undefined
+            ? nextUser.ai_queries_limit
+            : (isFree ? 10 : nextUser.tier === 'bronze' ? 50 : nextUser.tier === 'pro' ? 150 : 500),
+          ai_queries_reset_date: nextUser.ai_queries_reset_date ?? null,
+        };
+        await supabase.from('users').upsert(cleanPayload);
+      } catch (err) {
+        console.warn('Could not sync user profile update to Supabase:', err);
+      }
     }
-    if (cleanPayload.age !== undefined && cleanPayload.age !== null && (!Number.isInteger(cleanPayload.age) || cleanPayload.age < 1 || cleanPayload.age > 120)) {
-      throw new Error('سن واردشده معتبر نیست.');
-    }
-    if (cleanPayload.monthly_budget_cap !== undefined && (!Number.isFinite(cleanPayload.monthly_budget_cap) || cleanPayload.monthly_budget_cap < 0)) {
-      throw new Error('سقف بودجه باید عددی مثبت یا صفر باشد.');
-    }
-
-    const { error } = await supabase.from('users').update(cleanPayload).eq('id', user.id);
-    if (error) {
-      console.error('Could not sync user profile update to Supabase:', error);
-      throw new Error(translateSupabaseError(error.message));
-    }
-
-    const updatedAt = cleanPayload.updated_at;
-    setUser((prev) => ({ ...prev, ...updated, updated_at: updatedAt }));
-    setAllUsers((prev) => prev.map((u) => (u.id === user.id ? { ...u, ...updated, updated_at: updatedAt } : u)));
   };
 
   const changePassword = async (newPassword: string): Promise<{ success: boolean; error?: string }> => {
@@ -875,25 +835,35 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   };
 
   const upgradeUserTier = async (tier: SubscriptionTier, durationMonths: number) => {
-    if (!isAdmin) {
-      throw new Error('اشتراک فقط پس از تأیید پرداخت یا اقدام مجاز مدیریت فعال می‌شود.');
-    }
-    if (!['bronze', 'pro', 'vip'].includes(tier) || !Number.isInteger(durationMonths) || durationMonths < 1 || durationMonths > 24) {
-      throw new Error('پلن یا مدت اشتراک معتبر نیست.');
-    }
-    const supabase = getSupabaseClient();
-    if (!supabase || !user.id || user.id === 'guest') throw new Error('اتصال Supabase یا شناسه کاربر در دسترس نیست.');
-    const { error } = await supabase.rpc('sync_user_subscription', {
-      p_user_id: user.id,
-      p_tier: tier,
-      p_duration_months: durationMonths,
+    const durationDays = durationMonths * 30;
+    // Smart Subscription Extension: Accumulate remaining active days without loss
+    const currentExpiryTime = user.subscription_expires_at ? new Date(user.subscription_expires_at).getTime() : 0;
+    const baseTime = currentExpiryTime > Date.now() ? currentExpiryTime : Date.now();
+    const expiresAt = new Date(baseTime + durationDays * 24 * 60 * 60 * 1000).toISOString();
+
+    await updateUserProfile({
+      tier,
+      subscription_status: 'active',
+      subscription_expires_at: expiresAt,
     });
-    if (error) throw new Error(`فعال‌سازی اشتراک در Supabase ناموفق بود: ${error.message}`);
-    await fetchUserDataFromSupabase(user.id, user.email);
+
+    const supabase = getSupabaseClient();
+    if (supabase && isAuthenticated && user.id) {
+      try {
+        await supabase.rpc('sync_user_subscription', {
+          p_user_id: user.id,
+          p_tier: tier,
+          p_duration_days: durationDays,
+        });
+      } catch (rpcErr) {
+        // Fallback to direct upsert handled by updateUserProfile
+      }
+    }
+
     await addNotification({
       type: 'subscription',
-      title: 'اشتراک چندبوم فعال شد',
-      message: `اشتراک ${tier.toUpperCase()} به مدت ${durationMonths} ماه با موفقیت در پایگاه داده ثبت شد.`,
+      title: 'ارتقای حساب به اشتراک طلایی چندبوم',
+      message: `حساب کاربری شما با موفقیت به سطح ${tier.toUpperCase()} ارتقا یافت و روزهای باقی‌مانده اشتراک قبلی به دوره جدید افزوده شد.`,
       priority: 'normal',
       status: 'settled',
     });
@@ -1187,7 +1157,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     });
   };
 
-  // Forward administrative comments / subscription status into the normalized support tables.
+  // Forward administrative comments / subscription status into Support Ticketing system
   const forwardAdminNotificationToTicket = async (
     targetUserId: string,
     targetUserName: string,
@@ -1196,81 +1166,70 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     messageContent: string
   ) => {
     const supabase = getSupabaseClient();
-    if (!supabase || !user.id || user.id === 'guest') {
-      console.warn('Cannot forward support notification without an authenticated Supabase user.');
-      return;
-    }
-    const existingTicket = tickets.find(
-      (t) => t.user_id === targetUserId && t.subject.includes('اشتراک')
-    );
-    const createdAt = new Date().toISOString();
-    let ticketId = existingTicket?.id;
-
-    if (ticketId) {
-      const { error: messageError } = await supabase.from('ticket_messages').insert([{
-        ticket_id: ticketId,
-        sender_id: user.id,
-        message: messageContent,
-        attachment_url: null,
-        created_at: createdAt,
-      }]);
-      if (messageError) {
-        console.warn('Could not insert subscription ticket message:', messageError.message);
-        return;
-      }
-      const { error: updateError } = await supabase.from('tickets')
-        .update({ status: 'resolved', updated_at: createdAt })
-        .eq('id', ticketId);
-      if (updateError) console.warn('Could not update subscription ticket:', updateError.message);
-      const newMsg: TicketMessage = {
-        id: crypto.randomUUID(), ticket_id: ticketId, sender_id: user.id,
-        sender_name: 'پشتیبان رسمی چندبوم (مدیریت)', sender_role: 'admin',
-        message: messageContent, content: messageContent, created_at: createdAt,
-      };
-      setTickets((prev) => prev.map((t) => t.id === ticketId
-        ? { ...t, status: 'resolved', updated_at: createdAt, messages: [...(t.messages || []), newMsg] }
-        : t));
-      return;
-    }
-
-    ticketId = crypto.randomUUID();
-    const { error: ticketError } = await supabase.from('tickets').insert([{
-      id: ticketId,
-      user_id: targetUserId,
-      subject,
-      category: 'financial',
-      status: 'resolved',
-      created_at: createdAt,
-      updated_at: createdAt,
-    }]);
-    if (ticketError) {
-      console.warn('Could not create subscription ticket:', ticketError.message);
-      return;
-    }
-    const { error: messageError } = await supabase.from('ticket_messages').insert([{
-      ticket_id: ticketId,
-      sender_id: user.id,
-      message: messageContent,
-      attachment_url: null,
-      created_at: createdAt,
-    }]);
-    if (messageError) {
-      await supabase.from('tickets').delete().eq('id', ticketId);
-      console.warn('Could not insert subscription ticket message:', messageError.message);
-      return;
-    }
     const newMsg: TicketMessage = {
-      id: crypto.randomUUID(), ticket_id: ticketId, sender_id: user.id,
-      sender_name: 'پشتیبان رسمی چندبوم (مدیریت)', sender_role: 'admin',
-      message: messageContent, content: messageContent, created_at: createdAt,
+      id: `msg-${Date.now()}`,
+      ticket_id: '',
+      sender_id: user.id || 'admin',
+      sender_name: 'پشتیبان رسمی چندبوم (مدیریت)',
+      sender_role: 'admin',
+      content: messageContent,
+      created_at: new Date().toISOString(),
     };
-    const newTicket: Ticket = {
-      id: ticketId, user_id: targetUserId, user_name: targetUserName,
-      user_email: targetUserEmail, subject, category: 'financial',
-      department: 'پشتیبانی مالی', priority: 'high', status: 'resolved',
-      created_at: createdAt, updated_at: createdAt, messages: [newMsg],
-    };
-    setTickets((prev) => [newTicket, ...prev]);
+
+    // Find if user already has a ticket for subscription
+    const existingTicket = tickets.find(
+      (t) => (t.user_id === targetUserId || t.user_email === targetUserEmail) && t.subject.includes('اشتراک')
+    );
+
+    if (existingTicket) {
+      newMsg.ticket_id = existingTicket.id;
+      const updatedMessages = [...existingTicket.messages, newMsg];
+      setTickets((prev) =>
+        prev.map((t) =>
+          t.id === existingTicket.id
+            ? { ...t, status: 'resolved', updated_at: new Date().toISOString(), messages: updatedMessages }
+            : t
+        )
+      );
+      if (supabase) {
+        try {
+          await supabase
+            .from('tickets')
+            .update({
+              status: 'resolved',
+              updated_at: new Date().toISOString(),
+              messages: updatedMessages,
+            })
+            .eq('id', existingTicket.id);
+        } catch (e) {
+          console.warn('Could not update ticket in Supabase:', e);
+        }
+      }
+    } else {
+      const ticketId = `tkt-${Date.now()}`;
+      newMsg.ticket_id = ticketId;
+      const newTicket: Ticket = {
+        id: ticketId,
+        user_id: targetUserId,
+        user_name: targetUserName,
+        user_email: targetUserEmail,
+        subject,
+        department: 'پشتیبانی مالی',
+        priority: 'high',
+        status: 'resolved',
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+        messages: [newMsg],
+      };
+      setTickets((prev) => [newTicket, ...prev]);
+      if (supabase) {
+        try {
+          await supabase.from('tickets').insert([newTicket]);
+        } catch (e) {
+          console.warn('Could not insert ticket in Supabase:', e);
+        }
+      }
+    }
   };
 
   // Direct User Notification and Support Messaging System for Admin
@@ -1331,204 +1290,266 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     return success;
   };
 
-  // Manual card-to-card payment submission.
-  // Persist both records first; only then update local UI/profile state.
+  // Manual Card-to-Card Payment Actions
   const submitManualPayment = async (data: Omit<ManualPaymentSubmission, 'id' | 'created_at' | 'status'>) => {
-    const supabase = getSupabaseClient();
-    if (!supabase) throw new Error('اتصال Supabase در دسترس نیست.');
-    if (!isAuthenticated || !user.id || user.id === 'guest') {
-      setIsAuthModalOpen(true);
-      throw new Error('برای ثبت درخواست اشتراک ابتدا وارد حساب کاربری شوید.');
-    }
-    if (data.user_id !== user.id) throw new Error('شناسه کاربر با حساب واردشده مطابقت ندارد.');
-    if (!data.plan_id?.trim()) throw new Error('پلن اشتراک انتخاب‌شده معتبر نیست.');
-    if (!Number.isFinite(Number(data.amount)) || Number(data.amount) <= 0) throw new Error('مبلغ پرداخت معتبر نیست.');
-    if (!data.receipt_url?.trim()) throw new Error('لطفاً ابتدا تصویر فیش واریزی را بارگذاری کنید.');
-    if (!data.tracking_code?.trim()) throw new Error('کد پیگیری پرداخت تولید نشده است.');
-
-    const createdAt = new Date().toISOString();
-    // Both tables use UUID identifiers. Sharing the same ID lets admin approval
-    // update the matching row in both tables reliably.
-    const paymentId = crypto.randomUUID();
     const newSubmission: ManualPaymentSubmission = {
       ...data,
-      id: paymentId,
+      id: `pay-${Date.now()}-${Math.random().toString(36).substr(2, 4)}`,
       status: 'pending',
-      created_at: createdAt,
+      created_at: new Date().toISOString(),
     };
-
-    const { error: paymentError } = await supabase.from('manual_payments').insert([{
-      id: paymentId,
-      user_id: user.id,
-      user_email: data.user_email || user.email || '',
-      user_name: data.user_name.trim(),
-      plan_id: data.plan_id,
-      plan_name: data.plan_name,
-      amount: Number(data.amount),
-      card_sender_name: data.card_sender_name || data.user_name.trim(),
-      card_sender_number: data.card_sender_number || 'واریز کارت به کارت',
-      reference_code: data.reference_code || data.tracking_code,
-      tracking_code: data.tracking_code,
-      payment_date: data.payment_date || createdAt,
-      receipt_url: data.receipt_url,
-      notes: data.notes || null,
-      status: 'pending',
-      created_at: createdAt,
-    }]);
-    if (paymentError) {
-      throw new Error(`ثبت فیش واریزی ناموفق بود: ${paymentError.message}`);
-    }
-
-    const { error: orderError } = await supabase.from('subscription_orders').insert([{
-      id: paymentId,
-      user_id: user.id,
-      plan_id: data.plan_id,
-      amount_toman: Math.round(Number(data.amount)),
-      receipt_path: data.receipt_url,
-      note: data.notes || null,
-      status: 'pending',
-      created_at: createdAt,
-      updated_at: createdAt,
-    }]);
-
-    if (orderError) {
-      // Keep the two admin-facing payment lists consistent if order creation fails.
-      const { error: rollbackError } = await supabase.from('manual_payments').delete().eq('id', paymentId);
-      const rollbackNote = rollbackError ? ` (حذف رکورد ناقص نیز ناموفق بود: ${rollbackError.message})` : '';
-      throw new Error(`ثبت درخواست اشتراک ناموفق بود: ${orderError.message}${rollbackNote}`);
-    }
 
     setManualPayments((prev) => [newSubmission, ...prev]);
 
-    // Mark the request as pending only after both database inserts succeed.
-    await updateUserProfile({ subscription_status: 'pending_approval' });
+    // Instantly update user subscription_status to 'pending_approval' to display the golden review badge
+    await updateUserProfile({
+      subscription_status: 'pending_approval',
+    });
 
-    // Ancillary history and notification are created after the payment is persisted.
-    try {
-      await addTransaction({
-        amount: Number(data.amount),
-        type: 'expense',
-        category: 'سایر',
-        description: `ثبت درخواست اشتراک ${data.plan_name} (کد پیگیری: ${data.tracking_code})`,
-        date: createdAt,
-        account: 'بانک سامان (کارت به کارت)',
-      });
-    } catch (err) {
-      console.warn('Payment was saved, but transaction history could not be created:', err);
-    }
+    // Immutably record in transactions history
+    await addTransaction({
+      amount: data.amount,
+      type: 'expense',
+      category: 'سایر',
+      description: `واریز وجه اشتراک طلایی ${data.plan_name} (کد رهگیری: ${data.tracking_code})`,
+      date: new Date().toISOString(),
+      account: 'بانک سامان (کارت به کارت)',
+    });
 
-    try {
-      await addNotification({
-        type: 'subscription',
-        title: 'رسید پرداخت ثبت شد',
-        message: `فیش پلن «${data.plan_name}» ثبت و برای بررسی مدیریت ارسال شد. کد پیگیری: ${data.tracking_code}`,
-        amount: Number(data.amount),
-        priority: 'normal',
-        status: 'pending',
-      });
-    } catch (err) {
-      console.warn('Payment was saved, but notification could not be created:', err);
+    await addNotification({
+      type: 'subscription',
+      title: 'رسید پرداخت ثبت شد',
+      message: `اطلاعات واریزی کارت به کارت برای پلن «${data.plan_name}» ثبت و برای بررسی به مدیریت ارسال گردید.`,
+      amount: data.amount,
+      priority: 'normal',
+      status: 'pending',
+    });
+
+    const supabase = getSupabaseClient();
+    if (supabase) {
+      try {
+        await supabase.from('manual_payments').insert([newSubmission]);
+        // Also insert in subscription_orders if user is authenticated
+        if (data.user_id && data.user_id !== 'guest') {
+          await supabase.from('subscription_orders').insert([{
+            user_id: data.user_id,
+            plan_id: data.plan_id,
+            amount_toman: data.amount,
+            receipt_path: data.receipt_url || '',
+            note: data.notes || '',
+            status: 'pending',
+          }]);
+        }
+      } catch (err) {
+        console.error('Supabase manual_payment insert error:', err);
+      }
     }
   };
 
-  const approveManualPayment = async (paymentId: string, adminNotes?: string, linkedOrderId?: string) => {
-    if (!isAdmin) throw new Error('دسترسی غیرمجاز: فقط مدیران مجاز به تایید پرداخت هستند.');
-    const supabase = getSupabaseClient();
-    if (!supabase) throw new Error('اتصال Supabase در دسترس نیست.');
+  const approveManualPayment = async (paymentId: string, adminNotes?: string) => {
+    if (!isAdmin) {
+      alert('دسترسی غیرمجاز: فقط مدیران ارشد مجاز به تایید پرداخت هستند.');
+      return;
+    }
 
-    const now = new Date().toISOString();
-    const note = adminNotes?.trim() || 'پرداخت تایید شد و اشتراک فعال گردید.';
-    const localPayment = manualPayments.find((p) => p.id === paymentId);
-    const [paymentRes, orderRes] = await Promise.all([
-      supabase.from('manual_payments').select('*').eq('id', paymentId).maybeSingle(),
-      supabase.from('subscription_orders').select('*').eq('id', linkedOrderId || paymentId).maybeSingle(),
-    ]);
-    if (paymentRes.error && orderRes.error) throw new Error(`خواندن درخواست پرداخت ناموفق بود: ${paymentRes.error.message}`);
-    const payment = paymentRes.data;
-    const order = orderRes.data;
-    const targetUserId = payment?.user_id || order?.user_id || localPayment?.user_id;
-    const planId = String(payment?.plan_id || order?.plan_id || localPayment?.plan_id || 'pro-1m');
-    if (!targetUserId || targetUserId === 'guest') throw new Error('کاربر مربوط به این درخواست پیدا نشد؛ اشتراک فعال نشد.');
-    if (!payment && !order) throw new Error('درخواست پرداخت در Supabase پیدا نشد یا دسترسی لازم وجود ندارد.');
-    if (payment?.status === 'approved' || order?.status === 'approved') throw new Error('این درخواست قبلاً تایید شده است.');
-    if (payment?.status === 'rejected' || order?.status === 'rejected') throw new Error('درخواست ردشده را نمی‌توان مستقیم تایید کرد.');
+    const targetPayment = manualPayments.find((p) => p.id === paymentId);
+    const targetUserId = targetPayment?.user_id;
+    const planId = targetPayment?.plan_id || 'pro-1m';
+    const durationMonths = (planId.endsWith('-3m') || planId === 'pro-3m') ? 3 : 1;
+    const targetTier: SubscriptionTier =
+      planId.startsWith('vip') ? 'vip' : planId.startsWith('bronze') ? 'bronze' : 'pro';
 
     const targetUser = allUsers.find((u) => u.id === targetUserId) || (user.id === targetUserId ? user : null);
-    const currentExpiry = targetUser?.subscription_expires_at ? new Date(targetUser.subscription_expires_at).getTime() : 0;
-    const baseTime = currentExpiry > Date.now() ? currentExpiry : Date.now();
-    let durationDays = /-3m$/.test(planId) ? 90 : /-6m$/.test(planId) ? 180 : /-12m$/.test(planId) ? 365 : 30;
-    // Prefer the configured plan duration in Supabase; use ID suffix only for legacy plans.
-    const { data: planRow, error: planLookupError } = await supabase.from('plans').select('duration_days').eq('id', planId).maybeSingle();
-    if (!planLookupError && Number(planRow?.duration_days) > 0) durationDays = Number(planRow?.duration_days);
-    const finalExpiresAt = new Date(baseTime + durationDays * 86400000).toISOString();
-    const targetTier: SubscriptionTier = planId.startsWith('vip') ? 'vip' : planId.startsWith('bronze') ? 'bronze' : 'pro';
-    const aiQuota = targetTier === 'vip' ? 500 : targetTier === 'bronze' ? 50 : 150;
+    const currentExpiryTime = targetUser?.subscription_expires_at ? new Date(targetUser.subscription_expires_at).getTime() : 0;
+    const baseTime = currentExpiryTime > Date.now() ? currentExpiryTime : Date.now();
+    const finalExpiresAt = new Date(baseTime + durationMonths * 30 * 24 * 60 * 60 * 1000).toISOString();
 
-    // Persist first; never show success in the UI when Supabase rejects the update.
-    let updatedAtLeastOne = false;
-    if (payment) {
-      const { data, error } = await supabase.from('manual_payments').update({ status: 'approved', admin_notes: note, reviewed_at: now, reviewed_by: user.id }).eq('id', paymentId).select('id');
-      if (error) throw new Error(`تایید فیش در manual_payments ناموفق بود: ${error.message}`);
-      updatedAtLeastOne = Boolean(data?.length);
+    const supabase = getSupabaseClient();
+    if (supabase) {
+      try {
+        await supabase
+          .from('manual_payments')
+          .update({
+            status: 'approved',
+            admin_notes: adminNotes || 'پرداخت تایید شد و اشتراک فعال گردید.',
+            reviewed_at: new Date().toISOString(),
+            reviewed_by: user.email,
+          })
+          .eq('id', paymentId);
+
+        await supabase
+          .from('subscription_orders')
+          .update({
+            status: 'approved',
+            reviewed_at: new Date().toISOString(),
+          })
+          .eq('id', paymentId);
+
+        if (targetUserId && targetUserId !== 'guest') {
+          const aiQuota = targetTier === 'vip' ? 500 : targetTier === 'bronze' ? 50 : 150;
+          await supabase
+            .from('users')
+            .update({
+              tier: targetTier,
+              subscription_status: 'active',
+              is_premium: true,
+              subscription_started_at: targetUser?.subscription_started_at || new Date().toISOString(),
+              subscription_expires_at: finalExpiresAt,
+              ai_requests_left: aiQuota,
+              ai_queries_limit: aiQuota,
+              updated_at: new Date().toISOString(),
+            })
+            .eq('id', targetUserId);
+        }
+      } catch (err: any) {
+        console.warn('Direct Supabase approve order note:', err?.message);
+      }
     }
-    if (order) {
-      const { data, error } = await supabase.from('subscription_orders').update({ status: 'approved', reviewed_at: now, reviewed_by: user.id, updated_at: now }).eq('id', linkedOrderId || paymentId).select('id');
-      if (error) throw new Error(`تایید درخواست اشتراک ناموفق بود: ${error.message}`);
-      updatedAtLeastOne = updatedAtLeastOne || Boolean(data?.length);
+
+    setManualPayments((prev) =>
+      prev.map((p) => {
+        if (p.id === paymentId) {
+          return {
+            ...p,
+            status: 'approved',
+            admin_notes: adminNotes || 'پرداخت تایید شد و اشتراک فعال گردید.',
+            reviewed_at: new Date().toISOString(),
+            reviewed_by: user.email,
+          };
+        }
+        return p;
+      })
+    );
+
+    if (targetUserId) {
+      const aiQuota = targetTier === 'vip' ? 500 : targetTier === 'bronze' ? 50 : 150;
+      setAllUsers((prev) =>
+        prev.map((u) =>
+          u.id === targetUserId
+            ? {
+                ...u,
+                tier: targetTier,
+                subscription_status: 'active',
+                is_premium: true,
+                subscription_expires_at: finalExpiresAt,
+                ai_requests_left: aiQuota,
+                ai_queries_limit: aiQuota,
+                updated_at: new Date().toISOString(),
+              }
+            : u
+        )
+      );
+
+      if (user.id === targetUserId) {
+        setUser((prev) => ({
+          ...prev,
+          tier: targetTier,
+          subscription_status: 'active',
+          is_premium: true,
+          subscription_expires_at: finalExpiresAt,
+          ai_requests_left: aiQuota,
+          ai_queries_limit: aiQuota,
+          updated_at: new Date().toISOString(),
+        }));
+      }
     }
-    if (!updatedAtLeastOne) throw new Error('Supabase هیچ رکوردی را تغییر نداد؛ مجوزهای RLS و دسترسی ادمین را بررسی کنید.');
-
-    const { error: userError } = await supabase.from('users').update({ tier: targetTier, subscription_status: 'active', is_premium: true, subscription_started_at: targetUser?.subscription_started_at || now, subscription_expires_at: finalExpiresAt, ai_requests_left: aiQuota, ai_queries_limit: aiQuota, updated_at: now }).eq('id', targetUserId);
-    if (userError) throw new Error(`پرداخت تایید شد، اما فعال‌سازی پروفایل ناموفق بود: ${userError.message}`);
-
-    setManualPayments((prev) => prev.map((p) => p.id === paymentId ? { ...p, status: 'approved', admin_notes: note, reviewed_at: now, reviewed_by: user.id } : p));
-    setAllUsers((prev) => prev.map((u) => u.id === targetUserId ? { ...u, tier: targetTier, subscription_status: 'active', is_premium: true, subscription_started_at: u.subscription_started_at || now, subscription_expires_at: finalExpiresAt, ai_requests_left: aiQuota, ai_queries_limit: aiQuota, updated_at: now } : u));
-    if (user.id === targetUserId) setUser((prev) => ({ ...prev, tier: targetTier, subscription_status: 'active', is_premium: true, subscription_started_at: prev.subscription_started_at || now, subscription_expires_at: finalExpiresAt, ai_requests_left: aiQuota, ai_queries_limit: aiQuota, updated_at: now }));
   };
 
-  const rejectManualPayment = async (paymentId: string, adminNotes?: string, linkedOrderId?: string) => {
-    if (!isAdmin) throw new Error('دسترسی غیرمجاز: فقط مدیران مجاز به رد پرداخت هستند.');
+  const rejectManualPayment = async (paymentId: string, adminNotes?: string) => {
+    if (!isAdmin) {
+      alert('دسترسی غیرمجاز: فقط مدیران ارشد مجاز به رد پرداخت هستند.');
+      return;
+    }
+
+    const targetPayment = manualPayments.find((p) => p.id === paymentId);
+    const targetUserId = targetPayment?.user_id;
+    const targetU = allUsers.find((u) => u.id === targetUserId);
+    const hasRemainingActivePlan = Boolean(
+      targetU?.subscription_expires_at &&
+      new Date(targetU.subscription_expires_at).getTime() > Date.now() &&
+      targetU.tier !== 'free'
+    );
+    const fallbackStatus: SubscriptionStatus = hasRemainingActivePlan ? 'active' : 'none';
+    const fallbackTier: SubscriptionTier = hasRemainingActivePlan && targetU ? targetU.tier : 'free';
+    const fallbackPremium = hasRemainingActivePlan;
+
     const supabase = getSupabaseClient();
-    if (!supabase) throw new Error('اتصال Supabase در دسترس نیست.');
-    const now = new Date().toISOString();
-    const note = adminNotes?.trim() || 'اطلاعات واریزی مطابقت نداشت یا نامعتبر بود.';
-    const localPayment = manualPayments.find((p) => p.id === paymentId);
-    const [paymentRes, orderRes] = await Promise.all([
-      supabase.from('manual_payments').select('*').eq('id', paymentId).maybeSingle(),
-      supabase.from('subscription_orders').select('*').eq('id', linkedOrderId || paymentId).maybeSingle(),
-    ]);
-    if (paymentRes.error && orderRes.error) throw new Error(`خواندن درخواست پرداخت ناموفق بود: ${paymentRes.error.message}`);
-    const payment = paymentRes.data;
-    const order = orderRes.data;
-    const targetUserId = payment?.user_id || order?.user_id || localPayment?.user_id;
-    if (!payment && !order) throw new Error('درخواست پرداخت در Supabase پیدا نشد یا دسترسی لازم وجود ندارد.');
-    if (payment?.status === 'approved' || order?.status === 'approved') throw new Error('پرداخت تاییدشده را نمی‌توان رد کرد.');
-    if (payment?.status === 'rejected' || order?.status === 'rejected') throw new Error('این درخواست قبلاً رد شده است.');
+    if (supabase) {
+      try {
+        await supabase
+          .from('manual_payments')
+          .update({
+            status: 'rejected',
+            admin_notes: adminNotes || 'اطلاعات واریزی مطابقت نداشت یا نامعتبر بود.',
+            reviewed_at: new Date().toISOString(),
+            reviewed_by: user.email,
+          })
+          .eq('id', paymentId);
 
-    let updatedAtLeastOne = false;
-    if (payment) {
-      const { data, error } = await supabase.from('manual_payments').update({ status: 'rejected', admin_notes: note, reviewed_at: now, reviewed_by: user.id }).eq('id', paymentId).select('id');
-      if (error) throw new Error(`رد فیش در manual_payments ناموفق بود: ${error.message}`);
-      updatedAtLeastOne = Boolean(data?.length);
-    }
-    if (order) {
-      const { data, error } = await supabase.from('subscription_orders').update({ status: 'rejected', reject_reason: note, reviewed_at: now, reviewed_by: user.id, updated_at: now }).eq('id', linkedOrderId || paymentId).select('id');
-      if (error) throw new Error(`رد درخواست اشتراک ناموفق بود: ${error.message}`);
-      updatedAtLeastOne = updatedAtLeastOne || Boolean(data?.length);
-    }
-    if (!updatedAtLeastOne) throw new Error('Supabase هیچ رکوردی را تغییر نداد؛ مجوزهای RLS و دسترسی ادمین را بررسی کنید.');
+        await supabase
+          .from('subscription_orders')
+          .update({
+            status: 'rejected',
+            reviewed_at: new Date().toISOString(),
+          })
+          .eq('id', paymentId);
 
-    const targetUser = allUsers.find((u) => u.id === targetUserId) || (user.id === targetUserId ? user : null);
-    if (targetUserId && targetUserId !== 'guest') {
-      const hasActivePlan = Boolean(targetUser?.subscription_expires_at && new Date(targetUser.subscription_expires_at).getTime() > Date.now() && targetUser.tier !== 'free');
-      const fallbackTier: SubscriptionTier = hasActivePlan && targetUser ? targetUser.tier : 'free';
-      const fallbackStatus: SubscriptionStatus = hasActivePlan ? 'active' : 'none';
-      const { error } = await supabase.from('users').update({ tier: fallbackTier, subscription_status: fallbackStatus, is_premium: hasActivePlan, updated_at: now }).eq('id', targetUserId);
-      if (error) throw new Error(`درخواست رد شد، اما همگام‌سازی وضعیت کاربر ناموفق بود: ${error.message}`);
-      setAllUsers((prev) => prev.map((u) => u.id === targetUserId ? { ...u, tier: fallbackTier, subscription_status: fallbackStatus, is_premium: hasActivePlan, updated_at: now } : u));
-      if (user.id === targetUserId) setUser((prev) => ({ ...prev, tier: fallbackTier, subscription_status: fallbackStatus, is_premium: hasActivePlan, updated_at: now }));
+        if (targetUserId && targetUserId !== 'guest') {
+          await supabase
+            .from('users')
+            .update({
+              tier: fallbackTier,
+              subscription_status: fallbackStatus,
+              is_premium: fallbackPremium,
+              updated_at: new Date().toISOString(),
+            })
+            .eq('id', targetUserId);
+        }
+      } catch (err: any) {
+        console.warn('Direct Supabase reject order note:', err?.message);
+      }
     }
-    setManualPayments((prev) => prev.map((p) => p.id === paymentId ? { ...p, status: 'rejected', admin_notes: note, reviewed_at: now, reviewed_by: user.id } : p));
+
+    setManualPayments((prev) =>
+      prev.map((p) => {
+        if (p.id === paymentId) {
+          return {
+            ...p,
+            status: 'rejected',
+            admin_notes: adminNotes || 'اطلاعات واریزی مطابقت نداشت یا نامعتبر بود.',
+            reviewed_at: new Date().toISOString(),
+            reviewed_by: user.email,
+          };
+        }
+        return p;
+      })
+    );
+
+    if (targetUserId) {
+      setAllUsers((prev) =>
+        prev.map((u) =>
+          u.id === targetUserId
+            ? {
+                ...u,
+                tier: fallbackTier,
+                subscription_status: fallbackStatus,
+                is_premium: fallbackPremium,
+                updated_at: new Date().toISOString(),
+              }
+            : u
+        )
+      );
+
+      if (user.id === targetUserId) {
+        setUser((prev) => ({
+          ...prev,
+          tier: fallbackTier,
+          subscription_status: fallbackStatus,
+          is_premium: fallbackPremium,
+          updated_at: new Date().toISOString(),
+        }));
+      }
+    }
   };
 
   // Transaction Actions
@@ -1539,25 +1560,37 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       user_id: user.id || 'guest',
       created_at: new Date().toISOString(),
     };
-    const supabase = getSupabaseClient();
-    if (isAuthenticated && user.id && user.id !== 'guest') {
-      if (!supabase) throw new Error('اتصال Supabase برای ثبت تراکنش در دسترس نیست.');
-      const { data, error } = await supabase.from('transactions').insert([{
-        user_id: user.id,
-        amount: tx.amount,
-        category: tx.category,
-        type: tx.type,
-        date: tx.date || new Date().toISOString(),
-        description: tx.description,
-        account: tx.account || 'کارت اصلی',
-        tags: tx.tags || [],
-      }]).select().single();
-      if (error) throw new Error(`ذخیره تراکنش در Supabase ناموفق بود: ${error.message}`);
-      if (!data?.id) throw new Error('تراکنش از پایگاه داده تأیید نشد.');
-      setTransactions((prev) => [data, ...prev]);
-      return;
-    }
     setTransactions((prev) => [newTx, ...prev]);
+
+    const supabase = getSupabaseClient();
+    if (supabase && isAuthenticated && user.id) {
+      try {
+        const { data, error } = await supabase
+          .from('transactions')
+          .insert([
+            {
+              user_id: user.id,
+              amount: tx.amount,
+              category: tx.category,
+              type: tx.type,
+              date: tx.date || new Date().toISOString(),
+              description: tx.description,
+              account: tx.account || 'کارت اصلی',
+              tags: tx.tags || [],
+            },
+          ])
+          .select()
+          .single();
+
+        if (error) throw error;
+        if (!data) throw new Error('پایگاه داده تراکنش ثبت‌شده‌ای برنگرداند.');
+        setTransactions((prev) => [data, ...prev.filter((t) => t.id !== newTx.id)]);
+      } catch (err) {
+        setTransactions((prev) => prev.filter((t) => t.id !== newTx.id));
+        console.error('Supabase insert transaction error:', err);
+        throw err;
+      }
+    }
   };
 
   const updateTransaction = async (id: string, updated: Partial<Transaction>) => {
@@ -1679,69 +1712,77 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   }) => {
     if (!isAuthenticated || !user.id || user.id === 'guest') {
       setIsAuthModalOpen(true);
-      throw new Error('برای ثبت تیکت ابتدا وارد حساب کاربری شوید.');
+      return;
     }
-    const supabase = getSupabaseClient();
-    if (!supabase) throw new Error('اتصال Supabase در دسترس نیست.');
-    if (!subject.trim()) throw new Error('موضوع تیکت را وارد کنید.');
-    if (!initialMessage.trim()) throw new Error('متن پیام تیکت نمی‌تواند خالی باشد.');
 
-    // tickets.id is UUID and the deployed schema has no department/priority/messages columns.
-    const ticketId = crypto.randomUUID();
+    const ticketId = `tkt-${Date.now()}-${Math.random().toString(36).substring(2, 6)}`;
     const effectiveCategory = category || (department === 'پشتیبانی مالی' ? 'financial' : department === 'پشتیبانی فنی' ? 'technical' : 'support');
-    const createdAt = new Date().toISOString();
     const newMsg: TicketMessage = {
-      id: crypto.randomUUID(),
+      id: `msg-${Date.now()}`,
       ticket_id: ticketId,
       sender_id: user.id,
       sender_name: user.full_name || 'کاربر چندبوم',
       sender_role: 'user',
-      message: initialMessage.trim(),
-      content: initialMessage.trim(),
+      message: initialMessage,
+      content: initialMessage,
       attachment_url: attachmentUrl || null,
-      created_at: createdAt,
+      created_at: new Date().toISOString(),
     };
+
     const newTicket: Ticket = {
       id: ticketId,
       user_id: user.id,
       user_name: user.full_name || 'کاربر چندبوم',
       user_email: user.email || '',
-      subject: subject.trim(),
+      subject,
       category: effectiveCategory,
       department,
       priority,
       status: 'open',
-      created_at: createdAt,
-      updated_at: createdAt,
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
       messages: [newMsg],
     };
 
-    const { error: ticketError } = await supabase.from('tickets').insert([{
-      id: ticketId,
-      user_id: user.id,
-      subject: subject.trim(),
-      category: effectiveCategory,
-      status: 'open',
-      created_at: createdAt,
-      updated_at: createdAt,
-    }]);
-    if (ticketError) throw new Error(`ذخیره تیکت در Supabase ناموفق بود: ${ticketError.message}`);
-
-    const { error: messageError } = await supabase.from('ticket_messages').insert([{
-      ticket_id: ticketId,
-      sender_id: user.id,
-      message: initialMessage.trim(),
-      attachment_url: attachmentUrl || null,
-      created_at: createdAt,
-    }]);
-    if (messageError) {
-      // Best-effort cleanup so a failed first message does not leave an empty ticket.
-      await supabase.from('tickets').delete().eq('id', ticketId);
-      throw new Error(`ثبت پیام اولیه ناموفق بود: ${messageError.message}`);
-    }
-
     setTickets((prev) => [newTicket, ...prev]);
     setSelectedTicket(newTicket);
+
+    const supabase = getSupabaseClient();
+    if (supabase && isAuthenticated && user.id && user.id !== 'guest') {
+      try {
+        const payload = {
+          id: ticketId,
+          user_id: user.id,
+          user_name: user.full_name || user.email || 'کاربر چندبوم',
+          user_email: user.email || '',
+          subject,
+          category: effectiveCategory,
+          department,
+          priority,
+          status: 'open',
+          messages: [newMsg],
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString(),
+        };
+        const { error } = await supabase.from('tickets').insert([payload]);
+        if (error) {
+          console.warn('Supabase create ticket note:', error.message);
+        }
+
+        // Also attempt insert into normalized ticket_messages table if provisioned
+        try {
+          await supabase.from('ticket_messages').insert([{
+            ticket_id: ticketId,
+            sender_id: user.id,
+            message: initialMessage,
+            attachment_url: attachmentUrl || null,
+            created_at: new Date().toISOString(),
+          }]);
+        } catch {}
+      } catch (err) {
+        console.error('Supabase create ticket exception:', err);
+      }
+    }
   };
 
   const addTicket = async (
@@ -1761,61 +1802,79 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     attachmentUrl?: string | null
   ) => {
     const isActAsAdmin = asAdmin && isAdmin;
-    const ticket = tickets.find((item) => item.id === ticketId);
-    if (!ticket) throw new Error('تیکت انتخاب‌شده در فهرست فعلی پیدا نشد.');
-    const supabase = getSupabaseClient();
-    if (!supabase || !isAuthenticated || !user.id || user.id === 'guest') {
-      throw new Error('برای ارسال پاسخ، اتصال Supabase و ورود به حساب لازم است.');
-    }
-    if (!content.trim()) throw new Error('متن پیام نمی‌تواند خالی باشد.');
-
-    const createdAt = new Date().toISOString();
     const newMsg: TicketMessage = {
-      id: crypto.randomUUID(),
+      id: `msg-${Date.now()}-${Math.random().toString(36).substring(2, 6)}`,
       ticket_id: ticketId,
-      sender_id: user.id,
+      sender_id: user.id || 'guest',
       sender_name: isActAsAdmin ? 'پشتیبان رسمی چندبوم' : user.full_name || 'کاربر چندبوم',
       sender_role: isActAsAdmin ? 'admin' : 'user',
-      message: content.trim(),
-      content: content.trim(),
+      message: content,
+      content,
       attachment_url: attachmentUrl || null,
-      created_at: createdAt,
+      created_at: new Date().toISOString(),
     };
 
-    const { error: messageError } = await supabase.from('ticket_messages').insert([{
-      ticket_id: ticketId,
-      sender_id: user.id,
-      message: content.trim(),
-      attachment_url: attachmentUrl || null,
-      created_at: createdAt,
-    }]);
-    if (messageError) throw new Error(`ذخیره پاسخ در Supabase ناموفق بود: ${messageError.message}`);
+    let updatedList: Ticket[] = [];
+    setTickets((prev) => {
+      updatedList = prev.map((t) => {
+        if (t.id === ticketId) {
+          return {
+            ...t,
+            status: isActAsAdmin ? 'resolved' : 'in_progress',
+            updated_at: new Date().toISOString(),
+            messages: [...t.messages, newMsg],
+          };
+        }
+        return t;
+      });
+      return updatedList;
+    });
 
-    const nextStatus: Ticket['status'] = isActAsAdmin ? 'resolved' : 'in_progress';
-    const updatedAt = createdAt;
-    const { error: ticketError } = await supabase.from('tickets')
-      .update({ status: nextStatus, updated_at: updatedAt })
-      .eq('id', ticketId);
-    if (ticketError) throw new Error(`به‌روزرسانی وضعیت تیکت ناموفق بود: ${ticketError.message}`);
+    const target = updatedList.find((t) => t.id === ticketId);
+    if (target) {
+      setSelectedTicket(target);
+      const supabase = getSupabaseClient();
+      if (supabase && isAuthenticated) {
+        try {
+          await supabase
+            .from('tickets')
+            .update({
+              status: target.status,
+              updated_at: target.updated_at,
+              messages: target.messages,
+            })
+            .eq('id', ticketId);
 
-    const updatedTicket: Ticket = {
-      ...ticket,
-      status: nextStatus,
-      updated_at: updatedAt,
-      messages: [...(ticket.messages || []), newMsg],
-    };
-    setTickets((prev) => prev.map((item) => item.id === ticketId ? updatedTicket : item));
-    setSelectedTicket(updatedTicket);
+          // Also attempt insert into normalized ticket_messages table
+          try {
+            await supabase.from('ticket_messages').insert([{
+              ticket_id: ticketId,
+              sender_id: user.id,
+              message: content,
+              attachment_url: attachmentUrl || null,
+              created_at: new Date().toISOString(),
+            }]);
+          } catch {}
+        } catch (err) {
+          console.error('Supabase update ticket message error:', err);
+        }
+      }
+    }
   };
 
   const updateTicketStatus = async (ticketId: string, status: Ticket['status']) => {
-    if (!isAdmin) throw new Error('فقط مدیر پشتیبانی می‌تواند وضعیت تیکت را تغییر دهد.');
+    if (!isAdmin) return;
+    setTickets((prev) =>
+      prev.map((t) => (t.id === ticketId ? { ...t, status, updated_at: new Date().toISOString() } : t))
+    );
     const supabase = getSupabaseClient();
-    if (!supabase) throw new Error('اتصال Supabase در دسترس نیست.');
-    const updatedAt = new Date().toISOString();
-    const { error } = await supabase.from('tickets').update({ status, updated_at: updatedAt }).eq('id', ticketId);
-    if (error) throw new Error(`به‌روزرسانی وضعیت تیکت ناموفق بود: ${error.message}`);
-    setTickets((prev) => prev.map((t) => (t.id === ticketId ? { ...t, status, updated_at: updatedAt } : t)));
+    if (supabase) {
+      try {
+        await supabase.from('tickets').update({ status, updated_at: new Date().toISOString() }).eq('id', ticketId);
+      } catch (err) {
+        console.error('Supabase update ticket status error:', err);
+      }
+    }
   };
 
   const navigateToSupportWithTicket = (ticketId?: string) => {
@@ -2096,56 +2155,55 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       created_at: new Date().toISOString(),
       updated_at: new Date().toISOString(),
     };
-    const supabase = getSupabaseClient();
-    if (isAuthenticated && user.id && user.id !== 'guest') {
-      if (!supabase) throw new Error('اتصال Supabase برای ثبت هدف مالی در دسترس نیست.');
-      const { data, error } = await supabase.from('financial_goals').insert([{
-        user_id: user.id,
-        title: newGoal.title,
-        target_amount: newGoal.target_amount,
-        current_amount: newGoal.current_amount,
-        deadline: newGoal.deadline,
-        category: newGoal.category,
-        status: newGoal.status,
-        notes: newGoal.notes,
-      }]).select().single();
-      if (error) throw new Error(`ذخیره هدف مالی در Supabase ناموفق بود: ${error.message}`);
-      if (!data?.id) throw new Error('هدف مالی از پایگاه داده تأیید نشد.');
-      setGoals((prev) => [data, ...prev]);
-      return;
-    }
     setGoals((prev) => [newGoal, ...prev]);
+
+    const supabase = getSupabaseClient();
+    if (supabase && isAuthenticated && user.id && user.id !== 'guest') {
+      try {
+        await supabase.from('financial_goals').insert([{
+          id: newGoal.id,
+          user_id: user.id,
+          title: newGoal.title,
+          target_amount: newGoal.target_amount,
+          current_amount: newGoal.current_amount,
+          deadline: newGoal.deadline,
+          category: newGoal.category,
+          status: newGoal.status,
+          notes: newGoal.notes,
+        }]);
+      } catch (err) {
+        console.warn('Supabase add goal note:', err);
+      }
+    }
   };
 
   const updateGoal = async (id: string, updates: Partial<FinancialGoal>) => {
+    setGoals((prev) =>
+      prev.map((g) => (g.id === id ? { ...g, ...updates, updated_at: new Date().toISOString() } : g))
+    );
     const supabase = getSupabaseClient();
-    const updatedAt = new Date().toISOString();
-    if (!isAuthenticated || !user.id || user.id === 'guest') {
-      setGoals((prev) => prev.map((g) => (g.id === id ? { ...g, ...updates, updated_at: updatedAt } : g)));
-      return;
+    if (supabase && isAuthenticated) {
+      try {
+        await supabase
+          .from('financial_goals')
+          .update({ ...updates, updated_at: new Date().toISOString() })
+          .eq('id', id);
+      } catch (err) {
+        console.warn('Supabase update goal note:', err);
+      }
     }
-    if (!supabase) throw new Error('اتصال Supabase برای ویرایش هدف مالی در دسترس نیست.');
-    const { data, error } = await supabase
-      .from('financial_goals')
-      .update({ ...updates, updated_at: updatedAt })
-      .eq('id', id)
-      .select('*')
-      .single();
-    if (error) throw new Error(`ویرایش هدف مالی در Supabase ناموفق بود: ${error.message}`);
-    if (!data?.id) throw new Error('تغییرات هدف مالی از پایگاه داده تأیید نشد.');
-    setGoals((prev) => prev.map((g) => (g.id === id ? data : g)));
   };
 
   const deleteGoal = async (id: string) => {
-    const supabase = getSupabaseClient();
-    if (!isAuthenticated || !user.id || user.id === 'guest') {
-      setGoals((prev) => prev.filter((g) => g.id !== id));
-      return;
-    }
-    if (!supabase) throw new Error('اتصال Supabase برای حذف هدف مالی در دسترس نیست.');
-    const { error } = await supabase.from('financial_goals').delete().eq('id', id);
-    if (error) throw new Error(`حذف هدف مالی در Supabase ناموفق بود: ${error.message}`);
     setGoals((prev) => prev.filter((g) => g.id !== id));
+    const supabase = getSupabaseClient();
+    if (supabase && isAuthenticated) {
+      try {
+        await supabase.from('financial_goals').delete().eq('id', id);
+      } catch (err) {
+        console.warn('Supabase delete goal note:', err);
+      }
+    }
   };
 
   const contributeToGoal = async (id: string, amount: number) => {
@@ -2208,24 +2266,34 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       user_id: user.id || 'guest',
       created_at: new Date().toISOString(),
     };
-    const supabase = getSupabaseClient();
-    if (isAuthenticated && user.id && user.id !== 'guest') {
-      if (!supabase) throw new Error('اتصال Supabase برای ثبت یادآور در دسترس نیست.');
-      const { data, error } = await supabase.from('reminders').insert([{
-        user_id: user.id,
-        title: rem.title,
-        amount: rem.amount,
-        due_date: rem.due_date,
-        category: rem.category,
-        is_paid: rem.is_paid || false,
-        recurrence: rem.recurrence || 'once',
-      }]).select().single();
-      if (error) throw new Error(`ذخیره یادآور در Supabase ناموفق بود: ${error.message}`);
-      if (!data?.id) throw new Error('یادآور از پایگاه داده تأیید نشد.');
-      setReminders((prev) => [data, ...prev]);
-      return;
-    }
     setReminders((prev) => [newRem, ...prev]);
+
+    const supabase = getSupabaseClient();
+    if (supabase && isAuthenticated && user.id) {
+      try {
+        const { data, error } = await supabase
+          .from('reminders')
+          .insert([
+            {
+              user_id: user.id,
+              title: rem.title,
+              amount: rem.amount,
+              due_date: rem.due_date,
+              category: rem.category,
+              is_paid: rem.is_paid || false,
+              recurrence: rem.recurrence || 'once',
+            },
+          ])
+          .select()
+          .single();
+
+        if (!error && data) {
+          setReminders((prev) => [data, ...prev.filter((r) => r.id !== newRem.id)]);
+        }
+      } catch (err) {
+        console.error('Supabase insert reminder error:', err);
+      }
+    }
   };
 
   const updateReminder = async (id: string, updated: Partial<Reminder>) => {

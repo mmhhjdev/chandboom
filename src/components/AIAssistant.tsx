@@ -28,6 +28,7 @@ import { useSpeechRecognition } from '../hooks/useSpeechRecognition';
 import { ChatMessage, ChatMessageItem } from './ChatMessage';
 import {
   invokeAiAssistantEdgeFunction,
+  decrementAiQuotaRpc,
   getSupabaseClient,
   AiAssistantAction,
 } from '../lib/supabase';
@@ -90,6 +91,8 @@ export const AIAssistant: React.FC<{ isOpen?: boolean; onClose?: () => void }> =
   const [aiMode, setAiMode] = useState<'agent' | 'advisor'>('agent');
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  // Keeps the last proposed operation so a plain 'yes/yeah' executes it once instead of asking again.
+  const pendingActionRef = useRef<{ messageId: string; action: AiAssistantAction } | null>(null);
 
   // Voice Recognition Hook
   const {
@@ -166,6 +169,8 @@ export const AIAssistant: React.FC<{ isOpen?: boolean; onClose?: () => void }> =
           ? 'income'
           : 'expense';
         const amount = Math.round(Number(params.amount) || 0);
+        if (!Number.isFinite(amount) || amount <= 0) throw new Error('مبلغ تراکنش مشخص یا معتبر نیست؛ مبلغ را دوباره اعلام کنید.');
+        if (!user?.id || user.id === 'guest') throw new Error('برای ثبت واقعی اطلاعات، ابتدا وارد حساب کاربری شوید.');
 
         await addTransaction({
           type: txType,
@@ -200,34 +205,28 @@ export const AIAssistant: React.FC<{ isOpen?: boolean; onClose?: () => void }> =
       // 2. Deng Group Creation
       if (type === 'create_dong_group' || type === 'create_group') {
         const supabase = getSupabaseClient();
+        if (!supabase || !user?.id || user.id === 'guest') throw new Error('برای ایجاد گروه دنگ، ورود به حساب کاربری و اتصال پایگاه داده لازم است.');
+        const groupName = String(params.name || params.group_name || '').trim();
+        if (!groupName) throw new Error('نام گروه مشخص نیست. لطفاً نام گروه را اعلام کنید.');
         const membersList: string[] =
           Array.isArray(params.members) && params.members.length > 0 ? [...params.members] : ['من'];
         if (!membersList.includes('من') && user?.full_name && !membersList.includes(user.full_name)) {
           membersList.unshift(user.full_name);
         }
 
-        if (!supabase || !user?.id || user.id === 'guest') {
-          throw new Error('برای ساخت گروه دنگ، اتصال پایگاه داده و ورود به حساب کاربری الزامی است.');
-        }
-        const groupName = String(params.name || '').trim();
-        if (!groupName) throw new Error('نام گروه دنگ مشخص نشده است.');
-        const { data: createdGroup, error: groupErr } = await supabase
-          .from('dong_groups')
-          .insert({
+        if (supabase) {
+          const { error: groupErr } = await supabase.from('dong_groups').insert({
             user_id: user.id,
             name: groupName,
             members: membersList,
             is_family_mode: false,
             families: [],
-          })
-          .select('id,name,members')
-          .single();
-        if (groupErr) throw groupErr;
-        if (!createdGroup?.id) throw new Error('گروه در پایگاه داده تأیید نشد؛ لطفاً دوباره تلاش کنید.');
+            created_at: new Date().toISOString(),
+          });
+          if (groupErr) throw groupErr;
+        }
 
-        const successMsg = `گروه دنگ «${createdGroup.name}» با اعضای (${(createdGroup.members || membersList).join(
-          '، '
-        )}) در پایگاه داده ساخته شد.`;
+        const successMsg = `گروه دنگ «${groupName}» با اعضای (${membersList.join('، ')}) ایجاد گردید.`;
 
         setMessages((prev) =>
           prev.map((m) =>
@@ -247,39 +246,61 @@ export const AIAssistant: React.FC<{ isOpen?: boolean; onClose?: () => void }> =
       // 3. Add Deng Expense
       if (type === 'add_deng_expense') {
         const supabase = getSupabaseClient();
+        if (!supabase || !user?.id || user.id === 'guest') throw new Error('برای ثبت هزینه دنگ، ابتدا وارد حساب کاربری شوید.');
         const amount = Math.round(Number(params.amount) || 0);
-        const groupName = params.group_name || 'سفر دوستانه';
-        const title = params.title || 'هزینه مشترک دنگ';
+        if (!Number.isFinite(amount) || amount <= 0) throw new Error('مبلغ هزینه دنگ مشخص یا معتبر نیست.');
+        const groupName = String(params.group_name || '').trim();
+        if (!groupName) throw new Error('نام گروه دنگ مشخص نیست.');
+        const title = String(params.title || 'هزینه مشترک دنگ').trim();
         const payer = params.payer || user?.full_name || 'من';
         const participants = Array.isArray(params.participants) && params.participants.length > 0
           ? params.participants
           : ['من', 'علی', 'رضا'];
 
-        if (!supabase || !user?.id || user.id === 'guest') {
-          throw new Error('برای ثبت خرج دنگ، اتصال پایگاه داده و ورود به حساب کاربری الزامی است.');
-        }
-        if (!Number.isFinite(amount) || amount <= 0) throw new Error('مبلغ خرج دنگ باید بیشتر از صفر باشد.');
-        let groupId: string | null = null;
-        const { data: existingGroup, error: findGroupError } = await supabase
-          .from('dong_groups').select('id').eq('name', groupName).maybeSingle();
-        if (findGroupError) throw findGroupError;
-        if (existingGroup) {
-          groupId = existingGroup.id;
-        } else {
-          const { data: newG, error: createGroupError } = await supabase
+        if (supabase) {
+          // Find or create group
+          let groupId: string | null = null;
+          const { data: existingGroup } = await supabase
             .from('dong_groups')
-            .insert({ user_id: user.id, name: groupName, members: participants, is_family_mode: false, families: [] })
-            .select('id').single();
-          if (createGroupError) throw createGroupError;
-          groupId = newG?.id || null;
-        }
-        if (!groupId) throw new Error('گروه دنگ در پایگاه داده پیدا یا ساخته نشد.');
-        const { error: expenseError } = await supabase.from('dong_expenses').insert({
-          group_id: groupId, title, payer, amount, participants, is_itemized: false, bill_items: [],
-        });
-        if (expenseError) throw expenseError;
+            .select('id')
+            .eq('name', groupName)
+            .eq('user_id', user.id)
+            .maybeSingle();
 
-        const successMsg = `خرج دنگ «${title}» به مبلغ ${formatToman(amount)} پرداخت شده توسط ${payer} در پایگاه داده ثبت شد.`;
+          if (existingGroup) {
+            groupId = existingGroup.id;
+          } else {
+            const { data: newG, error: createGroupError } = await supabase
+              .from('dong_groups')
+              .insert({
+                user_id: user?.id,
+                name: groupName,
+                members: participants,
+                is_family_mode: false,
+                families: [],
+                created_at: new Date().toISOString(),
+              })
+              .select('id')
+              .maybeSingle();
+            if (createGroupError) throw createGroupError;
+            groupId = newG?.id || null;
+          }
+
+          if (!groupId) throw new Error('گروه دنگ پیدا یا ایجاد نشد؛ عملیات ثبت هزینه انجام نشد.');
+          const { error: expenseError } = await supabase.from('dong_expenses').insert({
+              group_id: groupId,
+              title,
+              payer,
+              amount,
+              participants,
+              is_itemized: false,
+              bill_items: [],
+              created_at: new Date().toISOString(),
+          });
+          if (expenseError) throw expenseError;
+        }
+
+        const successMsg = `خرج دنگ «${title}» به مبلغ ${formatToman(amount)} پرداخت شده توسط ${payer} در سیستم دنگ ثبت گردید.`;
 
         setMessages((prev) =>
           prev.map((m) =>
@@ -410,6 +431,24 @@ export const AIAssistant: React.FC<{ isOpen?: boolean; onClose?: () => void }> =
     const text = (textToSend || inputValue).trim();
     if (!text || isLoading) return;
 
+    const affirmative = /^(آره|اره|بله|بلی|تأیید|تایید|تایید می.?کنم|تأیید می.?کنم|درسته|درست است|اوکی|باشه|باش|yes|yeah|yep|ok|okay)[.!؟،\s]*$/i.test(text);
+    const pending = pendingActionRef.current;
+    if (affirmative && pending) {
+      const userMsg: ChatMessageItem = { id: `usr-${Date.now()}`, role: 'user', content: text, timestamp: new Date().toISOString() };
+      setMessages((prev) => [...prev, userMsg]);
+      setInputValue('');
+      setErrorMessage(null);
+      pendingActionRef.current = null;
+      setIsLoading(true);
+      try {
+        const success = await handleExecuteAction(pending.messageId, pending.action);
+        if (!success) pendingActionRef.current = pending;
+      } finally {
+        setIsLoading(false);
+      }
+      return;
+    }
+
     // 1. Quota Guard: Verify client status first
     const clientCheck = checkCanMakeAiRequest();
     if (!clientCheck.allowed) {
@@ -455,8 +494,25 @@ export const AIAssistant: React.FC<{ isOpen?: boolean; onClose?: () => void }> =
       return;
     }
 
-    // The Edge Function is the single authority for persisted quota.
-    // Do not decrement it here; this avoids charging twice.
+    // 3. Atomically check and decrement quota via Supabase RPC if user authenticated
+    if (user.id && user.id !== 'guest') {
+      try {
+        const rpcRes = await decrementAiQuotaRpc(user.id);
+        if (rpcRes.success && !rpcRes.allowed) {
+          setErrorMessage(
+            rpcRes.error || 'سهمیه ماهانه هوش مصنوعی شما به اتمام رسیده است. لطفاً اشتراک خود را تمدید فرمایید.'
+          );
+          trackAiQuotaExceeded();
+          if (openSubscriptionModal) openSubscriptionModal();
+          return;
+        }
+      } catch (e) {
+        console.warn('RPC decrement exception, falling back to local quota check:', e);
+      }
+    }
+
+    // Consume local quota state
+    await consumeAiRequest();
 
     setIsLoading(true);
     trackAiQuerySent('assistant_guide');
@@ -470,25 +526,14 @@ export const AIAssistant: React.FC<{ isOpen?: boolean; onClose?: () => void }> =
       const response = await invokeAiAssistantEdgeFunction(text, historyPayload, aiMode);
 
       if (response.success && response.reply) {
-        // Mirror quota in client-only UI state after the server succeeds.
-        // The persisted quota has already been handled by the Edge Function.
-        await consumeAiRequest();
-        const proposedAction = response.action || null;
-        const proposedData = proposedAction?.data || proposedAction?.params || {};
-        let safeReply = response.reply;
-        // Never display an AI-generated claim that an operation is already running/done before the user confirms it.
-        if (proposedAction && (proposedAction.type === 'create_dong_group' || proposedAction.type === 'create_group')) {
-          const proposedName = String(proposedData.name || 'گروه جدید');
-          const proposedMembers = Array.isArray(proposedData.members) ? proposedData.members : [];
-          safeReply = `پیشنهاد ساخت گروه دنگ «${proposedName}»${proposedMembers.length ? ` با اعضای ${proposedMembers.join('، ')}` : ''} آماده است. هنوز چیزی در پایگاه داده ذخیره نشده؛ برای ساخت واقعی، جزئیات را بررسی و دکمه تأیید را بزن.`;
-        }
         const botMsg: ChatMessageItem = {
           id: `ast-${Date.now()}`,
           role: 'assistant',
-          content: safeReply || 'پیشنهاد آماده شد؛ جزئیات را در کارت عملیات بررسی کنید.',
+          content: response.reply,
           timestamp: new Date().toISOString(),
-          action: proposedAction,
+          action: response.action,
         };
+        if (response.action) pendingActionRef.current = { messageId: botMsg.id, action: response.action };
         setMessages((prev) => [...prev, botMsg]);
 
         if (typeof response.remaining_queries === 'number') {
@@ -729,7 +774,7 @@ export const AIAssistant: React.FC<{ isOpen?: boolean; onClose?: () => void }> =
               <button
                 type="button"
                 onClick={toggleListening}
-                title={isListening ? 'پایان ضبط و نگه‌داشتن متن' : 'گفتار به متن فارسی؛ ارسال فقط با دکمه ارسال'}
+                title={isListening ? 'توقف ضبط صدا' : 'صحبت صوتی (Web Speech)'}
                 className={`p-3 rounded-2xl transition cursor-pointer shrink-0 relative ${
                   isListening
                     ? 'bg-rose-500 hover:bg-rose-600 text-white ring-4 ring-rose-500/30 animate-pulse'
