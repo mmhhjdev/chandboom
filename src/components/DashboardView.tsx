@@ -24,6 +24,8 @@ import {
   Square,
   CreditCard,
   Calendar,
+  Mic,
+  MicOff,
 } from 'lucide-react';
 import { EmptyState, Badge } from './ui';
 import { useApp } from '../context/AppContext';
@@ -82,6 +84,8 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
 
   const [aiInput, setAiInput] = useState('');
   const [isTyping, setIsTyping] = useState(false);
+  const [isListening, setIsListening] = useState(false);
+  const speechRecognitionRef = React.useRef<any>(null);
 
   // 30-Day Financial Quests State
   const [completedQuests, setCompletedQuests] = useState<number[]>(() => getCompletedQuests());
@@ -286,6 +290,90 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
         setIsTyping(false);
       });
   };
+
+  const handleVoiceInput = () => {
+    // Voice input is exclusively available to VIP/Pro subscribers.
+    if (!isProUser) {
+      if (openSubscriptionModal) openSubscriptionModal();
+      else setActiveTab('subscription');
+      return;
+    }
+
+    if (!isAuthenticated || !hasAIAccess) {
+      if (!isAuthenticated) setIsAuthModalOpen(true);
+      else if (openSubscriptionModal) openSubscriptionModal();
+      else setActiveTab('subscription');
+      return;
+    }
+
+    const browser = window as any;
+    const SpeechRecognition = browser.SpeechRecognition || browser.webkitSpeechRecognition;
+
+    if (!SpeechRecognition) {
+      setChatMessages((prev) => [...prev, {
+        id: `${Date.now()}`,
+        sender: 'assistant',
+        text: 'مرورگر شما از تبدیل گفتار به متن پشتیبانی نمی‌کند. لطفاً از نسخه به‌روز Chrome یا Edge استفاده کنید.',
+        time: 'هم‌اکنون',
+      }]);
+      return;
+    }
+
+    if (speechRecognitionRef.current && isListening) {
+      speechRecognitionRef.current.stop();
+      setIsListening(false);
+      return;
+    }
+
+    const recognition = new SpeechRecognition();
+    recognition.lang = 'fa-IR';
+    recognition.continuous = false;
+    recognition.interimResults = false;
+    recognition.maxAlternatives = 1;
+
+    recognition.onstart = () => setIsListening(true);
+    recognition.onresult = (event: any) => {
+      const transcript = String(event.results?.[0]?.[0]?.transcript || '').trim();
+      if (transcript) {
+        setAiInput((previous) => `${previous.trim()}${previous.trim() ? ' ' : ''}${transcript}`);
+      }
+    };
+    recognition.onerror = (event: any) => {
+      setIsListening(false);
+      if (event.error !== 'no-speech' && event.error !== 'aborted') {
+        setChatMessages((prev) => [...prev, {
+          id: `${Date.now()}`,
+          sender: 'assistant',
+          text: event.error === 'not-allowed'
+            ? 'دسترسی میکروفون مسدود شده است. اجازه استفاده از میکروفون را در تنظیمات مرورگر فعال کنید.'
+            : 'تشخیص صدا با مشکل مواجه شد. لطفاً دوباره تلاش کنید.',
+          time: 'هم‌اکنون',
+        }]);
+      }
+    };
+    recognition.onend = () => {
+      setIsListening(false);
+      speechRecognitionRef.current = null;
+    };
+
+    speechRecognitionRef.current = recognition;
+    try {
+      recognition.start();
+    } catch (error) {
+      setIsListening(false);
+      speechRecognitionRef.current = null;
+      console.error('Voice input error:', error);
+    }
+  };
+
+  React.useEffect(() => {
+    return () => {
+      if (speechRecognitionRef.current) {
+        speechRecognitionRef.current.abort();
+        speechRecognitionRef.current = null;
+      }
+    };
+  }, []);
 
   const handleChatSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -793,6 +881,31 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                 placeholder="پیام مالی خود را بنویسید (مثلاً: ثبت کن ۷۰ تومن بنزین)..."
                 className="flex-1 px-4 py-2.5 bg-zinc-50 dark:bg-[#141E1A] border border-[#E2E8E4] dark:border-[#1F2E27] rounded-xl text-xs sm:text-sm text-zinc-900 dark:text-white outline-none focus:ring-2 focus:ring-emerald-600 font-cairo"
               />
+              <button
+                type="button"
+                onClick={handleVoiceInput}
+                title={!isProUser ? 'قابلیت ویس ویژه کاربران VIP/پرو' : isListening ? 'توقف ضبط صدا' : 'گفتن پیام با میکروفون'}
+                aria-label={isListening ? 'توقف ضبط صدا' : 'شروع ورودی صوتی'}
+                aria-pressed={isListening}
+                className={`relative shrink-0 p-2.5 rounded-xl border transition flex items-center justify-center ${
+                  !isProUser
+                    ? 'border-amber-300 bg-amber-50 text-amber-700 dark:bg-amber-950/30 dark:text-amber-300 dark:border-amber-800'
+                    : isListening
+                    ? 'border-rose-300 bg-rose-50 text-rose-600 dark:bg-rose-950/30 dark:border-rose-800 animate-pulse'
+                    : 'border-emerald-200 bg-emerald-50 text-emerald-700 hover:bg-emerald-100 dark:bg-[#15231C] dark:border-[#294536] dark:text-emerald-300'
+                }`}
+              >
+                {!isProUser ? (
+                  <>
+                    <Mic className="w-4 h-4" />
+                    <Crown className="absolute -top-1 -right-1 w-3 h-3 text-amber-500" />
+                  </>
+                ) : isListening ? (
+                  <MicOff className="w-4 h-4" />
+                ) : (
+                  <Mic className="w-4 h-4" />
+                )}
+              </button>
               <button
                 type="submit"
                 disabled={!aiInput.trim()}
