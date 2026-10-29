@@ -383,39 +383,63 @@ export function parseFinancialInputDeterministically(
   }
 
   // 3. Create Group Intent (ایجاد گروه دنگ)
-  if (/ساخت\s*گروه|ایجاد\s*گروه|گروه\s*جدید|تشکیل\s*گروه/i.test(lower)) {
+  if (/(?:بساز|بسازید|ایجاد\s*کن|ایجاد\s*کنید|تشکیل\s*بده|تشکیل\s*بدید|ساخت\s*گروه|ایجاد\s*گروه|گروه\s*جدید)/i.test(lower)) {
+    // Split members from the group name before extracting the name, so phrases like
+    // «گروه دنگ بساز با اسم سفر یزد که علی و محمد و تقی ...» stay intact.
+    const normalized = trimmed.replace(/[؟?!]+$/g, '').trim();
+    const memberSplit = normalized.split(/\s+(?:که|با\s+اعضای?|اعضای?|افراد(?:ی)?\s*[:：]?)\s*/i);
+    const namePart = memberSplit[0] || normalized;
+    const memberPart = memberSplit.slice(1).join(' ').trim();
+
     let groupName = '';
-    const nameMatch = trimmed.match(/(?:گروه|نام|به\s*اسم)\s*«?([^»\n،,]+)»?/i);
-    if (nameMatch) {
-      groupName = nameMatch[1].replace(/بساز|ایجاد\s*کن|تشکیل\s*بده/g, '').trim();
+    const explicitName = namePart.match(/(?:با\s*اسم|به\s*اسم|به\s*نام|اسم(?:ش)?|نام(?:\s*گروه)?)\s*[«“"]?(.+?)[»”"]?$/i);
+    if (explicitName) {
+      groupName = explicitName[1].trim();
+    } else {
+      const afterGroup = namePart.match(/(?:گروه(?:\s*دنگ)?|گروه\s*جدید)\s+(.+?)\s*$/i);
+      if (afterGroup) groupName = afterGroup[1].trim();
     }
-    if (!groupName || groupName.length < 2) {
+    groupName = groupName
+      .replace(/^[«“"]|[»”"]$/g, '')
+      .replace(/\b(?:دنگ|دونگ)\s*$/i, '')
+      .replace(/\s+(?:بسازید?|ایجاد\s*کنید?|تشکیل\s*بدهید?)$/i, '')
+      .trim();
+
+    if (!groupName || groupName.length < 2 || /^(?:دنگ|جدید|بساز|ایجاد)$/i.test(groupName)) {
       return {
-        reply: 'برای ایجاد گروه دنگ، لطفاً بفرمایید نام گروه چه باشد و چه افرادی در آن حضور دارند؟',
+        reply: 'برای ایجاد گروه دنگ، نام گروه را مشخص کنید؛ مثلاً «گروه دنگ با اسم سفر یزد بساز».',
         action: null,
         requires_confirmation: false,
       };
     }
 
-    const members: string[] = ['من'];
-    const potentialNames = ['علی', 'رضا', 'محمد', 'سارا', 'مریم', 'مهدی', 'نیما', 'امیر', 'پویا', 'حسین'];
-    for (const n of potentialNames) {
-      if (trimmed.includes(n) && !members.includes(n)) members.push(n);
+    const members: string[] = [];
+    if (memberPart) {
+      const cleaned = memberPart
+        .replace(/^(?:هستند|باشند|حضور\s*دارند|توش\s*هستند|تو\s*ش\s*هستند)\s*/i, '')
+        .replace(/\s+(?:توش\s*هستند|تو\s*ش\s*هستند|داخل\s*گروه\s*هستند|حضور\s*دارند|هستند|باشند)\s*$/i, '')
+        .replace(/[()،,؛؛]/g, ' و ')
+        .replace(/\s+و\s+/g, '|')
+        .replace(/\s*\|\s*/g, '|');
+      for (const rawName of cleaned.split('|')) {
+        const name = rawName.trim().replace(/^(?:آقا|اقای|آقای)\s+/i, '').replace(/\s+(?:هستند|باشند)$/i, '').trim();
+        if (name && !/^(?:من|اعضا|افراد|توش|داخل گروه)$/i.test(name) && !members.includes(name)) members.push(name);
+      }
     }
-    if (members.length === 1) members.push('دوستان');
+    if (!members.length) {
+      return {
+        reply: `نام گروه «${groupName}» مشخص شد. چه افرادی باید عضو گروه باشند؟ نام اعضا را با «و» جدا کنید.`,
+        action: null,
+        requires_confirmation: false,
+      };
+    }
 
     return {
-      reply: `پیشنهاد ایجاد گروه دنگ «${groupName}» با اعضای (${members.join('، ')}) آماده است. لطفاً جهت ساخت نهایی تأیید نمایید:`,
+      reply: `جزئیات گروه «${groupName}» آماده است. اعضا: ${members.join('، ')}. برای ثبت واقعی، دکمه «تأیید و ایجاد گروه دنگ» را بزنید.`,
       action: {
         type: 'create_group',
-        data: {
-          name: groupName,
-          members,
-        },
-        params: {
-          name: groupName,
-          members,
-        },
+        data: { name: groupName, members },
+        params: { name: groupName, members },
         description: `ایجاد گروه دنگ «${groupName}» با اعضای ${members.join(' و ')}`,
       },
       requires_confirmation: true,
@@ -603,74 +627,6 @@ function parseJsonObject(raw: string): any {
     }
     return null;
   }
-}
-
-
-/**
- * Validate AI-generated action payloads before exposing them to the client.
- * This endpoint proposes actions only; the client executes them after explicit confirmation.
- */
-function normalizeActionPayload(value: any): ActionPayload | null {
-  if (!value || typeof value !== 'object' || Array.isArray(value) || typeof value.type !== 'string') return null;
-  const type = value.type;
-  const rawData = value.data && typeof value.data === 'object' && !Array.isArray(value.data)
-    ? value.data
-    : value.params && typeof value.params === 'object' && !Array.isArray(value.params)
-      ? value.params : null;
-  if (!rawData) return null;
-  const data: Record<string, unknown> = { ...rawData };
-  const text = (v: unknown, max = 160) => typeof v === 'string' ? v.trim().slice(0, max) : '';
-  const positive = (v: unknown) => {
-    const n = typeof v === 'number' ? v : Number(v);
-    return Number.isFinite(n) && n > 0 ? n : null;
-  };
-  const date = (v: unknown) => {
-    if (typeof v !== 'string' || !/^\d{4}-\d{2}-\d{2}$/.test(v)) return false;
-    const d = new Date(`${v}T00:00:00.000Z`);
-    return Number.isFinite(d.getTime()) && d.toISOString().slice(0, 10) === v;
-  };
-  if (type === 'create_group' || type === 'create_dong_group') {
-    const name = text(data.name, 80);
-    const members = Array.isArray(data.members)
-      ? data.members.filter((m: unknown) => typeof m === 'string').map((m: string) => m.trim().slice(0, 80)).filter(Boolean).slice(0, 30)
-      : [];
-    if (!name) return null;
-    return { type: 'create_group', data: { name, members }, params: { name, members }, description: text(value.description, 180) || `ایجاد گروه دنگ «${name}»` };
-  }
-  if (type === 'add_transaction' || type === 'create_transaction') {
-    const amount = positive(data.amount);
-    const category = text(data.category, 60);
-    const description = text(data.description, 180);
-    const txType = data.type;
-    if (!amount || !category || !description || (txType !== 'income' && txType !== 'expense') || !date(data.date)) return null;
-    const clean = { amount, category, type: txType, description, date: data.date };
-    return { type: 'add_transaction', data: clean, params: clean, description: text(value.description, 180) || `ثبت ${txType === 'income' ? 'درآمد' : 'هزینه'} «${description}»` };
-  }
-  if (type === 'create_goal') {
-    const title = text(data.title, 100), target_amount = positive(data.target_amount), category = text(data.category, 60);
-    if (!title || !target_amount || !category || !date(data.deadline)) return null;
-    const clean = { title, target_amount, deadline: data.deadline, category };
-    return { type, data: clean, params: clean, description: text(value.description, 180) || `ایجاد هدف «${title}»` };
-  }
-  if (type === 'create_reminder') {
-    const title = text(data.title, 100);
-    const amount = data.amount === undefined || data.amount === null || data.amount === '' ? 0 : Number(data.amount);
-    if (!title || !Number.isFinite(amount) || amount < 0 || !date(data.due_date) || !['once', 'monthly'].includes(String(data.recurrence))) return null;
-    const clean = { title, amount, due_date: data.due_date, recurrence: data.recurrence };
-    return { type, data: clean, params: clean, description: text(value.description, 180) || `ایجاد یادآور «${title}»` };
-  }
-  if (type === 'add_deng_expense') {
-    const group_name = text(data.group_name, 80), title = text(data.title, 120), amount = positive(data.amount);
-    const payer = text(data.payer, 80);
-    const participants = Array.isArray(data.participants) ? data.participants.filter((m: unknown) => typeof m === 'string').map((m: string) => m.trim().slice(0, 80)).filter(Boolean).slice(0, 30) : [];
-    if (!group_name || !title || !amount || !payer || participants.length === 0) return null;
-    const clean = { group_name, title, amount, payer, participants, share_per_person: positive(data.share_per_person) ?? Math.round(amount / participants.length) };
-    return { type, data: clean, params: clean, description: text(value.description, 180) || `ثبت هزینه دنگ «${title}»` };
-  }
-  if (type === 'financial_analysis' || type === 'analysis_report') {
-    return { type, data, params: data, description: text(value.description, 180) || 'تحلیل وضعیت مالی' };
-  }
-  return null;
 }
 
 /**
@@ -884,10 +840,17 @@ serve(async (req: Request) => {
       };
     }
 
-    // 6. External LLM Invocation with Fallback to Deterministic Engine
+    // 6. Route high-impact group-creation requests deterministically first.
+    // This guarantees a structured action card instead of a text-only confirmation loop.
     let finalResult: { reply: string; action: ActionPayload | null; requires_confirmation: boolean } | null = null;
+    const isGroupCreationRequest = /(?:بساز|بسازید|ایجاد\s*کن|ایجاد\s*کنید|تشکیل\s*بده|تشکیل\s*بدید|ساخت\s*گروه|ایجاد\s*گروه|گروه\s*جدید)/i.test(userMessage)
+      && /گروه|دنگ|دونگ/i.test(userMessage);
+    if (isGroupCreationRequest) {
+      finalResult = parseFinancialInputDeterministically(userMessage, userFinancialContext);
+    }
 
-    if (apiKey) {
+    // 7. External LLM Invocation with deterministic fallback for other intents.
+    if (!finalResult && apiKey) {
       try {
         const history = Array.isArray(body.messages) ? body.messages : [];
         const formattedHistory: Array<{ role: 'system' | 'user' | 'assistant'; content: string }> = [
@@ -932,16 +895,21 @@ serve(async (req: Request) => {
           if (rawContent && typeof rawContent === 'string') {
             const parsed = parseJsonObject(rawContent);
             if (parsed && typeof parsed.reply === 'string') {
-              const actionObj: ActionPayload | null = parsed.action
-                ? normalizeActionPayload(parsed.action)
-                : null;
+              let actionObj: ActionPayload | null = null;
+              if (parsed.action && typeof parsed.action.type === 'string') {
+                const actionData = parsed.action.data || parsed.action.params || {};
+                actionObj = {
+                  type: parsed.action.type as ActionType,
+                  data: actionData,
+                  params: actionData,
+                  description: parsed.action.description || 'پیشنهاد عملیات هوشمند چندبوم',
+                };
+              }
 
               finalResult = {
-                reply: parsed.action && !actionObj
-                  ? 'برای جلوگیری از ثبت اشتباه، اطلاعات این عملیات کامل یا معتبر نیست. لطفاً جزئیات لازم را دقیق‌تر بگو.'
-                  : parsed.reply.slice(0, 4000),
+                reply: parsed.reply,
                 action: actionObj,
-                requires_confirmation: Boolean(actionObj && actionObj.type !== 'financial_analysis' && actionObj.type !== 'analysis_report'),
+                requires_confirmation: parsed.requires_confirmation ?? Boolean(actionObj),
               };
             }
           }
@@ -954,24 +922,6 @@ serve(async (req: Request) => {
     // 7. If LLM was unavailable or returned non-JSON, run our rock-solid deterministic NLP router
     if (!finalResult) {
       finalResult = parseFinancialInputDeterministically(userMessage, userFinancialContext);
-    }
-
-    // Apply the same validation to deterministic fallback actions.
-    if (finalResult.action) {
-      const normalizedAction = normalizeActionPayload(finalResult.action);
-      if (!normalizedAction) {
-        finalResult = {
-          reply: 'برای جلوگیری از ثبت اشتباه، اطلاعات عملیات کامل یا معتبر نیست. لطفاً جزئیات را دقیق‌تر وارد کن.',
-          action: null,
-          requires_confirmation: false,
-        };
-      } else {
-        finalResult = {
-          ...finalResult,
-          action: normalizedAction,
-          requires_confirmation: normalizedAction.type !== 'financial_analysis' && normalizedAction.type !== 'analysis_report',
-        };
-      }
     }
 
     // 8. Log AI Usage for Analytics

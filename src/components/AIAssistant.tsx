@@ -91,8 +91,6 @@ export const AIAssistant: React.FC<{ isOpen?: boolean; onClose?: () => void }> =
   const [aiMode, setAiMode] = useState<'agent' | 'advisor'>('agent');
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
-  // Keeps the last proposed operation so a plain 'yes/yeah' executes it once instead of asking again.
-  const pendingActionRef = useRef<{ messageId: string; action: AiAssistantAction } | null>(null);
 
   // Voice Recognition Hook
   const {
@@ -169,8 +167,6 @@ export const AIAssistant: React.FC<{ isOpen?: boolean; onClose?: () => void }> =
           ? 'income'
           : 'expense';
         const amount = Math.round(Number(params.amount) || 0);
-        if (!Number.isFinite(amount) || amount <= 0) throw new Error('مبلغ تراکنش مشخص یا معتبر نیست؛ مبلغ را دوباره اعلام کنید.');
-        if (!user?.id || user.id === 'guest') throw new Error('برای ثبت واقعی اطلاعات، ابتدا وارد حساب کاربری شوید.');
 
         await addTransaction({
           type: txType,
@@ -205,28 +201,50 @@ export const AIAssistant: React.FC<{ isOpen?: boolean; onClose?: () => void }> =
       // 2. Deng Group Creation
       if (type === 'create_dong_group' || type === 'create_group') {
         const supabase = getSupabaseClient();
-        if (!supabase || !user?.id || user.id === 'guest') throw new Error('برای ایجاد گروه دنگ، ورود به حساب کاربری و اتصال پایگاه داده لازم است.');
-        const groupName = String(params.name || params.group_name || '').trim();
-        if (!groupName) throw new Error('نام گروه مشخص نیست. لطفاً نام گروه را اعلام کنید.');
-        const membersList: string[] =
-          Array.isArray(params.members) && params.members.length > 0 ? [...params.members] : ['من'];
-        if (!membersList.includes('من') && user?.full_name && !membersList.includes(user.full_name)) {
+        const groupName = String(params.name || '').trim();
+        const suppliedMembers = Array.isArray(params.members) ? params.members : [];
+        const membersList = [...new Set(suppliedMembers
+          .map((member: unknown) => String(member || '').trim())
+          .filter((member: string) => member.length > 0))];
+
+        if (!user?.id || user.id === 'guest') {
+          throw new Error('برای ساخت گروه دنگ ابتدا وارد حساب کاربری خود شوید.');
+        }
+        if (!supabase) {
+          throw new Error('اتصال پایگاه داده برقرار نیست؛ گروه ثبت نشد.');
+        }
+        if (groupName.length < 2) {
+          throw new Error('نام گروه معتبر نیست. لطفاً نام گروه را بررسی کنید.');
+        }
+        if (membersList.length === 0) {
+          throw new Error('حداقل یک عضو برای گروه مشخص کنید.');
+        }
+
+        if (user.full_name && !membersList.includes(user.full_name)) {
           membersList.unshift(user.full_name);
         }
 
-        if (supabase) {
-          const { error: groupErr } = await supabase.from('dong_groups').insert({
+        const { data: createdGroup, error: groupErr } = await supabase
+          .from('dong_groups')
+          .insert({
             user_id: user.id,
             name: groupName,
             members: membersList,
             is_family_mode: false,
             families: [],
             created_at: new Date().toISOString(),
-          });
-          if (groupErr) throw groupErr;
+          })
+          .select('id, name, members')
+          .single();
+
+        if (groupErr) throw groupErr;
+        if (!createdGroup?.id) {
+          throw new Error('پایگاه داده شناسه گروه ساخته‌شده را برنگرداند؛ موفقیت ثبت تأیید نشد.');
         }
 
-        const successMsg = `گروه دنگ «${groupName}» با اعضای (${membersList.join('، ')}) ایجاد گردید.`;
+        const successMsg = `گروه دنگ «${createdGroup.name}» با اعضای (${membersList.join(
+          '، '
+        )}) با موفقیت در پایگاه داده ثبت شد.`;
 
         setMessages((prev) =>
           prev.map((m) =>
@@ -246,12 +264,9 @@ export const AIAssistant: React.FC<{ isOpen?: boolean; onClose?: () => void }> =
       // 3. Add Deng Expense
       if (type === 'add_deng_expense') {
         const supabase = getSupabaseClient();
-        if (!supabase || !user?.id || user.id === 'guest') throw new Error('برای ثبت هزینه دنگ، ابتدا وارد حساب کاربری شوید.');
         const amount = Math.round(Number(params.amount) || 0);
-        if (!Number.isFinite(amount) || amount <= 0) throw new Error('مبلغ هزینه دنگ مشخص یا معتبر نیست.');
-        const groupName = String(params.group_name || '').trim();
-        if (!groupName) throw new Error('نام گروه دنگ مشخص نیست.');
-        const title = String(params.title || 'هزینه مشترک دنگ').trim();
+        const groupName = params.group_name || 'سفر دوستانه';
+        const title = params.title || 'هزینه مشترک دنگ';
         const payer = params.payer || user?.full_name || 'من';
         const participants = Array.isArray(params.participants) && params.participants.length > 0
           ? params.participants
@@ -264,13 +279,12 @@ export const AIAssistant: React.FC<{ isOpen?: boolean; onClose?: () => void }> =
             .from('dong_groups')
             .select('id')
             .eq('name', groupName)
-            .eq('user_id', user.id)
             .maybeSingle();
 
           if (existingGroup) {
             groupId = existingGroup.id;
           } else {
-            const { data: newG, error: createGroupError } = await supabase
+            const { data: newG } = await supabase
               .from('dong_groups')
               .insert({
                 user_id: user?.id,
@@ -282,12 +296,11 @@ export const AIAssistant: React.FC<{ isOpen?: boolean; onClose?: () => void }> =
               })
               .select('id')
               .maybeSingle();
-            if (createGroupError) throw createGroupError;
             groupId = newG?.id || null;
           }
 
-          if (!groupId) throw new Error('گروه دنگ پیدا یا ایجاد نشد؛ عملیات ثبت هزینه انجام نشد.');
-          const { error: expenseError } = await supabase.from('dong_expenses').insert({
+          if (groupId) {
+            await supabase.from('dong_expenses').insert({
               group_id: groupId,
               title,
               payer,
@@ -296,8 +309,8 @@ export const AIAssistant: React.FC<{ isOpen?: boolean; onClose?: () => void }> =
               is_itemized: false,
               bill_items: [],
               created_at: new Date().toISOString(),
-          });
-          if (expenseError) throw expenseError;
+            });
+          }
         }
 
         const successMsg = `خرج دنگ «${title}» به مبلغ ${formatToman(amount)} پرداخت شده توسط ${payer} در سیستم دنگ ثبت گردید.`;
@@ -431,24 +444,6 @@ export const AIAssistant: React.FC<{ isOpen?: boolean; onClose?: () => void }> =
     const text = (textToSend || inputValue).trim();
     if (!text || isLoading) return;
 
-    const affirmative = /^(آره|اره|بله|بلی|تأیید|تایید|تایید می.?کنم|تأیید می.?کنم|درسته|درست است|اوکی|باشه|باش|yes|yeah|yep|ok|okay)[.!؟،\s]*$/i.test(text);
-    const pending = pendingActionRef.current;
-    if (affirmative && pending) {
-      const userMsg: ChatMessageItem = { id: `usr-${Date.now()}`, role: 'user', content: text, timestamp: new Date().toISOString() };
-      setMessages((prev) => [...prev, userMsg]);
-      setInputValue('');
-      setErrorMessage(null);
-      pendingActionRef.current = null;
-      setIsLoading(true);
-      try {
-        const success = await handleExecuteAction(pending.messageId, pending.action);
-        if (!success) pendingActionRef.current = pending;
-      } finally {
-        setIsLoading(false);
-      }
-      return;
-    }
-
     // 1. Quota Guard: Verify client status first
     const clientCheck = checkCanMakeAiRequest();
     if (!clientCheck.allowed) {
@@ -533,7 +528,6 @@ export const AIAssistant: React.FC<{ isOpen?: boolean; onClose?: () => void }> =
           timestamp: new Date().toISOString(),
           action: response.action,
         };
-        if (response.action) pendingActionRef.current = { messageId: botMsg.id, action: response.action };
         setMessages((prev) => [...prev, botMsg]);
 
         if (typeof response.remaining_queries === 'number') {
