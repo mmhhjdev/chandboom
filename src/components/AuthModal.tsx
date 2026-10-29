@@ -63,10 +63,10 @@ export const AuthModal: React.FC = () => {
   const [newPassword, setNewPassword] = useState('');
   const [showNewPassword, setShowNewPassword] = useState(false);
 
-  // OTP Verification Step
+  // OTP Verification Step - Updated to 8 digits
   const [isOtpStep, setIsOtpStep] = useState(false);
   const [otpAction, setOtpAction] = useState<'register' | 'login' | 'reset_password'>('register');
-  const [otpDigits, setOtpDigits] = useState<string[]>(['', '', '', '', '', '', '', '']);
+  const [otpDigits, setOtpDigits] = useState<string[]>(Array(8).fill(''));
   const otpInputRefs = useRef<(HTMLInputElement | null)[]>([]);
   const [timerSeconds, setTimerSeconds] = useState(120);
 
@@ -110,7 +110,7 @@ export const AuthModal: React.FC = () => {
   useEffect(() => {
     if (!isAuthModalOpen) {
       setIsOtpStep(false);
-      setOtpDigits(['', '', '', '', '', '', '', '']);
+      setOtpDigits(Array(8).fill(''));
       setError(null);
       setSuccessMsg(null);
       setIsLoading(false);
@@ -192,10 +192,10 @@ export const AuthModal: React.FC = () => {
         const res = await requestLoginOtp(cleanEmail);
         if (res.success) {
           setOtpAction('login');
-          setOtpDigits(['', '', '', '', '', '', '', '']);
+          setOtpDigits(Array(8).fill(''));
           setIsOtpStep(true);
           setTimerSeconds(120);
-          setSuccessMsg('کد ۶ رقمی ورود به آدرس ایمیل شما ارسال شد.');
+          setSuccessMsg('کد ۸ رقمی ورود به آدرس ایمیل شما ارسال شد.');
         } else {
           setError(res.error || 'خطا در ارسال کد یکبارمصرف به ایمیل.');
         }
@@ -235,9 +235,9 @@ export const AuthModal: React.FC = () => {
       try {
         const res = await requestPasswordResetOtp(cleanEmail);
         if (res.success) {
-          setSuccessMsg('کد بازیابی رمز عبور به ایمیل شما ارسال شد.');
+          setSuccessMsg('کد ۸ رقمی بازیابی رمز عبور با موفقیت به ایمیل شما ارسال شد.');
           setOtpAction('reset_password');
-          setOtpDigits(['', '', '', '', '', '', '', '']);
+          setOtpDigits(Array(8).fill(''));
           setIsOtpStep(true);
           setTimerSeconds(120);
         } else {
@@ -291,14 +291,14 @@ export const AuthModal: React.FC = () => {
           } else if (res.requiresEmailConfirmation) {
             setSuccessMsg('حساب شما ایجاد شد! کد تایید ارسال شده به ایمیل را وارد فرمایید.');
             setOtpAction('register');
-            setOtpDigits(['', '', '', '', '', '', '', '']);
+            setOtpDigits(Array(8).fill(''));
             setIsOtpStep(true);
             setTimerSeconds(120);
           } else {
             setIsAuthModalOpen(false);
           }
         } catch (err: any) {
-          setError(err?.message || 'خطا در ارتباط با سرور پایگاه داده سوپربیس.');
+          setError(err?.message || 'خطا در ارتباط با سرور پایگاه داده.');
         } finally {
           setIsLoading(false);
         }
@@ -317,7 +317,7 @@ export const AuthModal: React.FC = () => {
 
         if (res.success) {
           setOtpAction('register');
-          setOtpDigits(['', '', '', '', '', '', '', '']);
+          setOtpDigits(Array(8).fill(''));
           setIsOtpStep(true);
           setTimerSeconds(120);
           setError(null);
@@ -334,8 +334,8 @@ export const AuthModal: React.FC = () => {
 
   const handleVerifyOtp = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (combinedOtp.length < 6 || combinedOtp.length > 8) {
-      setError('لطفاً کد ۶ تا ۸ رقمی ارسال‌شده را کامل وارد نمایید.');
+    if (combinedOtp.length !== 8) {
+      setError('لطفاً کد ۸ رقمی تایید را به طور کامل وارد نمایید.');
       return;
     }
 
@@ -352,7 +352,7 @@ export const AuthModal: React.FC = () => {
         } else {
           setIsAuthModalOpen(false);
           setIsOtpStep(false);
-          setOtpDigits(['', '', '', '', '', '', '', '']);
+          setOtpDigits(Array(8).fill(''));
         }
         return;
       }
@@ -374,7 +374,7 @@ export const AuthModal: React.FC = () => {
         } else {
           setSuccessMsg('رمز عبور شما با موفقیت تغییر یافت. اکنون وارد شوید.');
           setIsOtpStep(false);
-          setOtpDigits(['', '', '', '', '', '', '', '']);
+          setOtpDigits(Array(8).fill(''));
           setMode('login');
           setLoginType('password');
           setPassword(newPassword);
@@ -399,7 +399,7 @@ export const AuthModal: React.FC = () => {
       } else {
         setIsAuthModalOpen(false);
         setIsOtpStep(false);
-        setOtpDigits(['', '', '', '', '', '', '', '']);
+        setOtpDigits(Array(8).fill(''));
       }
     } catch (err: any) {
       setError(err?.message || 'خطا در اعتبارسنجی کد امنیتی.');
@@ -479,9 +479,9 @@ export const AuthModal: React.FC = () => {
               </div>
               <p className="text-xs text-zinc-500 dark:text-zinc-400 mt-0.5">
                 {isOtpStep
-                  ? 'تایید هویت امن و اتصال به دیتابیس سوپربیس'
+                  ? 'تایید هویت امن و اتصال به پایگاه داده'
                   : mode === 'forgot_password'
-                  ? 'بازیابی رمز عبور از طریق کد ۶ رقمی امنیتی'
+                  ? 'بازیابی رمز عبور از طریق کد ۸ رقمی امنیتی'
                   : mode === 'login'
                   ? 'ورود به پنل جامع مدیریت دخل، خرج و دنگ گروهی'
                   : 'عضویت آنی و اتصال امن به پایگاه داده ابری'}
@@ -568,19 +568,19 @@ export const AuthModal: React.FC = () => {
             <form onSubmit={handleVerifyOtp} className="space-y-4">
               <div className="text-center space-y-1 bg-zinc-50 dark:bg-zinc-900/60 p-3 rounded-2xl border border-zinc-200 dark:border-zinc-800">
                 <p className="text-xs text-zinc-600 dark:text-zinc-400">
-                  کد ۶ تا ۸ رقمی ارسال‌شده به نشانی ایمیل زیر را وارد نمایید:
+                  کد ۸ رقمی ارسال‌شده به نشانی ایمیل زیر را وارد نمایید:
                 </p>
                 <p className="font-mono text-sm font-black text-emerald-700 dark:text-emerald-400" dir="ltr">
                   {email}
                 </p>
               </div>
 
-              {/* 6 Digit Inputs */}
+              {/* 8 Digit Inputs */}
               <div>
                 <label className="block text-xs font-bold text-zinc-700 dark:text-zinc-300 mb-2 text-center">
-                  کد تایید ۶ تا ۸ رقمی
+                  کد تایید ۸ رقمی
                 </label>
-                <div className="flex items-center justify-center gap-2" dir="ltr">
+                <div className="flex items-center justify-center gap-1.5 sm:gap-2" dir="ltr">
                   {otpDigits.map((digit, idx) => (
                     <input
                       key={idx}
@@ -595,7 +595,7 @@ export const AuthModal: React.FC = () => {
                       onChange={(e) => handleOtpDigitChange(idx, e.target.value)}
                       onKeyDown={(e) => handleOtpKeyDown(idx, e)}
                       onPaste={handleOtpPaste}
-                      className="w-11 h-13 sm:w-12 sm:h-14 text-center font-mono text-xl sm:text-2xl font-black bg-zinc-50 dark:bg-zinc-900 border-2 border-zinc-200 dark:border-zinc-800 rounded-2xl text-zinc-900 dark:text-white outline-none focus:border-emerald-500 dark:focus:border-emerald-400 focus:bg-white dark:focus:bg-[#0E1712] transition-all shadow-xs"
+                      className="w-8 h-11 sm:w-10 sm:h-12 text-center font-mono text-lg sm:text-xl font-black bg-zinc-50 dark:bg-zinc-900 border-2 border-zinc-200 dark:border-zinc-800 rounded-xl sm:rounded-2xl text-zinc-900 dark:text-white outline-none focus:border-emerald-500 dark:focus:border-emerald-400 focus:bg-white dark:focus:bg-[#0E1712] transition-all shadow-xs p-0"
                     />
                   ))}
                 </div>
@@ -673,7 +673,7 @@ export const AuthModal: React.FC = () => {
               <div className="space-y-2 pt-2">
                 <button
                   type="submit"
-                  disabled={isLoading || combinedOtp.length < 6 || combinedOtp.length > 8}
+                  disabled={isLoading || combinedOtp.length !== 8}
                   className="w-full py-3 rounded-2xl bg-gradient-to-r from-emerald-600 to-teal-700 hover:from-emerald-700 hover:to-teal-800 text-white font-bold text-xs shadow-md transition cursor-pointer disabled:opacity-50 flex items-center justify-center gap-2"
                 >
                   {isLoading ? (
@@ -697,7 +697,7 @@ export const AuthModal: React.FC = () => {
                   type="button"
                   onClick={() => {
                     setIsOtpStep(false);
-                    setOtpDigits(['', '', '', '', '', '', '', '']);
+                    setOtpDigits(Array(8).fill(''));
                     setError(null);
                   }}
                   className="w-full py-2 text-xs text-zinc-500 hover:text-zinc-800 dark:hover:text-zinc-200 transition cursor-pointer"
@@ -710,7 +710,7 @@ export const AuthModal: React.FC = () => {
             /* Forgot Password */
             <form onSubmit={handleSubmit} className="space-y-4">
               <div className="p-3.5 rounded-2xl bg-zinc-50 dark:bg-zinc-900/60 border border-zinc-200 dark:border-zinc-800 text-xs text-zinc-600 dark:text-zinc-400 leading-relaxed">
-                آدرس ایمیل ثبت‌شده در حساب کاربری خود را وارد فرمایید تا کد ۶ رقمی امنیتی جهت بازنشانی کلمه عبور برای شما ارسال شود.
+                آدرس ایمیل ثبت‌شده در حساب کاربری خود را وارد فرمایید تا کد ۸ رقمی امنیتی جهت بازنشانی کلمه عبور برای شما ارسال شود.
               </div>
 
               <div>
@@ -744,7 +744,7 @@ export const AuthModal: React.FC = () => {
                       <span>در حال ارسال کد...</span>
                     </>
                   ) : (
-                    <span>ارسال کد ۶ رقمی به ایمیل</span>
+                    <span>ارسال کد ۸ رقمی به ایمیل</span>
                   )}
                 </button>
 
@@ -902,7 +902,7 @@ export const AuthModal: React.FC = () => {
                       : 'text-zinc-500 hover:text-zinc-800 dark:hover:text-zinc-300'
                   }`}
                 >
-                  تایید ایمیل با کد ۶ رقمی
+                  تایید ایمیل با کد ۸ رقمی
                 </button>
               </div>
 
@@ -1022,7 +1022,7 @@ export const AuthModal: React.FC = () => {
                 </div>
               )}
 
-              {/* Demographics for Supabase `users` table */}
+              {/* Demographics for users table */}
               <div className="grid grid-cols-2 gap-2.5">
                 <div>
                   <label className="block text-xs font-bold text-zinc-700 dark:text-zinc-300 mb-1">
@@ -1099,7 +1099,7 @@ export const AuthModal: React.FC = () => {
                 {isLoading ? (
                   <>
                     <RefreshCw className="w-4 h-4 animate-spin" />
-                    <span>در حال ساخت حساب و ذخیره در سوپربیس...</span>
+                    <span>در حال ساخت حساب و ذخیره در پایگاه داده...</span>
                   </>
                 ) : registerType === 'direct' ? (
                   <>
@@ -1109,7 +1109,7 @@ export const AuthModal: React.FC = () => {
                 ) : (
                   <>
                     <Mail className="w-4 h-4" />
-                    <span>دریافت کد تایید ۶ تا ۸ رقمی ایمیلی</span>
+                    <span>دریافت کد تایید ۸ رقمی ایمیلی</span>
                   </>
                 )}
               </button>
@@ -1120,7 +1120,7 @@ export const AuthModal: React.FC = () => {
           <div className="pt-2 border-t border-zinc-100 dark:border-zinc-800/80 flex items-center justify-between text-[11px] text-zinc-400">
             <span className="inline-flex items-center gap-1">
               <ShieldCheck className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
-              <span>پایگاه ابری سوپربیس فعال</span>
+              <span>پایگاه داده ابری فعال</span>
             </span>
             <span>رمزنگاری ۲۵۶ بیتی داده‌ها</span>
           </div>
