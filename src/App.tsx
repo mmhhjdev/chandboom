@@ -29,6 +29,8 @@ import { AboutPage } from './pages/AboutPage';
 import { ContactPage } from './pages/ContactPage';
 import { FeaturesPage } from './pages/FeaturesPage';
 import { PricingPage } from './pages/PricingPage';
+import { BlogPage } from './pages/BlogPage';
+import { ArticlePage } from './pages/ArticlePage';
 import { AIAssistant } from './components/AIAssistant';
 import { ShieldCheck, Heart, Sparkles, ShieldAlert } from 'lucide-react';
 import { initSecurityProtection } from './utils/devtoolsProtection';
@@ -267,6 +269,8 @@ export default function App() {
         <Route path="/contact" element={<ContactPage />} />
         <Route path="/features" element={<FeaturesPage />} />
         <Route path="/pricing" element={<PricingPage />} />
+        <Route path="/articles" element={<BlogPage />} />
+        <Route path="/articles/:slug" element={<ArticlePage />} />
         <Route path="*" element={<AppContent />} />
       </Routes>
     </AppProvider>

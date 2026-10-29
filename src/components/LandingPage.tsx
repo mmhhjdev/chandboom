@@ -1056,6 +1056,11 @@ export const LandingPage: React.FC<LandingPageProps> = ({
               </div>
             ))}
           </div>
+          <div className="mt-10 flex justify-center">
+            <a href="/articles" className="inline-flex items-center gap-2 rounded-2xl bg-emerald-700 px-6 py-3.5 text-sm font-extrabold text-white shadow-lg shadow-emerald-900/10 transition hover:bg-emerald-600">
+              مشاهده همه ۷ مقاله آموزشی <ArrowLeft className="h-4 w-4" />
+            </a>
+          </div>
 
         </div>
       </section>

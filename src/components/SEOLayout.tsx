@@ -34,6 +34,7 @@ export const SEOLayout: React.FC<SEOLayoutProps> = ({ children }) => {
             <Link to="/pricing" className="text-zinc-600 dark:text-zinc-300 hover:text-emerald-600 dark:hover:text-emerald-400 transition">
               تعرفه‌ها
             </Link>
+            <Link to="/articles" className="text-zinc-600 dark:text-zinc-300 hover:text-emerald-600 dark:hover:text-emerald-400 transition">مجله مالی</Link>
             <Link to="/faq" className="text-zinc-600 dark:text-zinc-300 hover:text-emerald-600 dark:hover:text-emerald-400 transition">
               سوالات متداول
             </Link>
@@ -100,6 +101,9 @@ export const SEOLayout: React.FC<SEOLayoutProps> = ({ children }) => {
             <div>
               <h4 className="font-bold text-zinc-900 dark:text-zinc-200 mb-3 text-xs">پشتیبانی و راهنما</h4>
               <ul className="space-y-2">
+                <li>
+                  <Link to="/articles" className="hover:text-emerald-500 transition">مجله و مقالات مالی</Link>
+                </li>
                 <li>
                   <Link to="/faq" className="hover:text-emerald-500 transition">سوالات متداول (FAQ)</Link>
                 </li>
