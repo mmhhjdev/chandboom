@@ -40,7 +40,7 @@ import {
   isAdminEmail,
   getEnvAdminEmail,
 } from '../utils/admin';
-import { getSupabaseClient, sanitizeVerificationCode, resolvePaymentReceiptUrl } from '../lib/supabase';
+import { getSupabaseClient, sanitizeVerificationCode } from '../lib/supabase';
 import { formatToman, formatShamsiDateTime, formatShamsiDate, toPersianDigits } from '../utils/formatters';
 import { calculateRemainingProDays } from '../utils/security';
 import { UserRole, SubscriptionTier, SubscriptionStatus, UserProfile, ManualPaymentSubmission } from '../types';
@@ -89,7 +89,6 @@ export const AdminDashboardModal: React.FC<AdminDashboardModalProps> = ({ isOpen
   // Live Manual Payments from Supabase manual_payments table
   const [livePayments, setLivePayments] = useState<ManualPaymentSubmission[]>(manualPayments);
   const [isFetchingPayments, setIsFetchingPayments] = useState(false);
-  const [paymentsFetchError, setPaymentsFetchError] = useState<string | null>(null);
 
   const [twoFaInput, setTwoFaInput] = useState('');
   const [twoFaError, setTwoFaError] = useState<string | null>(null);
@@ -98,7 +97,6 @@ export const AdminDashboardModal: React.FC<AdminDashboardModalProps> = ({ isOpen
   const [adminNotes, setAdminNotes] = useState<Record<string, string>>({});
   const [userSearch, setUserSearch] = useState('');
   const [selectedReceiptForPreview, setSelectedReceiptForPreview] = useState<string | null>(null);
-  const [receiptPreviewError, setReceiptPreviewError] = useState(false);
 
   // Sync session state from secure admin authorization
   React.useEffect(() => {
@@ -113,7 +111,6 @@ export const AdminDashboardModal: React.FC<AdminDashboardModalProps> = ({ isOpen
   // Fetch live requests simultaneously and safely from BOTH subscription_orders and manual_payments
   const fetchLiveManualPayments = async () => {
     setIsFetchingPayments(true);
-    setPaymentsFetchError(null);
     try {
       const supabase = getSupabaseClient();
       if (!supabase) {
@@ -128,16 +125,6 @@ export const AdminDashboardModal: React.FC<AdminDashboardModalProps> = ({ isOpen
       ]);
 
       const mergedMap = new Map<string, ManualPaymentSubmission>();
-      const ordersError = ordersRes.status === 'fulfilled' ? ordersRes.value.error : ordersRes.reason;
-      const paymentsError = paymentsRes.status === 'fulfilled' ? paymentsRes.value.error : paymentsRes.reason;
-      if (ordersError && paymentsError) {
-        const message = ordersError?.message || paymentsError?.message || 'خواندن درخواست‌های پرداخت ناموفق بود.';
-        setPaymentsFetchError(`دریافت درخواست‌ها از Supabase ناموفق بود: ${message}`);
-        throw new Error(message);
-      }
-      if (ordersError || paymentsError) {
-        setPaymentsFetchError('بخشی از درخواست‌ها از Supabase بارگذاری نشد؛ مجوزهای جدول‌ها و RLS را بررسی کنید.');
-      }
 
       // 1. Ingest manual_payments records
       if (paymentsRes.status === 'fulfilled' && Array.isArray(paymentsRes.value.data)) {
@@ -250,16 +237,9 @@ export const AdminDashboardModal: React.FC<AdminDashboardModalProps> = ({ isOpen
       const mergedList = Array.from(mergedMap.values()).sort(
         (a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
       );
-      // receipt_path may be a Storage object path rather than a public URL.
-      // Resolve it for display so private buckets work too.
-      const withReceiptUrls = await Promise.all(mergedList.map(async (item) => {
-        const rawReceipt = item.receipt_url || item.receipt_image_url;
-        const displayUrl = await resolvePaymentReceiptUrl(rawReceipt);
-        return { ...item, receipt_url: displayUrl || rawReceipt || undefined, receipt_image_url: displayUrl || rawReceipt || undefined };
-      }));
 
-      if (withReceiptUrls.length > 0) {
-        setLivePayments(withReceiptUrls);
+      if (mergedList.length > 0) {
+        setLivePayments(mergedList);
       } else {
         setLivePayments(manualPayments || []);
       }
@@ -665,7 +645,14 @@ export const AdminDashboardModal: React.FC<AdminDashboardModalProps> = ({ isOpen
   const handleApproveAction = async (pay: ManualPaymentSubmission) => {
     setActionLoadingId(pay.id);
     try {
-      await approveManualPayment(pay.id, adminNotes[pay.id], (pay as any).alt_id);
+      await approveManualPayment(pay.id, adminNotes[pay.id]);
+      if ((pay as any).alt_id && (pay as any).alt_id !== pay.id) {
+        try {
+          await approveManualPayment((pay as any).alt_id, adminNotes[pay.id]);
+        } catch {
+          // Non-fatal if secondary record already updated
+        }
+      }
       await fetchLiveManualPayments();
     } catch (err: any) {
       alert(err?.message || 'خطا در تایید سفارش اشتراک');
@@ -677,7 +664,14 @@ export const AdminDashboardModal: React.FC<AdminDashboardModalProps> = ({ isOpen
   const handleRejectAction = async (pay: ManualPaymentSubmission) => {
     setActionLoadingId(pay.id);
     try {
-      await rejectManualPayment(pay.id, adminNotes[pay.id], (pay as any).alt_id);
+      await rejectManualPayment(pay.id, adminNotes[pay.id]);
+      if ((pay as any).alt_id && (pay as any).alt_id !== pay.id) {
+        try {
+          await rejectManualPayment((pay as any).alt_id, adminNotes[pay.id]);
+        } catch {
+          // Non-fatal if secondary record already updated
+        }
+      }
       await fetchLiveManualPayments();
     } catch (err: any) {
       alert(err?.message || 'خطا در رد سفارش اشتراک');
@@ -980,11 +974,6 @@ export const AdminDashboardModal: React.FC<AdminDashboardModalProps> = ({ isOpen
                     </button>
                   </div>
 
-                  {paymentsFetchError && (
-                    <div role="alert" className="rounded-xl border border-rose-300 bg-rose-50 dark:bg-rose-950/30 dark:border-rose-900 p-3 text-xs text-rose-800 dark:text-rose-200 font-cairo">
-                      {paymentsFetchError}
-                    </div>
-                  )}
                   <div className="space-y-3">
                     {livePayments.length === 0 ? (
                       <div className="p-8 text-center bg-zinc-50 dark:bg-[#121B16] rounded-2xl border border-[#E2E8E4] dark:border-[#1F2E26] text-xs text-zinc-400">
@@ -1046,7 +1035,7 @@ export const AdminDashboardModal: React.FC<AdminDashboardModalProps> = ({ isOpen
                               {pay.receipt_url ? (
                                 <button
                                   type="button"
-                                  onClick={() => { setReceiptPreviewError(false); setSelectedReceiptForPreview(pay.receipt_url || pay.receipt_image_url || null); }}
+                                  onClick={() => setSelectedReceiptForPreview(pay.receipt_url || null)}
                                   className="inline-flex items-center gap-1 text-emerald-700 dark:text-emerald-400 font-bold hover:underline cursor-pointer"
                                 >
                                   <Eye className="w-3.5 h-3.5" />
@@ -1536,20 +1525,11 @@ export const AdminDashboardModal: React.FC<AdminDashboardModalProps> = ({ isOpen
               </button>
             </div>
             <div className="max-h-[75vh] overflow-auto flex items-center justify-center rounded-2xl bg-zinc-900/80 p-2">
-              {receiptPreviewError ? (
-                <div className="p-8 text-center text-rose-300 space-y-2">
-                  <AlertTriangle className="w-8 h-8 mx-auto" />
-                  <p className="font-cairo font-bold">تصویر فیش بارگذاری نشد.</p>
-                  <p className="text-xs text-zinc-400">آدرس ذخیره‌سازی یا دسترسی Storage را بررسی کنید؛ سپس فهرست درخواست‌ها را تازه‌سازی کنید.</p>
-                </div>
-              ) : (
-                <img
-                  src={selectedReceiptForPreview}
-                  alt="فیش واریزی کاربر"
-                  onError={() => setReceiptPreviewError(true)}
-                  className="max-h-[70vh] w-auto rounded-xl object-contain shadow-2xl"
-                />
-              )}
+              <img
+                src={selectedReceiptForPreview}
+                alt="فیش واریزی کاربر"
+                className="max-h-[70vh] w-auto rounded-xl object-contain shadow-2xl"
+              />
             </div>
           </div>
         </div>

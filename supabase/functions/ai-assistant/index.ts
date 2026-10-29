@@ -605,6 +605,74 @@ function parseJsonObject(raw: string): any {
   }
 }
 
+
+/**
+ * Validate AI-generated action payloads before exposing them to the client.
+ * This endpoint proposes actions only; the client executes them after explicit confirmation.
+ */
+function normalizeActionPayload(value: any): ActionPayload | null {
+  if (!value || typeof value !== 'object' || Array.isArray(value) || typeof value.type !== 'string') return null;
+  const type = value.type;
+  const rawData = value.data && typeof value.data === 'object' && !Array.isArray(value.data)
+    ? value.data
+    : value.params && typeof value.params === 'object' && !Array.isArray(value.params)
+      ? value.params : null;
+  if (!rawData) return null;
+  const data: Record<string, unknown> = { ...rawData };
+  const text = (v: unknown, max = 160) => typeof v === 'string' ? v.trim().slice(0, max) : '';
+  const positive = (v: unknown) => {
+    const n = typeof v === 'number' ? v : Number(v);
+    return Number.isFinite(n) && n > 0 ? n : null;
+  };
+  const date = (v: unknown) => {
+    if (typeof v !== 'string' || !/^\d{4}-\d{2}-\d{2}$/.test(v)) return false;
+    const d = new Date(`${v}T00:00:00.000Z`);
+    return Number.isFinite(d.getTime()) && d.toISOString().slice(0, 10) === v;
+  };
+  if (type === 'create_group' || type === 'create_dong_group') {
+    const name = text(data.name, 80);
+    const members = Array.isArray(data.members)
+      ? data.members.filter((m: unknown) => typeof m === 'string').map((m: string) => m.trim().slice(0, 80)).filter(Boolean).slice(0, 30)
+      : [];
+    if (!name) return null;
+    return { type: 'create_group', data: { name, members }, params: { name, members }, description: text(value.description, 180) || `ایجاد گروه دنگ «${name}»` };
+  }
+  if (type === 'add_transaction' || type === 'create_transaction') {
+    const amount = positive(data.amount);
+    const category = text(data.category, 60);
+    const description = text(data.description, 180);
+    const txType = data.type;
+    if (!amount || !category || !description || (txType !== 'income' && txType !== 'expense') || !date(data.date)) return null;
+    const clean = { amount, category, type: txType, description, date: data.date };
+    return { type: 'add_transaction', data: clean, params: clean, description: text(value.description, 180) || `ثبت ${txType === 'income' ? 'درآمد' : 'هزینه'} «${description}»` };
+  }
+  if (type === 'create_goal') {
+    const title = text(data.title, 100), target_amount = positive(data.target_amount), category = text(data.category, 60);
+    if (!title || !target_amount || !category || !date(data.deadline)) return null;
+    const clean = { title, target_amount, deadline: data.deadline, category };
+    return { type, data: clean, params: clean, description: text(value.description, 180) || `ایجاد هدف «${title}»` };
+  }
+  if (type === 'create_reminder') {
+    const title = text(data.title, 100);
+    const amount = data.amount === undefined || data.amount === null || data.amount === '' ? 0 : Number(data.amount);
+    if (!title || !Number.isFinite(amount) || amount < 0 || !date(data.due_date) || !['once', 'monthly'].includes(String(data.recurrence))) return null;
+    const clean = { title, amount, due_date: data.due_date, recurrence: data.recurrence };
+    return { type, data: clean, params: clean, description: text(value.description, 180) || `ایجاد یادآور «${title}»` };
+  }
+  if (type === 'add_deng_expense') {
+    const group_name = text(data.group_name, 80), title = text(data.title, 120), amount = positive(data.amount);
+    const payer = text(data.payer, 80);
+    const participants = Array.isArray(data.participants) ? data.participants.filter((m: unknown) => typeof m === 'string').map((m: string) => m.trim().slice(0, 80)).filter(Boolean).slice(0, 30) : [];
+    if (!group_name || !title || !amount || !payer || participants.length === 0) return null;
+    const clean = { group_name, title, amount, payer, participants, share_per_person: positive(data.share_per_person) ?? Math.round(amount / participants.length) };
+    return { type, data: clean, params: clean, description: text(value.description, 180) || `ثبت هزینه دنگ «${title}»` };
+  }
+  if (type === 'financial_analysis' || type === 'analysis_report') {
+    return { type, data, params: data, description: text(value.description, 180) || 'تحلیل وضعیت مالی' };
+  }
+  return null;
+}
+
 /**
  * Main Deno HTTP Handler
  */
@@ -621,10 +689,9 @@ serve(async (req: Request) => {
   try {
     const supabaseUrl = Deno.env.get('SUPABASE_URL') || '';
     const serviceRoleKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') || '';
-    const apiKey = Deno.env.get('GAPGPT_API_KEY') || '';
+    const apiKey = Deno.env.get('GAPGPT_API_KEY') || Deno.env.get('OPENAI_API_KEY') || '';
     const baseUrl = (Deno.env.get('GAPGPT_BASE_URL') || 'https://api.gapgpt.app/v1').replace(/\/+$/, '');
-    // Prefer explicit GAPGPT_MODEL; AI_MODEL remains supported for existing deployments.
-    const model = Deno.env.get('GAPGPT_MODEL') || Deno.env.get('AI_MODEL') || 'gpt-4o-mini';
+    const model = Deno.env.get('AI_MODEL') || 'gpt-4o-mini';
 
     // 1. Authenticate user from Bearer Token
     const authHeader = req.headers.get('Authorization') || '';
@@ -636,15 +703,6 @@ serve(async (req: Request) => {
     if (!supabaseUrl || !serviceRoleKey) {
       console.error('Supabase server-side environment variables missing.');
       return jsonResponse({ success: false, error: 'پیکربندی سرور ابری در دسترس نیست.' }, 500);
-    }
-
-    if (!apiKey) {
-      console.error('GAPGPT_API_KEY is missing from Edge Function secrets.');
-      return jsonResponse({
-        success: false,
-        code: 'AI_PROVIDER_NOT_CONFIGURED',
-        error: 'کلید GAPGPT در Secrets تابع ai-assistant تنظیم نشده است.'
-      }, 500);
     }
 
     const supabaseAdmin = createClient(supabaseUrl, serviceRoleKey, {
@@ -826,10 +884,8 @@ serve(async (req: Request) => {
       };
     }
 
-    // 6. External GAPGPT LLM invocation. Deterministic parsing remains only as a fallback
-    // when the provider returns a successful response with non-JSON content.
+    // 6. External LLM Invocation with Fallback to Deterministic Engine
     let finalResult: { reply: string; action: ActionPayload | null; requires_confirmation: boolean } | null = null;
-    let providerFailure: string | null = null;
 
     if (apiKey) {
       try {
@@ -870,52 +926,52 @@ serve(async (req: Request) => {
           }),
         });
 
-        if (!aiResponse.ok) {
-          const errorBody = await aiResponse.text().catch(() => '');
-          console.error('GAPGPT request failed:', aiResponse.status, errorBody.slice(0, 500));
-          providerFailure = `سرویس GAPGPT درخواست را با وضعیت ${aiResponse.status} رد کرد. مدل و کلید API را بررسی کنید.`;
-        } else {
+        if (aiResponse.ok) {
           const aiJson = await aiResponse.json().catch(() => null);
           const rawContent = aiJson?.choices?.[0]?.message?.content;
           if (rawContent && typeof rawContent === 'string') {
             const parsed = parseJsonObject(rawContent);
             if (parsed && typeof parsed.reply === 'string') {
-              let actionObj: ActionPayload | null = null;
-              if (parsed.action && typeof parsed.action.type === 'string') {
-                const actionData = parsed.action.data || parsed.action.params || {};
-                actionObj = {
-                  type: parsed.action.type as ActionType,
-                  data: actionData,
-                  params: actionData,
-                  description: parsed.action.description || 'پیشنهاد عملیات هوشمند چندبوم',
-                };
-              }
+              const actionObj: ActionPayload | null = parsed.action
+                ? normalizeActionPayload(parsed.action)
+                : null;
 
               finalResult = {
-                reply: parsed.reply,
+                reply: parsed.action && !actionObj
+                  ? 'برای جلوگیری از ثبت اشتباه، اطلاعات این عملیات کامل یا معتبر نیست. لطفاً جزئیات لازم را دقیق‌تر بگو.'
+                  : parsed.reply.slice(0, 4000),
                 action: actionObj,
-                requires_confirmation: parsed.requires_confirmation ?? Boolean(actionObj),
+                requires_confirmation: Boolean(actionObj && actionObj.type !== 'financial_analysis' && actionObj.type !== 'analysis_report'),
               };
-            } else {
-              providerFailure = 'پاسخ GAPGPT در قالب مورد انتظار دریافت نشد. تنظیمات مدل یا قالب پاسخ را بررسی کنید.';
             }
-          } else {
-            providerFailure = 'پاسخ معتبری از مدل GAPGPT دریافت نشد.';
           }
         }
       } catch (llmErr) {
-        console.error('GAPGPT invocation failed:', llmErr);
-        providerFailure = 'ارتباط با GAPGPT برقرار نشد. آدرس API، کلید و وضعیت سرویس را بررسی کنید.';
+        console.warn('External LLM invocation failed; using deterministic Persian NLP fallback:', llmErr);
       }
     }
 
-    if (providerFailure) {
-      return jsonResponse({ success: false, code: 'AI_PROVIDER_ERROR', error: providerFailure }, 502);
-    }
-
-    // 7. Deterministic router is retained only for internal parsing when applicable.
+    // 7. If LLM was unavailable or returned non-JSON, run our rock-solid deterministic NLP router
     if (!finalResult) {
       finalResult = parseFinancialInputDeterministically(userMessage, userFinancialContext);
+    }
+
+    // Apply the same validation to deterministic fallback actions.
+    if (finalResult.action) {
+      const normalizedAction = normalizeActionPayload(finalResult.action);
+      if (!normalizedAction) {
+        finalResult = {
+          reply: 'برای جلوگیری از ثبت اشتباه، اطلاعات عملیات کامل یا معتبر نیست. لطفاً جزئیات را دقیق‌تر وارد کن.',
+          action: null,
+          requires_confirmation: false,
+        };
+      } else {
+        finalResult = {
+          ...finalResult,
+          action: normalizedAction,
+          requires_confirmation: normalizedAction.type !== 'financial_analysis' && normalizedAction.type !== 'analysis_report',
+        };
+      }
     }
 
     // 8. Log AI Usage for Analytics

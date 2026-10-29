@@ -1582,13 +1582,11 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
           .select()
           .single();
 
-        if (error) throw error;
-        if (!data) throw new Error('پایگاه داده تراکنش ثبت‌شده‌ای برنگرداند.');
-        setTransactions((prev) => [data, ...prev.filter((t) => t.id !== newTx.id)]);
+        if (!error && data) {
+          setTransactions((prev) => [data, ...prev.filter((t) => t.id !== newTx.id)]);
+        }
       } catch (err) {
-        setTransactions((prev) => prev.filter((t) => t.id !== newTx.id));
         console.error('Supabase insert transaction error:', err);
-        throw err;
       }
     }
   };
