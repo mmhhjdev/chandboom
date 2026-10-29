@@ -557,17 +557,46 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         setNotifications(notifData);
       }
 
-      // 5. Fetch Support Tickets
+      // 5. Fetch tickets and their messages from the normalized tables.
       let ticketQuery = supabase.from('tickets').select('*').order('updated_at', { ascending: false });
-      if (!isAdm) {
-        ticketQuery = ticketQuery.eq('user_id', userId);
-      }
+      if (!isAdm) ticketQuery = ticketQuery.eq('user_id', userId);
       const { data: ticketData, error: ticketFetchError } = await ticketQuery;
-      if (!ticketFetchError) {
-        // An empty cloud result must clear demo/seed tickets instead of leaving fake records visible.
-        setTickets(ticketData || []);
-      } else {
+      if (ticketFetchError) {
         console.error('Supabase ticket fetch failed:', ticketFetchError.message);
+      } else {
+        const rows = ticketData || [];
+        const ids = rows.map((ticket: any) => ticket.id).filter(Boolean);
+        let messagesByTicket = new Map<string, TicketMessage[]>();
+        if (ids.length) {
+          const { data: messageRows, error: messagesError } = await supabase
+            .from('ticket_messages')
+            .select('*')
+            .in('ticket_id', ids)
+            .order('created_at', { ascending: true });
+          if (messagesError) {
+            console.error('Supabase ticket messages fetch failed:', messagesError.message);
+          } else {
+            for (const row of messageRows || []) {
+              const message = {
+                ...row,
+                content: row.message,
+                sender_name: row.sender_id === userId ? (user.full_name || 'کاربر چندبوم') : 'پشتیبانی چندبوم',
+                sender_role: row.sender_id === userId ? 'user' : 'admin',
+              } as TicketMessage;
+              messagesByTicket.set(row.ticket_id, [...(messagesByTicket.get(row.ticket_id) || []), message]);
+            }
+          }
+        }
+        const mappedTickets = rows.map((row: any) => ({
+          ...row,
+          user_name: row.user_id === userId ? (user.full_name || 'کاربر چندبوم') : (row.user_name || 'کاربر چندبوم'),
+          user_email: row.user_id === userId ? userEmail : (row.user_email || ''),
+          department: row.category === 'technical' ? 'پشتیبانی فنی' : 'پشتیبانی مالی',
+          priority: row.priority || 'medium',
+          messages: messagesByTicket.get(row.id) || [],
+        })) as Ticket[];
+        setTickets(mappedTickets);
+        setSelectedTicket((current) => current ? mappedTickets.find((ticket) => ticket.id === current.id) || null : null);
       }
 
       // 6. Fetch Manual Payments & Subscription Orders simultaneously and merge
@@ -1137,7 +1166,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     });
   };
 
-  // Forward administrative comments / subscription status into Support Ticketing system
+  // Forward administrative comments / subscription status into the normalized support tables.
   const forwardAdminNotificationToTicket = async (
     targetUserId: string,
     targetUserName: string,
@@ -1146,70 +1175,81 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     messageContent: string
   ) => {
     const supabase = getSupabaseClient();
-    const newMsg: TicketMessage = {
-      id: `msg-${Date.now()}`,
-      ticket_id: '',
-      sender_id: user.id || 'admin',
-      sender_name: 'پشتیبان رسمی چندبوم (مدیریت)',
-      sender_role: 'admin',
-      content: messageContent,
-      created_at: new Date().toISOString(),
-    };
-
-    // Find if user already has a ticket for subscription
-    const existingTicket = tickets.find(
-      (t) => (t.user_id === targetUserId || t.user_email === targetUserEmail) && t.subject.includes('اشتراک')
-    );
-
-    if (existingTicket) {
-      newMsg.ticket_id = existingTicket.id;
-      const updatedMessages = [...existingTicket.messages, newMsg];
-      setTickets((prev) =>
-        prev.map((t) =>
-          t.id === existingTicket.id
-            ? { ...t, status: 'resolved', updated_at: new Date().toISOString(), messages: updatedMessages }
-            : t
-        )
-      );
-      if (supabase) {
-        try {
-          await supabase
-            .from('tickets')
-            .update({
-              status: 'resolved',
-              updated_at: new Date().toISOString(),
-              messages: updatedMessages,
-            })
-            .eq('id', existingTicket.id);
-        } catch (e) {
-          console.warn('Could not update ticket in Supabase:', e);
-        }
-      }
-    } else {
-      const ticketId = `tkt-${Date.now()}`;
-      newMsg.ticket_id = ticketId;
-      const newTicket: Ticket = {
-        id: ticketId,
-        user_id: targetUserId,
-        user_name: targetUserName,
-        user_email: targetUserEmail,
-        subject,
-        department: 'پشتیبانی مالی',
-        priority: 'high',
-        status: 'resolved',
-        created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString(),
-        messages: [newMsg],
-      };
-      setTickets((prev) => [newTicket, ...prev]);
-      if (supabase) {
-        try {
-          await supabase.from('tickets').insert([{ ...newTicket, category: undefined }]);
-        } catch (e) {
-          console.warn('Could not insert ticket in Supabase:', e);
-        }
-      }
+    if (!supabase || !user.id || user.id === 'guest') {
+      console.warn('Cannot forward support notification without an authenticated Supabase user.');
+      return;
     }
+    const existingTicket = tickets.find(
+      (t) => t.user_id === targetUserId && t.subject.includes('اشتراک')
+    );
+    const createdAt = new Date().toISOString();
+    let ticketId = existingTicket?.id;
+
+    if (ticketId) {
+      const { error: messageError } = await supabase.from('ticket_messages').insert([{
+        ticket_id: ticketId,
+        sender_id: user.id,
+        message: messageContent,
+        attachment_url: null,
+        created_at: createdAt,
+      }]);
+      if (messageError) {
+        console.warn('Could not insert subscription ticket message:', messageError.message);
+        return;
+      }
+      const { error: updateError } = await supabase.from('tickets')
+        .update({ status: 'resolved', updated_at: createdAt })
+        .eq('id', ticketId);
+      if (updateError) console.warn('Could not update subscription ticket:', updateError.message);
+      const newMsg: TicketMessage = {
+        id: crypto.randomUUID(), ticket_id: ticketId, sender_id: user.id,
+        sender_name: 'پشتیبان رسمی چندبوم (مدیریت)', sender_role: 'admin',
+        message: messageContent, content: messageContent, created_at: createdAt,
+      };
+      setTickets((prev) => prev.map((t) => t.id === ticketId
+        ? { ...t, status: 'resolved', updated_at: createdAt, messages: [...(t.messages || []), newMsg] }
+        : t));
+      return;
+    }
+
+    ticketId = crypto.randomUUID();
+    const { error: ticketError } = await supabase.from('tickets').insert([{
+      id: ticketId,
+      user_id: targetUserId,
+      subject,
+      category: 'financial',
+      status: 'resolved',
+      created_at: createdAt,
+      updated_at: createdAt,
+    }]);
+    if (ticketError) {
+      console.warn('Could not create subscription ticket:', ticketError.message);
+      return;
+    }
+    const { error: messageError } = await supabase.from('ticket_messages').insert([{
+      ticket_id: ticketId,
+      sender_id: user.id,
+      message: messageContent,
+      attachment_url: null,
+      created_at: createdAt,
+    }]);
+    if (messageError) {
+      await supabase.from('tickets').delete().eq('id', ticketId);
+      console.warn('Could not insert subscription ticket message:', messageError.message);
+      return;
+    }
+    const newMsg: TicketMessage = {
+      id: crypto.randomUUID(), ticket_id: ticketId, sender_id: user.id,
+      sender_name: 'پشتیبان رسمی چندبوم (مدیریت)', sender_role: 'admin',
+      message: messageContent, content: messageContent, created_at: createdAt,
+    };
+    const newTicket: Ticket = {
+      id: ticketId, user_id: targetUserId, user_name: targetUserName,
+      user_email: targetUserEmail, subject, category: 'financial',
+      department: 'پشتیبانی مالی', priority: 'high', status: 'resolved',
+      created_at: createdAt, updated_at: createdAt, messages: [newMsg],
+    };
+    setTickets((prev) => [newTicket, ...prev]);
   };
 
   // Direct User Notification and Support Messaging System for Admin
@@ -1684,18 +1724,21 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     }
     const supabase = getSupabaseClient();
     if (!supabase) throw new Error('اتصال Supabase در دسترس نیست.');
+    if (!subject.trim()) throw new Error('موضوع تیکت را وارد کنید.');
+    if (!initialMessage.trim()) throw new Error('متن پیام تیکت نمی‌تواند خالی باشد.');
 
-    const ticketId = `tkt-${Date.now()}-${Math.random().toString(36).substring(2, 6)}`;
+    // tickets.id is UUID and the deployed schema has no department/priority/messages columns.
+    const ticketId = crypto.randomUUID();
     const effectiveCategory = category || (department === 'پشتیبانی مالی' ? 'financial' : department === 'پشتیبانی فنی' ? 'technical' : 'support');
     const createdAt = new Date().toISOString();
     const newMsg: TicketMessage = {
-      id: `msg-${Date.now()}`,
+      id: crypto.randomUUID(),
       ticket_id: ticketId,
       sender_id: user.id,
       sender_name: user.full_name || 'کاربر چندبوم',
       sender_role: 'user',
-      message: initialMessage,
-      content: initialMessage,
+      message: initialMessage.trim(),
+      content: initialMessage.trim(),
       attachment_url: attachmentUrl || null,
       created_at: createdAt,
     };
@@ -1704,7 +1747,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       user_id: user.id,
       user_name: user.full_name || 'کاربر چندبوم',
       user_email: user.email || '',
-      subject,
+      subject: subject.trim(),
       category: effectiveCategory,
       department,
       priority,
@@ -1714,21 +1757,29 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       messages: [newMsg],
     };
 
-    // The deployed SQL schema stores messages as JSONB on tickets and has no category column.
-    const { error } = await supabase.from('tickets').insert([{
+    const { error: ticketError } = await supabase.from('tickets').insert([{
       id: ticketId,
       user_id: user.id,
-      user_name: newTicket.user_name,
-      user_email: newTicket.user_email,
-      subject,
-      department,
-      priority,
+      subject: subject.trim(),
+      category: effectiveCategory,
       status: 'open',
-      messages: [newMsg],
       created_at: createdAt,
       updated_at: createdAt,
     }]);
-    if (error) throw new Error(`ذخیره تیکت در Supabase ناموفق بود: ${error.message}`);
+    if (ticketError) throw new Error(`ذخیره تیکت در Supabase ناموفق بود: ${ticketError.message}`);
+
+    const { error: messageError } = await supabase.from('ticket_messages').insert([{
+      ticket_id: ticketId,
+      sender_id: user.id,
+      message: initialMessage.trim(),
+      attachment_url: attachmentUrl || null,
+      created_at: createdAt,
+    }]);
+    if (messageError) {
+      // Best-effort cleanup so a failed first message does not leave an empty ticket.
+      await supabase.from('tickets').delete().eq('id', ticketId);
+      throw new Error(`ثبت پیام اولیه ناموفق بود: ${messageError.message}`);
+    }
 
     setTickets((prev) => [newTicket, ...prev]);
     setSelectedTicket(newTicket);
@@ -1754,32 +1805,46 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     const ticket = tickets.find((item) => item.id === ticketId);
     if (!ticket) throw new Error('تیکت انتخاب‌شده در فهرست فعلی پیدا نشد.');
     const supabase = getSupabaseClient();
-    if (!supabase || !isAuthenticated) throw new Error('برای ارسال پاسخ، اتصال Supabase و ورود به حساب لازم است.');
+    if (!supabase || !isAuthenticated || !user.id || user.id === 'guest') {
+      throw new Error('برای ارسال پاسخ، اتصال Supabase و ورود به حساب لازم است.');
+    }
+    if (!content.trim()) throw new Error('متن پیام نمی‌تواند خالی باشد.');
 
+    const createdAt = new Date().toISOString();
     const newMsg: TicketMessage = {
-      id: `msg-${Date.now()}-${Math.random().toString(36).substring(2, 6)}`,
+      id: crypto.randomUUID(),
       ticket_id: ticketId,
-      sender_id: user.id || 'guest',
+      sender_id: user.id,
       sender_name: isActAsAdmin ? 'پشتیبان رسمی چندبوم' : user.full_name || 'کاربر چندبوم',
       sender_role: isActAsAdmin ? 'admin' : 'user',
-      message: content,
-      content,
+      message: content.trim(),
+      content: content.trim(),
       attachment_url: attachmentUrl || null,
-      created_at: new Date().toISOString(),
+      created_at: createdAt,
     };
+
+    const { error: messageError } = await supabase.from('ticket_messages').insert([{
+      ticket_id: ticketId,
+      sender_id: user.id,
+      message: content.trim(),
+      attachment_url: attachmentUrl || null,
+      created_at: createdAt,
+    }]);
+    if (messageError) throw new Error(`ذخیره پاسخ در Supabase ناموفق بود: ${messageError.message}`);
+
+    const nextStatus: Ticket['status'] = isActAsAdmin ? 'resolved' : 'in_progress';
+    const updatedAt = createdAt;
+    const { error: ticketError } = await supabase.from('tickets')
+      .update({ status: nextStatus, updated_at: updatedAt })
+      .eq('id', ticketId);
+    if (ticketError) throw new Error(`به‌روزرسانی وضعیت تیکت ناموفق بود: ${ticketError.message}`);
+
     const updatedTicket: Ticket = {
       ...ticket,
-      status: isActAsAdmin ? 'resolved' : 'in_progress',
-      updated_at: new Date().toISOString(),
+      status: nextStatus,
+      updated_at: updatedAt,
       messages: [...(ticket.messages || []), newMsg],
     };
-    const { error } = await supabase.from('tickets').update({
-      status: updatedTicket.status,
-      updated_at: updatedTicket.updated_at,
-      messages: updatedTicket.messages,
-    }).eq('id', ticketId);
-    if (error) throw new Error(`ذخیره پاسخ در Supabase ناموفق بود: ${error.message}`);
-
     setTickets((prev) => prev.map((item) => item.id === ticketId ? updatedTicket : item));
     setSelectedTicket(updatedTicket);
   };
