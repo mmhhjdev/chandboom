@@ -56,7 +56,7 @@ export const DongGroupAI: React.FC<DongGroupAIProps> = ({ group, onRegisterExpen
     setExpanded(true);
     setInput('');
     setError('');
-    const nextHistory: ChatLine[] = [...history, { role: 'user', content: question }].slice(-8);
+    const nextHistory: ChatLine[] = [...history, { role: 'user' as const, content: question }].slice(-8);
     setHistory(nextHistory);
     setLoading(true);
     const context = {
