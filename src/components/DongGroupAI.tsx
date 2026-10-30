@@ -2,6 +2,8 @@ import React, { useEffect, useRef, useState } from 'react';
 import { Bot, Send, Sparkles, Loader2, RotateCcw, ChevronDown, ChevronUp, Mic, Check, X, WandSparkles } from 'lucide-react';
 import { invokeAiAssistantEdgeFunction } from '../lib/supabase';
 import { formatToman, toPersianDigits } from '../utils/formatters';
+import { useApp } from '../context/AppContext';
+import { useSubscription } from '../hooks/useSubscription';
 
 export interface ExpenseDraftItem { title: string; amount: number; participants: string[]; }
 export interface ExpenseDraft { title: string; payer: string; items: ExpenseDraftItem[]; }
@@ -26,6 +28,11 @@ const starterPrompts = [
 ];
 
 export const DongGroupAI: React.FC<DongGroupAIProps> = ({ group, onRegisterExpense, currentUserName }) => {
+  const { openSubscriptionModal } = useApp();
+  const { tier, status, subscriptionExpiresAt, aiRequestsLeft, monthlyAiLimit } = useSubscription();
+  const [voiceTranscript, setVoiceTranscript] = useState(false);
+  const [localRequestsLeft, setLocalRequestsLeft] = useState(aiRequestsLeft);
+  useEffect(() => { setLocalRequestsLeft(aiRequestsLeft); }, [aiRequestsLeft, group.id]);
   const [expanded, setExpanded] = useState(false);
   const [input, setInput] = useState('');
   const [loading, setLoading] = useState(false);
@@ -42,6 +49,7 @@ export const DongGroupAI: React.FC<DongGroupAIProps> = ({ group, onRegisterExpen
   useEffect(() => {
     setHistory([]);
     setInput('');
+    setVoiceTranscript(false);
     setError('');
     setDraft(null);
     setDraftError('');
@@ -71,19 +79,30 @@ export const DongGroupAI: React.FC<DongGroupAIProps> = ({ group, onRegisterExpen
     };
     const scopedQuestion = `این گفتگو فقط درباره تحلیل هزینه‌های گروه دنگ مشخص‌شده زیر است. فقط از داده‌های همین گروه استفاده کن؛ اگر داده برای محاسبه بدهی دقیق کافی نیست، این محدودیت را شفاف بگو. واحد مبلغ‌ها تومان است. هیچ هزینه یا تغییری ثبت نکن و ادعا نکن چیزی را تغییر داده‌ای.\nاطلاعات گروه: ${JSON.stringify(context)}\nسؤال کاربر: ${question}`;
     try {
-      const result = await invokeAiAssistantEdgeFunction(scopedQuestion, nextHistory.slice(0, -1), 'advisor');
+      const result = await invokeAiAssistantEdgeFunction(scopedQuestion, nextHistory.slice(0, -1), 'group_advisor', { feature: voiceTranscript ? 'voice_expense' : 'text' });
+      if (typeof result.remaining_queries === 'number') setLocalRequestsLeft(result.remaining_queries);
       if (!result.success || !result.reply) throw new Error(result.error || 'پاسخ هوش مصنوعی دریافت نشد.');
       setHistory(prev => [...prev, { role: 'assistant' as const, content: result.reply! }].slice(-8));
     } catch (e: any) {
       setError(e?.message || 'ارتباط با هوش مصنوعی برقرار نشد.');
       setHistory(prev => prev.filter((m, i) => !(i === prev.length - 1 && m.role === 'user' && m.content === question)));
       setInput(question);
-    } finally { setLoading(false); }
+    } finally { setLoading(false); setVoiceTranscript(false); }
   };
 
   const normalizeName = (value: string) => value.trim().replace(/[يى]/g, 'ی').replace(/ك/g, 'ک').replace(/\s+/g, ' ').toLowerCase();
 
   const startVoiceInput = () => {
+    const subscriptionActive = status === 'active' && (!subscriptionExpiresAt || new Date(subscriptionExpiresAt).getTime() > Date.now());
+    if (tier !== 'vip' || !subscriptionActive) {
+      setDraftError('ثبت هزینه با صدا مخصوص اشتراک VIP فعال است. برای مشاهده پلن‌ها روی دکمه ارتقای اشتراک بزن.');
+      openSubscriptionModal();
+      return;
+    }
+    if (localRequestsLeft <= 0) {
+      setDraftError('سهمیه ماهانه هوش مصنوعی شما تمام شده است. پس از تمدید سهمیه دوباره تلاش کن.');
+      return;
+    }
     const SpeechRecognitionCtor = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
     if (!SpeechRecognitionCtor) {
       setDraftError('مرورگر شما تبدیل گفتار به متن را پشتیبانی نمی‌کند. از Chrome یا Edge استفاده کنید یا متن را تایپ کنید.');
@@ -96,7 +115,7 @@ export const DongGroupAI: React.FC<DongGroupAIProps> = ({ group, onRegisterExpen
     recognition.onstart = () => { setListening(true); setDraftError(''); };
     recognition.onresult = (event: any) => {
       const transcript = event.results?.[0]?.[0]?.transcript;
-      if (transcript) setInput((previous) => `${previous.trim()} ${transcript}`.trim());
+      if (transcript) { setInput((previous) => `${previous.trim()} ${transcript}`.trim()); setVoiceTranscript(true); }
     };
     recognition.onerror = () => setDraftError('صدای شما دریافت نشد. اجازه میکروفون را بررسی کنید و دوباره تلاش کنید.');
     recognition.onend = () => setListening(false);
@@ -111,7 +130,8 @@ export const DongGroupAI: React.FC<DongGroupAIProps> = ({ group, onRegisterExpen
     setDraft(null);
     const prompt = `از متن زیر فقط یک پیش‌نویس هزینه برای گروه دنگ استخراج کن. هنوز چیزی ثبت نکن. نام اعضای معتبر گروه: ${JSON.stringify(group.members)}. نام نمایشی کاربر فعلی: ${JSON.stringify(currentUserName || null)}. گروه: ${group.name}. واحد پیش‌فرض تومان است؛ «هزار تومان» را در مبلغ عددی ضربدر ۱۰۰۰ کن. اگر کاربر گفت «من»، «خودم» یا «من حساب کردم»، payer را فقط در صورت تطبیق قطعی با عضو گروه برابر نام واقعی عضو کن؛ در غیر این صورت از مقدار «__CURRENT_USER__» استفاده کن تا برنامه بررسی کند. هر آیتم باید مصرف‌کننده‌های همان آیتم را داشته باشد. فقط JSON معتبر و بدون markdown برگردان با این ساختار: {"title":"نام کلی هزینه","payer":"نام پرداخت‌کننده یا __CURRENT_USER__","items":[{"title":"نام آیتم","amount":320000,"participants":["نام عضو"]}],"missing_information":[]} . اگر مبلغ، پرداخت‌کننده یا مصرف‌کننده‌ها قابل تشخیص نیستند، چیزی حدس نزن و آن را در missing_information بنویس. همه آیتم‌ها باید مبلغ مثبت داشته باشند. متن کاربر: ${spoken}`;
     try {
-      const result = await invokeAiAssistantEdgeFunction(prompt, [], 'advisor');
+      const result = await invokeAiAssistantEdgeFunction(prompt, [], 'group_advisor', { feature: voiceTranscript ? 'voice_expense' : 'text' });
+      if (typeof result.remaining_queries === 'number') setLocalRequestsLeft(result.remaining_queries);
       if (!result.success || !result.reply) throw new Error(result.error || 'پیش‌نویس هزینه ساخته نشد.');
       const replyText = result.reply.trim();
       const jsonStart = replyText.indexOf('{');
@@ -143,7 +163,7 @@ export const DongGroupAI: React.FC<DongGroupAIProps> = ({ group, onRegisterExpen
       setDraft({ title: String(parsed.title), payer, items });
     } catch (e: any) {
       setDraftError(e?.message || 'ساخت پیش‌نویس ناموفق بود.');
-    } finally { setDraftLoading(false); }
+    } finally { setDraftLoading(false); setVoiceTranscript(false); }
   };
 
   const confirmDraft = async () => {
@@ -193,7 +213,7 @@ export const DongGroupAI: React.FC<DongGroupAIProps> = ({ group, onRegisterExpen
         </form>
         <div className="flex flex-wrap items-center gap-2">
           <button type="button" onClick={() => void prepareExpense()} disabled={!input.trim() || draftLoading || savingDraft} className="inline-flex items-center gap-2 rounded-xl bg-emerald-700 hover:bg-emerald-800 disabled:opacity-50 text-white px-3 py-2 text-xs font-cairo font-bold"><WandSparkles className="w-4 h-4" />{draftLoading ? 'در حال فهمیدن هزینه…' : 'آماده‌سازی برای ثبت هزینه'}</button>
-          <span className="text-[11px] text-zinc-500 font-cairo">قبل از ثبت، جزئیات را تأیید می‌کنی.</span>
+          <span className="text-[11px] text-zinc-500 font-cairo">قبل از ثبت، جزئیات را تأیید می‌کنی.</span><span className="text-[11px] text-zinc-500 font-cairo">سهمیه باقی‌مانده: {toPersianDigits(localRequestsLeft)} از {toPersianDigits(monthlyAiLimit)} درخواست</span>
         </div>
         {draftError && <p role="status" className={`text-xs font-cairo ${draftError.includes('موفقیت') ? 'text-emerald-600' : 'text-rose-600'}`}>{draftError}</p>}
         {draft && <div className="rounded-2xl border border-emerald-200 dark:border-emerald-900/60 bg-emerald-50/70 dark:bg-emerald-950/20 p-3 space-y-3">

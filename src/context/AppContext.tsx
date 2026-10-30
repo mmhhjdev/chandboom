@@ -503,7 +503,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
   const aiQueriesRemaining = useMemo(() => {
     if (user.tier === 'free') return 0;
-    const limit = user.ai_queries_limit ?? (user.tier === 'bronze' ? 30 : user.tier === 'vip' ? 250 : 100);
+    const limit = user.ai_queries_limit ?? (user.tier === 'bronze' ? 50 : user.tier === 'vip' ? 500 : user.tier === 'pro' ? 150 : 0);
     const serverRemaining = user.ai_requests_left;
     if (typeof serverRemaining === 'number') return Math.max(0, serverRemaining);
     return Math.max(0, Number(limit) - (user.ai_queries_used || 0));
@@ -514,7 +514,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     if (!Number.isFinite(remaining) || remaining < 0) return;
     setUser((prev) => {
       const limit = Number(prev.ai_queries_limit ?? (
-        prev.tier === 'bronze' ? 30 : prev.tier === 'vip' ? 250 : prev.tier === 'pro' ? 100 : 0
+        prev.tier === 'bronze' ? 50 : prev.tier === 'vip' ? 500 : prev.tier === 'pro' ? 150 : 0
       ));
       return {
         ...prev,

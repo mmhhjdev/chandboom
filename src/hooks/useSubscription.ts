@@ -46,7 +46,7 @@ export function useSubscription(): UseSubscriptionReturn {
     if (user.ai_requests_left !== undefined && user.ai_requests_left !== null) {
       return Math.max(0, user.ai_requests_left);
     }
-    const limit = user.ai_queries_limit ?? (user.tier === 'vip' ? 500 : user.tier === 'bronze' ? 30 : 100);
+    const limit = user.ai_queries_limit ?? (user.tier === 'vip' ? 500 : user.tier === 'bronze' ? 50 : user.tier === 'pro' ? 150 : 0);
     const used = user.ai_queries_used ?? 0;
     return Math.max(0, limit - used);
   }, [user.ai_requests_left, user.ai_queries_limit, user.ai_queries_used, user.tier]);
@@ -118,7 +118,7 @@ export function useSubscription(): UseSubscriptionReturn {
     subscriptionExpiresAt: user.subscription_expires_at || null,
     remainingDays: remainingInfo.daysLeft,
     aiRequestsLeft,
-    monthlyAiLimit: user.ai_queries_limit ?? 100,
+    monthlyAiLimit: user.ai_queries_limit ?? (user.tier === 'vip' ? 500 : user.tier === 'pro' ? 150 : user.tier === 'bronze' ? 50 : 0),
     aiQueriesUsed: user.ai_queries_used ?? 0,
     hasAiAccess: hasAIAccess,
     checkCanMakeAiRequest,

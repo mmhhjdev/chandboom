@@ -442,7 +442,8 @@ export interface AiAssistantResult {
 export async function invokeAiAssistantEdgeFunction(
   message: string,
   history: Array<{ role: 'user' | 'assistant'; content: string }> = [],
-  mode: 'agent' | 'advisor' = 'agent'
+  mode: 'agent' | 'advisor' | 'group_advisor' = 'agent',
+  options: { feature?: 'voice_expense' | 'text' } = {}
 ): Promise<AiAssistantResult> {
   try {
     const sessionRes = await supabase.auth.getSession();
@@ -456,7 +457,7 @@ export async function invokeAiAssistantEdgeFunction(
     }
 
     const { data, error } = await supabase.functions.invoke('ai-assistant', {
-      body: { message, messages: history, mode },
+      body: { message, messages: history, mode, feature: options.feature || 'text' },
       headers: { Authorization: `Bearer ${token}` },
     });
 

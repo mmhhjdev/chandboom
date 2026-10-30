@@ -22,7 +22,7 @@ function corsFor(req: Request): Record<string, string> {
   return baseCorsHeaders;
 }
 
-type Mode = 'agent' | 'advisor';
+type Mode = 'agent' | 'advisor' | 'group_advisor';
 type ActionType =
   | 'create_transaction'
   | 'create_dong_group'
@@ -209,7 +209,7 @@ function normalizeResult(raw: unknown, mode: Mode): AssistantResult {
   }
 
   const reply = safeString(raw.reply, 4000) || 'برای پاسخ دقیق‌تر، لطفاً درخواستت رو کمی روشن‌تر کن.';
-  if (mode === 'advisor') return { reply, action: null, requires_confirmation: false };
+  if (mode === 'advisor' || mode === 'group_advisor') return { reply, action: null, requires_confirmation: false };
 
   const action = validateAction(raw.action);
   // An invalid or unsupported action must never be forwarded to the client.
@@ -304,11 +304,14 @@ serve(async (req: Request) => {
     let body: unknown = null;
     try { body = JSON.parse(rawBody); } catch { /* handled below */ }
     if (!isRecord(body)) return respond({ success: false, error: 'بدنه درخواست معتبر نیست.' }, 400);
+    if (body.feature === 'voice_expense' && String(dbUser.tier || '').toLowerCase() !== 'vip') {
+      return respond({ success: false, error: 'ثبت هزینه با صدا مخصوص اشتراک VIP است.', code: 'VIP_VOICE_REQUIRED' }, 403);
+    }
 
     const userMessage = normalizeMessage(body.message);
     if (!userMessage) return respond({ success: false, error: 'متن پیام الزامی است.' }, 400);
 
-    const mode: Mode = body.mode === 'advisor' ? 'advisor' : 'agent';
+    const mode: Mode = body.mode === 'advisor' ? 'advisor' : body.mode === 'group_advisor' ? 'group_advisor' : 'agent';
     const currentLimit = Number(dbUser.ai_queries_limit ?? 0);
     const currentUsed = Math.max(0, Number(dbUser.ai_queries_used || 0));
     const currentRemaining = remainingQueries(currentLimit, currentUsed);
@@ -360,9 +363,9 @@ serve(async (req: Request) => {
     }
     const remainingAfterConsume = Number(quotaData.remaining_queries ?? 0);
 
-    const isAdvisor = mode === 'advisor';
+    const isAdvisor = mode === 'advisor' || mode === 'group_advisor';
     let advisorContext = '';
-    if (isAdvisor) {
+    if (mode === 'advisor') {
       const since = new Date();
       since.setMonth(since.getMonth() - 6);
       const [txRes, goalsRes, remindersRes] = await Promise.all([
@@ -469,7 +472,7 @@ serve(async (req: Request) => {
     try {
       await supabaseAdmin.from('ai_usage_logs').insert([{
         user_id: userId,
-        query_category: isAdvisor ? 'financial_advice' : result.action ? 'action_proposal' : 'finance_help',
+        query_category: mode === 'group_advisor' ? 'group_finance_help' : isAdvisor ? 'financial_advice' : result.action ? 'action_proposal' : 'finance_help',
         tokens_used: Number.isFinite(actualTotalTokens) && actualTotalTokens >= 0 ? actualTotalTokens : 0,
       }]);
     } catch (logError) {

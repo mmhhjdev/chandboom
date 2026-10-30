@@ -10,20 +10,20 @@ export const ArticlePage: React.FC = () => {
   const article = useMemo(() => ARTICLES.find((item) => item.slug === slug), [slug]);
   if (!article) return <Navigate to="/articles" replace />;
   const related = ARTICLES.filter((item) => item.slug !== article.slug).slice(0, 3);
-  const schema = {'@context':'https://schema.org','@type':'Article','headline':article.title,'description':article.description,'image':`https://chandboom.ir/assets/articles/${article.slug}.svg`,'mainEntityOfPage':`https://chandboom.ir/articles/${article.slug}`,'publisher':{'@type':'Organization','name':'چندبوم','url':'https://chandboom.ir'},'inLanguage':'fa-IR'};
+  const schema = {'@context':'https://schema.org','@type':'Article','headline':article.title,'description':article.description,'keywords':article.keywords,'image':`https://chandboom.ir/assets/articles/${article.slug}.svg`,'datePublished':'2026-10-30','dateModified':'2026-10-30','author':{'@type':'Organization','name':'مجله چندبوم'},'mainEntityOfPage':`https://chandboom.ir/articles/${article.slug}`,'publisher':{'@type':'Organization','name':'چندبوم','url':'https://chandboom.ir'},'inLanguage':'fa-IR'};
   return <SEOLayout>
-    <SEOHead title={`${article.title} | مجله چندبوم`} description={article.description} canonicalPath={`/articles/${article.slug}`} structuredData={schema} />
+    <SEOHead title={`${article.title} | مجله چندبوم`} description={article.description} keywords={article.keywords} image={`https://chandboom.ir/assets/articles/${article.slug}.svg`} canonicalPath={`/articles/${article.slug}`} structuredData={{'@context':'https://schema.org','@graph':[schema,{'@type':'BreadcrumbList','itemListElement':[{'@type':'ListItem','position':1,'name':'مجله چندبوم','item':'https://chandboom.ir/articles'},{'@type':'ListItem','position':2,'name':article.title,'item':`https://chandboom.ir/articles/${article.slug}`}]}]}} />
     <article className="mx-auto max-w-3xl">
       <nav className="mb-6 text-xs text-zinc-500"><Link to="/articles" className="hover:text-emerald-700">مجله چندبوم</Link><span className="mx-2">/</span><span>{article.category}</span></nav>
       <header className="mb-8 space-y-5">
         <span className="inline-flex rounded-full bg-emerald-100 px-3 py-1.5 text-xs font-extrabold text-emerald-900 dark:bg-emerald-900/40 dark:text-emerald-200">{article.category}</span>
         <h1 className="text-3xl sm:text-4xl font-black leading-[1.8] text-zinc-950 dark:text-white">{article.title}</h1>
-        <p className="text-base leading-8 text-zinc-600 dark:text-zinc-300">{article.description}</p>
+        <p className="text-base leading-8 text-zinc-600 dark:text-zinc-300">{article.description}</p><div className="flex flex-wrap gap-3 text-xs text-zinc-500"><span className="rounded-full bg-zinc-100 px-3 py-1.5 dark:bg-zinc-800">زمان مطالعه: حدود ۱۰ دقیقه</span><span className="rounded-full bg-zinc-100 px-3 py-1.5 dark:bg-zinc-800">به‌روزرسانی: ۸ آبان ۱۴۰۵</span></div>
         <img src={`/assets/articles/${article.slug}.svg`} alt={article.alt} className="mt-6 max-h-[430px] w-full rounded-3xl border border-emerald-100 object-cover dark:border-emerald-900/60" width="1200" height="630" fetchPriority="high"/>
       </header>
-      <div className="mb-8 rounded-2xl border border-emerald-100 bg-emerald-50/70 p-5 text-sm leading-8 text-emerald-950 dark:border-emerald-900/50 dark:bg-emerald-950/30 dark:text-emerald-100"><strong>در این راهنما:</strong> {article.sections.map(s=>s.heading).join('، ')}.</div>
+      <nav aria-label="فهرست مطالب" className="mb-8 rounded-2xl border border-emerald-100 bg-emerald-50/70 p-5 text-sm leading-8 text-emerald-950 dark:border-emerald-900/50 dark:bg-emerald-950/30 dark:text-emerald-100"><strong className="block mb-2">فهرست مطالب</strong><ol className="list-decimal pr-5 grid gap-1 sm:grid-cols-2">{article.sections.map((section,i)=><li key={section.heading}><a className="hover:underline" href={`#section-${i}`}>{section.heading}</a></li>)}</ol></nav>
       <div className="article-body space-y-8">
-        {article.sections.map((section, i) => <section key={`${article.slug}-${i}`} className="space-y-3">
+        {article.sections.map((section, i) => <section id={`section-${i}`} key={`${article.slug}-${i}`} className="scroll-mt-24 space-y-3">
           <h2 className="border-r-4 border-emerald-500 pr-4 text-xl sm:text-2xl font-black leading-9 text-zinc-900 dark:text-white">{section.heading}</h2>
           {section.paragraphs.map((paragraph, j) => <p key={j} className="text-[15px] leading-9 text-zinc-700 dark:text-zinc-300">{paragraph}</p>)}
         </section>)}
