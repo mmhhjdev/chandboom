@@ -4,6 +4,7 @@ import { formatToman, toPersianDigits } from '../utils/formatters';
 import { getSupabaseClient } from '../lib/supabase';
 import { DongCollaborationPanel } from './DongCollaborationPanel';
 import { DongGroupAI } from './DongGroupAI';
+import type { ExpenseDraft } from './DongGroupAI';
 
 interface FamilyMember {
   name: string;
@@ -87,6 +88,8 @@ export const DongView: React.FC = () => {
         const { data: profile } = await supabase.from('profiles').select('username,display_name').eq('id', user.id).maybeSingle();
         setProfileUsername(profile?.username || null);
         setProfileDisplayName(profile?.display_name || null);
+        await fetchGroups(supabase, profile?.display_name || null);
+        return;
       }
       await fetchGroups(supabase);
     };
@@ -94,7 +97,8 @@ export const DongView: React.FC = () => {
     checkAuthAndFetch();
   }, []);
 
-  const fetchGroups = async (supabase: any) => {
+  const fetchGroups = async (supabase: any, displayNameOverride?: string | null) => {
+    const effectiveDisplayName = displayNameOverride || profileDisplayName;
     setLoading(true);
     const { data: groupsData, error: groupsError } = await supabase
       .from('dong_groups')
@@ -120,15 +124,15 @@ export const DongView: React.FC = () => {
       name: g.name,
       isFamilyMode: g.is_family_mode || false,
       families: g.families || [],
-      members: g.members || [],
+      members: (g.members || []).map((member: string) => (effectiveDisplayName && ['من', 'خودم'].includes(member.trim()) ? effectiveDisplayName : member)),
       expenses: (expensesData || [])
         .filter((ex: any) => ex.group_id === g.id)
         .map((ex: any) => ({
           id: ex.id,
           title: ex.title,
-          payer: ex.payer,
+          payer: effectiveDisplayName && ['من', 'خودم'].includes(String(ex.payer || '').trim()) ? effectiveDisplayName : ex.payer,
           amount: Number(ex.amount),
-          participants: ex.participants || [],
+          participants: (ex.participants || []).map((member: string) => (effectiveDisplayName && ['من', 'خودم'].includes(String(member).trim()) ? effectiveDisplayName : member)),
           isItemized: ex.is_itemized || false,
           billItems: ex.bill_items || [],
         })),
@@ -290,6 +294,44 @@ export const DongView: React.FC = () => {
     setExpenseAmount('');
     setBillItems([{ title: '', price: '', consumers: [] }]);
     setIsExpenseModalOpen(false);
+  };
+
+  const handleRegisterAIDraft = async (draft: ExpenseDraft) => {
+    if (!activeGroup) throw new Error('گروه فعالی انتخاب نشده است.');
+    const supabase = getSupabaseClient();
+    if (!supabase) throw new Error('اتصال به پایگاه داده برقرار نیست.');
+    const memberSet = new Set(activeGroup.members);
+    if (!memberSet.has(draft.payer)) throw new Error('نام پرداخت‌کننده عضو این گروه نیست.');
+    const billItems: BillItem[] = draft.items.map((item, index) => {
+      if (!Number.isFinite(item.amount) || item.amount <= 0 || !item.title.trim() || item.participants.length === 0) {
+        throw new Error('یکی از آیتم‌ها مبلغ یا مصرف‌کننده معتبر ندارد.');
+      }
+      if (item.participants.some(name => !memberSet.has(name))) throw new Error('یکی از مصرف‌کننده‌ها عضو این گروه نیست.');
+      return { id: String(index + 1), title: item.title.trim(), price: Math.round(item.amount), consumers: [...new Set(item.participants)] };
+    });
+    const participants = [...new Set(billItems.flatMap(item => item.consumers))];
+    const totalAmount = billItems.reduce((sum, item) => sum + item.price, 0);
+    const payload = {
+      group_id: activeGroup.id,
+      title: draft.title.trim() || 'هزینه ثبت‌شده با هوش مصنوعی',
+      payer: draft.payer,
+      amount: totalAmount,
+      participants,
+      is_itemized: true,
+      bill_items: billItems,
+    };
+    const { data, error } = await supabase.from('dong_expenses').insert([payload]).select().single();
+    if (error || !data?.id) throw new Error(`ثبت هزینه ناموفق بود: ${error?.message || 'شناسه هزینه دریافت نشد.'}`);
+    const newExpense: ExpenseItem = {
+      id: data.id,
+      title: payload.title,
+      payer: payload.payer,
+      amount: totalAmount,
+      participants,
+      isItemized: true,
+      billItems,
+    };
+    setGroups(previous => previous.map(group => group.id === activeGroup.id ? { ...group, expenses: [newExpense, ...group.expenses] } : group));
   };
 
   const handleDeleteExpense = async (expenseId: string) => {
@@ -737,7 +779,7 @@ export const DongView: React.FC = () => {
 
       {currentUserId && <DongCollaborationPanel groupId={activeGroup.id} currentUserId={currentUserId} onChanged={() => { const supabase = getSupabaseClient(); void fetchGroups(supabase); }} />}
 
-      <DongGroupAI group={activeGroup} />
+      <DongGroupAI group={activeGroup} currentUserName={profileDisplayName || profileUsername} onRegisterExpense={handleRegisterAIDraft} />
 
       <div className="bg-gradient-to-br from-emerald-50 to-teal-50 dark:from-[#122019] dark:to-[#0F1814] p-5 rounded-2xl border border-emerald-200/60 dark:border-emerald-900/50 shadow-xs space-y-4">
         <div className="flex items-center gap-2 text-emerald-900 dark:text-emerald-300">

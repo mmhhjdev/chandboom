@@ -1,9 +1,13 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { Bot, Send, Sparkles, Loader2, RotateCcw, ChevronDown, ChevronUp } from 'lucide-react';
+import { Bot, Send, Sparkles, Loader2, RotateCcw, ChevronDown, ChevronUp, Mic, Check, X, WandSparkles } from 'lucide-react';
 import { invokeAiAssistantEdgeFunction } from '../lib/supabase';
 import { formatToman, toPersianDigits } from '../utils/formatters';
 
+export interface ExpenseDraftItem { title: string; amount: number; participants: string[]; }
+export interface ExpenseDraft { title: string; payer: string; items: ExpenseDraftItem[]; }
 interface DongGroupAIProps {
+  onRegisterExpense: (draft: ExpenseDraft) => Promise<void>;
+  currentUserName?: string | null;
   group: {
     id: string;
     name: string;
@@ -21,12 +25,17 @@ const starterPrompts = [
   'هزینه‌های گروه را تحلیل کن',
 ];
 
-export const DongGroupAI: React.FC<DongGroupAIProps> = ({ group }) => {
+export const DongGroupAI: React.FC<DongGroupAIProps> = ({ group, onRegisterExpense, currentUserName }) => {
   const [expanded, setExpanded] = useState(false);
   const [input, setInput] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [history, setHistory] = useState<ChatLine[]>([]);
+  const [draft, setDraft] = useState<ExpenseDraft | null>(null);
+  const [draftLoading, setDraftLoading] = useState(false);
+  const [draftError, setDraftError] = useState('');
+  const [savingDraft, setSavingDraft] = useState(false);
+  const [listening, setListening] = useState(false);
   const endRef = useRef<HTMLDivElement>(null);
 
   // Each group has a separate conversation; switching groups never carries another group's chat.
@@ -34,6 +43,8 @@ export const DongGroupAI: React.FC<DongGroupAIProps> = ({ group }) => {
     setHistory([]);
     setInput('');
     setError('');
+    setDraft(null);
+    setDraftError('');
     setExpanded(false);
   }, [group.id]);
 
@@ -62,12 +73,91 @@ export const DongGroupAI: React.FC<DongGroupAIProps> = ({ group }) => {
     try {
       const result = await invokeAiAssistantEdgeFunction(scopedQuestion, nextHistory.slice(0, -1), 'advisor');
       if (!result.success || !result.reply) throw new Error(result.error || 'پاسخ هوش مصنوعی دریافت نشد.');
-      setHistory(prev => [...prev, { role: 'assistant', content: result.reply! }].slice(-8));
+      setHistory(prev => [...prev, { role: 'assistant' as const, content: result.reply! }].slice(-8));
     } catch (e: any) {
       setError(e?.message || 'ارتباط با هوش مصنوعی برقرار نشد.');
       setHistory(prev => prev.filter((m, i) => !(i === prev.length - 1 && m.role === 'user' && m.content === question)));
       setInput(question);
     } finally { setLoading(false); }
+  };
+
+  const normalizeName = (value: string) => value.trim().replace(/[يى]/g, 'ی').replace(/ك/g, 'ک').replace(/\s+/g, ' ').toLowerCase();
+
+  const startVoiceInput = () => {
+    const SpeechRecognitionCtor = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
+    if (!SpeechRecognitionCtor) {
+      setDraftError('مرورگر شما تبدیل گفتار به متن را پشتیبانی نمی‌کند. از Chrome یا Edge استفاده کنید یا متن را تایپ کنید.');
+      return;
+    }
+    const recognition = new SpeechRecognitionCtor();
+    recognition.lang = 'fa-IR';
+    recognition.interimResults = false;
+    recognition.maxAlternatives = 1;
+    recognition.onstart = () => { setListening(true); setDraftError(''); };
+    recognition.onresult = (event: any) => {
+      const transcript = event.results?.[0]?.[0]?.transcript;
+      if (transcript) setInput((previous) => `${previous.trim()} ${transcript}`.trim());
+    };
+    recognition.onerror = () => setDraftError('صدای شما دریافت نشد. اجازه میکروفون را بررسی کنید و دوباره تلاش کنید.');
+    recognition.onend = () => setListening(false);
+    recognition.start();
+  };
+
+  const prepareExpense = async () => {
+    const spoken = input.trim();
+    if (!spoken || draftLoading) return;
+    setDraftLoading(true);
+    setDraftError('');
+    setDraft(null);
+    const prompt = `از متن زیر فقط یک پیش‌نویس هزینه برای گروه دنگ استخراج کن. هنوز چیزی ثبت نکن. نام اعضای معتبر گروه: ${JSON.stringify(group.members)}. نام نمایشی کاربر فعلی: ${JSON.stringify(currentUserName || null)}. گروه: ${group.name}. واحد پیش‌فرض تومان است؛ «هزار تومان» را در مبلغ عددی ضربدر ۱۰۰۰ کن. اگر کاربر گفت «من»، «خودم» یا «من حساب کردم»، payer را فقط در صورت تطبیق قطعی با عضو گروه برابر نام واقعی عضو کن؛ در غیر این صورت از مقدار «__CURRENT_USER__» استفاده کن تا برنامه بررسی کند. هر آیتم باید مصرف‌کننده‌های همان آیتم را داشته باشد. فقط JSON معتبر و بدون markdown برگردان با این ساختار: {"title":"نام کلی هزینه","payer":"نام پرداخت‌کننده یا __CURRENT_USER__","items":[{"title":"نام آیتم","amount":320000,"participants":["نام عضو"]}],"missing_information":[]} . اگر مبلغ، پرداخت‌کننده یا مصرف‌کننده‌ها قابل تشخیص نیستند، چیزی حدس نزن و آن را در missing_information بنویس. همه آیتم‌ها باید مبلغ مثبت داشته باشند. متن کاربر: ${spoken}`;
+    try {
+      const result = await invokeAiAssistantEdgeFunction(prompt, [], 'advisor');
+      if (!result.success || !result.reply) throw new Error(result.error || 'پیش‌نویس هزینه ساخته نشد.');
+      const replyText = result.reply.trim();
+      const jsonStart = replyText.indexOf('{');
+      const jsonEnd = replyText.lastIndexOf('}');
+      if (jsonStart < 0 || jsonEnd <= jsonStart) throw new Error('پاسخ هوش مصنوعی ساختار قابل‌خواندن نداشت. دوباره تلاش کن.');
+      const parsed = JSON.parse(replyText.slice(jsonStart, jsonEnd + 1));
+      if (Array.isArray(parsed.missing_information) && parsed.missing_information.length) {
+        throw new Error(`برای آماده‌سازی هزینه این موارد روشن نیست: ${parsed.missing_information.join('، ')}`);
+      }
+      if (!parsed.title || !parsed.payer || !Array.isArray(parsed.items) || parsed.items.length === 0) throw new Error('اطلاعات هزینه کامل استخراج نشد. متن را دقیق‌تر بنویس.');
+      const members = group.members;
+      const resolveMember = (name: string) => {
+        if (name === '__CURRENT_USER__' || ['من', 'خودم', 'کاربر فعلی'].includes(normalizeName(name))) {
+          const currentMatch = members.find(m => currentUserName && normalizeName(m) === normalizeName(currentUserName));
+          if (currentMatch) return currentMatch;
+          const aliasMatch = members.find(m => ['من', 'خودم'].includes(normalizeName(m)));
+          return aliasMatch || '';
+        }
+        return members.find(m => normalizeName(m) === normalizeName(name)) || '';
+      };
+      const payer = resolveMember(String(parsed.payer));
+      const items: ExpenseDraftItem[] = parsed.items.map((item: any) => ({
+        title: String(item.title || '').trim(),
+        amount: Number(item.amount),
+        participants: Array.isArray(item.participants) ? item.participants.map((n: unknown) => resolveMember(String(n))).filter(Boolean) : [],
+      }));
+      const invalid = items.some(item => !item.title || !Number.isFinite(item.amount) || item.amount <= 0 || item.participants.length === 0);
+      if (!payer || invalid) throw new Error('یک یا چند نام با اعضای گروه تطبیق نداشت یا اطلاعات ناقص بود. نام پرداخت‌کننده و مصرف‌کننده‌ها را واضح‌تر بگو؛ هنوز هیچ هزینه‌ای ثبت نشده است.');
+      setDraft({ title: String(parsed.title), payer, items });
+    } catch (e: any) {
+      setDraftError(e?.message || 'ساخت پیش‌نویس ناموفق بود.');
+    } finally { setDraftLoading(false); }
+  };
+
+  const confirmDraft = async () => {
+    if (!draft || savingDraft) return;
+    setSavingDraft(true);
+    setDraftError('');
+    try {
+      await onRegisterExpense(draft);
+      setDraft(null);
+      setInput('');
+      setDraftError('هزینه با موفقیت در گروه ثبت شد.');
+    } catch (e: any) {
+      setDraftError(e?.message || 'ثبت هزینه انجام نشد.');
+    } finally { setSavingDraft(false); }
   };
 
   return (
@@ -96,10 +186,23 @@ export const DongGroupAI: React.FC<DongGroupAIProps> = ({ group }) => {
         </div>}
         {error && <p role="alert" className="text-xs text-rose-600">{error}</p>}
         <form onSubmit={e => { e.preventDefault(); void send(); }} className="flex gap-2">
-          <input value={input} onChange={e => setInput(e.target.value)} placeholder="مثلاً سهم هر نفر چقدر است؟" className="min-w-0 flex-1 rounded-xl border border-violet-200 dark:border-violet-900/60 bg-white dark:bg-[#0D120F] px-3 py-2.5 text-sm font-cairo text-zinc-900 dark:text-zinc-100 outline-none focus:ring-2 focus:ring-violet-500/30" maxLength={700} />
+          <input value={input} onChange={e => setInput(e.target.value)} placeholder="سؤال بپرس یا هزینه را محاوره‌ای تعریف کن…" className="min-w-0 flex-1 rounded-xl border border-violet-200 dark:border-violet-900/60 bg-white dark:bg-[#0D120F] px-3 py-2.5 text-sm font-cairo text-zinc-900 dark:text-zinc-100 outline-none focus:ring-2 focus:ring-violet-500/30" maxLength={1200} />
+          <button type="button" onClick={startVoiceInput} disabled={listening || draftLoading} aria-label="گفتن هزینه با صدا" title="گفتن با صدا" className={`px-3 rounded-xl border border-violet-200 dark:border-violet-900/60 ${listening ? 'bg-rose-100 text-rose-700' : 'text-violet-700 dark:text-violet-300'}`}><Mic className="w-4 h-4" /></button>
           <button type="submit" disabled={!input.trim() || loading} aria-label="ارسال پیام" className="px-3 rounded-xl bg-violet-700 hover:bg-violet-800 disabled:opacity-50 text-white"><Send className="w-4 h-4" /></button>
           {history.length > 0 && <button type="button" aria-label="پاک کردن گفتگو" onClick={() => { setHistory([]); setError(''); }} className="px-3 rounded-xl border border-zinc-200 dark:border-zinc-700 text-zinc-500"><RotateCcw className="w-4 h-4" /></button>}
         </form>
+        <div className="flex flex-wrap items-center gap-2">
+          <button type="button" onClick={() => void prepareExpense()} disabled={!input.trim() || draftLoading || savingDraft} className="inline-flex items-center gap-2 rounded-xl bg-emerald-700 hover:bg-emerald-800 disabled:opacity-50 text-white px-3 py-2 text-xs font-cairo font-bold"><WandSparkles className="w-4 h-4" />{draftLoading ? 'در حال فهمیدن هزینه…' : 'آماده‌سازی برای ثبت هزینه'}</button>
+          <span className="text-[11px] text-zinc-500 font-cairo">قبل از ثبت، جزئیات را تأیید می‌کنی.</span>
+        </div>
+        {draftError && <p role="status" className={`text-xs font-cairo ${draftError.includes('موفقیت') ? 'text-emerald-600' : 'text-rose-600'}`}>{draftError}</p>}
+        {draft && <div className="rounded-2xl border border-emerald-200 dark:border-emerald-900/60 bg-emerald-50/70 dark:bg-emerald-950/20 p-3 space-y-3">
+          <div className="font-cairo font-bold text-sm">بررسی هزینه پیش از ثبت</div>
+          <div className="text-xs font-cairo text-zinc-600 dark:text-zinc-300">عنوان: {draft.title} · پرداخت‌کننده: {draft.payer}</div>
+          <div className="space-y-2">{draft.items.map((item, i) => <div key={`${item.title}-${i}`} className="flex items-start justify-between gap-3 rounded-xl bg-white/80 dark:bg-black/20 p-2.5 text-xs font-cairo"><div><div className="font-bold">{item.title}</div><div className="text-zinc-500 mt-1">مصرف‌کننده: {item.participants.join('، ')}</div></div><b className="whitespace-nowrap">{formatToman(item.amount)}</b></div>)}</div>
+          <div className="flex items-center justify-between border-t border-emerald-200 dark:border-emerald-900/60 pt-2 text-sm font-cairo"><span>مجموع</span><b>{formatToman(draft.items.reduce((sum, item) => sum + item.amount, 0))}</b></div>
+          <div className="flex gap-2"><button type="button" onClick={() => void confirmDraft()} disabled={savingDraft} className="inline-flex flex-1 items-center justify-center gap-2 rounded-xl bg-emerald-700 text-white px-3 py-2 text-xs font-cairo font-bold disabled:opacity-50"><Check className="w-4 h-4" />{savingDraft ? 'در حال ثبت…' : 'تأیید و ثبت هزینه'}</button><button type="button" onClick={() => setDraft(null)} disabled={savingDraft} className="inline-flex items-center justify-center gap-2 rounded-xl border border-zinc-300 dark:border-zinc-700 px-3 py-2 text-xs font-cairo"><X className="w-4 h-4" />لغو</button></div>
+        </div>}
       </div>}
     </section>
   );

@@ -1,6 +1,0 @@
-{
-  "name": "چندبوم (Chandboom) - سامانه هوشمند مدیریت مالی و دنگ",
-  "description": "سامانه هوشمند و مدرن چندبوم (Chandboom): مدیریت دارایی، پیش‌بینی بودجه با هوش مصنوعی و محاسبه دنگ گروهی",
-  "requestFramePermissions": [],
-  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
-}
