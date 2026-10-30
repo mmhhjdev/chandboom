@@ -3,6 +3,7 @@ import { Users, Plus, Calculator, Trash2, ArrowRight, Receipt, UserPlus, X, Home
 import { formatToman, toPersianDigits } from '../utils/formatters';
 import { getSupabaseClient } from '../lib/supabase';
 import { DongCollaborationPanel } from './DongCollaborationPanel';
+import { DongGroupAI } from './DongGroupAI';
 
 interface FamilyMember {
   name: string;
@@ -735,6 +736,8 @@ export const DongView: React.FC = () => {
       </div>
 
       {currentUserId && <DongCollaborationPanel groupId={activeGroup.id} currentUserId={currentUserId} onChanged={() => { const supabase = getSupabaseClient(); void fetchGroups(supabase); }} />}
+
+      <DongGroupAI group={activeGroup} />
 
       <div className="bg-gradient-to-br from-emerald-50 to-teal-50 dark:from-[#122019] dark:to-[#0F1814] p-5 rounded-2xl border border-emerald-200/60 dark:border-emerald-900/50 shadow-xs space-y-4">
         <div className="flex items-center gap-2 text-emerald-900 dark:text-emerald-300">

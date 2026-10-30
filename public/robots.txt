@@ -1,6 +1,11 @@
 User-agent: *
 Allow: /
+Disallow: /dashboard
+Disallow: /settings
+Disallow: /transactions
+Disallow: /support
+Disallow: /subscription
+Disallow: /dong
+Disallow: /ai-assistant
 Disallow: /admin
-Disallow: /api/
-
 Sitemap: https://chandboom.ir/sitemap.xml

@@ -1,0 +1,76 @@
+name: Deploy Chandboom to GitHub Pages
+
+on:
+  push:
+    branches:
+      - main
+      - master
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: "pages"
+  cancel-in-progress: false
+
+jobs:
+  build:
+    name: Build Static Applet
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+
+      - name: Install Dependencies
+        run: bun install --frozen-lockfile
+
+      - name: Verify TypeScript & Lint
+        run: bun run lint
+
+      - name: Build Application for Production
+        env:
+          VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
+          VITE_SUPABASE_ANON_KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY }}
+          VITE_GAPGPT_API_KEY: ${{ secrets.VITE_GAPGPT_API_KEY }}
+          VITE_GAPGPT_BASE_URL: ${{ vars.VITE_GAPGPT_BASE_URL || 'https://api.gapgpt.app/v1' }}
+          VITE_GA_MEASUREMENT_ID: ${{ secrets.VITE_GA_MEASUREMENT_ID }}
+        run: bun run build
+
+      - name: Verify CNAME and SPA 404 Routing in Dist
+        run: |
+          if [ -f public/CNAME ] && [ ! -f dist/CNAME ]; then
+            cp public/CNAME dist/CNAME
+          fi
+          if [ -f public/404.html ] && [ ! -f dist/404.html ]; then
+            cp public/404.html dist/404.html
+          fi
+          echo "Verified dist contents:"
+          ls -la dist
+
+      - name: Setup GitHub Pages
+        uses: actions/configure-pages@v5
+
+      - name: Upload Pages Artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: './dist'
+
+  deploy:
+    name: Deploy to GitHub Pages
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    runs-on: ubuntu-latest
+    needs: build
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4

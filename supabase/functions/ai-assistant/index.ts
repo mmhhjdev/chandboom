@@ -1,11 +1,26 @@
 import { serve } from 'https://deno.land/std@0.177.0/http/server.ts';
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.117.0';
 
-const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
+const allowedOrigins = (Deno.env.get('AI_ALLOWED_ORIGINS') || '')
+  .split(',').map((origin) => origin.trim()).filter(Boolean);
+const baseCorsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type, x-requested-with',
   'Access-Control-Allow-Methods': 'POST, OPTIONS',
+  'Vary': 'Origin',
 };
+function corsFor(req: Request): Record<string, string> {
+  const origin = req.headers.get('Origin');
+  // Requests without Origin (e.g. server-to-server) are still handled by auth.
+  // Browser origins are only allowed when explicitly listed in AI_ALLOWED_ORIGINS.
+  if (origin && allowedOrigins.length === 0) {
+    // Development fallback only; production should set AI_ALLOWED_ORIGINS.
+    return { ...baseCorsHeaders, 'Access-Control-Allow-Origin': '*' };
+  }
+  if (origin && allowedOrigins.includes(origin)) {
+    return { ...baseCorsHeaders, 'Access-Control-Allow-Origin': origin };
+  }
+  return baseCorsHeaders;
+}
 
 type Mode = 'agent' | 'advisor';
 type ActionType =
@@ -30,6 +45,8 @@ const MAX_MESSAGE_CHARS = 1200;
 const MAX_HISTORY_MESSAGES = 4;
 const MAX_HISTORY_CHARS = 350;
 const MAX_ADVISOR_CONTEXT_CHARS = 10000;
+const MAX_REQUEST_BYTES = 48_000;
+const MAX_HISTORY_TOTAL_CHARS = 1800;
 const AI_TIMEOUT_MS = 18000;
 
 const INSTANT_REPLIES: Record<string, string> = {
@@ -71,10 +88,10 @@ const ADVISOR_SYSTEM_PROMPT = `شما مشاور مالی شخصی چندبوم 
 درخواست‌های خارج از حوزه مالی و امکانات چندبوم را مؤدبانه رد کن.
 خروجی فقط JSON معتبر با شکل {"reply":"پاسخ فارسی","action":null,"requires_confirmation":false} باشد.`;
 
-function jsonResponse(body: Record<string, unknown>, status = 200): Response {
+function jsonResponse(body: Record<string, unknown>, status = 200, responseHeaders: Record<string, string> = baseCorsHeaders): Response {
   return new Response(JSON.stringify(body), {
     status,
-    headers: { ...corsHeaders, 'Content-Type': 'application/json; charset=utf-8' },
+    headers: { ...responseHeaders, 'Content-Type': 'application/json; charset=utf-8' },
   });
 }
 
@@ -88,7 +105,9 @@ function normalizeMessage(value: unknown): string {
 
 function isClearlyOffTopic(message: string): boolean {
   if (CLEARLY_OFF_TOPIC_PATTERN.test(message) && !FINANCE_TOPIC_PATTERN.test(message)) return true;
-  return !FINANCE_TOPIC_PATTERN.test(message);
+  // Keyword filters are only a cheap rejection for clearly unrelated requests.
+  // Avoid rejecting valid financial questions merely because they use unexpected wording.
+  return false;
 }
 
 function getInstantReply(message: string): string | null {
@@ -197,13 +216,33 @@ function normalizeResult(raw: unknown, mode: Mode): AssistantResult {
   return {
     reply: action ? reply : (raw.action ? 'برای جلوگیری از ثبت اشتباه، اطلاعات این عملیات کامل یا معتبر نبود. لطفاً جزئیات رو بررسی کن.' : reply),
     action,
-    requires_confirmation: Boolean(action) && raw.requires_confirmation === true,
+    // Confirmation is enforced by the server, never delegated to model output.
+    requires_confirmation: Boolean(action),
   };
 }
 
 serve(async (req: Request) => {
-  if (req.method === 'OPTIONS') return new Response('ok', { headers: corsHeaders });
-  if (req.method !== 'POST') return jsonResponse({ success: false, error: 'فقط درخواست POST پشتیبانی می‌شود.' }, 405);
+  const corsHeaders = corsFor(req);
+  const respond = (body: Record<string, unknown>, status = 200) => jsonResponse(body, status, corsHeaders);
+  const origin = req.headers.get('Origin');
+  if (req.method === 'OPTIONS') {
+    if (origin && allowedOrigins.length > 0 && !allowedOrigins.includes(origin)) {
+      return new Response(null, { status: 403, headers: corsHeaders });
+    }
+    return new Response(null, { status: 204, headers: corsHeaders });
+  }
+  if (origin && allowedOrigins.length > 0 && !allowedOrigins.includes(origin)) {
+    return respond({ success: false, error: 'مبدأ درخواست مجاز نیست.' }, 403);
+  }
+  if (req.method !== 'POST') return respond({ success: false, error: 'فقط درخواست POST پشتیبانی می‌شود.' }, 405);
+  const contentType = req.headers.get('content-type') || '';
+  if (!contentType.toLowerCase().includes('application/json')) {
+    return respond({ success: false, error: 'نوع محتوای درخواست باید JSON باشد.' }, 415);
+  }
+  const contentLength = Number(req.headers.get('content-length') || 0);
+  if (Number.isFinite(contentLength) && contentLength > MAX_REQUEST_BYTES) {
+    return respond({ success: false, error: 'درخواست بیش از حد بزرگ است.' }, 413);
+  }
 
   try {
     const supabaseUrl = Deno.env.get('SUPABASE_URL') || '';
@@ -221,18 +260,18 @@ serve(async (req: Request) => {
         apiKey: Boolean(apiKey),
         model: Boolean(model),
       });
-      return jsonResponse({ success: false, error: 'پیکربندی دستیار روی سرور کامل نیست.' }, 500);
+      return respond({ success: false, error: 'پیکربندی دستیار روی سرور کامل نیست.' }, 500);
     }
 
     const authHeader = req.headers.get('Authorization') || '';
     const token = authHeader.replace(/^Bearer\s+/i, '').trim();
-    if (!token) return jsonResponse({ success: false, error: 'لطفاً وارد حساب خودت شو.' }, 401);
+    if (!token) return respond({ success: false, error: 'لطفاً وارد حساب خودت شو.' }, 401);
 
     const supabaseAdmin = createClient(supabaseUrl, serviceRoleKey, {
       auth: { persistSession: false, autoRefreshToken: false },
     });
     const { data: authData, error: authError } = await supabaseAdmin.auth.getUser(token);
-    if (authError || !authData.user) return jsonResponse({ success: false, error: 'نشست معتبر نیست؛ دوباره وارد شو.' }, 401);
+    if (authError || !authData.user) return respond({ success: false, error: 'نشست معتبر نیست؛ دوباره وارد شو.' }, 401);
 
     const userId = authData.user.id;
     const { data: dbUser, error: userError } = await supabaseAdmin
@@ -243,26 +282,31 @@ serve(async (req: Request) => {
 
     if (userError) {
       console.error('User lookup failed:', userError.message);
-      return jsonResponse({ success: false, error: 'بررسی حساب کاربری موقتاً ممکن نیست.' }, 500);
+      return respond({ success: false, error: 'بررسی حساب کاربری موقتاً ممکن نیست.' }, 500);
     }
-    if (!dbUser) return jsonResponse({ success: false, error: 'اطلاعات کاربری یافت نشد.' }, 404);
+    if (!dbUser) return respond({ success: false, error: 'اطلاعات کاربری یافت نشد.' }, 404);
 
     const paidTier = ['bronze', 'pro', 'vip'].includes(String(dbUser.tier || '').toLowerCase());
     const activeSubscription = dbUser.subscription_status === 'active' &&
       (!dbUser.subscription_expires_at || new Date(dbUser.subscription_expires_at).getTime() > Date.now());
     if (!paidTier || !activeSubscription) {
-      return jsonResponse({
+      return respond({
         success: false,
         error: 'دستیار هوشمند برای حساب فعلی فعال نیست.',
         code: 'SUBSCRIPTION_REQUIRED',
       }, 403);
     }
 
-    const body = await req.json().catch(() => null);
-    if (!isRecord(body)) return jsonResponse({ success: false, error: 'بدنه درخواست معتبر نیست.' }, 400);
+    const rawBody = await req.text().catch(() => '');
+    if (new TextEncoder().encode(rawBody).byteLength > MAX_REQUEST_BYTES) {
+      return respond({ success: false, error: 'درخواست بیش از حد بزرگ است.' }, 413);
+    }
+    let body: unknown = null;
+    try { body = JSON.parse(rawBody); } catch { /* handled below */ }
+    if (!isRecord(body)) return respond({ success: false, error: 'بدنه درخواست معتبر نیست.' }, 400);
 
     const userMessage = normalizeMessage(body.message);
-    if (!userMessage) return jsonResponse({ success: false, error: 'متن پیام الزامی است.' }, 400);
+    if (!userMessage) return respond({ success: false, error: 'متن پیام الزامی است.' }, 400);
 
     const mode: Mode = body.mode === 'advisor' ? 'advisor' : 'agent';
     const currentLimit = Number(dbUser.ai_queries_limit ?? 0);
@@ -270,7 +314,7 @@ serve(async (req: Request) => {
     const currentRemaining = remainingQueries(currentLimit, currentUsed);
     const instantReply = getInstantReply(userMessage);
     if (instantReply) {
-      return jsonResponse({
+      return respond({
         success: true,
         reply: instantReply,
         action: null,
@@ -282,7 +326,7 @@ serve(async (req: Request) => {
 
     // Do not spend model tokens on clearly unrelated requests.
     if (isClearlyOffTopic(userMessage)) {
-      return jsonResponse({
+      return respond({
         success: true,
         reply: 'من دستیار تخصصی مدیریت مالی و امکانات چندبوم هستم؛ می‌تونم در تحلیل هزینه‌ها، بودجه‌بندی، پس‌انداز، دنگ گروهی و عملیات مالی داخل برنامه کمکت کنم.',
         action: null,
@@ -304,10 +348,10 @@ serve(async (req: Request) => {
     );
     if (quotaError) {
       console.error('Atomic AI quota check failed:', quotaError.message);
-      return jsonResponse({ success: false, error: 'بررسی سهمیه هوش مصنوعی ممکن نیست؛ لطفاً دوباره تلاش کن.' }, 503);
+      return respond({ success: false, error: 'بررسی سهمیه هوش مصنوعی ممکن نیست؛ لطفاً دوباره تلاش کن.' }, 503);
     }
     if (!isRecord(quotaData) || quotaData.allowed !== true) {
-      return jsonResponse({
+      return respond({
         success: false,
         error: safeString(isRecord(quotaData) ? quotaData.error : '', 240) || 'سهمیه هوش مصنوعی این ماه تمام شده است.',
         code: 'QUOTA_EXCEEDED',
@@ -334,6 +378,11 @@ serve(async (req: Request) => {
           .eq('user_id', userId).order('due_date', { ascending: true }).limit(20),
       ]);
 
+      // Do not produce numeric advice from missing transaction data.
+      if (txRes.error) {
+        console.error('Advisor transaction query failed:', txRes.error.message);
+        return respond({ success: false, error: 'دریافت تراکنش‌های مالی برای تحلیل ممکن نشد؛ لطفاً کمی بعد دوباره تلاش کن.' }, 503);
+      }
       const tx = txRes.data || [];
       const income = tx.filter((t: any) => t.type === 'income').reduce((sum: number, t: any) => sum + Number(t.amount || 0), 0);
       const expenses = tx.filter((t: any) => t.type === 'expense').reduce((sum: number, t: any) => sum + Number(t.amount || 0), 0);
@@ -372,13 +421,14 @@ serve(async (req: Request) => {
       content: (isAdvisor ? ADVISOR_SYSTEM_PROMPT + advisorContext : SYSTEM_PROMPT),
     }];
 
+    let historyChars = 0;
     for (const item of history.slice(-MAX_HISTORY_MESSAGES)) {
       if (!isRecord(item) || (item.role !== 'user' && item.role !== 'assistant')) continue;
       if (typeof item.content !== 'string') continue;
-      chatMessages.push({
-        role: item.role,
-        content: item.content.slice(0, MAX_HISTORY_CHARS),
-      });
+      const content = item.content.slice(0, MAX_HISTORY_CHARS);
+      if (historyChars + content.length > MAX_HISTORY_TOTAL_CHARS) continue;
+      historyChars += content.length;
+      chatMessages.push({ role: item.role, content });
     }
     chatMessages.push({ role: 'user', content: userMessage });
 
@@ -397,19 +447,19 @@ serve(async (req: Request) => {
       });
     } catch (error) {
       console.error('AI provider request failed:', error);
-      return jsonResponse({ success: false, error: 'دستیار فعلاً در دسترس نیست؛ کمی بعد دوباره امتحان کن.' }, 502);
+      return respond({ success: false, error: 'دستیار فعلاً در دسترس نیست؛ کمی بعد دوباره امتحان کن.' }, 502);
     }
 
     if (!aiResponse.ok) {
       const providerText = await aiResponse.text().catch(() => '');
       console.error('AI provider returned error:', aiResponse.status, providerText.slice(0, 500));
-      return jsonResponse({ success: false, error: 'سرویس هوش مصنوعی موقتاً پاسخ‌گو نیست.' }, 502);
+      return respond({ success: false, error: 'سرویس هوش مصنوعی موقتاً پاسخ‌گو نیست.' }, 502);
     }
 
     const providerData = await aiResponse.json().catch(() => null);
     const rawText = providerData?.choices?.[0]?.message?.content;
     if (typeof rawText !== 'string' || !rawText.trim()) {
-      return jsonResponse({ success: false, error: 'پاسخ دستیار خالی یا نامعتبر بود؛ دوباره تلاش کن.' }, 502);
+      return respond({ success: false, error: 'پاسخ دستیار خالی یا نامعتبر بود؛ دوباره تلاش کن.' }, 502);
     }
 
     const parsed = parseJsonObject(rawText);
@@ -426,7 +476,7 @@ serve(async (req: Request) => {
       console.warn('AI usage logging failed:', logError);
     }
 
-    return jsonResponse({
+    return respond({
       success: true,
       reply: result.reply,
       action: result.action,
@@ -436,6 +486,6 @@ serve(async (req: Request) => {
     });
   } catch (error) {
     console.error('AI Edge Function exception:', error);
-    return jsonResponse({ success: false, error: 'خطای داخلی رخ داد. لطفاً بعداً دوباره تلاش کن.' }, 500);
+    return respond({ success: false, error: 'خطای داخلی رخ داد. لطفاً بعداً دوباره تلاش کن.' }, 500);
   }
 });
