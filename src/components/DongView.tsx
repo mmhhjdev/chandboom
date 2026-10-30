@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { Users, Plus, Calculator, Trash2, ArrowRight, Receipt, UserPlus, X, Home, ShoppingCart } from 'lucide-react';
+import { Users, Plus, Calculator, Trash2, ArrowRight, Receipt, UserPlus, X, Home, ShoppingCart, Copy } from 'lucide-react';
 import { formatToman, toPersianDigits } from '../utils/formatters';
 import { getSupabaseClient } from '../lib/supabase';
+import { DongCollaborationPanel } from './DongCollaborationPanel';
 
 interface FamilyMember {
   name: string;
@@ -46,6 +47,8 @@ export const DongView: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(null);
   const [currentUserId, setCurrentUserId] = useState<string | null>(null);
+  const [profileUsername, setProfileUsername] = useState<string | null>(null);
+  const [profileDisplayName, setProfileDisplayName] = useState<string | null>(null);
 
   const [isNewGroupModalOpen, setIsNewGroupModalOpen] = useState(false);
   const [newGroupName, setNewGroupName] = useState('');
@@ -79,6 +82,11 @@ export const DongView: React.FC = () => {
       const { data: { user } } = await supabase.auth.getUser();
       setCurrentUserId(user?.id || null);
       setIsAuthenticated(Boolean(user?.id));
+      if (user?.id) {
+        const { data: profile } = await supabase.from('profiles').select('username,display_name').eq('id', user.id).maybeSingle();
+        setProfileUsername(profile?.username || null);
+        setProfileDisplayName(profile?.display_name || null);
+      }
       await fetchGroups(supabase);
     };
 
@@ -172,6 +180,14 @@ export const DongView: React.FC = () => {
       return;
     }
 
+    // ثبت مالک در جدول عضویت؛ تابع سمت سرور مجوز را مستقل از فرانت‌اند بررسی می‌کند.
+    const { error: membershipError } = await supabase.rpc('dong_register_group_owner', { p_group_id: String(data.id) });
+    if (membershipError) {
+      // گروه ذخیره شده است؛ خطای عضویت را شفاف می‌کنیم و گروه را از دست نمی‌دهیم.
+      console.error('ثبت مالک گروه ناموفق بود:', membershipError.message);
+      alert('گروه ساخته شد، اما ثبت عضویت کامل نشد. فایل SQL هماهنگ‌سازی را اجرا کنید و سپس صفحه را تازه‌سازی کنید.');
+    }
+
     const newGroup: Group = {
       id: data.id,
       name: newGroupName,
@@ -210,11 +226,17 @@ export const DongView: React.FC = () => {
         }));
 
       totalAmount = formattedBillItems.reduce((acc, curr) => acc + curr.price, 0);
-      if (totalAmount === 0 || formattedBillItems.length === 0) return;
+      if (totalAmount <= 0 || formattedBillItems.length === 0 || formattedBillItems.some(item => !Number.isFinite(item.price) || item.price <= 0 || item.consumers.length === 0)) {
+        alert('برای هر آیتم مبلغ معتبر و حداقل یک مصرف‌کننده انتخاب کنید.');
+        return;
+      }
     } else {
       if (!expenseAmount) return;
       totalAmount = Number(expenseAmount.replace(/,/g, ''));
-      if (selectedParticipants.length === 0) return;
+      if (!Number.isFinite(totalAmount) || totalAmount <= 0 || selectedParticipants.length === 0) {
+        alert('مبلغ باید عددی و بیشتر از صفر باشد و حداقل یک نفر انتخاب شود.');
+        return;
+      }
     }
 
     const allParticipantsSet = new Set<string>();
@@ -263,6 +285,7 @@ export const DongView: React.FC = () => {
 
     setGroups(updatedGroups);
     setExpenseTitle('');
+    setExpensePayer('');
     setExpenseAmount('');
     setBillItems([{ title: '', price: '', consumers: [] }]);
     setIsExpenseModalOpen(false);
@@ -439,6 +462,11 @@ export const DongView: React.FC = () => {
             <p className="text-xs sm:text-sm text-zinc-600 dark:text-zinc-400 mt-1">
               گروه دوستانه یا جمع خانوادگی بسازید و خرج‌ها را به عادلانه‌ترین شکل تقسیم کنید.
             </p>
+            {profileUsername && <div className="mt-3 inline-flex flex-wrap items-center gap-2 rounded-xl bg-emerald-50 dark:bg-emerald-950/30 px-3 py-2 text-xs">
+              <span className="text-zinc-600 dark:text-zinc-300">{profileDisplayName || 'نام کاربری شما'}:</span>
+              <b dir="ltr" className="text-emerald-800 dark:text-emerald-300">@{profileUsername}</b>
+              <button type="button" title="کپی نام کاربری" onClick={() => { if (navigator.clipboard?.writeText) { void navigator.clipboard.writeText(`@${profileUsername}`).then(() => alert('نام کاربری کپی شد.')).catch(() => alert(`نام کاربری: @${profileUsername}`)); } else { alert(`نام کاربری: @${profileUsername}`); } }} className="p-1 rounded hover:bg-emerald-100 dark:hover:bg-emerald-900"><Copy className="w-3.5 h-3.5"/></button>
+            </div>}
           </div>
           <button
             onClick={() => setIsNewGroupModalOpen(true)}
@@ -691,6 +719,7 @@ export const DongView: React.FC = () => {
         <button
           onClick={() => {
             setSelectedParticipants(listToSelectFrom);
+            setExpensePayer(listToSelectFrom[0] || '');
             setExpenseType('normal');
             setBillItems([{ title: '', price: '', consumers: [] }]);
             setIsExpenseModalOpen(true);
@@ -701,6 +730,8 @@ export const DongView: React.FC = () => {
           ثبت هزینه جدید در گروه
         </button>
       </div>
+
+      {currentUserId && <DongCollaborationPanel groupId={activeGroup.id} currentUserId={currentUserId} onChanged={() => { const supabase = getSupabaseClient(); void fetchGroups(supabase); }} />}
 
       <div className="bg-gradient-to-br from-emerald-50 to-teal-50 dark:from-[#122019] dark:to-[#0F1814] p-5 rounded-2xl border border-emerald-200/60 dark:border-emerald-900/50 shadow-xs space-y-4">
         <div className="flex items-center gap-2 text-emerald-900 dark:text-emerald-300">
