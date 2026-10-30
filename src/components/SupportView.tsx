@@ -98,7 +98,7 @@ export const SupportView: React.FC<SupportViewProps> = ({ onOpenTicketModal }) =
     if (searchQuery.trim()) {
       const q = searchQuery.toLowerCase();
       return (
-        t.subject.toLowerCase().includes(q) ||
+        (t.subject || '').toLowerCase().includes(q) ||
         (t.department || '').toLowerCase().includes(q) ||
         (t.category || '').toLowerCase().includes(q) ||
         (t.user_name || '').toLowerCase().includes(q)
@@ -344,7 +344,8 @@ export const SupportView: React.FC<SupportViewProps> = ({ onOpenTicketModal }) =
                 const isSelected = activeTicket?.id === ticket.id;
                 const statusBadge = getStatusBadge(ticket.status);
                 const categoryBadge = getCategoryBadge(ticket.category, ticket.department);
-                const lastMsg = ticket.messages[ticket.messages.length - 1];
+                const safeMessages = Array.isArray(ticket.messages) ? ticket.messages : [];
+                const lastMsg = safeMessages.length ? safeMessages[safeMessages.length - 1] : null;
 
                 return (
                   <div

@@ -331,6 +331,12 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const [isAIAssistantOpen, setIsAIAssistantOpen] = useState(false);
 
   const [user, setUser] = useState<UserProfile>(GUEST_USER);
+
+  useEffect(() => {
+    if (isAuthenticated && user?.theme_preference && user.theme_preference !== 'system') {
+      setIsDarkMode(user.theme_preference === 'dark');
+    }
+  }, [isAuthenticated, user?.id, user?.theme_preference]);
   const [transactions, setTransactions] = useState<Transaction[]>(INITIAL_TRANSACTIONS);
   const [notifications, setNotifications] = useState<NotificationItem[]>(INITIAL_NOTIFICATIONS);
   const [tickets, setTickets] = useState<Ticket[]>(INITIAL_TICKETS);
@@ -766,9 +772,10 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         const email = session.user.email || '';
         await fetchUserDataFromSupabase(session.user.id, email);
 
-        if (event === 'SIGNED_IN') {
-          setActiveTabState('dashboard');
-        }
+        // Do not force navigation on every SIGNED_IN event. Supabase can emit
+        // SIGNED_IN again when a session is restored/refreshed in another tab;
+        // resetting the active tab here unexpectedly kicked users out of tools
+        // such as Dong Calculator and sent them to the dashboard.
       } else if (event === 'SIGNED_OUT') {
         setIsAuthenticated(false);
         setUser(GUEST_USER);

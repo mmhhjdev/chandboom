@@ -345,7 +345,7 @@ export const DongView: React.FC = () => {
 
           if (activeGroup.isFamilyMode) {
             let totalConsumersCount = 0;
-            item.consumers.forEach((cName) => {
+            item.consumers.filter((cName) => cName !== exp.payer).forEach((cName) => {
               const fam = activeGroup.families.find((f) => f.name === cName);
               if (fam) totalConsumersCount += fam.count;
             });
@@ -360,8 +360,10 @@ export const DongView: React.FC = () => {
               });
             }
           } else {
-            const share = item.price / item.consumers.length;
-            item.consumers.forEach((cName) => {
+            const payingConsumers = item.consumers.filter((cName) => cName !== exp.payer);
+            if (payingConsumers.length === 0) return;
+            const share = item.price / payingConsumers.length;
+            payingConsumers.forEach((cName) => {
               if (balances[cName] !== undefined) {
                 balances[cName] -= share;
               }
@@ -371,7 +373,7 @@ export const DongView: React.FC = () => {
       } else {
         if (activeGroup.isFamilyMode) {
           let totalParticipatingCount = 0;
-          exp.participants.forEach((pName) => {
+          exp.participants.filter((pName) => pName !== exp.payer).forEach((pName) => {
             const fam = activeGroup.families.find((f) => f.name === pName);
             if (fam) totalParticipatingCount += fam.count;
           });
@@ -386,9 +388,10 @@ export const DongView: React.FC = () => {
             });
           }
         } else {
-          if (exp.participants.length > 0) {
-            const share = exp.amount / exp.participants.length;
-            exp.participants.forEach((p) => {
+          const payingParticipants = exp.participants.filter((p) => p !== exp.payer);
+          if (payingParticipants.length > 0) {
+            const share = exp.amount / payingParticipants.length;
+            payingParticipants.forEach((p) => {
               if (balances[p] !== undefined) {
                 balances[p] -= share;
               }

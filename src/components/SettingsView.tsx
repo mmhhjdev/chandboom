@@ -24,6 +24,7 @@ import {
 import { useApp } from '../context/AppContext';
 import { formatToman, formatShamsiDate, formatShamsiDateTime, toPersianDigits } from '../utils/formatters';
 import { calculateRemainingProDays } from '../utils/security';
+import { getSupabaseClient } from '../lib/supabase';
 
 interface SettingsViewProps {
   onOpenAvatarModal: () => void;
@@ -54,6 +55,10 @@ export const SettingsView: React.FC<SettingsViewProps> = ({ onOpenAvatarModal })
   const [profileSaveError, setProfileSaveError] = useState<string | null>(null);
   const [copiedCode, setCopiedCode] = useState<string | null>(null);
   const [selectedReceiptForPreview, setSelectedReceiptForPreview] = useState<string | null>(null);
+  const [username, setUsername] = useState<string | null>(null);
+  const [usernameLoading, setUsernameLoading] = useState(false);
+  const [themeSaving, setThemeSaving] = useState(false);
+  const [themeSaveError, setThemeSaveError] = useState<string | null>(null);
 
   // Change Password State
   const [newPassword, setNewPassword] = useState('');
@@ -105,6 +110,35 @@ export const SettingsView: React.FC<SettingsViewProps> = ({ onOpenAvatarModal })
     navigator.clipboard.writeText(code);
     setCopiedCode(code);
     setTimeout(() => setCopiedCode(null), 2000);
+  };
+
+  useEffect(() => {
+    let cancelled = false;
+    const loadUsername = async () => {
+      if (!isAuthenticated || !user.id || user.id === 'guest') { setUsername(null); return; }
+      const supabase = getSupabaseClient();
+      if (!supabase) return;
+      setUsernameLoading(true);
+      const { data, error } = await supabase.from('profiles').select('username').eq('id', user.id).maybeSingle();
+      if (!cancelled) {
+        setUsername(!error && data?.username ? String(data.username) : null);
+        setUsernameLoading(false);
+      }
+    };
+    void loadUsername();
+    return () => { cancelled = true; };
+  }, [isAuthenticated, user.id]);
+
+  const chooseTheme = async (nextTheme: 'light' | 'dark') => {
+    setThemeSaveError(null);
+    if (theme !== nextTheme) toggleTheme();
+    if (!isAuthenticated || !user.id || user.id === 'guest') return;
+    setThemeSaving(true);
+    try {
+      await updateUserProfile({ theme_preference: nextTheme });
+    } catch (error: any) {
+      setThemeSaveError(error?.message || 'ذخیره تم در پایگاه داده انجام نشد.');
+    } finally { setThemeSaving(false); }
   };
 
   useEffect(() => {
@@ -639,6 +673,11 @@ export const SettingsView: React.FC<SettingsViewProps> = ({ onOpenAvatarModal })
         </form>
       )}
 
+      <div className="p-5 bg-white dark:bg-[#0E1511] rounded-3xl border border-[#E2E8E4] dark:border-[#1F2E27] space-y-2">
+        <h3 className="font-cairo font-bold text-zinc-900 dark:text-white">نام کاربری دنگ</h3>
+        {username ? <div className="flex items-center justify-between gap-3"><code dir="ltr" className="text-emerald-700 dark:text-emerald-300">@{username}</code><button type="button" onClick={() => handleCopy(`@${username}`)} className="inline-flex items-center gap-2 rounded-xl border px-3 py-2 text-xs"><Copy className="w-4 h-4"/> کپی نام کاربری</button></div> : <p className="text-xs text-zinc-500">{usernameLoading ? 'در حال دریافت نام کاربری…' : isAuthenticated ? 'نام کاربری در دسترس نیست؛ Migration مربوط به profiles را بررسی کنید.' : 'برای مشاهده نام کاربری وارد حساب شوید.'}</p>}
+      </div>
+
       {/* 4. Theme & Appearance Settings (منتقل‌شده از هدر به تنظیمات پروفایل) */}
       <div className="p-6 bg-white dark:bg-[#0E1511] rounded-3xl border border-[#E2E8E4] dark:border-[#1F2E27] shadow-xs space-y-4">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-[#E2E8E4] dark:border-[#1F2E27]">
@@ -661,12 +700,14 @@ export const SettingsView: React.FC<SettingsViewProps> = ({ onOpenAvatarModal })
           </span>
         </div>
 
+        {themeSaveError && <p role="alert" className="text-xs text-rose-600">{themeSaveError}</p>}
+        {themeSaving && <p className="text-xs text-zinc-500">در حال ذخیره تم در حساب کاربری…</p>}
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
           {/* Light Mode Option Button */}
           <button
             type="button"
             onClick={() => {
-              if (theme === 'dark') toggleTheme();
+              void chooseTheme('light');
             }}
             className={`p-4 rounded-2xl border text-right transition cursor-pointer flex items-center justify-between ${
               theme === 'light'
@@ -696,7 +737,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({ onOpenAvatarModal })
           <button
             type="button"
             onClick={() => {
-              if (theme === 'light') toggleTheme();
+              void chooseTheme('dark');
             }}
             className={`p-4 rounded-2xl border text-right transition cursor-pointer flex items-center justify-between ${
               theme === 'dark'
