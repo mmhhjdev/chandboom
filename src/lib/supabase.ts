@@ -439,269 +439,6 @@ export interface AiAssistantResult {
   code?: string;
 }
 
-/**
- * Client-Side Smart Fallback Engine
- * Mirrors the exact logic, patterns, and safety constraints of the Chandboom AI Edge Function:
- * - Instant replies for greetings
- * - Topic filter (blocks school homework, poems, general off-topic)
- * - 4 Canonical Actions:
- *   1. create_transaction
- *   2. create_dong_group
- *   3. create_goal
- *   4. create_reminder
- */
-function runClientSideAiAssistantFallback(
-  message: string,
-  mode: 'agent' | 'advisor' = 'agent'
-): AiAssistantResult {
-  const trimmed = message.trim();
-  const lower = trimmed.toLowerCase();
-
-  // 1. Instant Replies
-  if (lower === 'سلام' || lower.startsWith('سلام ')) {
-    return {
-      success: true,
-      reply: 'سلام! چطور می‌تونم در مدیریت مالی، هزینه‌های گروهی یا برنامه‌ریزی مالی کمکت کنم؟',
-      action: null,
-      requires_confirmation: false,
-      remaining_queries: 100,
-    };
-  }
-  if (lower === 'خداحافظ' || lower.startsWith('خداحافظ ')) {
-    return {
-      success: true,
-      reply: 'خدانگهدار! هر وقت برای مدیریت مالی چندبوم کمکی خواستی، در خدمتم.',
-      action: null,
-      requires_confirmation: false,
-      remaining_queries: 100,
-    };
-  }
-
-  // 2. Off-Topic Filtering
-  const isOffTopic =
-    /حل\s*(?:کن|کنید|معادله)|مشق|تکلیف\s*مدرسه|سوال\s*درسی|سؤال\s*درسی|انشا\s*(?:بنویس|درباره)|ترجمه\s*(?:کن|کنید)|کد\s*نویسی|برنامه\s*نویسی|بازی\s*بساز|جواب\s*آزمون|جواب\s*امتحان|شعر\s*(?:کامل|بنویس)|داستان\s*(?:بنویس|کامل)/i.test(
-      trimmed
-    );
-  const isFinancial =
-    /مالی|پول|هزینه|خرج|خرید|درآمد|حقوق|پس‌انداز|پس انداز|بودجه|تراکنش|دنگ|گروه|سهم|بدهکار|طلبکار|قسط|قبض|یادآور|یادآوری|هدف|سرمایه|تورم|وام|بیمه|مالیات|پرداخت|موجودی|مانده|دسته‌بندی|دسته بندی|گزارش|تحلیل|خرج‌کرد|خرج کرد|صرفه‌جویی|صرفه جویی|برنامه‌ریزی|برنامه ریزی|تومان|ریال|هزار|میلیون|میلیارد|\d+/i.test(
-      trimmed
-    );
-
-  if (isOffTopic && !isFinancial) {
-    return {
-      success: true,
-      reply: 'من دستیار تخصصی مدیریت مالی و امکانات چندبوم هستم؛ می‌تونم در تحلیل هزینه‌ها، بودجه‌بندی، پس‌انداز، دنگ گروهی و عملیات مالی داخل برنامه کمکت کنم.',
-      action: null,
-      requires_confirmation: false,
-      remaining_queries: 100,
-    };
-  }
-
-  // 3. Prohibited Topics
-  if (/فیش|واریز|ادمین|رمز عبور|پسورد/i.test(trimmed)) {
-    return {
-      success: true,
-      reply: 'جهت پیگیری وضعیت فیش‌های واریزی، تایید پرداخت‌های کارت‌به‌کارت و تغییر کلمه عبور، لطفاً مستقیماً از بخش «تنظیمات و پروفایل» یا ارسال «تیکت به پشتیبانی» استفاده فرمایید.',
-      action: null,
-      requires_confirmation: false,
-      remaining_queries: 100,
-    };
-  }
-
-  // 4. Extract Amount Utility
-  const extractAmount = (text: string): number => {
-    // Check millions (e.g. 25 میلیون or ۲۵ میلیون)
-    const millionMatch = text.match(/(\d+(?:[.,]\d+)?)\s*(?:میلیون|ملیون)/i);
-    if (millionMatch) {
-      return Math.round(parseFloat(millionMatch[1].replace(/,/g, '')) * 1000000);
-    }
-    // Check thousands (e.g. 50 هزار or ۵۰ هزار)
-    const thousandMatch = text.match(/(\d+(?:[.,]\d+)?)\s*(?:هزار|هزارتومان|هزار تومان)/i);
-    if (thousandMatch) {
-      return Math.round(parseFloat(thousandMatch[1].replace(/,/g, '')) * 1000);
-    }
-    // Check raw number
-    const numMatch = text.match(/(\d[\d,]*\d|\d+)/);
-    if (numMatch) {
-      const val = parseInt(numMatch[1].replace(/,/g, ''), 10);
-      if (!isNaN(val) && val > 0) return val;
-    }
-    return 0;
-  };
-
-  const todayIso = new Date().toISOString().split('T')[0];
-
-  // 5. Advisor Mode Handling
-  if (mode === 'advisor' || /تحلیل|مشاوره|پیش‌بینی|وضعیت کلی|بررسی بودجه|سناریو/i.test(trimmed)) {
-    return {
-      success: true,
-      reply: `تحلیل مالی چندبوم برای وضعیت شما:
-۱. تعادل جریان نقدی: هزینه‌های ضروری و روزمره را در ابتدای ماه مشخص کنید تا در روزهای پایانی دچار کسری نشوید.
-۲. کنترل هزینه‌های متفرقه: اختصاص سقف مشخص برای خریدهای هیجانی می‌تواند تا ۲۰٪ پس‌انداز ماهانه شما را افزایش دهد.
-۳. اهداف مالی: تعیین تاریخ سررسید دقیق برای اهداف پس‌انداز، انگیزه و نظم مالی شما را دوچندان می‌کند.`,
-      action: null,
-      requires_confirmation: false,
-      remaining_queries: 100,
-    };
-  }
-
-  // 6. Action 1: Create Dong Group (دنگ و گروه)
-  if (/دنگ|گروه\s*دنگ|سهم\s*سفر|تقسیم\s*هزینه|همسفر/i.test(trimmed)) {
-    // Extract explicit group names such as «با اسم سفری» without inventing a prefix.
-    let groupName = 'سفر دوستانه';
-    const explicitName = trimmed.match(/(?:با\s*(?:اسم|نام)|به\s*نام|نام(?:ش)?\s*[:：]?)\s*[«"']?([^،,؛;\n.!؟]+?)(?=\s+(?:است\s+که|که|با\s+اعضای|اعضای|توش|در\s+آن|و\s+(?:علی|محمد|مهراد|رضا|سارا|مریم))|[»"']?$)/i);
-    if (explicitName?.[1]) groupName = explicitName[1].trim().replace(/[»"']+$/g, '').trim();
-    else {
-      const travelName = trimmed.match(/سفر\s+([\p{L}\d-]+)/u);
-      if (travelName?.[1]) groupName = `سفر ${travelName[1]}`;
-    }
-
-    // Prefer full compound names before their shorter substrings.
-    const knownNames = ['مهراد امیرحسین', 'محمد تقی', 'امیرحسین', 'محمد', 'علی', 'رضا', 'سارا', 'مریم', 'امیر', 'مهدی', 'حسین', 'نیما', 'پویا'];
-    const members: string[] = [];
-    for (const name of knownNames) {
-      if (trimmed.includes(name) && !members.some((found) => found === name || found.includes(name))) {
-        members.push(name);
-      }
-    }
-    if (members.length === 0) members.push('علی', 'رضا');
-
-    return {
-      success: true,
-      reply: `پیشنهاد ایجاد گروه دنگ جدید «${groupName}» با اعضای (${members.join('، ')}) آماده شد. در صورت تأیید، دکمه زیر را لمس کنید:`,
-      action: {
-        type: 'create_dong_group',
-        params: {
-          name: groupName,
-          members,
-        },
-        description: `ایجاد گروه دنگ «${groupName}» با اعضای ${members.join(' و ')}`,
-      },
-      requires_confirmation: true,
-      remaining_queries: 99,
-    };
-  }
-
-  // 7. Action 2: Create Goal (هدف مالی)
-  if (/هدف|پس‌انداز|پس انداز|خرید\s*(?:ماشین|لپ‌تاپ|موتور|خانه)|صندوق/i.test(trimmed)) {
-    const amount = extractAmount(trimmed) || 50000000;
-    let title = 'هدف پس‌انداز مالی';
-    if (/خرید\s*([^\s،,]+)/i.test(trimmed)) {
-      const match = trimmed.match(/خرید\s*([^\s،,]+)/i);
-      if (match) title = `خرید ${match[1]}`;
-    } else if (/هدف\s*([^\s،,]+)/i.test(trimmed)) {
-      const match = trimmed.match(/هدف\s*([^\s،,]+)/i);
-      if (match) title = `هدف ${match[1]}`;
-    }
-
-    const futureDate = new Date();
-    futureDate.setMonth(futureDate.getMonth() + 6);
-    const deadline = futureDate.toISOString().split('T')[0];
-
-    return {
-      success: true,
-      reply: `پیشنهاد ایجاد هدف مالی «${title}» با مبلغ هدف ${amount.toLocaleString('fa-IR')} تومان آماده شد. آیا مایل به ثبت نهایی آن هستید؟`,
-      action: {
-        type: 'create_goal',
-        params: {
-          title,
-          target_amount: amount,
-          deadline,
-          category: 'سرمایه‌گذاری',
-        },
-        description: `ثبت هدف مالی «${title}» به مبلغ ${amount.toLocaleString('fa-IR')} تومان`,
-      },
-      requires_confirmation: true,
-      remaining_queries: 99,
-    };
-  }
-
-  // 8. Action 3: Create Reminder (یادآور، قسط، قبض)
-  if (/یادآور|قسط|قبض|چک|سررسید|موعد/i.test(trimmed)) {
-    const amount = extractAmount(trimmed);
-    let title = 'یادآور پرداخت مالی';
-    if (/قسط\s*([^\s،,]+)/i.test(trimmed)) {
-      const match = trimmed.match(/قسط\s*([^\s،,]+)/i);
-      if (match) title = `قسط ${match[1]}`;
-    } else if (/قبض\s*([^\s،,]+)/i.test(trimmed)) {
-      const match = trimmed.match(/قبض\s*([^\s،,]+)/i);
-      if (match) title = `قبض ${match[1]}`;
-    } else if (/چک\s*([^\s،,]+)/i.test(trimmed)) {
-      const match = trimmed.match(/چک\s*([^\s،,]+)/i);
-      if (match) title = `چک ${match[1]}`;
-    }
-
-    const nextWeek = new Date();
-    nextWeek.setDate(nextWeek.getDate() + 7);
-    const dueDate = nextWeek.toISOString().split('T')[0];
-
-    return {
-      success: true,
-      reply: `پیشنهاد ثبت یادآور «${title}» به مبلغ ${amount ? amount.toLocaleString('fa-IR') + ' تومان' : 'تعیین‌نشده'} برای تاریخ ${dueDate} آماده است:`,
-      action: {
-        type: 'create_reminder',
-        params: {
-          title,
-          amount,
-          due_date: dueDate,
-          recurrence: /ماهانه|هر\s*ماه/i.test(trimmed) ? 'monthly' : 'once',
-        },
-        description: `ثبت یادآور «${title}» برای موعد ${dueDate}`,
-      },
-      requires_confirmation: true,
-      remaining_queries: 99,
-    };
-  }
-
-  // 9. Action 4: Create Transaction (تراکنش هزینه یا درآمد)
-  const amount = extractAmount(trimmed);
-  if (amount > 0 || /خرید|پرداخت|هزینه|خرج|کافه|رستوران|اسنپ|تاکسی|حقوق|درآمد/i.test(trimmed)) {
-    const finalAmount = amount > 0 ? amount : 50000;
-    const isIncome = /حقوق|درآمد|واریز\s*شد|سود|پاداش|فروش/i.test(trimmed);
-
-    let category = 'خوراک و غذا';
-    if (/اسنپ|تاکسی|بنزین|کرایه|مترو/i.test(trimmed)) category = 'حمل و نقل';
-    else if (/لباس|کفش|پوشاک|مانتو|شلوار/i.test(trimmed)) category = 'خرید و پوشاک';
-    else if (/دکتر|دارو|بیمارستان|درمان/i.test(trimmed)) category = 'سلامت و درمان';
-    else if (/شارژ|برق|آب|گاز|اجاره|مسکن/i.test(trimmed)) category = 'مسکن و قبوض';
-    else if (/کتاب|دوره|آموزش|کلاس/i.test(trimmed)) category = 'آموزش و یادگیری';
-    else if (/سینما|سفر|تفریح|بازی/i.test(trimmed)) category = 'تفریح و سرگرمی';
-    else if (isIncome) category = 'حقوق و دستمزد';
-
-    let desc = trimmed.replace(/\b\d+\b/g, '').replace(/هزار|میلیون|تومان|تومن/g, '').trim();
-    if (!desc || desc.length < 3) {
-      desc = isIncome ? 'درآمد دریافتی' : `هزینه ${category}`;
-    }
-
-    return {
-      success: true,
-      reply: `پیشنهاد ثبت تراکنش ${isIncome ? 'درآمد' : 'هزینه'} به شرح «${desc}» و مبلغ ${finalAmount.toLocaleString('fa-IR')} تومان آماده گردید. لطفاً تایید نمایید:`,
-      action: {
-        type: 'create_transaction',
-        params: {
-          amount: finalAmount,
-          category,
-          type: isIncome ? 'income' : 'expense',
-          description: desc,
-          date: todayIso,
-        },
-        description: `ثبت ${isIncome ? 'درآمد' : 'هزینه'} «${desc}» به مبلغ ${finalAmount.toLocaleString('fa-IR')} تومان`,
-      },
-      requires_confirmation: true,
-      remaining_queries: 99,
-    };
-  }
-
-  // 10. General Financial Guidance
-  return {
-    success: true,
-    reply: 'من در خدمت شما هستم! می‌توانید برای من بنویسید (مثلاً: «ثبت کن ۵۰ هزار تومن قهوه»، «ساخت گروه دنگ سفر مشهد»، یا «ثبت قسط ۵ میلیونی») تا به سرعت برای شما آماده کنم.',
-    action: null,
-    requires_confirmation: false,
-    remaining_queries: 100,
-  };
-}
-
 export async function invokeAiAssistantEdgeFunction(
   message: string,
   history: Array<{ role: 'user' | 'assistant'; content: string }> = [],
@@ -710,96 +447,70 @@ export async function invokeAiAssistantEdgeFunction(
   try {
     const sessionRes = await supabase.auth.getSession();
     const token = sessionRes?.data?.session?.access_token;
+    if (!token) {
+      return {
+        success: false,
+        error: 'برای استفاده از دستیار هوشمند، ابتدا وارد حساب کاربری خود شوید.',
+        code: 'AUTH_REQUIRED',
+      };
+    }
 
-    // 1. Attempt official Supabase Edge Function call if authenticated
-    if (token) {
+    const { data, error } = await supabase.functions.invoke('ai-assistant', {
+      body: { message, messages: history, mode },
+      headers: { Authorization: `Bearer ${token}` },
+    });
+
+    if (error) {
+      // Supabase returns non-2xx Edge Function responses as FunctionsHttpError.
+      // Read its response body so quota/auth/subscription codes reach every UI entry point.
+      let serverError: any = null;
       try {
-        const { data, error } = await supabase.functions.invoke('ai-assistant', {
-          body: { message, messages: history, mode },
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        });
+        serverError = await (error as any).context?.json?.();
+      } catch {
+        serverError = null;
+      }
+      console.error('AI Edge Function request failed:', error);
+      return {
+        success: false,
+        error: serverError?.error || error.message || 'ارتباط امن با سرویس هوش مصنوعی برقرار نشد.',
+        code: serverError?.code || 'EDGE_FUNCTION_ERROR',
+        remaining_queries: typeof serverError?.remaining_queries === 'number'
+          ? serverError.remaining_queries
+          : undefined,
+      };
+    }
 
-        if (!error && data && data.success) {
-          const actionPayload = data.action
-            ? {
-                ...data.action,
-                data: data.action.data || data.action.params || {},
-                params: data.action.params || data.action.data || {},
-              }
-            : null;
+    if (!data || typeof data !== 'object') {
+      return {
+        success: false,
+        error: 'پاسخ سرور هوش مصنوعی معتبر نیست.',
+        code: 'INVALID_AI_RESPONSE',
+      };
+    }
 
-          return {
-            success: true,
-            reply: data.reply,
-            action: actionPayload,
-            requires_confirmation: Boolean(data.requires_confirmation),
-            remaining_queries: data.remaining_queries,
-            error: data.error,
-            code: data.code,
-          };
+    const actionPayload = data.action
+      ? {
+          ...data.action,
+          data: data.action.data || data.action.params || {},
+          params: data.action.params || data.action.data || {},
         }
-      } catch (invokeErr) {
-        console.warn('Edge Function invocation fallback:', invokeErr);
-      }
-    }
+      : null;
 
-    // 2. Seamless Client-Side Financial Intelligence Engine
-    // Complies 100% with chandboom-ai-assistant-edge-function_c69e74c5.txt rules
-    return runClientSideAiAssistantFallback(message, mode);
+    return {
+      success: Boolean(data.success),
+      reply: data.reply,
+      action: actionPayload,
+      requires_confirmation: Boolean(data.requires_confirmation),
+      remaining_queries: data.remaining_queries,
+      error: data.error,
+      code: data.code,
+    };
   } catch (err: any) {
-    return runClientSideAiAssistantFallback(message, mode);
+    console.error('AI Edge Function invocation error:', err);
+    return {
+      success: false,
+      error: err?.message || 'سرویس هوش مصنوعی موقتاً در دسترس نیست.',
+      code: 'EDGE_FUNCTION_ERROR',
+    };
   }
-}
-
-export async function decrementAiQuotaRpc(userId: string): Promise<{ success: boolean; allowed: boolean; remaining?: number; error?: string }> {
-  if (!userId || userId === 'guest') {
-    return { success: false, allowed: false, error: 'برای استفاده از هوش مصنوعی لطفاً وارد شوید.' };
-  }
-
-  try {
-    // 1. Try with p_user_id
-    const { data, error } = await supabase.rpc('decrement_ai_quota', {
-      p_user_id: userId,
-    });
-
-    if (!error && data !== null && data !== undefined) {
-      if (typeof data === 'boolean') {
-        return { success: true, allowed: data };
-      }
-      if (typeof data === 'object') {
-        return {
-          success: true,
-          allowed: data.allowed !== false,
-          remaining: data.remaining_queries ?? data.remaining ?? data.remaining_quota,
-        };
-      }
-      return { success: true, allowed: Boolean(data) };
-    }
-
-    // 2. Try with user_id parameter name variation
-    const altRes = await supabase.rpc('decrement_ai_quota', {
-      user_id: userId,
-    });
-
-    if (!altRes.error && altRes.data !== null && altRes.data !== undefined) {
-      if (typeof altRes.data === 'boolean') {
-        return { success: true, allowed: altRes.data };
-      }
-      if (typeof altRes.data === 'object') {
-        return {
-          success: true,
-          allowed: altRes.data.allowed !== false,
-          remaining: altRes.data.remaining_queries ?? altRes.data.remaining,
-        };
-      }
-      return { success: true, allowed: Boolean(altRes.data) };
-    }
-  } catch (err: any) {
-    console.warn('RPC decrement_ai_quota fallback notice:', err?.message);
-  }
-
-  // Fail closed: quota must be enforced by the database, never by client-only state.
-  return { success: false, allowed: false, error: 'بررسی سهمیه هوش مصنوعی در پایگاه داده ناموفق بود. ابتدا اسکیما و تابع decrement_ai_quota را اعمال کنید.' };
 }

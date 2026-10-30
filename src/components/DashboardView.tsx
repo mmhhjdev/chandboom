@@ -61,6 +61,7 @@ interface TransactionDraft {
   clean_title: string;
   bank?: string | null;
   category: TransactionCategory;
+  date?: string;
 }
 
 export const DashboardView: React.FC<DashboardViewProps> = ({
@@ -80,6 +81,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
     isProUser,
     isAuthenticated,
     setIsAuthModalOpen,
+    syncAiQuotaFromServer,
   } = useApp();
 
   const [aiInput, setAiInput] = useState('');
@@ -155,7 +157,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
       category: pendingDraft.category,
       description: pendingDraft.clean_title,
       account: pendingDraft.bank || 'کارت اصلی',
-      date: new Date().toISOString(),
+      date: pendingDraft.date || new Date().toISOString(),
     });
 
     const reply = `✅ تراکنش توسط «دستیار هوشمند چندبوم» با موفقیت ثبت شد:
@@ -216,6 +218,9 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
       })),
     })
       .then(async (result) => {
+        if (typeof result.remaining_queries === 'number') {
+          syncAiQuotaFromServer(result.remaining_queries);
+        }
         if (result.is_ambiguous) {
           // Ambiguity handling
           setChatMessages((prev) => [
@@ -228,40 +233,40 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
             },
           ]);
         } else if (result.is_transaction && ((result.transactions && result.transactions.length > 0) || result.transaction)) {
-          // Automatic transaction(s) recording from structured output
+          // Every write is a draft until the user explicitly confirms it.
           const txList = result.transactions && result.transactions.length > 0
             ? result.transactions
             : [result.transaction!];
 
-          for (const tx of txList) {
-            await addTransaction({
+          if (txList.length === 1) {
+            const tx = txList[0];
+            setPendingDraft({
               type: tx.type,
               amount: tx.amount,
               category: tx.category,
-              description: tx.title,
-              account: 'کارت اصلی',
-              date: new Date().toISOString(),
+              clean_title: tx.title,
+              date: tx.date,
             });
-          }
-
-          let replyText = '';
-          if (txList.length === 1) {
-            const tx = txList[0];
-            replyText = `✅ تراکنش «${tx.title}» به مبلغ ${formatToman(tx.amount)} در دسته‌بندی «${tx.category}» به صورت خودکار ثبت گردید.`;
+            setChatMessages((prev) => [
+              ...prev,
+              {
+                id: (Date.now() + 1).toString(),
+                sender: 'assistant',
+                text: `پیش‌نویس تراکنش آماده است. لطفاً مبلغ، شرح و دسته‌بندی را بررسی و سپس ثبت نهایی را تأیید کنید.\n\n${result.conversational_reply || ''}`,
+                time: 'هم‌اکنون',
+              },
+            ]);
           } else {
-            replyText = `✅ تعداد ${txList.length.toLocaleString('fa-IR')} تراکنش همزمان با موفقیت ثبت شدند:\n\n` +
-              txList.map((tx, idx) => `${(idx + 1).toLocaleString('fa-IR')}. ${tx.type === 'income' ? '🟢 واریز' : '🔴 هزینه'}: «${tx.title}» - ${formatToman(tx.amount)} (${tx.category})`).join('\n');
+            setChatMessages((prev) => [
+              ...prev,
+              {
+                id: (Date.now() + 1).toString(),
+                sender: 'assistant',
+                text: 'برای جلوگیری از ثبت اشتباه، ثبت چند تراکنش هم‌زمان از این پنجره پشتیبانی نمی‌شود. لطفاً هر تراکنش را جداگانه ارسال کنید.',
+                time: 'هم‌اکنون',
+              },
+            ]);
           }
-
-          setChatMessages((prev) => [
-            ...prev,
-            {
-              id: (Date.now() + 1).toString(),
-              sender: 'assistant',
-              text: replyText,
-              time: 'هم‌اکنون',
-            },
-          ]);
         } else {
           setChatMessages((prev) => [
             ...prev,

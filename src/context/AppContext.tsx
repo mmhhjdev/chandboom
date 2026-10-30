@@ -124,6 +124,7 @@ interface AppContextType {
   isProUser: boolean;
   hasAIAccess: boolean;
   aiQueriesRemaining: number;
+  syncAiQuotaFromServer: (remaining: number) => void;
   upgradeUserTier: (tier: SubscriptionTier, durationMonths: number) => Promise<void>;
 
   // Financial Goals (اهداف مالی)
@@ -496,9 +497,26 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
   const aiQueriesRemaining = useMemo(() => {
     if (user.tier === 'free') return 0;
-    const limit = user.ai_queries_limit || (user.tier === 'bronze' ? 20 : user.tier === 'vip' ? 500 : 100);
-    return Math.max(0, limit - (user.ai_queries_used || 0));
-  }, [user.tier, user.ai_queries_limit, user.ai_queries_used]);
+    const limit = user.ai_queries_limit ?? (user.tier === 'bronze' ? 30 : user.tier === 'vip' ? 250 : 100);
+    const serverRemaining = user.ai_requests_left;
+    if (typeof serverRemaining === 'number') return Math.max(0, serverRemaining);
+    return Math.max(0, Number(limit) - (user.ai_queries_used || 0));
+  }, [user.tier, user.ai_queries_limit, user.ai_requests_left, user.ai_queries_used]);
+
+  // The server is authoritative for quota consumption; this only mirrors its response locally.
+  const syncAiQuotaFromServer = useCallback((remaining: number) => {
+    if (!Number.isFinite(remaining) || remaining < 0) return;
+    setUser((prev) => {
+      const limit = Number(prev.ai_queries_limit ?? (
+        prev.tier === 'bronze' ? 30 : prev.tier === 'vip' ? 250 : prev.tier === 'pro' ? 100 : 0
+      ));
+      return {
+        ...prev,
+        ai_requests_left: remaining,
+        ai_queries_used: Math.max(0, limit - remaining),
+      };
+    });
+  }, []);
 
   // Direct Supabase synchronization
   const fetchUserDataFromSupabase = async (userId: string, userEmail: string) => {
@@ -2445,6 +2463,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         isProUser,
         hasAIAccess,
         aiQueriesRemaining,
+        syncAiQuotaFromServer,
         upgradeUserTier,
         goals,
         addGoal,

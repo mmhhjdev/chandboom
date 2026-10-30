@@ -151,7 +151,14 @@ export async function processFinancialAI(
   // Format message history
   const history: Array<{ role: 'user' | 'assistant'; content: string }> = [];
   if (userContext?.chatHistory && userContext.chatHistory.length > 0) {
-    const recent = userContext.chatHistory.slice(-4);
+    const suppliedHistory = userContext.chatHistory;
+    const lastMessage = suppliedHistory[suppliedHistory.length - 1];
+    const lastText = String(lastMessage?.text || lastMessage?.content || '').trim();
+    const historyWithoutCurrentPrompt =
+      lastMessage?.role === 'user' && lastText === trimmed
+        ? suppliedHistory.slice(0, -1)
+        : suppliedHistory;
+    const recent = historyWithoutCurrentPrompt.slice(-4);
     for (const item of recent) {
       history.push({
         role: item.role === 'user' ? 'user' : 'assistant',

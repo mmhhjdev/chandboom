@@ -14,7 +14,6 @@ export interface UseSubscriptionReturn {
   aiQueriesUsed: number;
   hasAiAccess: boolean;
   checkCanMakeAiRequest: () => { allowed: boolean; reason?: string };
-  consumeAiRequest: () => Promise<boolean>;
   updateUserQuotaByAdmin: (
     targetUserId: string,
     params: {
@@ -32,7 +31,7 @@ export interface UseSubscriptionReturn {
  * and admin quota management.
  */
 export function useSubscription(): UseSubscriptionReturn {
-  const { user, updateUserProfile, isProUser, hasAIAccess } = useApp();
+  const { user, isProUser, hasAIAccess } = useApp();
 
   const remainingInfo = useMemo(() => {
     return calculateRemainingProDays(user.subscription_expires_at);
@@ -53,16 +52,12 @@ export function useSubscription(): UseSubscriptionReturn {
   }, [user.ai_requests_left, user.ai_queries_limit, user.ai_queries_used, user.tier]);
 
   const checkCanMakeAiRequest = useCallback(() => {
-    if (user.tier === 'free' && !isPremium) {
+    // Use the same active-subscription rule as AppContext and the Edge Function.
+    // A null expiry date is valid for subscriptions that do not have a fixed end date.
+    if (!hasAIAccess) {
       return {
         allowed: false,
-        reason: 'طرح پایه (رایگان) فاقد سهمیه هوش مصنوعی است. لطفاً اشتراک خود را ارتقا دهید.',
-      };
-    }
-    if (!remainingInfo.isActive && user.tier !== 'free') {
-      return {
-        allowed: false,
-        reason: 'اشتراک هوش مصنوعی شما به پایان رسیده است. لطفاً اقدام به تمدید فرمایید.',
+        reason: 'برای استفاده از دستیار هوشمند به اشتراک فعال نیاز دارید.',
       };
     }
     if (aiRequestsLeft <= 0) {
@@ -72,22 +67,7 @@ export function useSubscription(): UseSubscriptionReturn {
       };
     }
     return { allowed: true };
-  }, [user.tier, isPremium, remainingInfo.isActive, aiRequestsLeft]);
-
-  const consumeAiRequest = useCallback(async (): Promise<boolean> => {
-    const check = checkCanMakeAiRequest();
-    if (!check.allowed) return false;
-
-    // The AI entry points consume quota once through the atomic decrement_ai_quota RPC.
-    // This method only mirrors the already-authorized request in local UI state.
-    const nextUsed = (user.ai_queries_used ?? 0) + 1;
-    const nextLeft = Math.max(0, aiRequestsLeft - 1);
-    await updateUserProfile({
-      ai_queries_used: nextUsed,
-      ai_requests_left: nextLeft,
-    });
-    return true;
-  }, [checkCanMakeAiRequest, user.ai_queries_used, aiRequestsLeft, updateUserProfile]);
+  }, [hasAIAccess, aiRequestsLeft]);
 
   const updateUserQuotaByAdmin = useCallback(
     async (
@@ -142,7 +122,6 @@ export function useSubscription(): UseSubscriptionReturn {
     aiQueriesUsed: user.ai_queries_used ?? 0,
     hasAiAccess: hasAIAccess,
     checkCanMakeAiRequest,
-    consumeAiRequest,
     updateUserQuotaByAdmin,
   };
 }

@@ -59,9 +59,10 @@ export const FloatingAIAssistant: React.FC = () => {
     setActiveTab,
     setIsAuthModalOpen,
     openSubscriptionModal,
+    syncAiQuotaFromServer,
   } = useApp();
 
-  const { checkCanMakeAiRequest, consumeAiRequest } = useSubscription();
+  const { checkCanMakeAiRequest } = useSubscription();
 
   const [isOpen, setIsOpen] = useState(false);
   const [input, setInput] = useState('');
@@ -342,6 +343,9 @@ export const FloatingAIAssistant: React.FC = () => {
       })),
     })
       .then(async (result) => {
+        if (typeof result.remaining_queries === 'number' && result.remaining_queries >= 0) {
+          syncAiQuotaFromServer(result.remaining_queries);
+        }
         if (result.action) {
           // Action proposed by AI -> Require explicit user confirmation card
           setPendingAction(result.action);

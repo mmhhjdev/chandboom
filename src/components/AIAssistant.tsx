@@ -28,7 +28,6 @@ import { useSpeechRecognition } from '../hooks/useSpeechRecognition';
 import { ChatMessage, ChatMessageItem } from './ChatMessage';
 import {
   invokeAiAssistantEdgeFunction,
-  decrementAiQuotaRpc,
   getSupabaseClient,
   AiAssistantAction,
 } from '../lib/supabase';
@@ -71,6 +70,7 @@ export const AIAssistant: React.FC<{ isOpen?: boolean; onClose?: () => void }> =
     isProUser,
     setActiveTab,
     openSubscriptionModal,
+    syncAiQuotaFromServer,
     addTransaction,
     addGoal,
     addReminder,
@@ -78,9 +78,6 @@ export const AIAssistant: React.FC<{ isOpen?: boolean; onClose?: () => void }> =
 
   const {
     checkCanMakeAiRequest,
-    consumeAiRequest,
-    aiRequestsLeft,
-    isPremium,
   } = useSubscription();
 
   const [messages, setMessages] = useState<ChatMessageItem[]>([]);
@@ -489,26 +486,6 @@ export const AIAssistant: React.FC<{ isOpen?: boolean; onClose?: () => void }> =
       return;
     }
 
-    // 3. Atomically check and decrement quota via Supabase RPC if user authenticated
-    if (user.id && user.id !== 'guest') {
-      try {
-        const rpcRes = await decrementAiQuotaRpc(user.id);
-        if (rpcRes.success && !rpcRes.allowed) {
-          setErrorMessage(
-            rpcRes.error || 'سهمیه ماهانه هوش مصنوعی شما به اتمام رسیده است. لطفاً اشتراک خود را تمدید فرمایید.'
-          );
-          trackAiQuotaExceeded();
-          if (openSubscriptionModal) openSubscriptionModal();
-          return;
-        }
-      } catch (e) {
-        console.warn('RPC decrement exception, falling back to local quota check:', e);
-      }
-    }
-
-    // Consume local quota state
-    await consumeAiRequest();
-
     setIsLoading(true);
     trackAiQuerySent('assistant_guide');
 
@@ -520,6 +497,11 @@ export const AIAssistant: React.FC<{ isOpen?: boolean; onClose?: () => void }> =
 
       const response = await invokeAiAssistantEdgeFunction(text, historyPayload, aiMode);
 
+      if (typeof response.remaining_queries === 'number') {
+        setRemainingQueries(response.remaining_queries);
+        if (response.remaining_queries >= 0) syncAiQuotaFromServer(response.remaining_queries);
+      }
+
       if (response.success && response.reply) {
         const botMsg: ChatMessageItem = {
           id: `ast-${Date.now()}`,
@@ -530,9 +512,6 @@ export const AIAssistant: React.FC<{ isOpen?: boolean; onClose?: () => void }> =
         };
         setMessages((prev) => [...prev, botMsg]);
 
-        if (typeof response.remaining_queries === 'number') {
-          setRemainingQueries(response.remaining_queries);
-        }
       } else {
         if (response.code === 'QUOTA_EXCEEDED') {
           trackAiQuotaExceeded();
