@@ -1,3 +1,5 @@
+import { computeSettlement } from '../utils/dongSettlement';
+import { parseMoneyInput, formatMoneyInput } from '../utils/money';
 import React, { useState, useEffect } from 'react';
 import { Users, Plus, Calculator, Trash2, ArrowRight, Receipt, UserPlus, X, Home, ShoppingCart, Copy } from 'lucide-react';
 import { formatToman, toPersianDigits } from '../utils/formatters';
@@ -142,11 +144,7 @@ export const DongView: React.FC = () => {
     setLoading(false);
   };
 
-  const formatNumberInput = (value: string) => {
-    const cleanNum = value.replace(/\D/g, '');
-    if (!cleanNum) return '';
-    return Number(cleanNum).toLocaleString('en-US');
-  };
+  const formatNumberInput = (value: string) => formatMoneyInput(value);
 
   const handleCreateGroup = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -226,7 +224,7 @@ export const DongView: React.FC = () => {
         .map((b, idx) => ({
           id: String(idx + 1),
           title: b.title,
-          price: Number(b.price.replace(/,/g, '')),
+          price: parseMoneyInput(b.price),
           consumers: b.consumers,
         }));
 
@@ -237,7 +235,7 @@ export const DongView: React.FC = () => {
       }
     } else {
       if (!expenseAmount) return;
-      totalAmount = Number(expenseAmount.replace(/,/g, ''));
+      totalAmount = parseMoneyInput(expenseAmount);
       if (!Number.isFinite(totalAmount) || totalAmount <= 0 || selectedParticipants.length === 0) {
         alert('مبلغ باید عددی و بیشتر از صفر باشد و حداقل یک نفر انتخاب شود.');
         return;
@@ -367,126 +365,17 @@ export const DongView: React.FC = () => {
     if (activeGroupId === groupId) setActiveGroupId(null);
   };
 
-  const calculateOptimalTransfers = (): TransferDebt[] => {
-    if (!activeGroup) return [];
 
-    const balances: { [key: string]: number } = {};
-    const entities = activeGroup.isFamilyMode ? activeGroup.families.map((f) => f.name) : activeGroup.members;
-
-    entities.forEach((ent) => {
-      balances[ent] = 0;
-    });
-
-    activeGroup.expenses.forEach((exp) => {
-      if (balances[exp.payer] !== undefined) {
-        balances[exp.payer] += exp.amount;
-      }
-
-      if (exp.isItemized && exp.billItems && exp.billItems.length > 0) {
-        exp.billItems.forEach((item) => {
-          if (item.consumers.length === 0) return;
-
-          if (activeGroup.isFamilyMode) {
-            let totalConsumersCount = 0;
-            item.consumers.filter((cName) => cName !== exp.payer).forEach((cName) => {
-              const fam = activeGroup.families.find((f) => f.name === cName);
-              if (fam) totalConsumersCount += fam.count;
-            });
-
-            if (totalConsumersCount > 0) {
-              const costPerPerson = item.price / totalConsumersCount;
-              item.consumers.forEach((cName) => {
-                const fam = activeGroup.families.find((f) => f.name === cName);
-                if (fam && balances[cName] !== undefined) {
-                  balances[cName] -= costPerPerson * fam.count;
-                }
-              });
-            }
-          } else {
-            const payingConsumers = item.consumers.filter((cName) => cName !== exp.payer);
-            if (payingConsumers.length === 0) return;
-            const share = item.price / payingConsumers.length;
-            payingConsumers.forEach((cName) => {
-              if (balances[cName] !== undefined) {
-                balances[cName] -= share;
-              }
-            });
-          }
-        });
-      } else {
-        if (activeGroup.isFamilyMode) {
-          let totalParticipatingCount = 0;
-          exp.participants.filter((pName) => pName !== exp.payer).forEach((pName) => {
-            const fam = activeGroup.families.find((f) => f.name === pName);
-            if (fam) totalParticipatingCount += fam.count;
-          });
-
-          if (totalParticipatingCount > 0) {
-            const costPerPerson = exp.amount / totalParticipatingCount;
-            exp.participants.forEach((pName) => {
-              const fam = activeGroup.families.find((f) => f.name === pName);
-              if (fam && balances[pName] !== undefined) {
-                balances[pName] -= costPerPerson * fam.count;
-              }
-            });
-          }
-        } else {
-          const payingParticipants = exp.participants.filter((p) => p !== exp.payer);
-          if (payingParticipants.length > 0) {
-            const share = exp.amount / payingParticipants.length;
-            payingParticipants.forEach((p) => {
-              if (balances[p] !== undefined) {
-                balances[p] -= share;
-              }
-            });
-          }
-        }
-      }
-    });
-
-    const debtors: { name: string; amount: number }[] = [];
-    const creditors: { name: string; amount: number }[] = [];
-
-    Object.entries(balances).forEach(([name, bal]) => {
-      const roundedBal = Math.round(bal);
-      if (roundedBal < 0) {
-        debtors.push({ name, amount: -roundedBal });
-      } else if (roundedBal > 0) {
-        creditors.push({ name, amount: roundedBal });
-      }
-    });
-
-    debtors.sort((a, b) => b.amount - a.amount);
-    creditors.sort((a, b) => b.amount - a.amount);
-
-    const transfers: TransferDebt[] = [];
-    let i = 0;
-    let j = 0;
-
-    while (i < debtors.length && j < creditors.length) {
-      const debtor = debtors[i];
-      const creditor = creditors[j];
-      const settleAmount = Math.min(debtor.amount, creditor.amount);
-
-      if (settleAmount > 0) {
-        transfers.push({
-          from: debtor.name,
-          to: creditor.name,
-          amount: settleAmount,
-        });
-      }
-
-      debtor.amount -= settleAmount;
-      creditor.amount -= settleAmount;
-
-      if (debtor.amount === 0) i++;
-      if (creditor.amount === 0) j++;
-    }
-
-    return transfers;
-  };
-
-  const optimalTransfers = calculateOptimalTransfers();
+  const settlement = activeGroup
+    ? computeSettlement({
+        members: activeGroup.members,
+        families: activeGroup.families,
+        isFamilyMode: activeGroup.isFamilyMode,
+        expenses: activeGroup.expenses,
+      })
+    : null;
+  const optimalTransfers: TransferDebt[] = settlement?.transfers ?? [];
+  const settlementIssues: string[] = settlement?.issues ?? [];
   const listToSelectFrom = activeGroup
     ? activeGroup.isFamilyMode
       ? activeGroup.families.map((f) => f.name)
@@ -787,6 +676,14 @@ export const DongView: React.FC = () => {
           <h3 className="font-cairo font-bold text-base">تسویه حساب نهایی و کمترین تراکنش ممکن</h3>
         </div>
 
+        {settlementIssues.length > 0 && (
+          <div role="alert" className="mb-3 space-y-1 rounded-xl border border-amber-300 bg-amber-50 p-3 text-xs font-cairo text-amber-800 dark:border-amber-700/50 dark:bg-amber-950/30 dark:text-amber-200">
+            <p className="font-bold">برخی هزینه‌ها در تسویه لحاظ نشدند:</p>
+            {settlementIssues.map((msg, i) => (
+              <p key={i}>{msg}</p>
+            ))}
+          </div>
+        )}
         {optimalTransfers.length === 0 ? (
           <p className="text-xs text-emerald-700 dark:text-emerald-400">
             همه هزینه‌ها مساوی پرداخت شده و هیچ بدهی در این گروه وجود ندارد!

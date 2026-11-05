@@ -1,11 +1,11 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, lazy, Suspense } from 'react';
 import { AppProvider, useApp } from './context/AppContext';
 import { Header } from './components/Header';
 import { Navigation } from './components/Navigation';
 import { DashboardView } from './components/DashboardView';
 import { TransactionsView } from './components/TransactionsView';
-import { AnalyticsView } from './components/AnalyticsView';
-import { DongView } from './components/DongView';
+const AnalyticsView = lazy(() => import('./components/AnalyticsView').then((m) => ({ default: m.AnalyticsView })));
+const DongView = lazy(() => import('./components/DongView').then((m) => ({ default: m.DongView })));
 import { GoalsView } from './components/GoalsView';
 import { RemindersView } from './components/RemindersView';
 import { SubscriptionView } from './components/SubscriptionView';
@@ -15,7 +15,7 @@ import { TransactionModal } from './components/TransactionModal';
 import { TicketModal } from './components/TicketModal';
 import { AuthModal } from './components/AuthModal';
 import { AvatarModal } from './components/AvatarModal';
-import { AdminDashboardModal } from './components/AdminDashboardModal';
+const AdminDashboardModal = lazy(() => import('./components/AdminDashboardModal').then((m) => ({ default: m.AdminDashboardModal })));
 import { SubscriptionModal } from './components/SubscriptionModal';
 import { FloatingAIAssistant } from './components/FloatingAIAssistant';
 import { LandingPage } from './components/LandingPage';
@@ -32,9 +32,9 @@ import { PricingPage } from './pages/PricingPage';
 import { BlogPage } from './pages/BlogPage';
 import { ArticlePage } from './pages/ArticlePage';
 import { AIAssistant } from './components/AIAssistant';
-import { ShieldCheck, Heart, Sparkles, ShieldAlert } from 'lucide-react';
-import { initSecurityProtection } from './utils/devtoolsProtection';
+import { ShieldCheck, Heart, Sparkles } from 'lucide-react';
 import { EnvNoticeBanner } from './components/EnvNoticeBanner';
+import { CookieConsentBanner } from './components/CookieConsentBanner';
 
 const AppContent: React.FC = () => {
   const {
@@ -59,15 +59,6 @@ const AppContent: React.FC = () => {
   const [isAvatarModalOpen, setIsAvatarModalOpen] = useState(false);
   const [isBankSmsModalOpen, setIsBankSmsModalOpen] = useState(false);
   const [isDailyQuestsModalOpen, setIsDailyQuestsModalOpen] = useState(false);
-  const [showSecurityNotice, setShowSecurityNotice] = useState(false);
-
-  useEffect(() => {
-    const cleanup = initSecurityProtection(() => {
-      setShowSecurityNotice(true);
-      setTimeout(() => setShowSecurityNotice(false), 3000);
-    });
-    return cleanup;
-  }, []);
 
   const handleOpenTransactionModal = (tx?: Transaction) => {
     setEditingTx(tx || null);
@@ -92,16 +83,10 @@ const AppContent: React.FC = () => {
   if (activeTab === 'landing') {
     return (
       <>
-        {/* Security Shield Toast for Inspector/DevTools Attempts */}
-        {showSecurityNotice && (
-          <div className="fixed top-4 left-1/2 -translate-x-1/2 z-50 px-5 py-2.5 rounded-2xl bg-rose-950/90 border border-rose-500/70 text-rose-200 text-xs font-cairo font-bold shadow-2xl flex items-center gap-2 animate-in fade-in slide-in-from-top-3">
-            <ShieldAlert className="w-4 h-4 text-rose-400 shrink-0" />
-            <span>کدهای منبع سامانه جهت حفظ امنیت حساب‌های مالی رمزنگاری و حفاظت شده‌اند.</span>
-          </div>
-        )}
 
         {/* Environment configuration banner if variables missing */}
         <EnvNoticeBanner />
+      <CookieConsentBanner />
 
         <LandingPage
           onEnterApp={() => setActiveTab('dashboard')}
@@ -128,16 +113,10 @@ const AppContent: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-[#F8FAF9] dark:bg-[#070B09] text-zinc-900 dark:text-zinc-100 flex flex-col transition-colors duration-200 font-cairo" dir="rtl">
-      {/* Security Shield Toast for Inspector/DevTools Attempts */}
-      {showSecurityNotice && (
-        <div className="fixed top-4 left-1/2 -translate-x-1/2 z-50 px-5 py-2.5 rounded-2xl bg-rose-950/90 border border-rose-500/70 text-rose-200 text-xs font-cairo font-bold shadow-2xl flex items-center gap-2 animate-in fade-in slide-in-from-top-3">
-          <ShieldAlert className="w-4 h-4 text-rose-400 shrink-0" />
-          <span>کدهای منبع سامانه جهت حفظ امنیت حساب‌های مالی رمزنگاری و حفاظت شده‌اند.</span>
-        </div>
-      )}
 
       {/* Environment configuration banner if variables missing */}
       <EnvNoticeBanner />
+      <CookieConsentBanner />
 
       {/* Top Header */}
       <Header
@@ -164,8 +143,16 @@ const AppContent: React.FC = () => {
           />
         )}
         {activeTab === 'goals' && <GoalsView />}
-        {activeTab === 'analytics' && <AnalyticsView />}
-        {activeTab === 'dong' && <DongView />}
+        {activeTab === 'analytics' && (
+          <Suspense fallback={<div className="p-6 text-center text-xs font-cairo text-slate-400">در حال بارگذاری…</div>}>
+            <AnalyticsView />
+          </Suspense>
+        )}
+        {activeTab === 'dong' && (
+          <Suspense fallback={<div className="p-6 text-center text-xs font-cairo text-slate-400">در حال بارگذاری…</div>}>
+            <DongView />
+          </Suspense>
+        )}
         {activeTab === 'reminders' && <RemindersView />}
         {activeTab === 'subscription' && <SubscriptionView />}
         {activeTab === 'support' && (
@@ -234,10 +221,10 @@ const AppContent: React.FC = () => {
         onSubmit={handleTicketSubmit}
       />
 
-      <AdminDashboardModal
+      <Suspense fallback={null}><AdminDashboardModal
         isOpen={isAdminModalOpen}
         onClose={() => setIsAdminModalOpen(false)}
-      />
+      /></Suspense>
 
       <AvatarModal
         isOpen={isAvatarModalOpen}

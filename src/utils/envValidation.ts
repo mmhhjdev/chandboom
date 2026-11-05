@@ -37,48 +37,18 @@ export function validateEnvironment(): EnvValidationReport {
   if (!supabaseUrl) missing.push('VITE_SUPABASE_URL');
   if (!supabaseAnonKey) missing.push('VITE_SUPABASE_ANON_KEY');
 
-  // 2. Chandboom AI Credentials (VITE_AI_API_KEY or VITE_GAPGPT_API_KEY)
-  const aiKey =
-    (typeof import.meta !== 'undefined' &&
-      ((import.meta as any).env?.VITE_AI_API_KEY ||
-        (import.meta as any).env?.VITE_GAPGPT_API_KEY ||
-        (import.meta as any).env?.VITE_DEEPSEEK_API_KEY)) ||
-    (typeof process !== 'undefined' &&
-      (process.env?.VITE_AI_API_KEY ||
-        process.env?.VITE_GAPGPT_API_KEY ||
-        process.env?.GAPGPT_API_KEY ||
-        process.env?.DEEPSEEK_API_KEY)) ||
-    '';
-
-  const isAiConfigured = Boolean(aiKey && !aiKey.includes('MY_') && !aiKey.includes('placeholder'));
-
-  if (!isAiConfigured) {
-    missing.push('VITE_GAPGPT_API_KEY (یا VITE_AI_API_KEY)');
-    warnings.push('کلید هوش مصنوعی چندبوم برای تحلیل پیامک بانکی و گفتگو تنظیم نشده است.');
-  }
-
-  // AI Base URL
-  const aiBaseUrl =
-    (typeof import.meta !== 'undefined' && ((import.meta as any).env?.VITE_AI_BASE_URL || (import.meta as any).env?.VITE_GAPGPT_BASE_URL)) ||
-    (typeof process !== 'undefined' && (process.env?.VITE_AI_BASE_URL || process.env?.VITE_GAPGPT_BASE_URL)) ||
-    '';
-  if (!aiBaseUrl) {
-    // Defaults to https://api.gapgpt.app/v1 automatically in aiService
-  }
+  // 2. AI: the provider key lives ONLY in Supabase Edge Function secrets (GAPGPT_API_KEY).
+  // Never read or validate an AI key in the browser: Vite inlines import.meta.env into the bundle.
+  const isAiConfigured = isSupabaseConfigured;
 
   // 3. Admin Credentials
   const adminEmail =
     (typeof import.meta !== 'undefined' && (import.meta as any).env?.VITE_ADMIN_EMAIL) ||
     (typeof process !== 'undefined' && process.env?.VITE_ADMIN_EMAIL) ||
     '';
-  const adminPassword =
-    (typeof import.meta !== 'undefined' && (import.meta as any).env?.VITE_ADMIN_PASSWORD) ||
-    (typeof process !== 'undefined' && process.env?.VITE_ADMIN_PASSWORD) ||
-    '';
-
-  const isAdminConfigured = Boolean(adminEmail && adminPassword);
+  const isAdminConfigured = Boolean(adminEmail);
   if (!isAdminConfigured) {
-    warnings.push('اطلاعات ورود ادمین ارشد (VITE_ADMIN_EMAIL / VITE_ADMIN_PASSWORD) در متغیرها تنظیم نشده است.');
+    warnings.push('ایمیل ادمین ارشد (VITE_ADMIN_EMAIL) تنظیم نشده است. دسترسی ادمین در هر حال توسط سرور (role=admin) کنترل می‌شود.');
   }
 
   return {

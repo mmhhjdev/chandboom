@@ -128,7 +128,7 @@ export const DongGroupAI: React.FC<DongGroupAIProps> = ({ group, onRegisterExpen
     setDraftLoading(true);
     setDraftError('');
     setDraft(null);
-    const prompt = `از متن زیر فقط یک پیش‌نویس هزینه برای گروه دنگ استخراج کن. هنوز چیزی ثبت نکن. نام اعضای معتبر گروه: ${JSON.stringify(group.members)}. نام نمایشی کاربر فعلی: ${JSON.stringify(currentUserName || null)}. گروه: ${group.name}. واحد پیش‌فرض تومان است؛ «هزار تومان» را در مبلغ عددی ضربدر ۱۰۰۰ کن. اگر کاربر گفت «من»، «خودم» یا «من حساب کردم»، payer را فقط در صورت تطبیق قطعی با عضو گروه برابر نام واقعی عضو کن؛ در غیر این صورت از مقدار «__CURRENT_USER__» استفاده کن تا برنامه بررسی کند. هر آیتم باید مصرف‌کننده‌های همان آیتم را داشته باشد. فقط JSON معتبر و بدون markdown برگردان با این ساختار: {"title":"نام کلی هزینه","payer":"نام پرداخت‌کننده یا __CURRENT_USER__","items":[{"title":"نام آیتم","amount":320000,"participants":["نام عضو"]}],"missing_information":[]} . اگر مبلغ، پرداخت‌کننده یا مصرف‌کننده‌ها قابل تشخیص نیستند، چیزی حدس نزن و آن را در missing_information بنویس. همه آیتم‌ها باید مبلغ مثبت داشته باشند. متن کاربر: ${spoken}`;
+    const prompt = `از متن زیر فقط یک پیش‌نویس هزینه برای گروه دنگ استخراج کن. هنوز چیزی ثبت نکن. نام اعضای معتبر گروه: ${JSON.stringify(group.isFamilyMode ? group.families : group.members)}. نام نمایشی کاربر فعلی: ${JSON.stringify(currentUserName || null)}. گروه: ${group.name}. واحد پیش‌فرض تومان است؛ «هزار تومان» را در مبلغ عددی ضربدر ۱۰۰۰ کن. اگر کاربر گفت «من»، «خودم» یا «من حساب کردم»، payer را فقط در صورت تطبیق قطعی با عضو گروه برابر نام واقعی عضو کن؛ در غیر این صورت از مقدار «__CURRENT_USER__» استفاده کن تا برنامه بررسی کند. هر آیتم باید مصرف‌کننده‌های همان آیتم را داشته باشد. فقط JSON معتبر و بدون markdown برگردان با این ساختار: {"title":"نام کلی هزینه","payer":"نام پرداخت‌کننده یا __CURRENT_USER__","items":[{"title":"نام آیتم","amount":320000,"participants":["نام عضو"]}],"missing_information":[]} . اگر مبلغ، پرداخت‌کننده یا مصرف‌کننده‌ها قابل تشخیص نیستند، چیزی حدس نزن و آن را در missing_information بنویس. همه آیتم‌ها باید مبلغ مثبت داشته باشند. متن کاربر: ${spoken}`;
     try {
       const result = await invokeAiAssistantEdgeFunction(prompt, [], 'group_advisor', { feature: voiceTranscript ? 'voice_expense' : 'text' });
       if (typeof result.remaining_queries === 'number') setLocalRequestsLeft(result.remaining_queries);
@@ -142,15 +142,21 @@ export const DongGroupAI: React.FC<DongGroupAIProps> = ({ group, onRegisterExpen
         throw new Error(`برای آماده‌سازی هزینه این موارد روشن نیست: ${parsed.missing_information.join('، ')}`);
       }
       if (!parsed.title || !parsed.payer || !Array.isArray(parsed.items) || parsed.items.length === 0) throw new Error('اطلاعات هزینه کامل استخراج نشد. متن را دقیق‌تر بنویس.');
-      const members = group.members;
-      const resolveMember = (name: string) => {
-        if (name === '__CURRENT_USER__' || ['من', 'خودم', 'کاربر فعلی'].includes(normalizeName(name))) {
-          const currentMatch = members.find(m => currentUserName && normalizeName(m) === normalizeName(currentUserName));
-          if (currentMatch) return currentMatch;
-          const aliasMatch = members.find(m => ['من', 'خودم'].includes(normalizeName(m)));
-          return aliasMatch || '';
+      const members = group.isFamilyMode ? group.families.map(f => f.name) : group.members;
+      const resolveMember = (rawName: string) => {
+        const name = normalizeName(rawName);
+        const isCurrentUser = rawName === '__CURRENT_USER__' || ['من', 'خودم', 'کاربر فعلی'].includes(name);
+        const target = isCurrentUser && currentUserName ? normalizeName(currentUserName) : name;
+        const matches = members.filter(m => normalizeName(m) === target);
+        // Names are labels, not identities. Never silently choose between homonyms.
+        if (matches.length > 1) throw new Error(`نام «${rawName}» در گروه تکراری است؛ برای ثبت دقیق هزینه، نام متمایز اعضا را مشخص کن.`);
+        if (matches.length === 1) return matches[0];
+        if (isCurrentUser) {
+          const aliases = members.filter(m => ['من', 'خودم'].includes(normalizeName(m)));
+          if (aliases.length === 1) return aliases[0];
+          if (aliases.length > 1) throw new Error('چند عضو با عنوان «من/خودم» وجود دارد؛ پرداخت‌کننده را با نام دقیق مشخص کن.');
         }
-        return members.find(m => normalizeName(m) === normalizeName(name)) || '';
+        return '';
       };
       const payer = resolveMember(String(parsed.payer));
       const items: ExpenseDraftItem[] = parsed.items.map((item: any) => ({
@@ -195,7 +201,7 @@ export const DongGroupAI: React.FC<DongGroupAIProps> = ({ group, onRegisterExpen
       {expanded && <div className="px-4 pb-4 space-y-3">
         <div className="rounded-xl bg-white/80 dark:bg-black/20 border border-violet-100 dark:border-violet-900/40 p-3 text-xs text-zinc-600 dark:text-zinc-300 flex flex-wrap gap-x-4 gap-y-1">
           <span>مجموع هزینه‌ها: <b className="text-violet-700 dark:text-violet-300">{formatToman(group.expenses.reduce((sum, e) => sum + (Number(e.amount) || 0), 0))}</b></span>
-          <span>اعضا: <b>{toPersianDigits(group.members.length || group.families.length)}</b></span>
+          <span>اعضا: <b>{toPersianDigits(group.isFamilyMode ? group.families.length : group.members.length)}</b></span>
           <span className="text-zinc-400">فقط اطلاعات همین گروه به پرسش اضافه می‌شود.</span>
         </div>
         {history.length === 0 && <div className="flex flex-wrap gap-2">{starterPrompts.map(p => <button key={p} type="button" onClick={() => void send(p)} className="text-xs font-cairo px-3 py-2 rounded-xl border border-violet-200 dark:border-violet-900/50 text-violet-800 dark:text-violet-200 hover:bg-violet-100 dark:hover:bg-violet-900/30">{p}</button>)}</div>}

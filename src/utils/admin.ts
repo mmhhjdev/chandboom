@@ -27,7 +27,8 @@ export function isAdminEmail(email?: string | null): boolean {
   if (!email) return false;
   const clean = email.trim().toLowerCase();
   const envEmail = getEnvAdminEmail();
-  return Boolean((envEmail && clean === envEmail) || clean === 'info.chandboom.app@gmail.com');
+  // Client-side check is cosmetic only. Real admin power is enforced by public.is_admin() in RLS.
+  return Boolean(envEmail && clean === envEmail);
 }
 
 export function canAccessAdminPanel(userRole?: string, email?: string): boolean {

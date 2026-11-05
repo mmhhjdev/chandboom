@@ -1,3 +1,4 @@
+import { createDongGroup, findOrCreateDongGroup, addDongExpense } from '../services/dongService';
 import React, { useState, useEffect, useRef } from 'react';
 import {
   Bot,
@@ -221,23 +222,7 @@ export const AIAssistant: React.FC<{ isOpen?: boolean; onClose?: () => void }> =
           membersList.unshift(user.full_name);
         }
 
-        const { data: createdGroup, error: groupErr } = await supabase
-          .from('dong_groups')
-          .insert({
-            user_id: user.id,
-            name: groupName,
-            members: membersList,
-            is_family_mode: false,
-            families: [],
-            created_at: new Date().toISOString(),
-          })
-          .select('id, name, members')
-          .single();
-
-        if (groupErr) throw groupErr;
-        if (!createdGroup?.id) {
-          throw new Error('پایگاه داده شناسه گروه ساخته‌شده را برنگرداند؛ موفقیت ثبت تأیید نشد.');
-        }
+        const createdGroup = await createDongGroup(user.id, groupName, membersList);
 
         const successMsg = `گروه دنگ «${createdGroup.name}» با اعضای (${membersList.join(
           '، '
@@ -269,46 +254,9 @@ export const AIAssistant: React.FC<{ isOpen?: boolean; onClose?: () => void }> =
           ? params.participants
           : ['من', 'علی', 'رضا'];
 
-        if (supabase) {
-          // Find or create group
-          let groupId: string | null = null;
-          const { data: existingGroup } = await supabase
-            .from('dong_groups')
-            .select('id')
-            .eq('name', groupName)
-            .maybeSingle();
-
-          if (existingGroup) {
-            groupId = existingGroup.id;
-          } else {
-            const { data: newG } = await supabase
-              .from('dong_groups')
-              .insert({
-                user_id: user?.id,
-                name: groupName,
-                members: participants,
-                is_family_mode: false,
-                families: [],
-                created_at: new Date().toISOString(),
-              })
-              .select('id')
-              .maybeSingle();
-            groupId = newG?.id || null;
-          }
-
-          if (groupId) {
-            await supabase.from('dong_expenses').insert({
-              group_id: groupId,
-              title,
-              payer,
-              amount,
-              participants,
-              is_itemized: false,
-              bill_items: [],
-              created_at: new Date().toISOString(),
-            });
-          }
-        }
+        if (!supabase || !user?.id) throw new Error('برای ثبت خرج دنگ باید وارد حساب کاربری باشید.');
+        const group = await findOrCreateDongGroup(user.id, groupName, participants);
+        await addDongExpense({ groupId: group.id, members: group.members.length ? group.members : participants, title, payer, amount, participants });
 
         const successMsg = `خرج دنگ «${title}» به مبلغ ${formatToman(amount)} پرداخت شده توسط ${payer} در سیستم دنگ ثبت گردید.`;
 

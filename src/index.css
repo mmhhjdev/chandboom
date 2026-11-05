@@ -6,11 +6,33 @@
 @layer base {
   * {
     border-color: #E2E8E4;
-    font-variant-numeric: tabular-nums;
+  }
+
+  html {
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+    scroll-behavior: smooth;
+  }
+
+  button:not(:disabled),
+  [role='button'],
+  a[href] {
+    cursor: pointer;
   }
   
   .dark * {
     border-color: #1A2621;
+  }
+
+  /* Keyboard focus must be visible (accessibility) in the brand green. */
+  :focus-visible {
+    outline: 2px solid #059669;
+    outline-offset: 2px;
+    border-radius: 8px;
+  }
+
+  ::selection {
+    background: rgba(16, 185, 129, 0.28);
   }
 
   h1, h2, h3, h4, h5, h6 {
@@ -103,3 +125,15 @@ body {
   animation: shimmer 2s infinite ease-in-out;
 }
 
+
+/* Respect users who ask their OS for less motion. */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}

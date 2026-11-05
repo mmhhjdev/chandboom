@@ -39,8 +39,6 @@ jobs:
         env:
           VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
           VITE_SUPABASE_ANON_KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY }}
-          VITE_GAPGPT_API_KEY: ${{ secrets.VITE_GAPGPT_API_KEY }}
-          VITE_GAPGPT_BASE_URL: ${{ vars.VITE_GAPGPT_BASE_URL || 'https://api.gapgpt.app/v1' }}
           VITE_GA_MEASUREMENT_ID: ${{ secrets.VITE_GA_MEASUREMENT_ID }}
         run: bun run build
 

@@ -12,10 +12,7 @@ function corsFor(req: Request): Record<string, string> {
   const origin = req.headers.get('Origin');
   // Requests without Origin (e.g. server-to-server) are still handled by auth.
   // Browser origins are only allowed when explicitly listed in AI_ALLOWED_ORIGINS.
-  if (origin && allowedOrigins.length === 0) {
-    // Development fallback only; production should set AI_ALLOWED_ORIGINS.
-    return { ...baseCorsHeaders, 'Access-Control-Allow-Origin': '*' };
-  }
+  // No wildcard fallback: AI_ALLOWED_ORIGINS must list the production origin explicitly.
   if (origin && allowedOrigins.includes(origin)) {
     return { ...baseCorsHeaders, 'Access-Control-Allow-Origin': origin };
   }
@@ -87,6 +84,111 @@ const ADVISOR_SYSTEM_PROMPT = `شما مشاور مالی شخصی چندبوم 
 توصیه‌ها را قطعی یا تضمین‌شده معرفی نکن و ریسک‌ها و فرض‌ها را کوتاه توضیح بده. این حالت فقط مشاوره است: action همیشه null و requires_confirmation همیشه false.
 درخواست‌های خارج از حوزه مالی و امکانات چندبوم را مؤدبانه رد کن.
 خروجی فقط JSON معتبر با شکل {"reply":"پاسخ فارسی","action":null,"requires_confirmation":false} باشد.`;
+
+const AI_RATE_LIMIT_PER_MINUTE = 20;
+const AI_ATTEMPT_TIMEOUT_MS = 14000;
+const AI_MAX_ATTEMPTS = 2;
+// gpt-4o-mini list prices in micro-USD per token ($0.15 / 1M input, $0.60 / 1M output).
+const PRICE_INPUT_MICRO_USD = 0.15;
+const PRICE_OUTPUT_MICRO_USD = 0.6;
+
+// Structured Outputs: the provider returns exactly this shape. validateAction() below stays the
+// authority on business rules, so `strict` is false (free-form params object is allowed).
+const RESULT_JSON_SCHEMA = {
+  name: 'assistant_result',
+  strict: false,
+  schema: {
+    type: 'object',
+    properties: {
+      reply: { type: 'string' },
+      action: {
+        anyOf: [
+          { type: 'null' },
+          {
+            type: 'object',
+            properties: {
+              type: { type: 'string', enum: ['create_transaction', 'create_dong_group', 'create_goal', 'create_reminder'] },
+              params: { type: 'object' },
+              description: { type: 'string' },
+            },
+            required: ['type', 'params', 'description'],
+          },
+        ],
+      },
+      requires_confirmation: { type: 'boolean' },
+    },
+    required: ['reply', 'action', 'requires_confirmation'],
+  },
+};
+
+const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
+
+async function hashUserForProvider(userId: string): Promise<string> {
+  const digest = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(`chandboom:${userId}`));
+  return Array.from(new Uint8Array(digest)).slice(0, 16).map((b) => b.toString(16).padStart(2, '0')).join('');
+}
+
+type ProviderCallArgs = {
+  baseUrl: string;
+  apiKey: string;
+  model: string;
+  messages: Array<{ role: 'system' | 'user' | 'assistant'; content: string }>;
+  temperature: number;
+  maxTokens: number;
+  user: string;
+};
+
+// Calls the chat endpoint with: Structured Outputs first, automatic fallback to json_object if the
+// proxy rejects the schema, and ONE retry for transient errors (429 / 5xx / network).
+async function callChatModel(args: ProviderCallArgs): Promise<{ ok: true; data: any } | { ok: false; status: number; detail: string }> {
+  let useSchema = true;
+  let attempts = 0;
+  while (attempts < AI_MAX_ATTEMPTS) {
+    attempts++;
+    let res: Response;
+    try {
+      res = await fetch(`${args.baseUrl}/chat/completions`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${args.apiKey}` },
+        signal: AbortSignal.timeout(AI_ATTEMPT_TIMEOUT_MS),
+        body: JSON.stringify({
+          model: args.model,
+          messages: args.messages,
+          temperature: args.temperature,
+          max_tokens: args.maxTokens,
+          user: args.user,
+          response_format: useSchema
+            ? { type: 'json_schema', json_schema: RESULT_JSON_SCHEMA }
+            : { type: 'json_object' },
+        }),
+      });
+    } catch (error) {
+      console.error('AI provider network error:', error);
+      if (attempts < AI_MAX_ATTEMPTS) { await sleep(600); continue; }
+      return { ok: false, status: 0, detail: 'network' };
+    }
+
+    if (res.ok) {
+      const data = await res.json().catch(() => null);
+      return { ok: true, data };
+    }
+
+    const detail = await res.text().catch(() => '');
+    // The proxy does not support json_schema: switch format without counting it as a retry.
+    if (res.status === 400 && useSchema && /response_format|json_schema/i.test(detail)) {
+      useSchema = false;
+      attempts--;
+      continue;
+    }
+    const transient = res.status === 429 || res.status >= 500;
+    if (transient && attempts < AI_MAX_ATTEMPTS) {
+      await sleep(700 * attempts);
+      continue;
+    }
+    return { ok: false, status: res.status, detail: detail.slice(0, 500) };
+  }
+  return { ok: false, status: 0, detail: 'exhausted' };
+}
 
 function jsonResponse(body: Record<string, unknown>, status = 200, responseHeaders: Record<string, string> = baseCorsHeaders): Response {
   return new Response(JSON.stringify(body), {
@@ -341,6 +443,20 @@ serve(async (req: Request) => {
 
     // Consume quota atomically through the authenticated RPC. The RPC locks the user's row,
     // checks the active subscription and monthly reset, and cannot be forged by the browser.
+    // Per-minute burst limit (cost control). Runs before quota so rejected bursts cost nothing.
+    const { data: withinRate, error: rateError } = await supabaseAdmin.rpc('ai_consume_rate_limit', {
+      p_user_id: userId,
+      p_limit: AI_RATE_LIMIT_PER_MINUTE,
+      p_window_seconds: 60,
+    });
+    if (rateError) {
+      console.error('Rate limit check failed:', rateError.message);
+      return respond({ success: false, error: 'بررسی محدودیت درخواست ممکن نیست؛ کمی بعد دوباره تلاش کن.' }, 503);
+    }
+    if (withinRate !== true) {
+      return respond({ success: false, error: 'تعداد درخواست‌ها در این دقیقه زیاد است؛ چند ثانیه صبر کن.', code: 'RATE_LIMITED' }, 429);
+    }
+
     const userScopedSupabase = createClient(supabaseUrl, anonKey, {
       global: { headers: { Authorization: `Bearer ${token}` } },
       auth: { persistSession: false, autoRefreshToken: false },
@@ -363,6 +479,17 @@ serve(async (req: Request) => {
     }
     const remainingAfterConsume = Number(quotaData.remaining_queries ?? 0);
 
+    // A quota unit is consumed before the model call. If the request fails on our side or the
+    // provider side, give it back so users are never charged for an answer they did not receive.
+    const refundQuota = async () => {
+      try {
+        const { error } = await userScopedSupabase.rpc('refund_ai_quota', { p_user_id: userId });
+        if (error) console.warn('AI quota refund failed:', error.message);
+      } catch (refundError) {
+        console.warn('AI quota refund exception:', refundError);
+      }
+    };
+
     const isAdvisor = mode === 'advisor' || mode === 'group_advisor';
     let advisorContext = '';
     if (mode === 'advisor') {
@@ -384,6 +511,7 @@ serve(async (req: Request) => {
       // Do not produce numeric advice from missing transaction data.
       if (txRes.error) {
         console.error('Advisor transaction query failed:', txRes.error.message);
+        await refundQuota();
         return respond({ success: false, error: 'دریافت تراکنش‌های مالی برای تحلیل ممکن نشد؛ لطفاً کمی بعد دوباره تلاش کن.' }, 503);
       }
       const tx = txRes.data || [];
@@ -419,10 +547,11 @@ serve(async (req: Request) => {
     }
 
     const history = Array.isArray(body.messages) ? body.messages : [];
-    const chatMessages: Array<{ role: 'system' | 'user' | 'assistant'; content: string }> = [{
-      role: 'system',
-      content: (isAdvisor ? ADVISOR_SYSTEM_PROMPT + advisorContext : SYSTEM_PROMPT),
-    }];
+    // Static instructions first, so the prefix stays identical across requests (prompt caching).
+    const chatMessages: Array<{ role: 'system' | 'user' | 'assistant'; content: string }> = [
+      { role: 'system', content: isAdvisor ? ADVISOR_SYSTEM_PROMPT : SYSTEM_PROMPT },
+    ];
+    if (advisorContext) chatMessages.push({ role: 'system', content: advisorContext.trim() });
 
     let historyChars = 0;
     for (const item of history.slice(-MAX_HISTORY_MESSAGES)) {
@@ -435,48 +564,54 @@ serve(async (req: Request) => {
     }
     chatMessages.push({ role: 'user', content: userMessage });
 
-    let aiResponse: Response;
-    try {
-      aiResponse = await fetch(`${baseUrl}/chat/completions`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${apiKey}` },
-        signal: AbortSignal.timeout(AI_TIMEOUT_MS),
-        body: JSON.stringify({
-          model,
-          messages: chatMessages,
-          temperature: isAdvisor ? 0.35 : 0.15,
-          max_tokens: isAdvisor ? 850 : 450,
-        }),
-      });
-    } catch (error) {
-      console.error('AI provider request failed:', error);
+    const providerUser = await hashUserForProvider(userId);
+    const callResult = await callChatModel({
+      baseUrl,
+      apiKey,
+      model,
+      messages: chatMessages,
+      temperature: isAdvisor ? 0.3 : 0.1,
+      maxTokens: isAdvisor ? 850 : 450,
+      user: providerUser,
+    });
+    if (!callResult.ok) {
+      console.error('AI provider failed:', callResult.status, callResult.detail);
+      await refundQuota();
       return respond({ success: false, error: 'دستیار فعلاً در دسترس نیست؛ کمی بعد دوباره امتحان کن.' }, 502);
     }
-
-    if (!aiResponse.ok) {
-      const providerText = await aiResponse.text().catch(() => '');
-      console.error('AI provider returned error:', aiResponse.status, providerText.slice(0, 500));
-      return respond({ success: false, error: 'سرویس هوش مصنوعی موقتاً پاسخ‌گو نیست.' }, 502);
-    }
-
-    const providerData = await aiResponse.json().catch(() => null);
+    const providerData = callResult.data;
     const rawText = providerData?.choices?.[0]?.message?.content;
     if (typeof rawText !== 'string' || !rawText.trim()) {
+      await refundQuota();
       return respond({ success: false, error: 'پاسخ دستیار خالی یا نامعتبر بود؛ دوباره تلاش کن.' }, 502);
     }
 
     const parsed = parseJsonObject(rawText);
     const result = normalizeResult(parsed, mode);
 
-    const actualTotalTokens = Number(providerData?.usage?.total_tokens);
-    try {
-      await supabaseAdmin.from('ai_usage_logs').insert([{
-        user_id: userId,
-        query_category: mode === 'group_advisor' ? 'group_finance_help' : isAdvisor ? 'financial_advice' : result.action ? 'action_proposal' : 'finance_help',
-        tokens_used: Number.isFinite(actualTotalTokens) && actualTotalTokens >= 0 ? actualTotalTokens : 0,
-      }]);
-    } catch (logError) {
-      console.warn('AI usage logging failed:', logError);
+    const usage = providerData?.usage ?? {};
+    const promptTokens = Math.max(0, Number(usage.prompt_tokens) || 0);
+    const completionTokens = Math.max(0, Number(usage.completion_tokens) || 0);
+    const cachedTokens = Math.max(0, Number(usage?.prompt_tokens_details?.cached_tokens) || 0);
+    const estimatedCostMicroUsd = Math.round(promptTokens * PRICE_INPUT_MICRO_USD + completionTokens * PRICE_OUTPUT_MICRO_USD);
+    const category = mode === 'group_advisor' ? 'group_finance_help' : isAdvisor ? 'financial_advice' : result.action ? 'action_proposal' : 'finance_help';
+    const logRow = {
+      user_id: userId,
+      query_category: category,
+      tokens_used: promptTokens + completionTokens,
+    };
+    // Full accounting needs the columns from supabase/manual/SUPABASE_EDITS.sql; fall back to the basic row.
+    const { error: fullLogError } = await supabaseAdmin.from('ai_usage_logs').insert([{
+      ...logRow,
+      model,
+      prompt_tokens: promptTokens,
+      completion_tokens: completionTokens,
+      cached_prompt_tokens: cachedTokens,
+      est_cost_micro_usd: estimatedCostMicroUsd,
+    }]);
+    if (fullLogError) {
+      const { error: basicLogError } = await supabaseAdmin.from('ai_usage_logs').insert([logRow]);
+      if (basicLogError) console.warn('AI usage logging failed:', basicLogError.message);
     }
 
     return respond({

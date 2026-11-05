@@ -2,35 +2,11 @@
 <html lang="fa" dir="rtl" prefix="og: https://ogp.me/ns#">
   <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     
-    <!-- 1. Security Meta Headers & SPA Redirect Decoder -->
-    <meta http-equiv="X-Content-Type-Options" content="nosniff" />
-    <meta name="referrer" content="strict-origin-when-cross-origin" />
-    <script type="text/javascript">
-      // SPA redirect decoder for GitHub Pages custom domain (chandboom.ir)
-      (function(l) {
-        if (l.search && l.search[1] === '/') {
-          var decoded = l.search.slice(1).split('&').map(function(s) { 
-            return s.replace(/~and~/g, '&');
-          }).join('?');
-          window.history.replaceState(null, null,
-              l.pathname.slice(0, -1) + decoded + l.hash
-          );
-        }
-      }(window.location));
-    </script>
+    <!-- CSP_META -->
+    <script src="/js/spa-redirect.js"></script>
 
-    <!-- Google Analytics (GA4) -->
-    <script async src="https://www.googletagmanager.com/gtag/js?id=%VITE_GA_MEASUREMENT_ID%"></script>
-    <script>
-      window.dataLayer = window.dataLayer || [];
-      function gtag(){dataLayer.push(arguments);}
-      gtag('js', new Date());
-      gtag('config', '%VITE_GA_MEASUREMENT_ID%', {
-        send_page_view: false
-      });
-    </script>
 
     <!-- 2. Primary High-Performance SEO Meta Tags -->
     <title>چندبوم | مدیریت مالی هوشمند و مدیریت مالی شخصی با هوش مصنوعی</title>
@@ -42,10 +18,6 @@
     <meta name="googlebot" content="index, follow" />
     <link rel="canonical" href="https://chandboom.ir/" />
 
-    <!-- 2.1 Bilingual Alternate Language Links (hreflang) -->
-    <link rel="alternate" hreflang="fa" href="https://chandboom.ir/" />
-    <link rel="alternate" hreflang="en" href="https://chandboom.ir/?lang=en" />
-    <link rel="alternate" hreflang="x-default" href="https://chandboom.ir/" />
 
     <!-- 3. Open Graph / Facebook / Telegram / WhatsApp / LinkedIn -->
     <meta property="og:type" content="website" />

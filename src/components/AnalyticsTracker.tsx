@@ -1,20 +1,27 @@
 import React, { useEffect } from 'react';
 import { useLocation } from 'react-router-dom';
 import { initGA, trackPageView } from '../lib/analytics';
+import { getConsent, onConsentChange } from '../lib/consent';
 
 /**
- * Automatically tracks page views across client-side route changes
- * Must be mounted inside a <BrowserRouter>
+ * Tracks page views across client-side route changes, only after the visitor accepts analytics.
+ * Must be mounted inside a <BrowserRouter>.
  */
 export const AnalyticsTracker: React.FC = () => {
   const location = useLocation();
 
   useEffect(() => {
-    initGA();
+    const enableIfConsented = () => {
+      if (getConsent() === 'granted') initGA();
+    };
+    enableIfConsented();
+    return onConsentChange(enableIfConsented);
   }, []);
 
   useEffect(() => {
-    trackPageView(location.pathname + location.search, document.title);
+    if (getConsent() === 'granted') {
+      trackPageView(location.pathname + location.search, document.title);
+    }
   }, [location]);
 
   return null;

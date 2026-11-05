@@ -5,10 +5,12 @@
   "type": "module",
   "scripts": {
     "dev": "vite --port=3000 --host=0.0.0.0",
-    "build": "vite build && node scripts/generate-article-seo.mjs",
+    "build": "vite build && node scripts/generate-seo.mjs",
     "preview": "vite preview",
     "clean": "rm -rf dist server.js",
-    "lint": "tsc --noEmit"
+    "lint": "tsc --noEmit",
+    "test": "node --experimental-strip-types --test tests/*.test.ts",
+    "e2e": "playwright test"
   },
   "dependencies": {
     "@google/genai": "^2.4.0",

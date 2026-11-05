@@ -33,6 +33,7 @@ import {
   GUEST_USER,
 } from '../data/initialData';
 import { generatePredictiveBudgetAlerts } from '../utils/aiParser';
+import { useToast } from '../components/ui/Toast';
 import { isAdminEmail, isStoredAdminSessionValid, clearStoredAdminSession, getEnvAdminEmail } from '../utils/admin';
 import {
   requestAdminOtpViaEdgeFunction,
@@ -304,6 +305,7 @@ function getInitialTab(): ActiveTab {
 }
 
 export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  const toast = useToast();
   // Strict Zero LocalStorage & Zero SessionStorage policy:
   // Theme relies solely on component state and system preferences (no browser storage).
   const [isDarkMode, setIsDarkMode] = useState<boolean>(() => {
@@ -795,51 +797,61 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   }, []);
 
   const updateUserProfile = async (updated: Partial<UserProfile>) => {
-    setUser((prev) => ({ ...prev, ...updated }));
-    setAllUsers((prev) =>
-      prev.map((u) => (u.id === user.id ? { ...u, ...updated, updated_at: new Date().toISOString() } : u))
-    );
-
     const supabase = getSupabaseClient();
-    if (supabase && isAuthenticated && user.id && user.id !== 'guest') {
-      try {
-        const nextUser = { ...user, ...updated };
-        const isFree = nextUser.tier === 'free';
-        const finalStatus: SubscriptionStatus = isFree ? 'none' : (nextUser.subscription_status || 'none');
-        const isPrem = !isFree && finalStatus === 'active';
+    const authenticated = isAuthenticated && user.id && user.id !== 'guest';
+    const nextUser = { ...user, ...updated };
 
-        const cleanPayload = {
-          id: user.id,
-          email: nextUser.email || user.email,
-          full_name: nextUser.full_name || 'کاربر چندبوم',
-          avatar_url: nextUser.avatar_url ?? null,
-          role: nextUser.role || 'user',
-          tier: nextUser.tier || 'free',
-          subscription_status: finalStatus,
-          is_premium: nextUser.is_premium !== undefined ? nextUser.is_premium : isPrem,
-          subscription_started_at: isFree ? null : (nextUser.subscription_started_at ?? null),
-          subscription_expires_at: isFree ? null : (nextUser.subscription_expires_at ?? null),
-          monthly_budget_cap: Number(nextUser.monthly_budget_cap) || 20000000,
-          theme_preference: nextUser.theme_preference || (isDarkMode ? 'dark' : 'light'),
-          currency: nextUser.currency || 'تومان',
-          created_at: nextUser.created_at || new Date().toISOString(),
-          updated_at: new Date().toISOString(),
-          age: nextUser.age !== undefined && nextUser.age !== null ? Number(nextUser.age) : null,
-          gender: nextUser.gender ?? null,
-          ai_requests_left: nextUser.ai_requests_left !== undefined && nextUser.ai_requests_left !== null
-            ? Number(nextUser.ai_requests_left)
-            : (isFree ? 5 : nextUser.tier === 'bronze' ? 50 : nextUser.tier === 'pro' ? 150 : 500),
-          ai_queries_used: nextUser.ai_queries_used !== undefined ? Number(nextUser.ai_queries_used) : 0,
-          ai_queries_limit: nextUser.ai_queries_limit !== undefined
-            ? nextUser.ai_queries_limit
-            : (isFree ? 10 : nextUser.tier === 'bronze' ? 50 : nextUser.tier === 'pro' ? 150 : 500),
-          ai_queries_reset_date: nextUser.ai_queries_reset_date ?? null,
-        };
-        await supabase.from('users').upsert(cleanPayload);
-      } catch (err) {
-        console.warn('Could not sync user profile update to Supabase:', err);
+    if (authenticated && supabase) {
+      const isFree = nextUser.tier === 'free';
+      const finalStatus: SubscriptionStatus = isFree ? 'none' : (nextUser.subscription_status || 'none');
+      const isPrem = !isFree && finalStatus === 'active';
+      const cleanPayload = {
+        id: user.id,
+        email: nextUser.email || user.email,
+        full_name: nextUser.full_name || 'کاربر چندبوم',
+        avatar_url: nextUser.avatar_url ?? null,
+        role: nextUser.role || 'user',
+        tier: nextUser.tier || 'free',
+        subscription_status: finalStatus,
+        is_premium: nextUser.is_premium !== undefined ? nextUser.is_premium : isPrem,
+        subscription_started_at: isFree ? null : (nextUser.subscription_started_at ?? null),
+        subscription_expires_at: isFree ? null : (nextUser.subscription_expires_at ?? null),
+        monthly_budget_cap: Number(nextUser.monthly_budget_cap) || 20000000,
+        theme_preference: nextUser.theme_preference || (isDarkMode ? 'dark' : 'light'),
+        currency: nextUser.currency || 'تومان',
+        created_at: nextUser.created_at || new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+        age: nextUser.age !== undefined && nextUser.age !== null ? Number(nextUser.age) : null,
+        gender: nextUser.gender ?? null,
+        ai_requests_left: nextUser.ai_requests_left !== undefined && nextUser.ai_requests_left !== null
+          ? Number(nextUser.ai_requests_left)
+          : (isFree ? 5 : nextUser.tier === 'bronze' ? 50 : nextUser.tier === 'pro' ? 150 : 500),
+        ai_queries_used: nextUser.ai_queries_used !== undefined ? Number(nextUser.ai_queries_used) : 0,
+        ai_queries_limit: nextUser.ai_queries_limit !== undefined
+          ? nextUser.ai_queries_limit
+          : (isFree ? 10 : nextUser.tier === 'bronze' ? 50 : nextUser.tier === 'pro' ? 150 : 500),
+        ai_queries_reset_date: nextUser.ai_queries_reset_date ?? null,
+      };
+
+      const { error: userError } = await supabase.from('users').upsert(cleanPayload, { onConflict: 'id' });
+      if (userError) throw new Error(`ذخیره اطلاعات حساب ناموفق بود: ${userError.message}`);
+
+      // profiles is the canonical source for Dong identity/display names.
+      if (Object.prototype.hasOwnProperty.call(updated, 'full_name')) {
+        const displayName = String(updated.full_name || '').trim();
+        if (!displayName) throw new Error('نام نمایشی نمی‌تواند خالی باشد.');
+        const { data: profile, error: profileReadError } = await supabase
+          .from('profiles').select('id').eq('id', user.id).maybeSingle();
+        if (profileReadError) throw new Error(`خواندن پروفایل ناموفق بود: ${profileReadError.message}`);
+        if (!profile) throw new Error('پروفایل کاربر در جدول profiles وجود ندارد؛ ابتدا مهاجرت پروفایل را اجرا کنید.');
+        const { error: profileError } = await supabase
+          .from('profiles').update({ display_name: displayName }).eq('id', user.id);
+        if (profileError) throw new Error(`ذخیره نام نمایشی ناموفق بود: ${profileError.message}`);
       }
     }
+
+    setUser(nextUser);
+    setAllUsers((prev) => prev.map((u) => (u.id === user.id ? { ...u, ...updated, updated_at: new Date().toISOString() } : u)));
   };
 
   const changePassword = async (newPassword: string): Promise<{ success: boolean; error?: string }> => {
@@ -859,40 +871,6 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     }
   };
 
-  const upgradeUserTier = async (tier: SubscriptionTier, durationMonths: number) => {
-    const durationDays = durationMonths * 30;
-    // Smart Subscription Extension: Accumulate remaining active days without loss
-    const currentExpiryTime = user.subscription_expires_at ? new Date(user.subscription_expires_at).getTime() : 0;
-    const baseTime = currentExpiryTime > Date.now() ? currentExpiryTime : Date.now();
-    const expiresAt = new Date(baseTime + durationDays * 24 * 60 * 60 * 1000).toISOString();
-
-    await updateUserProfile({
-      tier,
-      subscription_status: 'active',
-      subscription_expires_at: expiresAt,
-    });
-
-    const supabase = getSupabaseClient();
-    if (supabase && isAuthenticated && user.id) {
-      try {
-        await supabase.rpc('sync_user_subscription', {
-          p_user_id: user.id,
-          p_tier: tier,
-          p_duration_days: durationDays,
-        });
-      } catch (rpcErr) {
-        // Fallback to direct upsert handled by updateUserProfile
-      }
-    }
-
-    await addNotification({
-      type: 'subscription',
-      title: 'ارتقای حساب به اشتراک طلایی چندبوم',
-      message: `حساب کاربری شما با موفقیت به سطح ${tier.toUpperCase()} ارتقا یافت و روزهای باقی‌مانده اشتراک قبلی به دوره جدید افزوده شد.`,
-      priority: 'normal',
-      status: 'settled',
-    });
-  };
 
   const refreshAllUsers = async () => {
     const supabase = getSupabaseClient();
@@ -1231,7 +1209,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         }
       }
     } else {
-      const ticketId = `tkt-${Date.now()}`;
+      const ticketId = crypto.randomUUID();
       newMsg.ticket_id = ticketId;
       const newTicket: Ticket = {
         id: ticketId,
@@ -1341,6 +1319,24 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       account: 'بانک سامان (کارت به کارت)',
     });
 
+    // The record must reach the database BEFORE the user is told it was received.
+    const supabase = getSupabaseClient();
+    if (!supabase) throw new Error('اتصال به پایگاه داده برقرار نیست. لطفاً دوباره تلاش کنید.');
+    const { id: _localId, ...paymentRow } = newSubmission;
+    const { error: payErr } = await supabase.from('manual_payments').insert([paymentRow]);
+    if (payErr) throw new Error(`ثبت رسید پرداخت ناموفق بود: ${payErr.message}`);
+    if (data.user_id && data.user_id !== 'guest') {
+      const { error: orderErr } = await supabase.from('subscription_orders').insert([{
+        user_id: data.user_id,
+        plan_id: data.plan_id,
+        amount_toman: data.amount,
+        receipt_path: data.receipt_url || '',
+        note: data.notes || '',
+        status: 'pending',
+      }]);
+      if (orderErr) console.warn('subscription_orders mirror failed:', orderErr.message);
+    }
+
     await addNotification({
       type: 'subscription',
       title: 'رسید پرداخت ثبت شد',
@@ -1350,25 +1346,6 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       status: 'pending',
     });
 
-    const supabase = getSupabaseClient();
-    if (supabase) {
-      try {
-        await supabase.from('manual_payments').insert([newSubmission]);
-        // Also insert in subscription_orders if user is authenticated
-        if (data.user_id && data.user_id !== 'guest') {
-          await supabase.from('subscription_orders').insert([{
-            user_id: data.user_id,
-            plan_id: data.plan_id,
-            amount_toman: data.amount,
-            receipt_path: data.receipt_url || '',
-            note: data.notes || '',
-            status: 'pending',
-          }]);
-        }
-      } catch (err) {
-        console.error('Supabase manual_payment insert error:', err);
-      }
-    }
   };
 
   const approveManualPayment = async (paymentId: string, adminNotes?: string) => {
@@ -1390,46 +1367,13 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     const finalExpiresAt = new Date(baseTime + durationMonths * 30 * 24 * 60 * 60 * 1000).toISOString();
 
     const supabase = getSupabaseClient();
-    if (supabase) {
-      try {
-        await supabase
-          .from('manual_payments')
-          .update({
-            status: 'approved',
-            admin_notes: adminNotes || 'پرداخت تایید شد و اشتراک فعال گردید.',
-            reviewed_at: new Date().toISOString(),
-            reviewed_by: user.email,
-          })
-          .eq('id', paymentId);
-
-        await supabase
-          .from('subscription_orders')
-          .update({
-            status: 'approved',
-            reviewed_at: new Date().toISOString(),
-          })
-          .eq('id', paymentId);
-
-        if (targetUserId && targetUserId !== 'guest') {
-          const aiQuota = targetTier === 'vip' ? 500 : targetTier === 'bronze' ? 50 : 150;
-          await supabase
-            .from('users')
-            .update({
-              tier: targetTier,
-              subscription_status: 'active',
-              is_premium: true,
-              subscription_started_at: targetUser?.subscription_started_at || new Date().toISOString(),
-              subscription_expires_at: finalExpiresAt,
-              ai_requests_left: aiQuota,
-              ai_queries_limit: aiQuota,
-              updated_at: new Date().toISOString(),
-            })
-            .eq('id', targetUserId);
-        }
-      } catch (err: any) {
-        console.warn('Direct Supabase approve order note:', err?.message);
-      }
-    }
+    if (!supabase) throw new Error('اتصال به پایگاه داده برقرار نیست.');
+    // One atomic database transaction: payment status, subscription, quota and audit log.
+    const { error: rpcErr } = await supabase.rpc('approve_manual_payment', {
+      p_payment_id: paymentId,
+      p_note: adminNotes || null,
+    });
+    if (rpcErr) throw new Error(`تایید پرداخت ناموفق بود: ${rpcErr.message}`);
 
     setManualPayments((prev) =>
       prev.map((p) => {
@@ -1499,41 +1443,13 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     const fallbackPremium = hasRemainingActivePlan;
 
     const supabase = getSupabaseClient();
-    if (supabase) {
-      try {
-        await supabase
-          .from('manual_payments')
-          .update({
-            status: 'rejected',
-            admin_notes: adminNotes || 'اطلاعات واریزی مطابقت نداشت یا نامعتبر بود.',
-            reviewed_at: new Date().toISOString(),
-            reviewed_by: user.email,
-          })
-          .eq('id', paymentId);
-
-        await supabase
-          .from('subscription_orders')
-          .update({
-            status: 'rejected',
-            reviewed_at: new Date().toISOString(),
-          })
-          .eq('id', paymentId);
-
-        if (targetUserId && targetUserId !== 'guest') {
-          await supabase
-            .from('users')
-            .update({
-              tier: fallbackTier,
-              subscription_status: fallbackStatus,
-              is_premium: fallbackPremium,
-              updated_at: new Date().toISOString(),
-            })
-            .eq('id', targetUserId);
-        }
-      } catch (err: any) {
-        console.warn('Direct Supabase reject order note:', err?.message);
-      }
-    }
+    if (!supabase) throw new Error('اتصال به پایگاه داده برقرار نیست.');
+    // One atomic database transaction: payment status, subscription, quota and audit log.
+    const { error: rpcErr } = await supabase.rpc('reject_manual_payment', {
+      p_payment_id: paymentId,
+      p_note: adminNotes || null,
+    });
+    if (rpcErr) throw new Error(`رد پرداخت ناموفق بود: ${rpcErr.message}`);
 
     setManualPayments((prev) =>
       prev.map((p) => {
@@ -1607,24 +1523,28 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
           .select()
           .single();
 
-        if (!error && data) {
+        if (error) throw error;
+        if (data) {
           setTransactions((prev) => [data, ...prev.filter((t) => t.id !== newTx.id)]);
         }
       } catch (err) {
         console.error('Supabase insert transaction error:', err);
+        setTransactions((prev) => prev.filter((t) => t.id !== newTx.id));
+        toast.error('ثبت تراکنش در سرور انجام نشد و از فهرست حذف شد. دوباره تلاش کنید.');
       }
     }
   };
 
   const updateTransaction = async (id: string, updated: Partial<Transaction>) => {
+    const previous = transactions.find((t) => t.id === id);
     setTransactions((prev) => prev.map((t) => (t.id === id ? { ...t, ...updated } : t)));
 
     const supabase = getSupabaseClient();
     if (supabase && isAuthenticated) {
-      try {
-        await supabase.from('transactions').update(updated).eq('id', id);
-      } catch (err) {
-        console.error('Supabase update transaction error:', err);
+      const { error } = await supabase.from('transactions').update(updated).eq('id', id);
+      if (error && previous) {
+        setTransactions((prev) => prev.map((t) => (t.id === id ? previous : t)));
+        toast.error('ویرایش تراکنش در سرور ذخیره نشد؛ تغییرات برگردانده شد.');
       }
     }
   };
@@ -1738,7 +1658,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       return;
     }
 
-    const ticketId = `tkt-${Date.now()}-${Math.random().toString(36).substring(2, 6)}`;
+    const ticketId = crypto.randomUUID();
     const effectiveCategory = category || (department === 'پشتیبانی مالی' ? 'financial' : department === 'پشتیبانی فنی' ? 'technical' : 'support');
     const newMsg: TicketMessage = {
       id: `msg-${Date.now()}`,
@@ -1794,14 +1714,15 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
         // Also attempt insert into normalized ticket_messages table if provisioned
         try {
-          await supabase.from('ticket_messages').insert([{
+            const { error: tmErr } = await supabase.from('ticket_messages').insert([{
             ticket_id: ticketId,
             sender_id: user.id,
             message: initialMessage,
             attachment_url: attachmentUrl || null,
             created_at: new Date().toISOString(),
           }]);
-        } catch {}
+            if (tmErr) console.warn('ticket_messages mirror failed:', tmErr.message);
+          } catch {}
       } catch (err) {
         console.error('Supabase create ticket exception:', err);
       }
@@ -1859,7 +1780,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       const supabase = getSupabaseClient();
       if (supabase && isAuthenticated) {
         try {
-          await supabase
+          const { error: tkErr } = await supabase
             .from('tickets')
             .update({
               status: target.status,
@@ -1867,19 +1788,22 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
               messages: target.messages,
             })
             .eq('id', ticketId);
+          if (tkErr) throw tkErr;
 
           // Also attempt insert into normalized ticket_messages table
           try {
-            await supabase.from('ticket_messages').insert([{
+            const { error: tmErr } = await supabase.from('ticket_messages').insert([{
               ticket_id: ticketId,
               sender_id: user.id,
               message: content,
               attachment_url: attachmentUrl || null,
               created_at: new Date().toISOString(),
             }]);
+            if (tmErr) console.warn('ticket_messages mirror failed:', tmErr.message);
           } catch {}
         } catch (err) {
           console.error('Supabase update ticket message error:', err);
+          toast.error('پیام به سرور ارسال نشد. دوباره تلاش کنید.');
         }
       }
     }
@@ -1980,7 +1904,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       if (data?.user) {
         // Upsert into Supabase public.users table with demographics for AI personalization
         try {
-          await supabase.from('users').upsert({
+          const { error: upErr } = await supabase.from('users').upsert({
             id: data.user.id,
             email: cleanEmail,
             full_name: fullName.trim(),
@@ -2001,6 +1925,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
             ai_queries_limit: 50,
             ai_queries_reset_date: null,
           });
+        if (upErr) console.warn('users upsert failed:', upErr.message);
         } catch (dbErr) {
           console.warn('Could not insert profile row immediately into users table:', dbErr);
         }
@@ -2138,7 +2063,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     if (supabase && sessionUser) {
       try {
         const isAdm = isAdminEmail(cleanEmail);
-        await supabase.from('users').upsert({
+        const { error: upErr } = await supabase.from('users').upsert({
           id: sessionUser.id,
           email: cleanEmail,
           full_name: fullName.trim(),
@@ -2159,6 +2084,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
           ai_queries_limit: 50,
           ai_queries_reset_date: null,
         });
+        if (upErr) console.warn('users upsert failed:', upErr.message);
         await fetchUserDataFromSupabase(sessionUser.id, cleanEmail);
       } catch (dbErr) {
         console.warn('User table upsert note:', dbErr);
@@ -2183,8 +2109,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     const supabase = getSupabaseClient();
     if (supabase && isAuthenticated && user.id && user.id !== 'guest') {
       try {
-        await supabase.from('financial_goals').insert([{
-          id: newGoal.id,
+        const { data: savedGoal, error: goalErr } = await supabase.from('financial_goals').insert([{
           user_id: user.id,
           title: newGoal.title,
           target_amount: newGoal.target_amount,
@@ -2193,9 +2118,13 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
           category: newGoal.category,
           status: newGoal.status,
           notes: newGoal.notes,
-        }]);
+        }]).select('id').single();
+        if (goalErr) throw goalErr;
+        setGoals((prev) => prev.map((g) => (g.id === newGoal.id ? { ...g, id: savedGoal.id } : g)));
       } catch (err) {
-        console.warn('Supabase add goal note:', err);
+        console.error('Supabase add goal failed:', err);
+        setGoals((prev) => prev.filter((g) => g.id !== newGoal.id));
+        toast.error('ذخیره هدف در سرور انجام نشد. دوباره تلاش کنید.');
       }
     }
   };
@@ -2310,10 +2239,13 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
           .select()
           .single();
 
-        if (!error && data) {
+        if (error) throw error;
+        if (data) {
           setReminders((prev) => [data, ...prev.filter((r) => r.id !== newRem.id)]);
         }
       } catch (err) {
+        setReminders((prev) => prev.filter((r) => r.id !== newRem.id));
+        toast.error('ذخیره یادآور در سرور انجام نشد. دوباره تلاش کنید.');
         console.error('Supabase insert reminder error:', err);
       }
     }
@@ -2429,6 +2361,17 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     setManualPayments([]);
     setGoals([]);
     setSelectedTicket(null);
+  };
+
+  // Entitlements (tier, subscription, AI quota) are controlled by the server only: the
+  // trg_protect_user_entitlements trigger blocks browser writes to these columns.
+  // After an admin approves a payment, the client re-reads the real server state
+  // instead of writing a tier itself.
+  const upgradeUserTier = async (_tier: SubscriptionTier, _durationMonths: number): Promise<void> => {
+    const supabase = getSupabaseClient();
+    const { data } = await supabase.auth.getUser();
+    if (!data?.user) return;
+    await fetchUserDataFromSupabase(data.user.id, data.user.email ?? '');
   };
 
   return (
