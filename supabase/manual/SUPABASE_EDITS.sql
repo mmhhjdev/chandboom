@@ -16,6 +16,35 @@
 begin;
 
 -- ----------------------------------------------------------------------------
+-- ۰) حذف نسخه‌های قدیمی توابع و ویو (PostgreSQL اجازه نمی‌دهد نوع خروجی یک تابع
+--    موجود با CREATE OR REPLACE عوض شود). همه‌ی overloadها با این نام حذف می‌شوند.
+--    توابع جدید بلافاصله بعد از این بلوک ساخته می‌شوند.
+-- ----------------------------------------------------------------------------
+do $$
+declare
+  r record;
+begin
+  for r in
+    select p.oid::regprocedure as sig
+      from pg_proc p
+      join pg_namespace n on n.oid = p.pronamespace
+     where n.nspname = 'public'
+       and p.proname in (
+         'approve_manual_payment',
+         'reject_manual_payment',
+         'assert_admin_mfa_if_required',
+         'ai_consume_rate_limit',
+         'generate_due_reminder_notifications'
+       )
+  loop
+    execute format('drop function if exists %s', r.sig);
+  end loop;
+end;
+$$;
+
+drop view if exists public.admin_ai_cost_daily;
+
+-- ----------------------------------------------------------------------------
 -- ۱) تأیید پرداخت کارت‌به‌کارت به‌صورت اتمیک
 --    قبلاً کلاینت سه نوشتن جدا انجام می‌داد؛ اگر وسطش قطع می‌شد، پرداخت تأیید
 --    می‌شد ولی اشتراک فعال نمی‌شد (یا برعکس). این تابع همه را در یک تراکنش انجام می‌دهد.

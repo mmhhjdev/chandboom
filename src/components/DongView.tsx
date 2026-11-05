@@ -378,7 +378,7 @@ export const DongView: React.FC = () => {
   const settlementIssues: string[] = settlement?.issues ?? [];
   const listToSelectFrom = activeGroup
     ? activeGroup.isFamilyMode
-      ? activeGroup.families.map((f) => f.name)
+      ? (activeGroup.families ?? []).map((f) => f.name)
       : activeGroup.members
     : [];
 
@@ -447,7 +447,7 @@ export const DongView: React.FC = () => {
                     {group.isFamilyMode ? 'خانواده‌ها: ' : 'اعضا: '}
                     <span className="text-zinc-800 dark:text-zinc-200">
                       {group.isFamilyMode
-                        ? group.families.map((f) => `${f.name} (${toPersianDigits(f.count)} نفر)`).join('، ')
+                        ? (group.families ?? []).map((f) => `${f.name} (${toPersianDigits(f.count)} نفر)`).join('، ')
                         : group.members.join('، ')}
                     </span>
                   </p>
@@ -644,7 +644,7 @@ export const DongView: React.FC = () => {
               {activeGroup.isFamilyMode ? 'خانواده‌ها: ' : 'اعضا: '}
               <span className="text-zinc-800 dark:text-zinc-200 font-medium">
                 {activeGroup.isFamilyMode
-                  ? activeGroup.families.map((f) => `${f.name} (${toPersianDigits(f.count)} نفر)`).join('، ')
+                  ? (activeGroup.families ?? []).map((f) => `${f.name} (${toPersianDigits(f.count)} نفر)`).join('، ')
                   : activeGroup.members.join('، ')}
               </span>
             </p>
@@ -729,7 +729,7 @@ export const DongView: React.FC = () => {
           {activeGroup.expenses.length === 0 ? (
             <div className="p-8 text-center text-xs text-zinc-500">هنوز هزینه‌ای در این گروه ثبت نشده است.</div>
           ) : (
-            activeGroup.expenses.map((item) => (
+            (activeGroup.expenses ?? []).map((item) => (
               <div key={item.id} className="p-4 space-y-3 hover:bg-zinc-50/50 dark:hover:bg-[#141E1A] transition">
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                   <div>
@@ -766,7 +766,7 @@ export const DongView: React.FC = () => {
                   <div className="bg-zinc-50 dark:bg-[#0A0F0D] p-3 rounded-xl border border-zinc-200 dark:border-zinc-800 space-y-2 text-xs">
                     <span className="font-bold text-zinc-600 dark:text-zinc-400 block mb-1">ریز اقلام فاکتور:</span>
                     <div className="space-y-1">
-                      {item.billItems.map((bi) => (
+                      {(item.billItems ?? []).map((bi) => (
                         <div
                           key={bi.id}
                           className="flex items-center justify-between py-1 border-b border-zinc-200/50 dark:border-zinc-800/50 last:border-0"

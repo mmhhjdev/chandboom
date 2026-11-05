@@ -93,3 +93,25 @@ test('persian and arabic digits are accepted in amounts', () => {
   assert.ok(Number.isNaN(parseMoneyInput('abc')));
   assert.equal(formatMoneyInput('۱۲۳۴۵'), '12,345');
 });
+
+test('rows with missing participants / consumers / bill items do not crash rendering', () => {
+  // Regression: "Cannot read properties of undefined (reading 'map')" from older or partial DB rows.
+  const r = computeSettlement({
+    members: ['A', 'B'],
+    expenses: [
+      { payer: 'A', amount: 100 } as any,
+      { payer: 'A', amount: 100, participants: ['A', 'B'], isItemized: true, billItems: [{ price: 100 } as any] },
+      { payer: 'A', amount: 100, participants: ['A', 'B'], isItemized: true, billItems: null } as any,
+    ],
+    families: null,
+    isFamilyMode: false,
+  });
+  assert.ok(Array.isArray(r.transfers));
+  assert.equal(sumBalances(r.balances), 0);
+});
+
+test('null members and expenses are treated as empty', () => {
+  const r = computeSettlement({ members: null as any, expenses: null as any });
+  assert.deepEqual(r.transfers, []);
+  assert.deepEqual(r.balances, {});
+});

@@ -86,12 +86,16 @@ export function splitProportionally(total: number, parts: Weighted[]): Map<strin
 export function computeSettlement(input: SettlementInput): SettlementResult {
   const issues: string[] = [];
   const isFamily = Boolean(input.isFamilyMode);
+  // Rows from the database can be missing fields (null / older schema). Never assume arrays.
+  const asArray = <T,>(value: T[] | null | undefined): T[] => (Array.isArray(value) ? value : []);
+  const members = asArray(input.members);
+  const expensesList = asArray(input.expenses);
 
-  const families = input.families ?? [];
+  const families = asArray(input.families);
   const familyWeight = new Map<string, number>();
   families.forEach((f) => familyWeight.set(f.name, Math.max(1, Math.floor(Number(f.count) || 1))));
 
-  const entities = isFamily ? families.map((f) => f.name) : input.members;
+  const entities = isFamily ? families.map((f) => f.name) : members;
   const entitySet = new Set(entities);
 
   const balances: Record<string, number> = {};
@@ -100,9 +104,10 @@ export function computeSettlement(input: SettlementInput): SettlementResult {
   });
 
   const weightOf = (name: string): number => (isFamily ? familyWeight.get(name) ?? 0 : 1);
-  const unique = (list: string[]) => Array.from(new Set(list.map((n) => String(n).trim()).filter(Boolean)));
+  const unique = (list: string[] | null | undefined) =>
+    Array.from(new Set(asArray(list).map((n) => String(n).trim()).filter(Boolean)));
 
-  input.expenses.forEach((exp, index) => {
+  expensesList.forEach((exp, index) => {
     const label = exp.title?.trim() ? `«${exp.title.trim()}»` : `هزینه ${index + 1}`;
 
     if (!entitySet.has(exp.payer)) {
@@ -111,12 +116,12 @@ export function computeSettlement(input: SettlementInput): SettlementResult {
     }
 
     // مبلغ کل هزینه: برای فاکتور تفکیک‌شده، جمع اقلام ملاک است تا بدهی‌ها با پرداخت هماهنگ بمانند.
-    const itemized = Boolean(exp.isItemized && exp.billItems && exp.billItems.length > 0);
+    const items = asArray(exp.billItems);
+    const itemized = Boolean(exp.isItemized && items.length > 0);
     let total = Math.round(Number(exp.amount) || 0);
     const allocations = new Map<string, number>();
 
     if (itemized) {
-      const items = exp.billItems ?? [];
       const itemsTotal = items.reduce((sum, item) => sum + Math.round(Number(item.price) || 0), 0);
       if (itemsTotal !== total) {
         issues.push(`${label}: جمع اقلام (${itemsTotal.toLocaleString('en-US')}) با مبلغ ثبت‌شده (${total.toLocaleString('en-US')}) برابر نیست؛ جمع اقلام ملاک محاسبه شد.`);
