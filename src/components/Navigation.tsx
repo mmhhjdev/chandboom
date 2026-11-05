@@ -1,18 +1,10 @@
 import React, { useState } from 'react';
 import {
-  LayoutDashboard,
-  Receipt,
-  PieChart,
-  Users,
-  Bell,
-  Crown,
-  LifeBuoy,
-  Settings,
-  Target,
   MoreHorizontal,
   X,
   ChevronLeft,
 } from 'lucide-react';
+import { ChandIcon } from './icons/ChandIcon';
 import { useApp } from '../context/AppContext';
 import { NavTab } from '../types';
 
@@ -26,43 +18,43 @@ export const Navigation: React.FC = () => {
     {
       id: 'dashboard',
       label: 'داشبورد',
-      icon: <LayoutDashboard className="w-4 h-4" />,
+      icon: <ChandIcon name="dashboard" className="w-4 h-4" />,
     },
     {
       id: 'transactions',
       label: 'تراکنش‌ها',
-      icon: <Receipt className="w-4 h-4" />,
+      icon: <ChandIcon name="transactions" className="w-4 h-4" />,
     },
     {
       id: 'goals',
       label: 'اهداف مالی',
-      icon: <Target className="w-4 h-4" />,
+      icon: <ChandIcon name="goals" className="w-4 h-4" />,
     },
     {
       id: 'dong',
       label: 'محاسبه دنگ',
-      icon: <Users className="w-4 h-4" />,
+      icon: <ChandIcon name="dong" className="w-4 h-4" />,
     },
     {
       id: 'analytics',
       label: 'تحلیل مالی',
-      icon: <PieChart className="w-4 h-4" />,
+      icon: <ChandIcon name="analytics" className="w-4 h-4" />,
     },
     {
       id: 'reminders',
       label: 'یادآورها',
-      icon: <Bell className="w-4 h-4" />,
+      icon: <ChandIcon name="reminders" className="w-4 h-4" />,
       badge: unpaidRemindersCount > 0 ? unpaidRemindersCount : undefined,
     },
     {
       id: 'support',
       label: 'پشتیبانی',
-      icon: <LifeBuoy className="w-4 h-4" />,
+      icon: <ChandIcon name="support" className="w-4 h-4" />,
     },
     {
       id: 'settings',
       label: 'تنظیمات',
-      icon: <Settings className="w-4 h-4" />,
+      icon: <ChandIcon name="settings" className="w-4 h-4" />,
     },
   ];
 
@@ -75,32 +67,32 @@ export const Navigation: React.FC = () => {
       id: 'analytics',
       label: 'تحلیل مالی و نمودارها',
       desc: 'بررسی بصری دخل‌وخرج و دسته‌بندی‌ها',
-      icon: <PieChart className="w-5 h-5 text-emerald-600 dark:text-emerald-400" />,
+      icon: <ChandIcon name="analytics" className="w-5 h-5 text-emerald-600 dark:text-emerald-400" />,
     },
     {
       id: 'reminders',
       label: 'یادآورها و سررسید اقساط',
       desc: 'پیگیری چک‌ها، قبوض و اقساط ماهانه',
-      icon: <Bell className="w-5 h-5 text-amber-600 dark:text-amber-400" />,
+      icon: <ChandIcon name="reminders" className="w-5 h-5 text-amber-600 dark:text-amber-400" />,
       badge: unpaidRemindersCount > 0 ? unpaidRemindersCount : undefined,
     },
     {
       id: 'support',
       label: 'پشتیبانی و ثبت تیکت',
       desc: 'ارتباط مستقیم با کارشناسان چندبوم',
-      icon: <LifeBuoy className="w-5 h-5 text-cyan-600 dark:text-cyan-400" />,
+      icon: <ChandIcon name="support" className="w-5 h-5 text-cyan-600 dark:text-cyan-400" />,
     },
     {
       id: 'settings',
       label: 'تنظیمات حساب کاربری',
       desc: 'شخصی‌سازی، بودجه ماهانه و نمایه',
-      icon: <Settings className="w-5 h-5 text-zinc-600 dark:text-zinc-400" />,
+      icon: <ChandIcon name="settings" className="w-5 h-5 text-zinc-600 dark:text-zinc-400" />,
     },
     {
       id: 'subscription',
       label: isProUser ? 'وضعیت اشتراک طلایی' : 'خرید اشتراک و پلن‌ها',
       desc: isProUser ? 'مدیریت و تمدید اشتراک فعال شما' : 'پلن‌های برنزی، طلایی و سازمانی',
-      icon: <Crown className="w-5 h-5 text-amber-500" />,
+      icon: <ChandIcon name="subscription" className="w-5 h-5 text-amber-500" />,
     },
   ];
 

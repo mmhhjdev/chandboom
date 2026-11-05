@@ -590,7 +590,18 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       }
       const { data: ticketData } = await ticketQuery;
       if (ticketData && ticketData.length > 0) {
-        setTickets(ticketData);
+        // Normalise rows: the database may not store every field (or may have NULLs for older rows).
+        // The UI always expects an array of messages and known department / priority values.
+        setTickets(
+          ticketData.map((row: any) => ({
+            ...row,
+            messages: Array.isArray(row.messages) ? row.messages : [],
+            department: row.department || 'پشتیبانی مالی',
+            priority: row.priority || 'medium',
+            user_name: row.user_name || '',
+            user_email: row.user_email || '',
+          })) as Ticket[]
+        );
       }
 
       // 6. Fetch Manual Payments & Subscription Orders simultaneously and merge
@@ -1186,7 +1197,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
     if (existingTicket) {
       newMsg.ticket_id = existingTicket.id;
-      const updatedMessages = [...existingTicket.messages, newMsg];
+      const updatedMessages = [...(existingTicket.messages ?? []), newMsg];
       setTickets((prev) =>
         prev.map((t) =>
           t.id === existingTicket.id
@@ -1766,7 +1777,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
             ...t,
             status: isActAsAdmin ? 'resolved' : 'in_progress',
             updated_at: new Date().toISOString(),
-            messages: [...t.messages, newMsg],
+            messages: [...(t.messages ?? []), newMsg],
           };
         }
         return t;

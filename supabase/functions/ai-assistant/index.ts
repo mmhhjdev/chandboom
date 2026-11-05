@@ -23,6 +23,7 @@ type Mode = 'agent' | 'advisor' | 'group_advisor';
 type ActionType =
   | 'create_transaction'
   | 'create_dong_group'
+  | 'add_deng_expense'
   | 'create_goal'
   | 'create_reminder';
 
@@ -65,11 +66,16 @@ const SYSTEM_PROMPT = `شما دستیار اجرایی مالی چندبوم ه
 1) create_transaction با params شامل amount (عدد مثبت)، category (رشته)، type ("expense" یا "income")، description (رشته)، date ("YYYY-MM-DD")
 2) create_dong_group با params شامل name (رشته) و members (آرایه نام افراد؛ در صورت نامشخص بودن آرایه خالی)
 3) create_goal با params شامل title (رشته)، target_amount (عدد مثبت)، deadline ("YYYY-MM-DD") و category (رشته)
-4) create_reminder با params شامل title (رشته)، amount (عدد مثبت یا 0)، due_date ("YYYY-MM-DD") و recurrence ("once" یا "monthly")
+4) add_deng_expense با params شامل group_name (نام گروه از فهرست گروه‌های کاربر)، amount (عدد مثبت)، title (شرح خرج)، payer (نام پرداخت‌کننده) و participants (آرایه‌ی نام شرکت‌کنندگان)
+5) create_reminder با params شامل title (رشته)، amount (عدد مثبت یا 0)، due_date ("YYYY-MM-DD") و recurrence ("once" یا "monthly")
 
 قواعد:
 - اگر کاربر درباره چند مرحله صحبت کرد، فقط مراحل لازم را کوتاه و روشن مشخص کن؛ در هر پاسخ حداکثر یک عملیات اجرایی پیشنهاد بده. پس از تأیید و نتیجه واقعی آن عملیات، مرحله بعد باید با درخواست بعدی/وضعیت تازه انجام شود. عملیات چندمرحله‌ای را وانمود نکن که اجرا شده است.
-- اگر برای عملیات داده ضروری کم است، action=null بگذار و فقط سؤال ضروری را بپرس.
+- برای add_deng_expense از فهرست «گروه‌های دنگ کاربر» در پیام سیستمی استفاده کن. اگر کاربر نام گروه را نگفت و فقط یک گروه دارد، همان را انتخاب کن. اگر چند گروه دارد و مشخص نیست، یکی را حدس نزن و بپرس.
+- پیش‌فرض‌های هوشمند را به‌کار ببر و سؤال نپرس: payer = نام خود کاربر (اگر پیام نام دیگری نگفته)، participants = همه‌ی اعضای گروه، title = شرح کوتاه از پیام کاربر.
+- اگر گروه اصلاً وجود ندارد، به‌جای ثبت خرج، پیشنهاد create_dong_group بده.
+- فقط وقتی واقعاً نمی‌توانی حدس معقولی بزنی (مثلاً مبلغ مشخص نیست)، action=null بگذار و یک سؤال کوتاه بپرس.
+- reply را کوتاه و روشن بنویس، مثلاً: «ثبت خرج ۳۰٬۰۰۰ تومان برای خرید سیب‌زمینی در گروه سفر ۳ثف، پرداخت‌کننده: مهران، برای همه‌ی اعضا.»
 - برای هر عملیات تغییردهنده، requires_confirmation=true باشد.
 - برای مشاوره، سؤال‌های مالی یا توضیح امکانات چندبوم، action=null و requires_confirmation=false باشد.
 - هرگز ادعا نکن عملی انجام شده، مگر نتیجه واقعی از سامانه به تو داده شده باشد.
@@ -107,7 +113,7 @@ const RESULT_JSON_SCHEMA = {
           {
             type: 'object',
             properties: {
-              type: { type: 'string', enum: ['create_transaction', 'create_dong_group', 'create_goal', 'create_reminder'] },
+              type: { type: 'string', enum: ['create_transaction', 'create_dong_group', 'add_deng_expense', 'create_goal', 'create_reminder'] },
               params: { type: 'object' },
               description: { type: 'string' },
             },
@@ -188,6 +194,128 @@ async function callChatModel(args: ProviderCallArgs): Promise<{ ok: true; data: 
     return { ok: false, status: res.status, detail: detail.slice(0, 500) };
   }
   return { ok: false, status: 0, detail: 'exhausted' };
+}
+
+// Server-side source of truth for the user's dong groups (never trusted from the browser).
+async function loadGroupsContext(admin: any, userId: string, fullName: string | null): Promise<string> {
+  const { data, error } = await admin
+    .from('dong_groups')
+    .select('name, members, families, is_family_mode')
+    .or(`user_id.eq.${userId},created_by.eq.${userId}`)
+    .order('updated_at', { ascending: false })
+    .limit(10);
+  if (error) {
+    console.warn('Groups context query failed:', error.message);
+    return '';
+  }
+  const groups = (data ?? []).map((g: any) => ({
+    name: String(g.name || '').slice(0, 80),
+    members: Array.isArray(g.members) ? g.members.filter((m: unknown) => typeof m === 'string').slice(0, 30) : [],
+    families: g.is_family_mode && Array.isArray(g.families) ? g.families.slice(0, 20) : [],
+  }));
+  const payload = { user_name: fullName || null, dong_groups: groups };
+  return `\nاطلاعات واقعی کاربر (فقط همین حساب؛ گروه‌های دنگ کاربر و نام او):\n${JSON.stringify(payload)}`.slice(0, 4000);
+}
+
+// ---------- Deterministic expense intent (no model call, no quota) ----------
+const PERSIAN_TO_LATIN_DIGITS: Record<string, string> = {
+  '۰': '0', '۱': '1', '۲': '2', '۳': '3', '۴': '4', '۵': '5', '۶': '6', '۷': '7', '۸': '8', '۹': '9',
+  '٠': '0', '١': '1', '٢': '2', '٣': '3', '٤': '4', '٥': '5', '٦': '6', '٧': '7', '٨': '8', '٩': '9',
+};
+
+function normalizeDigitsFa(text: string): string {
+  return text.replace(/[۰-۹٠-٩]/g, (d) => PERSIAN_TO_LATIN_DIGITS[d] ?? d);
+}
+
+function formatTomanFa(value: number): string {
+  const latin = Math.round(value).toLocaleString('en-US').replace(/,/g, '٬');
+  return latin.replace(/[0-9]/g, (d) => '۰۱۲۳۴۵۶۷۸۹'[Number(d)]);
+}
+
+function parseExpenseAmount(message: string): number | null {
+  const text = normalizeDigitsFa(message);
+  const match = text.match(/(\d+(?:[.,٬،]\d+)*)\s*(میلیون|هزار)?/);
+  if (!match) return null;
+  const base = Number(match[1].replace(/[,٬،]/g, ''));
+  if (!Number.isFinite(base) || base <= 0) return null;
+  const multiplier = match[2] === 'میلیون' ? 1_000_000 : match[2] === 'هزار' ? 1_000 : 1;
+  return base * multiplier;
+}
+
+function parseExpenseTitle(message: string): string {
+  const cleaned = normalizeDigitsFa(message)
+    .replace(/\d+(?:[.,٬،]\d+)*\s*(میلیون|هزار)?\s*(تومان|ریال)?/g, ' ')
+    .replace(/(برام|برایم|یه|یک|لطفا|لطفاً|ثبت|کن|کنید|بنویس|اضافه|هزینه|خرج|را|رو)/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
+  const afterPurchase = cleaned.match(/(?:خرید|بابت)\s+(.+)$/);
+  const candidate = (afterPurchase ? `خرید ${afterPurchase[1]}` : cleaned).replace(/[.!؟?،,]+$/g, '').trim();
+  return candidate.slice(0, 100) || 'خرج مشترک دنگ';
+}
+
+async function loadUserGroups(admin: any, userId: string): Promise<Array<{ name: string; members: string[] }>> {
+  const { data, error } = await admin
+    .from('dong_groups')
+    .select('name, members')
+    .or(`user_id.eq.${userId},created_by.eq.${userId}`)
+    .order('updated_at', { ascending: false })
+    .limit(10);
+  if (error) {
+    console.warn('User groups query failed:', error.message);
+    return [];
+  }
+  return (data ?? []).map((g: any) => ({
+    name: String(g.name || '').trim(),
+    members: Array.isArray(g.members) ? g.members.filter((m: unknown) => typeof m === 'string' && m.trim()) : [],
+  })).filter((g: { name: string; members: string[] }) => g.name && g.members.length > 0);
+}
+
+async function tryDeterministicExpense(
+  admin: any,
+  userId: string,
+  fullName: string | null,
+  message: string,
+): Promise<{ reply: string; action: ProposedAction } | null> {
+  const normalized = normalizeDigitsFa(message);
+  const wantsRecord = /ثبت|بنویس|اضافه کن|ثبت کن/.test(normalized);
+  const isExpense = /هزینه|خرج|خرید|پرداخت/.test(normalized);
+  if (!wantsRecord || !isExpense) return null;
+
+  const amount = parseExpenseAmount(message);
+  if (!amount) return null;
+
+  const groups = await loadUserGroups(admin, userId);
+  if (groups.length === 0) return null; // let the model suggest creating a group
+
+  const named = groups.find((g) => normalized.includes(g.name));
+  const group = named ?? (groups.length === 1 ? groups[0] : null);
+  if (!group) return null; // several groups and none named: the model asks which one
+
+  // Groups usually store the owner as their full name or as "من"; accept either.
+  const payer = fullName && group.members.includes(fullName)
+    ? fullName
+    : group.members.includes('من') ? 'من' : null;
+  if (!payer) return null; // payer must be a member; let the model ask
+
+  const title = parseExpenseTitle(message);
+  const action = validateAction({
+    type: 'add_deng_expense',
+    params: {
+      group_name: group.name,
+      amount,
+      title,
+      payer,
+      participants: group.members,
+    },
+    description: `ثبت ${title} به مبلغ ${formatTomanFa(amount)} تومان در گروه ${group.name}`,
+  });
+  if (!action) return null;
+
+  const reply =
+    `ثبت خرج ${formatTomanFa(amount)} تومان برای «${title}» در گروه «${group.name}»؛ ` +
+    `پرداخت‌کننده: ${payer}، برای همه‌ی ${group.members.length} عضو. ` +
+    'برای ثبت نهایی، دکمه‌ی تأیید را بزنید.';
+  return { reply, action };
 }
 
 function jsonResponse(body: Record<string, unknown>, status = 200, responseHeaders: Record<string, string> = baseCorsHeaders): Response {
@@ -277,6 +405,18 @@ function validateAction(value: unknown): ProposedAction | null {
       : [];
     if (!name) return null;
     return { type, params: { name, members }, description };
+  }
+
+  if (type === 'add_deng_expense') {
+    const groupName = safeString(params.group_name, 80);
+    const amount = positiveNumber(params.amount);
+    const title = safeString(params.title, 100) || 'خرج مشترک دنگ';
+    const payer = safeString(params.payer, 80);
+    const participants = Array.isArray(params.participants)
+      ? params.participants.filter((item): item is string => typeof item === 'string').map(item => item.trim().slice(0, 80)).filter(Boolean).slice(0, 30)
+      : [];
+    if (!groupName || !amount || !payer || participants.length === 0) return null;
+    return { type, params: { group_name: groupName, amount: Math.round(amount), title, payer, participants }, description };
   }
 
   if (type === 'create_goal') {
@@ -378,7 +518,7 @@ serve(async (req: Request) => {
     const userId = authData.user.id;
     const { data: dbUser, error: userError } = await supabaseAdmin
       .from('users')
-      .select('id, tier, subscription_status, subscription_expires_at, ai_queries_used, ai_queries_limit, ai_queries_reset_date')
+      .select('id, full_name, tier, subscription_status, subscription_expires_at, ai_queries_used, ai_queries_limit, ai_queries_reset_date')
       .eq('id', userId)
       .maybeSingle();
 
@@ -424,6 +564,19 @@ serve(async (req: Request) => {
         reply: instantReply,
         action: null,
         requires_confirmation: false,
+        remaining_queries: currentRemaining,
+        ai_call_used: false,
+      });
+    }
+
+    // Clear expense requests are handled without the model: faster, cheaper, and predictable.
+    const expenseIntent = await tryDeterministicExpense(supabaseAdmin, userId, dbUser.full_name ?? null, userMessage);
+    if (expenseIntent) {
+      return respond({
+        success: true,
+        reply: expenseIntent.reply,
+        action: expenseIntent.action,
+        requires_confirmation: true,
         remaining_queries: currentRemaining,
         ai_call_used: false,
       });
@@ -552,6 +705,10 @@ serve(async (req: Request) => {
       { role: 'system', content: isAdvisor ? ADVISOR_SYSTEM_PROMPT : SYSTEM_PROMPT },
     ];
     if (advisorContext) chatMessages.push({ role: 'system', content: advisorContext.trim() });
+    if (!isAdvisor) {
+      const groupsContext = await loadGroupsContext(supabaseAdmin, userId, dbUser.full_name ?? null);
+      if (groupsContext) chatMessages.push({ role: 'system', content: groupsContext.trim() });
+    }
 
     let historyChars = 0;
     for (const item of history.slice(-MAX_HISTORY_MESSAGES)) {

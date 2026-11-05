@@ -5,6 +5,8 @@ import { Users, Plus, Calculator, Trash2, ArrowRight, Receipt, UserPlus, X, Home
 import { formatToman, toPersianDigits } from '../utils/formatters';
 import { getSupabaseClient } from '../lib/supabase';
 import { DongCollaborationPanel } from './DongCollaborationPanel';
+import { friendsOverview, type FriendEntry } from '../services/friendsService';
+import { buildGroupMemberLabels } from '../utils/friendLabels';
 import { DongGroupAI } from './DongGroupAI';
 import type { ExpenseDraft } from './DongGroupAI';
 
@@ -58,6 +60,13 @@ export const DongView: React.FC = () => {
   const [newGroupName, setNewGroupName] = useState('');
   const [isFamilyMode, setIsFamilyMode] = useState(false);
   const [memberInputs, setMemberInputs] = useState<string[]>(['من', '']);
+  const [friends, setFriends] = useState<FriendEntry[]>([]);
+  const [selectedFriendIds, setSelectedFriendIds] = useState<string[]>([]);
+  useEffect(() => {
+    friendsOverview()
+      .then((all) => setFriends(all.filter((f) => f.state === 'friend')))
+      .catch(() => setFriends([]));
+  }, []);
   const [familyInputs, setFamilyInputs] = useState<FamilyMember[]>([
     { name: 'خانواده من', count: 2 },
     { name: 'خانواده دوم', count: 3 }
@@ -166,9 +175,12 @@ export const DongView: React.FC = () => {
       groupDataToSave.families = cleanFamilies;
       groupDataToSave.members = cleanFamilies.map((f) => f.name);
     } else {
-      const cleanMembers = memberInputs.map((m) => m.trim()).filter(Boolean);
-      if (!newGroupName || cleanMembers.length === 0) return;
-      groupDataToSave.members = cleanMembers;
+      const pickedFriends = friends.filter((f) => selectedFriendIds.includes(f.user_id));
+      if (!newGroupName || pickedFriends.length === 0) {
+        alert('حداقل یک دوست را برای این گروه انتخاب کنید.');
+        return;
+      }
+      groupDataToSave.members = buildGroupMemberLabels(pickedFriends, 'من');
       groupDataToSave.families = [];
     }
 
@@ -191,6 +203,18 @@ export const DongView: React.FC = () => {
       alert('گروه ساخته شد، اما ثبت عضویت کامل نشد. فایل SQL هماهنگ‌سازی را اجرا کنید و سپس صفحه را تازه‌سازی کنید.');
     }
 
+    // Invite the selected friends through the existing invitation flow. They join after accepting.
+    if (!isFamilyMode) {
+      const invitees = friends.filter((f) => selectedFriendIds.includes(f.user_id));
+      const results = await Promise.allSettled(
+        invitees.map((f) => supabase.rpc('dong_send_invitation', { p_group_id: String(data.id), p_username: f.username })),
+      );
+      const failed = results.filter((r) => r.status === 'rejected' || (r.value as any)?.error).length;
+      if (failed > 0) {
+        alert(`${toPersianDigits(failed)} دعوت ارسال نشد. می‌توانید بعداً از بخش همکاری گروه دوباره دعوت کنید.`);
+      }
+    }
+
     const newGroup: Group = {
       id: data.id,
       name: newGroupName,
@@ -203,6 +227,7 @@ export const DongView: React.FC = () => {
     setGroups([newGroup, ...groups]);
     setActiveGroupId(newGroup.id);
     setNewGroupName('');
+    setSelectedFriendIds([]);
     setIsNewGroupModalOpen(false);
   };
 
@@ -558,42 +583,42 @@ export const DongView: React.FC = () => {
                 ) : (
                   <div className="space-y-2">
                     <div className="flex items-center justify-between">
-                      <label className="block text-zinc-600 dark:text-zinc-400 font-bold">اسامی اعضای گروه</label>
-                      <button
-                        type="button"
-                        onClick={() => setMemberInputs([...memberInputs, ''])}
-                        className="text-emerald-700 dark:text-emerald-400 font-bold flex items-center gap-1 hover:underline cursor-pointer text-[11px]"
-                      >
-                        <UserPlus className="w-3.5 h-3.5" /> افزودن شخص جدید
-                      </button>
+                      <label className="block text-zinc-600 dark:text-zinc-400 font-bold">دوستان این گروه</label>
+                      <span className="text-[11px] text-zinc-500">{toPersianDigits(selectedFriendIds.length)} نفر انتخاب شده</span>
                     </div>
-                    <div className="max-h-48 overflow-y-auto space-y-2 pr-1">
-                      {memberInputs.map((member, index) => (
-                        <div key={index} className="flex items-center gap-2">
-                          <input
-                            type="text"
-                            value={member}
-                            onChange={(e) => {
-                              const updated = [...memberInputs];
-                              updated[index] = e.target.value;
-                              setMemberInputs(updated);
-                            }}
-                            placeholder={`نام شخص ${index + 1}`}
-                            required={index === 0}
-                            className="w-full px-3 py-2 rounded-xl border border-[#E2E8E4] dark:border-[#1A2621] bg-transparent text-zinc-900 dark:text-zinc-100 focus:outline-emerald-600"
-                          />
-                          {memberInputs.length > 1 && (
+                    {friends.length === 0 ? (
+                      <p className="text-xs text-zinc-500 leading-6 rounded-xl border border-dashed border-[#E2E8E4] dark:border-[#1A2621] p-3">
+                        هنوز دوستی ندارید. از <span className="font-bold">تنظیمات ← دوستان</span> با نام کاربری دوستتان را اضافه کنید.
+                      </p>
+                    ) : (
+                      <div className="flex flex-wrap gap-2 max-h-48 overflow-y-auto pr-1">
+                        {friends.map((f) => {
+                          const active = selectedFriendIds.includes(f.user_id);
+                          return (
                             <button
+                              key={f.user_id}
                               type="button"
-                              onClick={() => setMemberInputs(memberInputs.filter((_, i) => i !== index))}
-                              className="p-2 text-rose-500 rounded-xl"
+                              onClick={() =>
+                                setSelectedFriendIds((prev) =>
+                                  active ? prev.filter((id) => id !== f.user_id) : [...prev, f.user_id],
+                                )
+                              }
+                              className={`px-3 py-2 rounded-xl border text-xs font-bold transition cursor-pointer ${
+                                active
+                                  ? 'bg-emerald-600 text-white border-emerald-600'
+                                  : 'border-[#E2E8E4] dark:border-[#1A2621] text-zinc-700 dark:text-zinc-300 hover:border-emerald-500'
+                              }`}
                             >
-                              <X className="w-4 h-4" />
+                              {f.display_name || `@${f.username}`}
+                              <span className="opacity-70 font-mono mr-1" dir="ltr">@{f.username}</span>
                             </button>
-                          )}
-                        </div>
-                      ))}
-                    </div>
+                          );
+                        })}
+                      </div>
+                    )}
+                    <p className="text-[11px] text-zinc-500 leading-5">
+                      خودتان با نام «من» به گروه اضافه می‌شوید. دوستان انتخاب‌شده دعوت می‌شوند و بعد از پذیرش عضو گروه می‌شوند.
+                    </p>
                   </div>
                 )}
 

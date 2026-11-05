@@ -25,6 +25,7 @@ import { useApp } from '../context/AppContext';
 import { formatToman, formatShamsiDate, formatShamsiDateTime, toPersianDigits } from '../utils/formatters';
 import { calculateRemainingProDays } from '../utils/security';
 import { getSupabaseClient } from '../lib/supabase';
+import { FriendsPanel } from './FriendsPanel';
 
 interface SettingsViewProps {
   onOpenAvatarModal: () => void;
@@ -328,6 +329,9 @@ export const SettingsView: React.FC<SettingsViewProps> = ({ onOpenAvatarModal })
           <div className="absolute right-[-10%] bottom-[-40%] w-64 h-64 rounded-full bg-amber-500/10 blur-2xl pointer-events-none" />
         </div>
       )}
+
+      {/* Friends: add by username, accept requests, pick them for dong groups */}
+      <FriendsPanel />
 
       {/* 2. User's Pro Upgrades & Manual Payment Submissions History */}
       <div className="p-6 bg-white dark:bg-[#0E1511] rounded-3xl border border-[#E2E8E4] dark:border-[#1F2E27] shadow-xs space-y-4">

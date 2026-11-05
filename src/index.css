@@ -137,3 +137,13 @@ body {
     scroll-behavior: auto !important;
   }
 }
+
+/* Chandboom icon palette: duotone soft fill and accent dots (see components/icons/ChandIcon.tsx). */
+:root {
+  --icon-soft: #D1FAE5;
+  --icon-accent: #10B981;
+}
+.dark {
+  --icon-soft: #0F3D2E;
+  --icon-accent: #34D399;
+}

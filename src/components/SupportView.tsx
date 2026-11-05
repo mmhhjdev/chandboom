@@ -129,26 +129,32 @@ export const SupportView: React.FC<SupportViewProps> = ({ onOpenTicketModal }) =
     }
   };
 
-  const getStatusBadge = (status: TicketStatus) => {
+  // Status and category badges use only tones of green, white, and black (brand rule).
+  const getStatusBadge = (status: TicketStatus | string | undefined) => {
     switch (status) {
       case 'open':
         return {
           label: 'در انتظار پاسخ',
-          color: 'bg-amber-50 text-amber-800 dark:bg-[#1E190D] dark:text-amber-300 border-amber-300 dark:border-amber-900',
+          color: 'bg-emerald-900/10 text-emerald-900 dark:bg-emerald-400/10 dark:text-emerald-300 border-emerald-900/30 dark:border-emerald-400/30',
         };
       case 'in_progress':
         return {
           label: 'در حال بررسی فنی',
-          color: 'bg-sky-50 text-sky-800 dark:bg-[#0D1822] dark:text-sky-300 border-sky-300 dark:border-sky-900',
+          color: 'bg-emerald-600/10 text-emerald-700 dark:text-emerald-400 border-emerald-600/30',
         };
       case 'resolved':
         return {
           label: 'پاسخ داده شده',
-          color: 'bg-emerald-50 text-emerald-800 dark:bg-[#121F19] dark:text-emerald-300 border-emerald-300 dark:border-emerald-800',
+          color: 'bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 border-emerald-500/30',
         };
       case 'closed':
         return {
           label: 'بسته شده',
+          color: 'bg-zinc-100 text-zinc-600 dark:bg-[#121714] dark:text-zinc-400 border-zinc-200 dark:border-zinc-800',
+        };
+      default:
+        return {
+          label: 'نامشخص',
           color: 'bg-zinc-100 text-zinc-600 dark:bg-[#121714] dark:text-zinc-400 border-zinc-200 dark:border-zinc-800',
         };
     }
@@ -157,13 +163,13 @@ export const SupportView: React.FC<SupportViewProps> = ({ onOpenTicketModal }) =
   const getCategoryBadge = (category?: string, department?: string) => {
     const raw = (category || department || '').toLowerCase();
     if (raw.includes('finan') || raw.includes('مالی')) {
-      return { label: 'مالی', color: 'bg-amber-500/10 text-amber-700 dark:text-amber-400 border-amber-500/30' };
+      return { label: 'مالی', color: 'bg-emerald-900/10 text-emerald-900 dark:text-emerald-300 border-emerald-900/30' };
     }
     if (raw.includes('tech') || raw.includes('فنی')) {
-      return { label: 'فنی', color: 'bg-cyan-500/10 text-cyan-700 dark:text-cyan-400 border-cyan-500/30' };
+      return { label: 'فنی', color: 'bg-emerald-600/10 text-emerald-700 dark:text-emerald-400 border-emerald-600/30' };
     }
     if (raw.includes('feed') || raw.includes('انتقاد') || raw.includes('پیشنهاد')) {
-      return { label: 'پیشنهاد', color: 'bg-purple-500/10 text-purple-700 dark:text-purple-400 border-purple-500/30' };
+      return { label: 'پیشنهاد', color: 'bg-zinc-900/10 text-zinc-900 dark:bg-white/10 dark:text-zinc-100 border-zinc-900/30 dark:border-white/30' };
     }
     return { label: 'عمومی', color: 'bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 border-emerald-500/30' };
   };
@@ -445,7 +451,7 @@ export const SupportView: React.FC<SupportViewProps> = ({ onOpenTicketModal }) =
 
               {/* Messages Feed */}
               <div className="flex-1 overflow-y-auto p-4 space-y-4 max-h-[380px]">
-                {activeTicket.messages.map((msg) => {
+                {(activeTicket.messages ?? []).map((msg) => {
                   const isMsgAdmin = msg.sender_role === 'admin';
                   const msgText = msg.message || msg.content || '';
 

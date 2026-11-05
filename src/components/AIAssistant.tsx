@@ -201,7 +201,7 @@ export const AIAssistant: React.FC<{ isOpen?: boolean; onClose?: () => void }> =
         const supabase = getSupabaseClient();
         const groupName = String(params.name || '').trim();
         const suppliedMembers = Array.isArray(params.members) ? params.members : [];
-        const membersList = [...new Set(suppliedMembers
+        const membersList: string[] = [...new Set(suppliedMembers
           .map((member: unknown) => String(member || '').trim())
           .filter((member: string) => member.length > 0))];
 
