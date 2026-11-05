@@ -200,10 +200,14 @@ export const AIAssistant: React.FC<{ isOpen?: boolean; onClose?: () => void }> =
       if (type === 'create_dong_group' || type === 'create_group') {
         const supabase = getSupabaseClient();
         const groupName = String(params.name || '').trim();
-        const suppliedMembers = Array.isArray(params.members) ? params.members : [];
-        const membersList: string[] = [...new Set(suppliedMembers
-          .map((member: unknown) => String(member || '').trim())
-          .filter((member: string) => member.length > 0))];
+        const rawMembers: unknown[] = Array.isArray(params.members) ? (params.members as unknown[]) : [];
+        const membersList: string[] = [];
+        for (const rawMember of rawMembers) {
+          const cleanMember = String(rawMember ?? '').trim();
+          if (cleanMember && !membersList.includes(cleanMember)) {
+            membersList.push(cleanMember);
+          }
+        }
 
         if (!user?.id || user.id === 'guest') {
           throw new Error('برای ساخت گروه دنگ ابتدا وارد حساب کاربری خود شوید.');
