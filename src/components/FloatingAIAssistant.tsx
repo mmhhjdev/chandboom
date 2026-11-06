@@ -1,3 +1,4 @@
+import { ChandMascot } from './ChandMascot';
 import { ChandIcon } from './icons/ChandIcon';
 import { createDongGroup, findOrCreateDongGroup, addDongExpense } from '../services/dongService';
 import React, { useState, useRef } from 'react';
@@ -382,19 +383,11 @@ export const FloatingAIAssistant: React.FC = () => {
         >
           {/* Subtle pulse ring */}
           <span className="absolute -top-1 -right-1 flex h-3.5 w-3.5">
-            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-400 opacity-75" />
-            <span className="relative inline-flex rounded-full h-3.5 w-3.5 bg-amber-500 border-2 border-[#0E1512]" />
+            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
+            <span className="relative inline-flex rounded-full h-3.5 w-3.5 bg-emerald-500 border-2 border-[#0E1512]" />
           </span>
 
-          {/* AI Creative Lettering */}
-          <div className="flex flex-col items-center justify-center select-none leading-none">
-            <span className="font-mono text-base font-black tracking-tighter text-amber-300 group-hover:scale-110 transition drop-shadow-md">
-              AI
-            </span>
-            <span className="text-[8px] font-brand font-bold text-emerald-200 opacity-80 -mt-0.5">
-              چندبوم
-            </span>
-          </div>
+          <ChandMascot size={44} className="select-none drop-shadow-md group-hover:scale-110 transition" />
         </button>
       </div>
 

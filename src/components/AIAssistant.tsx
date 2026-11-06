@@ -1,3 +1,4 @@
+import { ChandMascot } from './ChandMascot';
 import { ChandIcon } from './icons/ChandIcon';
 import { createDongGroup, findOrCreateDongGroup, addDongExpense } from '../services/dongService';
 import React, { useState, useEffect, useRef } from 'react';
@@ -480,8 +481,8 @@ export const AIAssistant: React.FC<{ isOpen?: boolean; onClose?: () => void }> =
       {/* Header */}
       <div className="p-4 sm:p-5 border-b border-[#E2E8E4] dark:border-[#1E2D24] bg-zinc-50 dark:bg-[#131F19] flex items-center justify-between">
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-2xl bg-emerald-500/10 dark:bg-emerald-500/20 border border-emerald-500/30 flex items-center justify-center text-emerald-600 dark:text-emerald-400">
-            <ChandIcon name="ai" className="w-5 h-5" />
+          <div className="shrink-0 flex items-center justify-center">
+            <ChandMascot size={44} />
           </div>
           <div>
             <div className="flex items-center gap-2">
