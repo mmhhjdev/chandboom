@@ -217,6 +217,199 @@ async function loadGroupsContext(admin: any, userId: string, fullName: string | 
   return `\nاطلاعات واقعی کاربر (فقط همین حساب؛ گروه‌های دنگ کاربر و نام او):\n${JSON.stringify(payload)}`.slice(0, 4000);
 }
 
+// ---------- Persian calendar, categories and transaction intent (deterministic) ----------
+const EXPENSE_CATEGORY_LIST = ['خوراک و غذا', 'خرید و پوشاک', 'حمل و نقل', 'مسکن و قبوض', 'سلامت و درمان', 'آموزش و یادگیری', 'تفریح و سرگرمی', 'سایر'];
+const INCOME_CATEGORY_LIST = ['حقوق و دستمزد', 'سرمایه‌گذاری', 'سایر'];
+
+// Mirrors the app's keyword dictionary (src/utils/aiParser.ts) so both sides categorise alike.
+const CATEGORY_KEYWORDS: Array<[string, string[]]> = [
+  ['خوراک و غذا', ['سوپرمارکت', 'غذا', 'رستوران', 'شام', 'ناهار', 'صبحانه', 'نان', 'میوه', 'سبزی', 'سیب زمینی', 'سیبزمینی', 'گوشت', 'مرغ', 'لبنیات', 'پنیر', 'برنج', 'کافه', 'قهوه', 'اسنپ فود', 'پیتزا', 'ساندویچ', 'خواربار', 'هایپر', 'خوراک']],
+  ['حمل و نقل', ['اسنپ', 'تپسی', 'بنزین', 'تاکسی', 'مترو', 'اتوبوس', 'تعمیرگاه', 'روغن موتور', 'طرح ترافیک', 'بلیت', 'هواپیما', 'پارکینگ', 'عوارض', 'خودرو', 'ماشین']],
+  ['مسکن و قبوض', ['اجاره', 'قسط مسکن', 'شارژ ساختمان', 'برق', 'گاز', 'تلفن', 'اینترنت', 'مودم', 'قبض', 'مسکن']],
+  ['سلامت و درمان', ['دکتر', 'داروخانه', 'دارو', 'بیمارستان', 'آزمایشگاه', 'دندانپزشک', 'ویزیت', 'درمان', 'عینک', 'سلامت']],
+  ['آموزش و یادگیری', ['کتاب', 'دوره', 'دانشگاه', 'شهریه', 'مدرسه', 'کلاس', 'آموزش', 'کورس']],
+  ['تفریح و سرگرمی', ['سینما', 'تئاتر', 'بازی', 'پلی استیشن', 'سفر', 'هتل', 'ویلا', 'کنسرت', 'شهربازی', 'تفریح']],
+  ['خرید و پوشاک', ['لباس', 'کفش', 'شلوار', 'پیراهن', 'مانتو', 'پوشاک', 'دیجی‌کالا', 'دیجیکالا', 'کیف', 'عطر', 'لوازم', 'ایرپاد', 'گوشی', 'موبایل', 'لپ‌تاپ', 'لپتاپ', 'تبلت', 'تلویزیون', 'هدفون', 'ساعت مچی']],
+];
+
+const INCOME_WORDS = ['حقوق', 'دستمزد', 'واریز', 'درآمد', 'پاداش', 'عیدی', 'اضافه کار', 'کارمزد', 'سود', 'فروختم', 'فروش کالا'];
+const EXPENSE_WORDS = /هزینه|خرج|خرید|پرداخت|دادم|خریدم/;
+const JALALI_MONTHS = ['فروردین', 'اردیبهشت', 'خرداد', 'تیر', 'مرداد', 'شهریور', 'مهر', 'آبان', 'آذر', 'دی', 'بهمن', 'اسفند'];
+
+function jalaliToGregorian(jy: number, jm: number, jd: number): [number, number, number] {
+  const jy2 = jy - 979, jm2 = jm - 1, jd2 = jd - 1;
+  let jDayNo = 365 * jy2 + Math.floor(jy2 / 33) * 8 + Math.floor(((jy2 % 33) + 3) / 4);
+  const jdm = [31, 31, 31, 31, 31, 31, 30, 30, 30, 30, 30, 29];
+  for (let i = 0; i < jm2; i++) jDayNo += jdm[i];
+  jDayNo += jd2;
+  let gDayNo = jDayNo + 79;
+  let gy = 1600 + 400 * Math.floor(gDayNo / 146097);
+  gDayNo %= 146097;
+  let leap = true;
+  if (gDayNo >= 36525) {
+    gDayNo--;
+    gy += 100 * Math.floor(gDayNo / 36524);
+    gDayNo %= 36524;
+    if (gDayNo >= 365) gDayNo++; else leap = false;
+  }
+  gy += 4 * Math.floor(gDayNo / 1461);
+  gDayNo %= 1461;
+  if (gDayNo >= 366) { leap = false; gDayNo--; gy += Math.floor(gDayNo / 365); gDayNo %= 365; }
+  const gmd = [31, leap ? 29 : 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31];
+  let gm = 0;
+  while (gm < 12 && gDayNo >= gmd[gm]) { gDayNo -= gmd[gm]; gm++; }
+  return [gy, gm + 1, gDayNo + 1];
+}
+
+function gregorianToJalali(gy: number, gm: number, gd: number): [number, number, number] {
+  const cum = [0, 31, 59, 90, 120, 151, 181, 212, 243, 273, 304, 334];
+  const gy2 = gy - 1600, gm2 = gm - 1, gd2 = gd - 1;
+  let gDayNo = 365 * gy2 + Math.floor((gy2 + 3) / 4) - Math.floor((gy2 + 99) / 100) + Math.floor((gy2 + 399) / 400);
+  gDayNo += cum[gm2] + gd2;
+  if (gm2 > 1 && ((gy % 4 === 0 && gy % 100 !== 0) || gy % 400 === 0)) gDayNo++;
+  let jDayNo = gDayNo - 79;
+  const jNp = Math.floor(jDayNo / 12053);
+  jDayNo %= 12053;
+  let jy = 979 + 33 * jNp + 4 * Math.floor(jDayNo / 1461);
+  jDayNo %= 1461;
+  if (jDayNo >= 366) { jy += Math.floor((jDayNo - 1) / 365); jDayNo = (jDayNo - 1) % 365; }
+  const jdm = [31, 31, 31, 31, 31, 31, 30, 30, 30, 30, 30, 29];
+  let jm = 0;
+  while (jm < 11 && jDayNo >= jdm[jm]) { jDayNo -= jdm[jm]; jm++; }
+  return [jy, jm + 1, jDayNo + 1];
+}
+
+const pad2 = (n: number) => String(n).padStart(2, '0');
+const toFa = (n: number) => String(n).replace(/[0-9]/g, (d) => '۰۱۲۳۴۵۶۷۸۹'[Number(d)]);
+
+/** Today's date in Tehran (the users' timezone), as [year, month, day] in the Gregorian calendar. */
+function tehranToday(): [number, number, number] {
+  const iso = new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Tehran' });
+  const [y, m, d] = iso.split('-').map(Number);
+  return [y, m, d];
+}
+
+function fromGregorian(gy: number, gm: number, gd: number): { iso: string; jalaliLabel: string } {
+  const [jy, jm, jd] = gregorianToJalali(gy, gm, gd);
+  return {
+    iso: `${gy}-${pad2(gm)}-${pad2(gd)}`,
+    jalaliLabel: `${toFa(jd)} ${JALALI_MONTHS[jm - 1]} ${toFa(jy)}`,
+  };
+}
+
+function shiftDays(gy: number, gm: number, gd: number, delta: number): [number, number, number] {
+  const d = new Date(Date.UTC(gy, gm - 1, gd));
+  d.setUTCDate(d.getUTCDate() + delta);
+  return [d.getUTCFullYear(), d.getUTCMonth() + 1, d.getUTCDate()];
+}
+
+function todayInfo(): { iso: string; jalaliLabel: string } {
+  const [y, m, d] = tehranToday();
+  return fromGregorian(y, m, d);
+}
+
+/** Common misspelling: «ابان» for «آبان». Applied consistently when reading and when cleaning. */
+function normalizeDateText(text: string): string {
+  return text.replace(/ابان/g, 'آبان');
+}
+
+/** Reads a date phrase from free text: امروز/دیروز، «25 آبان 1405»، «25 ابان»، «1405-08-25» (شمسی) یا «2026-11-16» (میلادی). */
+function parseDateFromText(raw: string): { iso: string; jalaliLabel: string; matched: string } | null {
+  const text = normalizeDateText(normalizeDigitsFa(raw));
+  const [ty, tm, td] = tehranToday();
+
+  const relative = text.match(/(پریروز|دیروز|امروز)/);
+  if (relative) {
+    const delta = relative[1] === 'امروز' ? 0 : relative[1] === 'دیروز' ? -1 : -2;
+    const [y, m, d] = shiftDays(ty, tm, td, delta);
+    return { ...fromGregorian(y, m, d), matched: relative[1] };
+  }
+
+  const named = text.match(/(\d{1,2})\s*(فروردین|اردیبهشت|خرداد|تیر|مرداد|شهریور|مهر|آبان|آذر|دی|بهمن|اسفند)(?:\s*(\d{2,4}))?/);
+  if (named) {
+    const jd = Number(named[1]);
+    const jm = JALALI_MONTHS.indexOf(named[2]) + 1;
+    let jy = named[3] ? Number(named[3]) : gregorianToJalali(ty, tm, td)[0];
+    if (jy < 100) jy += 1400;
+    if (jy < 1300) jy = gregorianToJalali(ty, tm, td)[0];
+    const [gy, gm, gd] = jalaliToGregorian(jy, jm, jd);
+    return { ...fromGregorian(gy, gm, gd), matched: named[0] };
+  }
+
+  const numeric = text.match(/(\d{4})[\/-](\d{1,2})[\/-](\d{1,2})/);
+  if (numeric) {
+    const y = Number(numeric[1]), m = Number(numeric[2]), d = Number(numeric[3]);
+    if (y < 1700) {
+      const [gy, gm, gd] = jalaliToGregorian(y, m, d);
+      return { ...fromGregorian(gy, gm, gd), matched: numeric[0] };
+    }
+    return { ...fromGregorian(y, m, d), matched: numeric[0] };
+  }
+  return null;
+}
+
+function detectTransactionType(text: string): 'income' | 'expense' {
+  const hasIncome = INCOME_WORDS.some((w) => text.includes(w));
+  const hasExpense = EXPENSE_WORDS.test(text);
+  return hasIncome && !hasExpense ? 'income' : 'expense';
+}
+
+function detectCategory(text: string, type: 'income' | 'expense'): string {
+  if (type === 'income') {
+    if (/حقوق|دستمزد|اضافه کار|کارمزد/.test(text)) return 'حقوق و دستمزد';
+    if (/سود|سهام|بورس|طلا|سکه|سپرده|صندوق/.test(text)) return 'سرمایه‌گذاری';
+    return 'سایر';
+  }
+  for (const [category, words] of CATEGORY_KEYWORDS) {
+    if (words.some((w) => text.includes(w))) return category;
+  }
+  return 'سایر';
+}
+
+/** Short description: what was bought or received, without the amount, date, or command words. */
+function cleanPersonalDescription(raw: string, matchedDate: string | undefined): string {
+  let text = normalizeDateText(normalizeDigitsFa(raw));
+  if (matchedDate) text = text.replace(normalizeDateText(matchedDate), ' ');
+  text = text.replace(/\d+(?:[.,٬،]\d+)*\s*(میلیون|هزار)?\s*(تومان|ریال)?/g, ' ');
+  const stopWords = new Set([
+    'برام', 'برایم', 'یه', 'یک', 'لطفا', 'لطفاً', 'ثبت', 'کن', 'کنید', 'بنویس', 'اضافه', 'هزینه', 'خرج',
+    'در', 'به', 'تاریخ', 'را', 'رو', 'برای', 'از', 'این', 'دونه', 'تراکنش', 'امروز', 'دیروز', 'پریروز',
+    'درآمد', 'احمق', 'چند', 'بوم', 'چندبوم', 'میلیون', 'هزار', 'تومان', 'ریال',
+  ]);
+  return text
+    .split(/\s+/)
+    .map((word) => word.replace(/[.!؟?،,]+$/g, ''))
+    .filter((word) => word && !stopWords.has(word))
+    .join(' ')
+    .slice(0, 100);
+}
+
+function tryDeterministicTransaction(message: string): { reply: string; action: ProposedAction } | null {
+  const normalized = normalizeDigitsFa(message);
+  if (!/ثبت|بنویس|اضافه کن/.test(normalized)) return null;
+  const amount = parseExpenseAmount(message);
+  if (!amount) return null;
+
+  const type = detectTransactionType(normalized);
+  const date = parseDateFromText(message) ?? { ...todayInfo(), matched: undefined as string | undefined };
+  const cleaned = cleanPersonalDescription(message, date.matched);
+  const category = detectCategory(normalized, type);
+  const description = cleaned || (type === 'income' ? 'درآمد ثبت‌شده' : 'هزینه ثبت‌شده');
+
+  const action = validateAction({
+    type: 'create_transaction',
+    params: { amount, category, type, description, date: date.iso },
+    description: `ثبت ${type === 'income' ? 'درآمد' : 'هزینه'} ${description} به مبلغ ${formatTomanFa(amount)} تومان`,
+  });
+  if (!action) return null;
+
+  const label = type === 'income' ? 'درآمد' : 'هزینه';
+  const reply =
+    `ثبت ${label} ${formatTomanFa(amount)} تومان برای «${description}» در دسته‌ی «${category}»، ` +
+    `تاریخ ${date.jalaliLabel}. برای ثبت، دکمه‌ی تأیید را بزنید.`;
+  return { reply, action };
+}
+
 // ---------- Deterministic expense intent (no model call, no quota) ----------
 const PERSIAN_TO_LATIN_DIGITS: Record<string, string> = {
   '۰': '0', '۱': '1', '۲': '2', '۳': '3', '۴': '4', '۵': '5', '۶': '6', '۷': '7', '۸': '8', '۹': '9',
@@ -233,13 +426,23 @@ function formatTomanFa(value: number): string {
 }
 
 function parseExpenseAmount(message: string): number | null {
-  const text = normalizeDigitsFa(message);
-  const match = text.match(/(\d+(?:[.,٬،]\d+)*)\s*(میلیون|هزار)?/);
-  if (!match) return null;
-  const base = Number(match[1].replace(/[,٬،]/g, ''));
-  if (!Number.isFinite(base) || base <= 0) return null;
-  const multiplier = match[2] === 'میلیون' ? 1_000_000 : match[2] === 'هزار' ? 1_000 : 1;
-  return base * multiplier;
+  let text = normalizeDateText(normalizeDigitsFa(message));
+  const date = parseDateFromText(message);
+  if (date) text = text.replace(normalizeDateText(date.matched), ' ');
+
+  const pattern = /(\d+(?:[.,٬،]\d+)*)\s*(میلیون|هزار)?/g;
+  let first: { value: number; multiplier: number; hasUnit: boolean } | null = null;
+  let match: RegExpExecArray | null;
+  while ((match = pattern.exec(text)) !== null) {
+    const base = Number(match[1].replace(/[,٬،]/g, ''));
+    if (!Number.isFinite(base) || base <= 0) continue;
+    const multiplier = match[2] === 'میلیون' ? 1_000_000 : match[2] === 'هزار' ? 1_000 : 1;
+    const after = text.slice(match.index + match[0].length);
+    const hasUnit = multiplier > 1 || /^\s*(تومان|ریال)/.test(after);
+    if (hasUnit) return base * multiplier;
+    if (!first) first = { value: base, multiplier, hasUnit };
+  }
+  return first ? first.value * first.multiplier : null;
 }
 
 function parseExpenseTitle(message: string): string {
@@ -288,6 +491,9 @@ async function tryDeterministicExpense(
   if (groups.length === 0) return null; // let the model suggest creating a group
 
   const named = groups.find((g) => normalized.includes(g.name));
+  // A personal purchase must never land in a shared group: require an explicit group reference.
+  const mentionsGroup = /دنگ|گروه|مشترک|تقسیم|سهم|دوستان|همراهان/.test(normalized);
+  if (!mentionsGroup && !named) return null;
   const group = named ?? (groups.length === 1 ? groups[0] : null);
   if (!group) return null; // several groups and none named: the model asks which one
 
@@ -390,11 +596,16 @@ function validateAction(value: unknown): ProposedAction | null {
 
   if (type === 'create_transaction') {
     const amount = positiveNumber(params.amount);
-    const category = safeString(params.category, 60);
-    const txType = params.type;
-    const descriptionText = safeString(params.description, 180);
-    const date = validDate(params.date);
-    if (!amount || !category || !descriptionText || !date || (txType !== 'expense' && txType !== 'income')) return null;
+    if (!amount) return null;
+    const descriptionText = safeString(params.description, 180) || 'تراکنش ثبت‌شده توسط دستیار';
+    const txType: 'income' | 'expense' = params.type === 'income' || params.type === 'expense'
+      ? params.type
+      : detectTransactionType(normalizeDigitsFa(descriptionText));
+    const requested = safeString(params.category, 60);
+    const allowed = txType === 'income' ? INCOME_CATEGORY_LIST : EXPENSE_CATEGORY_LIST;
+    const category = allowed.includes(requested) ? requested : detectCategory(normalizeDigitsFa(descriptionText), txType);
+    // Missing or unreadable dates fall back to today; Persian dates are converted to Gregorian.
+    const date = validDate(params.date) ?? parseDateFromText(String(params.date ?? ''))?.iso ?? todayInfo().iso;
     return { type, params: { amount, category, type: txType, description: descriptionText, date }, description };
   }
 
@@ -571,11 +782,13 @@ serve(async (req: Request) => {
 
     // Clear expense requests are handled without the model: faster, cheaper, and predictable.
     const expenseIntent = await tryDeterministicExpense(supabaseAdmin, userId, dbUser.full_name ?? null, userMessage);
-    if (expenseIntent) {
+    const transactionIntent = expenseIntent ? null : tryDeterministicTransaction(userMessage);
+    const intent = expenseIntent ?? transactionIntent;
+    if (intent) {
       return respond({
         success: true,
-        reply: expenseIntent.reply,
-        action: expenseIntent.action,
+        reply: intent.reply,
+        action: intent.action,
         requires_confirmation: true,
         remaining_queries: currentRemaining,
         ai_call_used: false,

@@ -517,6 +517,8 @@ grant execute on function public.friend_respond_request(uuid, boolean) to authen
 grant execute on function public.friend_remove(uuid) to authenticated;
 
 
+notify pgrst, 'reload schema';
+
 commit;
 
 -- ============================================================================
