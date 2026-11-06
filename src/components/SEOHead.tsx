@@ -18,6 +18,9 @@ export const SEOHead: React.FC<SEOHeadProps> = ({
   structuredData,
 }) => {
   useEffect(() => {
+    // Static JSON-LD written at build time would duplicate the one set here after client navigation.
+    document.querySelectorAll('script[type="application/ld+json"][data-seo-static]').forEach((node) => node.remove());
+
     // 1. Update Title
     document.title = title;
 

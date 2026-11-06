@@ -1,11 +1,14 @@
 /**
  * Post-build SEO step for chandboom.ir (GitHub Pages, SPA).
  *
- * Why: the app is a single-page app, so every route shares the same HTML shell. Social crawlers
- * (Telegram, WhatsApp, X, LinkedIn) and many search bots do not run JavaScript, so they only see
- * whatever is in the static HTML. This script writes a real HTML file per public route with its
- * own title, description, canonical, Open Graph, Twitter and JSON-LD, and generates sitemap.xml
- * from the same route list, so the sitemap can never point at pages that do not exist.
+ * The app is a single-page app, so every route shares one HTML shell. Crawlers and social bots
+ * that do not run JavaScript only see that shell. This script writes a real HTML file per public
+ * route with its own title, description, canonical, Open Graph, Twitter and JSON-LD, and builds
+ * sitemap.xml from the same route list, so the sitemap cannot point at pages that do not exist.
+ *
+ * Article data comes from src/data/articles.json, the same file the app renders.
+ * The build fails if an article is missing a required field or if two articles share a
+ * slug, SEO title or description.
  */
 import fs from 'node:fs';
 import path from 'node:path';
@@ -14,24 +17,48 @@ const SITE = 'https://chandboom.ir';
 const root = process.cwd();
 const distDir = path.join(root, 'dist');
 const indexPath = path.join(distDir, 'index.html');
-const articlesPath = path.join(root, 'src/data/articles.ts');
-const today = new Date().toISOString().slice(0, 10);
+const articlesPath = path.join(root, 'src/data/articles.json');
 const DEFAULT_IMAGE = `${SITE}/chandboom-smart-personal-finance-hero.jpg`;
+// Lastmod for static pages. Update it when a static page's content changes.
+const STATIC_LASTMOD = '2026-11-06';
 
 if (!fs.existsSync(indexPath)) throw new Error('dist/index.html missing: run vite build first.');
 const template = fs.readFileSync(indexPath, 'utf8');
 if (!template.includes('<div id="root"></div>')) throw new Error('Unexpected index.html shell.');
 
-// The homepage keeps its full site-wide JSON-LD graph; other pages get their own.
+// The homepage keeps its site-wide JSON-LD graph; other pages get their own.
 const rootGraphMatch = template.match(/<script type="application\/ld\+json">[\s\S]*?<\/script>/);
-const rootGraphBlock = rootGraphMatch ? rootGraphMatch[0] : '';
+const rootGraphBlock = rootGraphMatch ? rootGraphMatch[0].replace('<script type="application/ld+json">', '<script type="application/ld+json" data-seo-static>') : '';
 
 const esc = (v) => String(v ?? '')
   .replaceAll('&', '&amp;').replaceAll('"', '&quot;').replaceAll('<', '&lt;').replaceAll('>', '&gt;');
 
 const jsonLdBlock = (obj) =>
-  `<script type="application/ld+json">${JSON.stringify(obj).replace(/</g, '\\u003c')}</script>`;
+  `<script type="application/ld+json" data-seo-static>${JSON.stringify(obj).replace(/</g, '\\u003c')}</script>`;
 
+// ---------- Articles: load and validate ----------
+const allArticles = JSON.parse(fs.readFileSync(articlesPath, 'utf8'));
+const articles = allArticles.filter((a) => a.status === 'published' && a.isIndexable);
+
+const REQUIRED = ['slug', 'title', 'seoTitle', 'description', 'keyword', 'keywords', 'category', 'publishedAt', 'updatedAt', 'sections'];
+const seen = { slug: new Set(), seoTitle: new Set(), description: new Set() };
+for (const a of articles) {
+  for (const key of REQUIRED) {
+    const v = a[key];
+    if (v === undefined || v === null || (Array.isArray(v) ? v.length === 0 : String(v).trim() === '')) {
+      throw new Error(`Article "${a.slug ?? '?'}" is missing required field "${key}".`);
+    }
+  }
+  if (!/^[a-z0-9-]+$/.test(a.slug)) throw new Error(`Article slug "${a.slug}" must be lowercase letters, digits and hyphens.`);
+  for (const key of Object.keys(seen)) {
+    if (seen[key].has(a[key])) throw new Error(`Duplicate ${key} in article "${a.slug}": "${a[key]}".`);
+    seen[key].add(a[key]);
+  }
+  if (a.description.length > 170) console.warn(`SEO: description of "${a.slug}" is ${a.description.length} chars (recommended <= 160).`);
+  if (a.seoTitle.length > 65) console.warn(`SEO: seoTitle of "${a.slug}" is ${a.seoTitle.length} chars (recommended <= 60).`);
+}
+
+// ---------- Static routes ----------
 const PAGES = [
   {
     path: '/',
@@ -75,51 +102,57 @@ const PAGES = [
     description: 'مقالات کاربردی درباره بودجه‌بندی، پس‌انداز، بدهی و استفاده از هوش مصنوعی در مدیریت مالی شخصی.',
     priority: '0.8', changefreq: 'weekly',
   },
-];
+].map((p) => ({ ...p, lastmod: STATIC_LASTMOD }));
 
-// Articles come from the same source file the app renders, so the two can never disagree.
-const source = fs.readFileSync(articlesPath, 'utf8');
-const prefix = 'export const ARTICLES: BlogArticle[] = ';
-const start = source.indexOf(prefix);
-if (start < 0) throw new Error('Could not locate ARTICLES export in src/data/articles.ts');
-const articles = JSON.parse(source.slice(start + prefix.length).trim().replace(/;\s*$/, ''));
-const ARTICLE_DATE = '2026-10-30'; // TODO: add a publishedAt field to each article for accurate dates.
-
-const ARTICLE_PAGES = articles.map((a) => ({
-  path: `/articles/${a.slug}`,
-  title: `${a.title} | مجله چندبوم`,
-  description: a.description,
-  keywords: a.keywords,
-  priority: '0.8',
-  changefreq: 'monthly',
-  lastmod: ARTICLE_DATE,
-  type: 'article',
-  jsonLd: {
-    '@context': 'https://schema.org',
-    '@graph': [
-      {
-        '@type': 'Article',
-        headline: a.title,
-        description: a.description,
-        keywords: a.keywords,
-        image: DEFAULT_IMAGE,
-        mainEntityOfPage: `${SITE}/articles/${a.slug}`,
-        datePublished: ARTICLE_DATE,
-        dateModified: ARTICLE_DATE,
-        inLanguage: 'fa-IR',
-        author: { '@type': 'Organization', name: 'مجله چندبوم' },
-        publisher: { '@type': 'Organization', name: 'چندبوم', url: SITE },
-      },
-      {
-        '@type': 'BreadcrumbList',
-        itemListElement: [
-          { '@type': 'ListItem', position: 1, name: 'مجله چندبوم', item: `${SITE}/articles` },
-          { '@type': 'ListItem', position: 2, name: a.title, item: `${SITE}/articles/${a.slug}` },
-        ],
-      },
-    ],
-  },
-}));
+// ---------- Article routes ----------
+const ARTICLE_PAGES = articles.map((a) => {
+  const url = `${SITE}/articles/${a.slug}`;
+  const graph = [
+    {
+      '@type': 'BlogPosting',
+      headline: a.title,
+      description: a.description,
+      keywords: a.keywords.join(', '),
+      image: DEFAULT_IMAGE,
+      mainEntityOfPage: url,
+      datePublished: a.publishedAt,
+      dateModified: a.updatedAt,
+      inLanguage: 'fa-IR',
+      articleSection: a.category,
+      author: { '@type': 'Organization', name: 'مجله چندبوم' },
+      publisher: { '@type': 'Organization', name: 'چندبوم', url: SITE },
+    },
+    {
+      '@type': 'BreadcrumbList',
+      itemListElement: [
+        { '@type': 'ListItem', position: 1, name: 'مجله چندبوم', item: `${SITE}/articles` },
+        { '@type': 'ListItem', position: 2, name: a.title, item: url },
+      ],
+    },
+  ];
+  const faq = a.sections.flatMap((s) => s.blocks).flatMap((b) => (b.type === 'faq' ? b.items : []));
+  if (faq.length > 0) {
+    graph.push({
+      '@type': 'FAQPage',
+      mainEntity: faq.map((item) => ({
+        '@type': 'Question',
+        name: item.q,
+        acceptedAnswer: { '@type': 'Answer', text: item.a },
+      })),
+    });
+  }
+  return {
+    path: `/articles/${a.slug}`,
+    title: a.seoTitle,
+    description: a.description,
+    keywords: a.keywords.join(', '),
+    priority: '0.8',
+    changefreq: 'monthly',
+    lastmod: a.updatedAt,
+    type: 'article',
+    jsonLd: { '@context': 'https://schema.org', '@graph': graph },
+  };
+});
 
 const ALL_PAGES = [...PAGES, ...ARTICLE_PAGES];
 
@@ -129,7 +162,7 @@ const stripOwnedHead = (html) => html
   .replace(/<meta\s+(?:name|property)="(?:description|keywords|robots|googlebot|author|title|og:[^"]*|twitter:[^"]*)"[^>]*>\s*/g, '')
   .replace(/<link rel="canonical"[^>]*>\s*/g, '')
   .replace(/<link rel="alternate"[^>]*>\s*/g, '')
-  .replace(/<script type="application\/ld\+json">[\s\S]*?<\/script>\s*/g, '');
+  .replace(/<script type="application\/ld\+json"[^>]*>[\s\S]*?<\/script>\s*/g, '');
 
 const noscriptNav = `<noscript>
       <nav aria-label="صفحات اصلی">
@@ -185,11 +218,11 @@ for (const page of ALL_PAGES) {
 // Sitemap: generated from the same list, so it only contains pages that exist.
 const urls = ALL_PAGES.map((p) => `  <url>
     <loc>${SITE}${p.path}</loc>
-    <lastmod>${p.lastmod || today}</lastmod>
+    <lastmod>${p.lastmod}</lastmod>
     <changefreq>${p.changefreq}</changefreq>
     <priority>${p.priority}</priority>
   </url>`).join('\n');
 fs.writeFileSync(path.join(distDir, 'sitemap.xml'),
   `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n${urls}\n</urlset>\n`, 'utf8');
 
-console.log(`SEO: wrote ${ALL_PAGES.length} pages and sitemap.xml (${ALL_PAGES.length} URLs).`);
+console.log(`SEO: wrote ${ALL_PAGES.length} pages (${ARTICLE_PAGES.length} articles) and sitemap.xml.`);
