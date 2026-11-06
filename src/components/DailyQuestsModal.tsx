@@ -2,9 +2,7 @@ import { ChandMascot } from './ChandMascot';
 import { ChandIcon } from './icons/ChandIcon';
 import React, { useState } from 'react';
 import {
-  X,
   Flame,
-  CheckCircle2,
   Coins,
 } from 'lucide-react';
 import {
@@ -53,7 +51,7 @@ export const DailyQuestsModal: React.FC<DailyQuestsModalProps> = ({
         {/* Header */}
         <div className="flex items-center justify-between px-6 py-4 border-b border-[#E2E8E4] dark:border-[#1F2E26] bg-zinc-50/70 dark:bg-[#111A15]">
           <div className="flex items-center gap-3">
-            <div className="p-2.5 rounded-2xl bg-amber-500 text-zinc-950 shadow-md">
+            <div className="shrink-0 text-amber-500">
               <ChandIcon name="quest" className="w-5 h-5" />
             </div>
             <div>
@@ -74,7 +72,7 @@ export const DailyQuestsModal: React.FC<DailyQuestsModalProps> = ({
             onClick={onClose}
             className="p-1.5 rounded-xl text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-200 transition cursor-pointer"
           >
-            <X className="w-5 h-5" />
+            <ChandIcon name="close" className="w-5 h-5" />
           </button>
         </div>
 
@@ -93,8 +91,8 @@ export const DailyQuestsModal: React.FC<DailyQuestsModalProps> = ({
           </div>
 
           <div className="flex items-center gap-3 p-3 rounded-2xl bg-white/80 dark:bg-[#141E1A] border border-[#E2E8E4] dark:border-[#1F2E26]">
-            <div className="p-2 rounded-xl bg-emerald-100 text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-300">
-              <CheckCircle2 className="w-5 h-5" />
+            <div className="p-2 rounded-xl text-emerald-700 dark:text-emerald-300">
+              <ChandIcon name="check-circle" className="w-5 h-5" />
             </div>
             <div>
               <span className="text-[11px] text-zinc-500 block">تسک‌های انجام شده</span>
@@ -211,7 +209,7 @@ export const DailyQuestsModal: React.FC<DailyQuestsModalProps> = ({
                           : 'bg-zinc-200 dark:bg-zinc-800 hover:bg-emerald-600 hover:text-white text-zinc-700 dark:text-zinc-300'
                       }`}
                     >
-                      <CheckCircle2 className="w-3.5 h-3.5" />
+                      <ChandIcon name="check-circle" className="w-3.5 h-3.5" />
                       <span>{isDone ? 'انجام شد ✓' : 'انجام دادم'}</span>
                     </button>
                   </div>

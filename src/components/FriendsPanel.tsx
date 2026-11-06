@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useState } from 'react';
-import { UserPlus, Check, X, Users } from 'lucide-react';
+
 import {
   friendsOverview,
   sendFriendRequest,
@@ -7,6 +7,7 @@ import {
   removeFriend,
   type FriendEntry,
 } from '../services/friendsService';
+import { ChandIcon } from './icons/ChandIcon';
 
 type Tab = 'friends' | 'incoming' | 'outgoing';
 
@@ -101,7 +102,7 @@ export const FriendsPanel: React.FC = () => {
       <div className="flex items-start justify-between gap-3 pb-3 border-b border-[#E2E8E4] dark:border-[#1F2E27]">
         <div>
           <h3 className="font-cairo font-bold text-base text-zinc-900 dark:text-zinc-100 flex items-center gap-2">
-            <Users className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
+            <ChandIcon name="users" className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
             <span>دوستان من</span>
           </h3>
           <p className="text-xs text-zinc-500 mt-0.5">
@@ -128,7 +129,7 @@ export const FriendsPanel: React.FC = () => {
           disabled={busy || username.trim().length < 3}
           className="px-4 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 disabled:opacity-50 text-white text-xs font-bold flex items-center justify-center gap-1.5 cursor-pointer"
         >
-          <UserPlus className="w-4 h-4" />
+          <ChandIcon name="user-plus" className="w-4 h-4" />
           افزودن دوست
         </button>
       </form>
@@ -197,7 +198,7 @@ export const FriendsPanel: React.FC = () => {
                       onClick={() => respond(entry, true)}
                       className="px-3 py-1.5 rounded-xl bg-emerald-600 text-white text-xs font-bold flex items-center gap-1 disabled:opacity-50 cursor-pointer"
                     >
-                      <Check className="w-3.5 h-3.5" /> پذیرش
+                      <ChandIcon name="check" className="w-3.5 h-3.5" /> پذیرش
                     </button>
                     <button
                       type="button"
@@ -205,7 +206,7 @@ export const FriendsPanel: React.FC = () => {
                       onClick={() => respond(entry, false)}
                       className="px-3 py-1.5 rounded-xl border border-zinc-900 dark:border-zinc-200 text-zinc-900 dark:text-zinc-100 text-xs font-bold flex items-center gap-1 disabled:opacity-50 cursor-pointer"
                     >
-                      <X className="w-3.5 h-3.5" /> رد
+                      <ChandIcon name="close" className="w-3.5 h-3.5" /> رد
                     </button>
                   </>
                 )}

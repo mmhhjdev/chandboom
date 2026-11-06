@@ -1,6 +1,7 @@
 import React from 'react';
-import { LogIn, UserPlus, X, ShieldCheck } from 'lucide-react';
+
 import { useApp } from '../context/AppContext';
+import { ChandIcon } from './icons/ChandIcon';
 
 interface AuthGuardModalProps {
   isOpen: boolean;
@@ -36,12 +37,12 @@ export const AuthGuardModal: React.FC<AuthGuardModalProps> = ({
           onClick={onClose}
           className="absolute top-5 left-5 p-2 rounded-xl text-zinc-400 hover:text-white hover:bg-zinc-900/80 transition cursor-pointer"
         >
-          <X className="w-5 h-5" />
+          <ChandIcon name="close" className="w-5 h-5" />
         </button>
 
         {/* Header Icon */}
-        <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-emerald-500/20 to-teal-500/10 border border-emerald-500/40 flex items-center justify-center mb-5">
-          <ShieldCheck className="w-7 h-7 text-emerald-400" />
+        <div className="w-14 h-14 rounded-2xl from-emerald-500/20 to-teal-500/10 flex items-center justify-center mb-5">
+          <ChandIcon name="shield" className="w-7 h-7 text-emerald-400" />
         </div>
 
         {/* Title with Bahman Font */}
@@ -56,7 +57,7 @@ export const AuthGuardModal: React.FC<AuthGuardModalProps> = ({
 
         {/* Trust Note */}
         <div className="flex items-center gap-2 p-3 rounded-xl bg-zinc-900/80 border border-emerald-900/40 text-xs text-emerald-400 mb-6">
-          <ShieldCheck className="w-4 h-4 shrink-0" />
+          <ChandIcon name="shield" className="w-4 h-4 shrink-0" />
           <span>عضویت در چندبوم در کمتر از ۱ دقیقه و با امنیت کامل انجام می‌شود.</span>
         </div>
 
@@ -66,7 +67,7 @@ export const AuthGuardModal: React.FC<AuthGuardModalProps> = ({
             onClick={handleOpenAuth}
             className="w-full flex items-center justify-center gap-2 py-3.5 rounded-2xl bg-gradient-to-r from-amber-400 via-amber-500 to-yellow-500 hover:from-amber-300 hover:to-yellow-400 text-zinc-950 font-black text-sm shadow-xl shadow-amber-500/20 transition-all cursor-pointer"
           >
-            <UserPlus className="w-4 h-4" />
+            <ChandIcon name="user-plus" className="w-4 h-4" />
             <span>ثبت‌نام یا ورود به حساب کاربری</span>
           </button>
 

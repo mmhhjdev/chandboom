@@ -12,10 +12,8 @@ import {
   FileSpreadsheet,
   BarChart3,
   Mic,
-  ShieldCheck,
-  Sparkles,
-  ArrowRight,
 } from 'lucide-react';
+import { ChandIcon } from '../components/icons/ChandIcon';
 
 const FEATURES_LIST = [
   {
@@ -89,7 +87,7 @@ export const FeaturesPage: React.FC = () => {
         {/* Header */}
         <div className="text-center max-w-2xl mx-auto space-y-3">
           <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 text-xs font-bold border border-emerald-500/20">
-            <Sparkles className="w-3.5 h-3.5" />
+            <ChandIcon name="ai" className="w-3.5 h-3.5" />
             <span>ابزارهای مدرن حسابداری شخصی</span>
           </div>
           <h1 className="text-2xl sm:text-4xl font-black text-zinc-900 dark:text-white leading-tight">
@@ -143,7 +141,7 @@ export const FeaturesPage: React.FC = () => {
               className="inline-flex items-center gap-2 px-6 py-3 rounded-2xl bg-emerald-500 hover:bg-emerald-400 text-zinc-950 font-bold text-xs sm:text-sm shadow-lg transition cursor-pointer"
             >
               <span>ورود و شروع رایگان</span>
-              <ArrowRight className="w-4 h-4" />
+              <ChandIcon name="arrow-right" className="w-4 h-4" />
             </Link>
           </div>
         </div>

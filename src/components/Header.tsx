@@ -1,21 +1,12 @@
 import React, { useState } from 'react';
 import {
-  Wallet,
-  Shield,
-  Crown,
-  LogIn,
-  LogOut,
   Bell,
-  ChevronDown,
   User,
-  LifeBuoy,
-  Receipt,
   Camera,
-  Target,
-  Settings,
 } from 'lucide-react';
 import { useApp } from '../context/AppContext';
 import { formatToman } from '../utils/formatters';
+import { ChandIcon } from './icons/ChandIcon';
 
 interface HeaderProps {
   onOpenAdminModal: () => void;
@@ -112,7 +103,7 @@ export const Header: React.FC<HeaderProps> = ({
               className="flex items-center gap-1.5 px-3.5 sm:px-4 py-1.5 sm:py-2 rounded-xl bg-emerald-700 hover:bg-emerald-800 text-white font-cairo font-bold text-xs shadow-xs hover:shadow-md transition active:scale-95 cursor-pointer shrink-0"
               title="ورود یا ثبت‌نام در سامانه چندبوم"
             >
-              <LogIn className="w-4 h-4 shrink-0" />
+              <ChandIcon name="login" className="w-4 h-4 shrink-0" />
               <span className="whitespace-nowrap">ورود / ثبت‌نام</span>
             </button>
           ) : (
@@ -129,7 +120,7 @@ export const Header: React.FC<HeaderProps> = ({
                   title="ورود به پنل مدیریت ارشد"
                   className="hidden sm:flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-purple-50 dark:bg-[#20152B] text-purple-700 dark:text-purple-300 border border-purple-200 dark:border-purple-900/60 font-cairo font-bold text-xs hover:bg-purple-100 dark:hover:bg-[#2C1C3D] transition cursor-pointer shadow-xs shrink-0"
                 >
-                  <Shield className="w-3.5 h-3.5 text-purple-600 dark:text-purple-400 shrink-0" />
+                  <ChandIcon name="shield" className="w-3.5 h-3.5 text-purple-600 dark:text-purple-400 shrink-0" />
                   <span>پنل مدیریت</span>
                 </button>
               )}
@@ -137,7 +128,7 @@ export const Header: React.FC<HeaderProps> = ({
               {/* Golden Pro Subscription Button / Active Badge */}
               {isProUser ? (
                 <div className="flex items-center gap-1 sm:gap-1.5 px-2.5 sm:px-3 py-1.5 sm:py-2 rounded-xl bg-amber-500/15 text-amber-900 dark:text-amber-200 border border-amber-400/50 text-[11px] sm:text-xs font-cairo font-bold shadow-xs shrink-0">
-                  <Crown className="w-3.5 h-3.5 text-amber-500 shrink-0" />
+                  <ChandIcon name="crown" className="w-3.5 h-3.5 text-amber-500 shrink-0" />
                   <span className="hidden sm:inline whitespace-nowrap">حساب طلایی فعال</span>
                   <span className="sm:hidden whitespace-nowrap">طلایی</span>
                 </div>
@@ -148,7 +139,7 @@ export const Header: React.FC<HeaderProps> = ({
                   className="flex items-center gap-1 sm:gap-1.5 px-2.5 sm:px-4 py-1.5 sm:py-2 rounded-xl bg-gradient-to-r from-amber-400 via-amber-500 to-yellow-500 hover:from-amber-300 hover:to-yellow-400 text-zinc-950 font-cairo font-black text-[11px] sm:text-xs transition cursor-pointer shadow-md hover:shadow-lg active:scale-95 shrink-0"
                   title="خرید اشتراک طلایی"
                 >
-                  <Crown className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-zinc-950 shrink-0" />
+                  <ChandIcon name="crown" className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-zinc-950 shrink-0" />
                   <span className="hidden sm:inline whitespace-nowrap">خرید اشتراک طلایی</span>
                   <span className="sm:hidden whitespace-nowrap">اشتراک طلایی</span>
                 </button>
@@ -160,7 +151,7 @@ export const Header: React.FC<HeaderProps> = ({
                 title="یادآورها و اعلان‌ها"
                 className="relative p-2 rounded-xl text-zinc-600 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-white hover:bg-zinc-100 dark:hover:bg-[#141F1A] transition cursor-pointer shrink-0"
               >
-                <Bell className="w-4 h-4 sm:w-4.5 sm:h-4.5" />
+                <ChandIcon name="bell" className="w-4 h-4 sm:w-4.5 sm:h-4.5" />
                 {unpaidRemindersCount > 0 && (
                   <span className="absolute top-1 right-1 w-2 h-2 rounded-full bg-rose-600 ring-2 ring-white dark:ring-[#0A100D]" />
                 )}
@@ -181,7 +172,7 @@ export const Header: React.FC<HeaderProps> = ({
                   <span className="text-xs font-cairo font-bold text-zinc-800 dark:text-zinc-200 hidden lg:inline max-w-[100px] truncate">
                     {user.full_name}
                   </span>
-                  <ChevronDown className="w-3.5 h-3.5 text-zinc-400 shrink-0" />
+                  <ChandIcon name="chevron-down" className="w-3.5 h-3.5 text-zinc-400 shrink-0" />
                 </button>
 
                 {isUserMenuOpen && (
@@ -211,7 +202,7 @@ export const Header: React.FC<HeaderProps> = ({
                         </div>
                         {isProUser ? (
                           <span className={`inline-flex items-center gap-1 text-[10px] font-bold ${user.tier === 'vip' ? 'text-purple-600 dark:text-purple-300' : user.tier === 'bronze' ? 'text-orange-700 dark:text-orange-300' : 'text-amber-600 dark:text-amber-400'}`}>
-                            <Crown className="w-3 h-3" /> {user.tier === 'vip' ? 'حساب VIP فعال' : user.tier === 'bronze' ? 'حساب برنزی فعال' : 'حساب پرو فعال'}
+                            <ChandIcon name="crown" className="w-3 h-3" /> {user.tier === 'vip' ? 'حساب VIP فعال' : user.tier === 'bronze' ? 'حساب برنزی فعال' : 'حساب پرو فعال'}
                           </span>
                         ) : user.subscription_status === 'pending_approval' ? (
                           <span className="inline-block text-[10px] text-amber-600 dark:text-amber-400">در انتظار تأیید اشتراک</span>
@@ -232,7 +223,7 @@ export const Header: React.FC<HeaderProps> = ({
                           }}
                           className="w-full text-right px-2.5 py-2 rounded-xl text-zinc-700 dark:text-zinc-300 hover:bg-emerald-50 dark:hover:bg-[#16261E] hover:text-emerald-700 dark:hover:text-emerald-400 transition flex items-center gap-2 cursor-pointer"
                         >
-                          <Settings className="w-4 h-4 text-emerald-600 shrink-0" />
+                          <ChandIcon name="settings" className="w-4 h-4 text-emerald-600 shrink-0" />
                           <span>مدیریت پروفایل</span>
                         </button>
                         <button
@@ -259,7 +250,7 @@ export const Header: React.FC<HeaderProps> = ({
                           }}
                           className="w-full text-right px-2.5 py-2 rounded-xl text-zinc-700 dark:text-zinc-300 hover:bg-emerald-50 dark:hover:bg-[#16261E] hover:text-emerald-700 dark:hover:text-emerald-400 transition flex items-center gap-2 cursor-pointer"
                         >
-                          <LifeBuoy className="w-4 h-4 text-emerald-600 shrink-0" />
+                          <ChandIcon name="support" className="w-4 h-4 text-emerald-600 shrink-0" />
                           <span>بخش پشتیبانی و تیکت‌ها</span>
                         </button>
                       </div>
@@ -276,7 +267,7 @@ export const Header: React.FC<HeaderProps> = ({
                           }}
                           className="w-full text-right px-2.5 py-2 rounded-xl text-zinc-700 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-[#16221D] transition flex items-center gap-2 cursor-pointer"
                         >
-                          <Receipt className="w-4 h-4 text-indigo-500 shrink-0" />
+                          <ChandIcon name="receipt" className="w-4 h-4 text-indigo-500 shrink-0" />
                           <span>تراکنش‌ها و اسناد مالی</span>
                         </button>
                         <button
@@ -286,7 +277,7 @@ export const Header: React.FC<HeaderProps> = ({
                           }}
                           className="w-full text-right px-2.5 py-2 rounded-xl text-zinc-700 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-[#16221D] transition flex items-center gap-2 cursor-pointer"
                         >
-                          <Target className="w-4 h-4 text-amber-500 shrink-0" />
+                          <ChandIcon name="goals" className="w-4 h-4 text-amber-500 shrink-0" />
                           <span>اهداف پس‌انداز</span>
                         </button>
                         {isAdmin && (
@@ -297,7 +288,7 @@ export const Header: React.FC<HeaderProps> = ({
                             }}
                             className="w-full text-right px-2.5 py-2 rounded-xl text-purple-700 dark:text-purple-300 hover:bg-purple-50 dark:hover:bg-[#20152B] transition flex items-center gap-2 cursor-pointer"
                           >
-                            <Shield className="w-4 h-4 text-purple-600 shrink-0" />
+                            <ChandIcon name="shield" className="w-4 h-4 text-purple-600 shrink-0" />
                             <span>پنل مدیریت ارشد</span>
                           </button>
                         )}
@@ -312,7 +303,7 @@ export const Header: React.FC<HeaderProps> = ({
                           }}
                           className="w-full text-right px-2.5 py-2 rounded-xl text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/40 transition flex items-center gap-2 cursor-pointer"
                         >
-                          <LogOut className="w-4 h-4 shrink-0" />
+                          <ChandIcon name="logout" className="w-4 h-4 shrink-0" />
                           <span>خروج از حساب</span>
                         </button>
                       </div>

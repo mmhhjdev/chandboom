@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import { X, Bell, Calendar, Tag, FileText } from 'lucide-react';
+
 import { useApp } from '../context/AppContext';
 import { Reminder, TransactionCategory } from '../types';
 import { EXPENSE_CATEGORIES } from '../data/initialData';
+import { ChandIcon } from './icons/ChandIcon';
 
 interface ReminderModalProps {
   isOpen: boolean;
@@ -76,8 +77,8 @@ export const ReminderModal: React.FC<ReminderModalProps> = ({
       >
         <div className="flex items-center justify-between px-6 py-4 border-b border-[#E2E8E4] dark:border-[#1A2621]">
           <div className="flex items-center gap-2">
-            <div className="p-2 rounded-xl bg-emerald-100 text-emerald-800 dark:bg-[#15271E] dark:text-emerald-300">
-              <Bell className="w-5 h-5" />
+            <div className="p-2 rounded-xl text-emerald-800 dark:text-emerald-300">
+              <ChandIcon name="bell" className="w-5 h-5" />
             </div>
             <h3 className="font-cairo text-lg font-bold text-zinc-900 dark:text-zinc-100">
               {editingReminder ? 'ویرایش یادآور مالی' : 'افزودن یادآور قبض یا چک سررسید'}
@@ -87,7 +88,7 @@ export const ReminderModal: React.FC<ReminderModalProps> = ({
             onClick={onClose}
             className="p-1.5 rounded-lg text-zinc-400 hover:text-zinc-700 dark:hover:text-zinc-200 hover:bg-zinc-100 dark:hover:bg-[#16221D] transition cursor-pointer"
           >
-            <X className="w-5 h-5" />
+            <ChandIcon name="close" className="w-5 h-5" />
           </button>
         </div>
 

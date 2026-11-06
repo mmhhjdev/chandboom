@@ -3,16 +3,8 @@ import { ChandIcon } from './icons/ChandIcon';
 import { createDongGroup, findOrCreateDongGroup, addDongExpense } from '../services/dongService';
 import React, { useState, useRef } from 'react';
 import {
-  Send,
-  X,
-  Lock,
-  CheckCircle2,
-  AlertCircle,
   TrendingUp,
-  User,
-  Mic,
   MicOff,
-  Loader2,
 } from 'lucide-react';
 import { useApp } from '../context/AppContext';
 import { useSubscription } from '../hooks/useSubscription';
@@ -421,7 +413,7 @@ export const FloatingAIAssistant: React.FC = () => {
               onClick={() => setIsOpen(false)}
               className="p-1.5 rounded-xl hover:bg-white/10 text-zinc-300 hover:text-white transition cursor-pointer"
             >
-              <X className="w-4 h-4" />
+              <ChandIcon name="close" className="w-4 h-4" />
             </button>
           </div>
 
@@ -458,7 +450,7 @@ export const FloatingAIAssistant: React.FC = () => {
           {!isAuthenticated ? (
             <div className="p-4 bg-gradient-to-r from-amber-500/15 to-yellow-500/10 border-b border-amber-400/30 text-right space-y-2">
               <div className="flex items-center gap-2 text-amber-300 text-xs font-cairo font-bold">
-                <Lock className="w-4 h-4 text-amber-400 shrink-0" />
+                <ChandIcon name="key" className="w-4 h-4 text-amber-400 shrink-0" />
                 <span>برای استفاده از هوش مصنوعی چندبوم، ابتدا باید وارد شوید</span>
               </div>
               <p className="text-[11px] text-zinc-300 leading-relaxed">
@@ -501,7 +493,7 @@ export const FloatingAIAssistant: React.FC = () => {
           {/* Feedback Notice */}
           {notice && (
             <div className="px-4 py-2 bg-amber-950/60 border-b border-amber-500/30 text-amber-300 text-xs font-cairo font-bold flex items-center gap-2">
-              <AlertCircle className="w-4 h-4 shrink-0" />
+              <ChandIcon name="alert" className="w-4 h-4 shrink-0" />
               <span>{notice}</span>
             </div>
           )}
@@ -522,7 +514,7 @@ export const FloatingAIAssistant: React.FC = () => {
                       : 'bg-zinc-800 text-white'
                   }`}
                 >
-                  {m.sender === 'assistant' ? 'AI' : <User className="w-3.5 h-3.5" />}
+                  {m.sender === 'assistant' ? 'AI' : <ChandIcon name="user" className="w-3.5 h-3.5" />}
                 </div>
 
                 <div
@@ -605,7 +597,7 @@ export const FloatingAIAssistant: React.FC = () => {
                     onClick={handleConfirmDraft}
                     className="flex-1 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs transition cursor-pointer flex items-center justify-center gap-1 shadow-sm"
                   >
-                    <CheckCircle2 className="w-3.5 h-3.5" />
+                    <ChandIcon name="check-circle" className="w-3.5 h-3.5" />
                     <span>تایید و ثبت در حسابداری</span>
                   </button>
                   <button
@@ -736,12 +728,12 @@ export const FloatingAIAssistant: React.FC = () => {
                   >
                     {isExecutingAction ? (
                       <>
-                        <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                        <ChandIcon name="loader" className="w-3.5 h-3.5 animate-spin" />
                         <span>در حال ثبت...</span>
                       </>
                     ) : (
                       <>
-                        <CheckCircle2 className="w-3.5 h-3.5" />
+                        <ChandIcon name="check-circle" className="w-3.5 h-3.5" />
                         <span>تایید و ثبت در سیستم</span>
                       </>
                     )}
@@ -819,7 +811,7 @@ export const FloatingAIAssistant: React.FC = () => {
               }`}
               title={isListening ? 'توقف ضبط صدا' : 'ارسال پیام صوتی به هوش مصنوعی'}
             >
-              {isListening ? <MicOff className="w-4 h-4 text-white" /> : <Mic className="w-4 h-4" />}
+              {isListening ? <MicOff className="w-4 h-4 text-white" /> : <ChandIcon name="mic" className="w-4 h-4" />}
             </button>
             <button
               type="submit"
@@ -827,7 +819,7 @@ export const FloatingAIAssistant: React.FC = () => {
               className="p-2.5 rounded-xl bg-emerald-700 hover:bg-emerald-600 text-white transition cursor-pointer shadow-xs disabled:opacity-50"
               title="ارسال پیام"
             >
-              <Send className="w-4 h-4 rotate-180" />
+              <ChandIcon name="send" className="w-4 h-4 rotate-180" />
             </button>
           </form>
         </div>

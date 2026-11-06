@@ -1,26 +1,12 @@
 import React, { useState } from 'react';
 import {
-  Bot,
-  User,
-  CheckCircle2,
-  AlertCircle,
-  Receipt,
-  Users,
-  Target,
-  Bell,
   ArrowUpRight,
   ArrowDownLeft,
-  Calendar,
-  Loader2,
-  Tag,
-  Check,
-  X,
   TrendingUp,
-  CreditCard,
-  PieChart,
 } from 'lucide-react';
 import { AiAssistantAction } from '../lib/supabase';
 import { formatToman, toPersianDigits } from '../utils/formatters';
+import { ChandIcon } from './icons/ChandIcon';
 
 export interface ChatMessageItem {
   id: string;
@@ -90,25 +76,25 @@ export const ChatMessage: React.FC<ChatMessageProps> = ({
     const { type, description } = action;
     const params = action.data || action.params || {};
 
-    let icon = <Receipt className="w-4 h-4 text-emerald-400" />;
+    let icon = <ChandIcon name="receipt" className="w-4 h-4 text-emerald-400" />;
     let typeTitle = 'پیشنهاد تراکنش مالی';
     let buttonLabel = 'تأیید و ثبت تراکنش';
     let isInformativeOnly = false;
 
     if (type === 'create_dong_group' || type === 'create_group') {
-      icon = <Users className="w-4 h-4 text-cyan-400" />;
+      icon = <ChandIcon name="users" className="w-4 h-4 text-cyan-400" />;
       typeTitle = 'پیشنهاد ایجاد گروه دنگ';
       buttonLabel = 'تأیید و ایجاد گروه دنگ';
     } else if (type === 'add_deng_expense') {
-      icon = <CreditCard className="w-4 h-4 text-emerald-300" />;
+      icon = <ChandIcon name="card" className="w-4 h-4 text-emerald-300" />;
       typeTitle = 'پیشنهاد ثبت خرج دنگ گروهی';
       buttonLabel = 'تأیید و ثبت خرج دنگ';
     } else if (type === 'create_goal') {
-      icon = <Target className="w-4 h-4 text-amber-400" />;
+      icon = <ChandIcon name="goals" className="w-4 h-4 text-amber-400" />;
       typeTitle = 'پیشنهاد هدف مالی و پس‌انداز';
       buttonLabel = 'تأیید و ثبت هدف مالی';
     } else if (type === 'create_reminder') {
-      icon = <Bell className="w-4 h-4 text-purple-400" />;
+      icon = <ChandIcon name="bell" className="w-4 h-4 text-purple-400" />;
       typeTitle = 'پیشنهاد یادآور پرداخت سررسید';
       buttonLabel = 'تأیید و ثبت یادآور';
     } else if (type === 'financial_analysis' || type === 'analysis_report') {
@@ -134,7 +120,7 @@ export const ChatMessage: React.FC<ChatMessageProps> = ({
             </span>
           ) : actionExecuted ? (
             <span className="flex items-center gap-1 text-[11px] font-medium text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded-full border border-emerald-500/30">
-              <Check className="w-3 h-3" />
+              <ChandIcon name="check" className="w-3 h-3" />
               انجام شد
             </span>
           ) : (
@@ -185,14 +171,14 @@ export const ChatMessage: React.FC<ChatMessageProps> = ({
                 )}
                 {params.category && (
                   <div className="flex items-center gap-1.5 text-zinc-300 col-span-2">
-                    <Tag className="w-3 h-3 text-zinc-400" />
+                    <ChandIcon name="tag" className="w-3 h-3 text-zinc-400" />
                     <span className="text-zinc-400">دسته‌بندی:</span>
                     <span className="text-zinc-200">{String(params.category)}</span>
                   </div>
                 )}
                 {params.date && (
                   <div className="flex items-center gap-1.5 text-zinc-300 col-span-2">
-                    <Calendar className="w-3 h-3 text-zinc-400" />
+                    <ChandIcon name="calendar" className="w-3 h-3 text-zinc-400" />
                     <span className="text-zinc-400">تاریخ:</span>
                     <span className="font-mono text-zinc-200">{toPersianDigits(params.date)}</span>
                   </div>
@@ -276,7 +262,7 @@ export const ChatMessage: React.FC<ChatMessageProps> = ({
                 )}
                 {params.deadline && (
                   <div className="flex items-center gap-1.5 text-zinc-300 col-span-2">
-                    <Calendar className="w-3 h-3 text-zinc-400" />
+                    <ChandIcon name="calendar" className="w-3 h-3 text-zinc-400" />
                     <span className="text-zinc-400">مهلت زمانی:</span>
                     <span className="font-mono text-zinc-200">{toPersianDigits(params.deadline)}</span>
                   </div>
@@ -299,7 +285,7 @@ export const ChatMessage: React.FC<ChatMessageProps> = ({
                 ) : null}
                 {params.due_date && (
                   <div className="flex items-center gap-1.5 text-zinc-300">
-                    <Calendar className="w-3 h-3 text-zinc-400" />
+                    <ChandIcon name="calendar" className="w-3 h-3 text-zinc-400" />
                     <span className="text-zinc-400">سررسید:</span>
                     <span className="font-mono text-zinc-200">{toPersianDigits(params.due_date)}</span>
                   </div>
@@ -341,7 +327,7 @@ export const ChatMessage: React.FC<ChatMessageProps> = ({
           {/* Action Success State */}
           {actionExecuted && (
             <div className="flex items-center gap-2 p-2.5 rounded-xl bg-emerald-500/15 border border-emerald-500/30 text-emerald-300 text-xs font-medium">
-              <CheckCircle2 className="w-4 h-4 shrink-0 text-emerald-400" />
+              <ChandIcon name="check-circle" className="w-4 h-4 shrink-0 text-emerald-400" />
               <span>{actionSuccessMessage || 'عملیات با موفقیت در پایگاه داده ثبت شد.'}</span>
             </div>
           )}
@@ -349,7 +335,7 @@ export const ChatMessage: React.FC<ChatMessageProps> = ({
           {/* Action Error State */}
           {localError && !actionExecuted && (
             <div className="flex items-center gap-2 p-2.5 rounded-xl bg-rose-500/15 border border-rose-500/30 text-rose-300 text-xs font-medium">
-              <AlertCircle className="w-4 h-4 shrink-0 text-rose-400" />
+              <ChandIcon name="alert" className="w-4 h-4 shrink-0 text-rose-400" />
               <span>{localError}</span>
             </div>
           )}
@@ -365,12 +351,12 @@ export const ChatMessage: React.FC<ChatMessageProps> = ({
               >
                 {isLoading ? (
                   <>
-                    <Loader2 className="w-4 h-4 animate-spin" />
+                    <ChandIcon name="loader" className="w-4 h-4 animate-spin" />
                     <span>در حال ثبت...</span>
                   </>
                 ) : (
                   <>
-                    <CheckCircle2 className="w-4 h-4" />
+                    <ChandIcon name="check-circle" className="w-4 h-4" />
                     <span>{buttonLabel}</span>
                   </>
                 )}
@@ -383,7 +369,7 @@ export const ChatMessage: React.FC<ChatMessageProps> = ({
                 className="py-2.5 px-3 rounded-xl bg-zinc-800 hover:bg-zinc-700 active:scale-[0.98] text-zinc-300 text-xs transition cursor-pointer flex items-center justify-center gap-1"
                 title="صرف‌نظر"
               >
-                <X className="w-3.5 h-3.5" />
+                <ChandIcon name="close" className="w-3.5 h-3.5" />
                 <span>انصراف</span>
               </button>
             </div>
@@ -407,7 +393,7 @@ export const ChatMessage: React.FC<ChatMessageProps> = ({
             : 'bg-emerald-600 text-white'
         }`}
       >
-        {isUser ? <User className="w-4 h-4" /> : <Bot className="w-4 h-4" />}
+        {isUser ? <ChandIcon name="user" className="w-4 h-4" /> : <ChandIcon name="ai" className="w-4 h-4" />}
       </div>
 
       {/* Bubble Content */}

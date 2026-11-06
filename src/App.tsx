@@ -32,7 +32,7 @@ import { PricingPage } from './pages/PricingPage';
 import { BlogPage } from './pages/BlogPage';
 import { ArticlePage } from './pages/ArticlePage';
 import { AIAssistant } from './components/AIAssistant';
-import { ShieldCheck, Heart, Sparkles } from 'lucide-react';
+
 import { EnvNoticeBanner } from './components/EnvNoticeBanner';
 import { CookieConsentBanner } from './components/CookieConsentBanner';
 

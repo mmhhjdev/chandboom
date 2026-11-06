@@ -1,5 +1,8 @@
 import React, { Component, ErrorInfo, ReactNode } from 'react';
-import { AlertTriangle, RotateCcw } from 'lucide-react';
+import {
+  RotateCcw,
+} from 'lucide-react';
+import { ChandIcon } from './icons/ChandIcon';
 
 interface Props {
   children: ReactNode;
@@ -36,8 +39,8 @@ export class FinancialChartsErrorBoundary extends Component<Props, State> {
     if (this.state.hasError) {
       return (
         <div className="p-8 rounded-3xl bg-zinc-50 dark:bg-[#121A16] border border-dashed border-rose-300 dark:border-rose-900/60 text-center flex flex-col items-center justify-center font-cairo">
-          <div className="w-12 h-12 rounded-2xl bg-rose-500/10 text-rose-500 flex items-center justify-center mb-3">
-            <AlertTriangle className="w-6 h-6" />
+          <div className="w-12 h-12 rounded-2xl text-rose-500 flex items-center justify-center mb-3">
+            <ChandIcon name="alert" className="w-6 h-6" />
           </div>
           <h4 className="text-sm font-bold text-zinc-900 dark:text-zinc-100 mb-1">
             خطا در بارگذاری نمودار مالی

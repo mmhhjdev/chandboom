@@ -1,18 +1,9 @@
 import React, { useState, useMemo } from 'react';
 import {
-  Plus,
   Search,
   Filter,
-  Download,
-  Trash2,
-  Edit2,
   TrendingDown,
   TrendingUp,
-  Sparkles,
-  ArrowUpDown,
-  Tag,
-  Calendar,
-  CreditCard,
   FileSpreadsheet,
 } from 'lucide-react';
 import { useApp } from '../context/AppContext';
@@ -21,6 +12,8 @@ import { formatToman, formatShamsiDate, toPersianDigits } from '../utils/formatt
 import { processFinancialAI } from '../services/aiService';
 import { EXPENSE_CATEGORIES, INCOME_CATEGORIES } from '../data/initialData';
 import { exportTransactionsToExcel } from '../utils/excelExporter';
+import { ChandAsset } from './ChandAsset';
+import { ChandIcon } from './icons/ChandIcon';
 
 interface TransactionsViewProps {
   onOpenTransactionModal: (tx?: Transaction) => void;
@@ -193,9 +186,12 @@ export const TransactionsView: React.FC<TransactionsViewProps> = ({
       {/* Top Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
+        <div className="flex items-center gap-3">
+          <ChandAsset name="transactions" size={44} className="shrink-0 drop-shadow-md" />
           <h2 className="font-cairo text-2xl font-bold text-zinc-900 dark:text-zinc-100">
             تراکنش‌های مالی و تایم‌لاین هوشمند
           </h2>
+        </div>
           <p className="text-xs sm:text-sm text-zinc-600 dark:text-zinc-400 mt-1">
             مشاهده تراکنش‌ها به تفکیک روز، فیلترهای فصلی و ماهانه، ثبت با پیامک بانکی و خروجی اکسل
           </p>
@@ -208,7 +204,7 @@ export const TransactionsView: React.FC<TransactionsViewProps> = ({
               title="پردازش و استخراج خودکار از متن پیامک یا فیش بانکی"
               className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-blue-50 dark:bg-[#131F2A] text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-blue-900/60 hover:bg-blue-100 text-xs font-bold transition cursor-pointer shadow-xs"
             >
-              <CreditCard className="w-4 h-4 text-blue-600 dark:text-blue-400" />
+              <ChandIcon name="card" className="w-4 h-4 text-blue-600 dark:text-blue-400" />
               <span>پردازش پیامک بانکی</span>
             </button>
           )}
@@ -227,7 +223,7 @@ export const TransactionsView: React.FC<TransactionsViewProps> = ({
             onClick={() => onOpenTransactionModal()}
             className="flex items-center gap-2 px-4 py-2 rounded-xl bg-emerald-700 hover:bg-emerald-800 text-white text-xs sm:text-sm font-bold shadow-xs transition cursor-pointer"
           >
-            <Plus className="w-4 h-4" />
+            <ChandIcon name="add" className="w-4 h-4" />
             <span>ثبت تراکنش جدید</span>
           </button>
         </div>
@@ -239,8 +235,8 @@ export const TransactionsView: React.FC<TransactionsViewProps> = ({
           onSubmit={handleQuickAiSubmit}
           className="p-3 bg-white dark:bg-[#0F1512] rounded-2xl border border-[#E2E8E4] dark:border-[#1A2621] shadow-xs flex items-center gap-2"
         >
-          <div className="p-2 rounded-xl bg-emerald-50 dark:bg-[#121F19] text-emerald-700 dark:text-emerald-300 shrink-0">
-            <Sparkles className="w-4 h-4" />
+          <div className="p-2 rounded-xl text-emerald-700 dark:text-emerald-300 shrink-0">
+            <ChandIcon name="ai" className="w-4 h-4" />
           </div>
           <input
             type="text"
@@ -348,7 +344,7 @@ export const TransactionsView: React.FC<TransactionsViewProps> = ({
         <div className="flex flex-col sm:flex-row gap-3">
           {/* Search Box */}
           <div className="relative flex-1">
-            <Search className="w-4 h-4 text-zinc-400 absolute right-3 top-1/2 -translate-y-1/2" />
+            <ChandIcon name="search" className="w-4 h-4 text-zinc-400 absolute right-3 top-1/2 -translate-y-1/2" />
             <input
               type="text"
               value={searchQuery}
@@ -414,7 +410,7 @@ export const TransactionsView: React.FC<TransactionsViewProps> = ({
       <div className="space-y-4">
         {groupedByDay.length === 0 ? (
           <div className="p-12 text-center text-zinc-400 space-y-3 bg-white dark:bg-[#0F1512] rounded-3xl border border-[#E2E8E4] dark:border-[#1A2621]">
-            <Calendar className="w-10 h-10 text-zinc-300 dark:text-zinc-600 mx-auto" />
+            <ChandIcon name="calendar" className="w-10 h-10 text-zinc-300 dark:text-zinc-600 mx-auto" />
             <p className="text-xs sm:text-sm">
               هیچ تراکنشی در بازه انتخابی ({periodFilter === 'current_month' ? 'ماه جاری' : periodFilter === 'last_month' ? 'ماه گذشته' : '۳ ماه اخیر'}) یافت نشد.
             </p>
@@ -528,7 +524,7 @@ export const TransactionsView: React.FC<TransactionsViewProps> = ({
                           title="ویرایش تراکنش"
                           className="p-1.5 rounded-lg text-zinc-400 hover:text-emerald-700 hover:bg-emerald-50 dark:hover:bg-[#16251E] transition cursor-pointer"
                         >
-                          <Edit2 className="w-4 h-4" />
+                          <ChandIcon name="edit" className="w-4 h-4" />
                         </button>
                         <button
                           onClick={() => {
@@ -539,7 +535,7 @@ export const TransactionsView: React.FC<TransactionsViewProps> = ({
                           title="حذف تراکنش"
                           className="p-1.5 rounded-lg text-zinc-400 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-[#281515] transition cursor-pointer"
                         >
-                          <Trash2 className="w-4 h-4" />
+                          <ChandIcon name="trash" className="w-4 h-4" />
                         </button>
                       </div>
                     </div>

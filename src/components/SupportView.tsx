@@ -1,22 +1,10 @@
 import React, { useState, useEffect, useRef } from 'react';
-import {
-  MessageSquarePlus,
-  Send,
-  User,
-  Shield,
-  Search,
-  LogIn,
-  Lock,
-  Loader2,
-  CheckCircle2,
-  Clock,
-  AlertCircle,
-  Tag,
-} from 'lucide-react';
+
 import { useApp } from '../context/AppContext';
 import { TicketPriority, TicketStatus } from '../types';
 import { formatShamsiDate, toPersianDigits } from '../utils/formatters';
 import { getSupabaseClient } from '../lib/supabase';
+import { ChandIcon } from './icons/ChandIcon';
 
 interface SupportViewProps {
   onOpenTicketModal: () => void;
@@ -180,12 +168,13 @@ export const SupportView: React.FC<SupportViewProps> = ({ onOpenTicketModal }) =
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <div className="flex items-center gap-2">
+            <ChandIcon name="support" className="w-8 h-8 shrink-0 text-emerald-700 dark:text-emerald-400" />
             <h2 className="font-cairo text-2xl font-bold text-zinc-900 dark:text-zinc-100">
               مرکز پشتیبانی و تیکت‌های <span className="font-brand text-emerald-700 dark:text-emerald-400">چندبوم</span>
             </h2>
             {isAdmin && adminMode && (
               <span className="px-2.5 py-0.5 rounded-full text-xs font-cairo font-bold bg-emerald-700 text-white flex items-center gap-1 shadow-xs">
-                <Shield className="w-3 h-3" />
+                <ChandIcon name="shield" className="w-3 h-3" />
                 پنل مدیریت پشتیبانی
               </span>
             )}
@@ -206,7 +195,7 @@ export const SupportView: React.FC<SupportViewProps> = ({ onOpenTicketModal }) =
                   : 'bg-white dark:bg-[#0F1512] text-zinc-700 dark:text-zinc-300 border-[#E2E8E4] dark:border-[#1A2621] hover:bg-emerald-50/50 dark:hover:bg-[#16201B]'
               }`}
             >
-              <Shield className="w-4 h-4 text-emerald-700 dark:text-emerald-400" />
+              <ChandIcon name="shield" className="w-4 h-4 text-emerald-700 dark:text-emerald-400" />
               <span>{adminMode ? 'خروج از پنل پشتیبان' : 'ورود به پنل پشتیبان (Admin)'}</span>
             </button>
           )}
@@ -222,7 +211,7 @@ export const SupportView: React.FC<SupportViewProps> = ({ onOpenTicketModal }) =
             }}
             className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-emerald-700 hover:bg-emerald-800 dark:bg-emerald-600 dark:hover:bg-emerald-500 active:scale-95 text-white text-xs sm:text-sm font-bold shadow-md transition cursor-pointer"
           >
-            <MessageSquarePlus className="w-4 h-4" />
+            <ChandIcon name="sms" className="w-4 h-4" />
             <span>ثبت تیکت جدید</span>
           </button>
         </div>
@@ -232,8 +221,8 @@ export const SupportView: React.FC<SupportViewProps> = ({ onOpenTicketModal }) =
       {!isAuthenticated && (
         <div className="p-5 rounded-2xl bg-emerald-50/80 dark:bg-[#13221B] border border-emerald-200 dark:border-emerald-900/60 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs">
           <div className="flex items-center gap-3 text-emerald-950 dark:text-emerald-200">
-            <div className="p-2 rounded-xl bg-emerald-200/60 dark:bg-emerald-900/60 text-emerald-800 dark:text-emerald-300 shrink-0">
-              <Lock className="w-5 h-5" />
+            <div className="p-2 rounded-xl text-emerald-800 dark:text-emerald-300 shrink-0">
+              <ChandIcon name="key" className="w-5 h-5" />
             </div>
             <div>
               <p className="font-cairo font-bold text-sm text-zinc-900 dark:text-zinc-100">
@@ -248,7 +237,7 @@ export const SupportView: React.FC<SupportViewProps> = ({ onOpenTicketModal }) =
             onClick={() => setIsAuthModalOpen(true)}
             className="px-5 py-2 rounded-xl bg-emerald-700 hover:bg-emerald-800 text-white font-cairo font-bold text-xs flex items-center gap-2 shrink-0 cursor-pointer shadow-xs transition"
           >
-            <LogIn className="w-4 h-4" />
+            <ChandIcon name="login" className="w-4 h-4" />
             <span>ورود / ثبت‌نام با ایمیل</span>
           </button>
         </div>
@@ -258,7 +247,7 @@ export const SupportView: React.FC<SupportViewProps> = ({ onOpenTicketModal }) =
       {isAdmin && adminMode && (
         <div className="p-4 rounded-2xl bg-emerald-50/70 dark:bg-[#14221C] border border-emerald-200 dark:border-emerald-900/60 flex items-center justify-between gap-3 text-xs">
           <div className="flex items-center gap-2 text-emerald-950 dark:text-emerald-200">
-            <Shield className="w-4 h-4 text-emerald-700 dark:text-emerald-400 shrink-0" />
+            <ChandIcon name="shield" className="w-4 h-4 text-emerald-700 dark:text-emerald-400 shrink-0" />
             <span>
               <strong>شما در پنل ادمین هستید:</strong> دسترسی به تیکت‌های تمامی کاربران باز است. می‌توانید وضعیت‌ها را به‌روزرسانی کرده و پاسخ رسمی ارسال فرمایید.
             </span>
@@ -287,7 +276,7 @@ export const SupportView: React.FC<SupportViewProps> = ({ onOpenTicketModal }) =
             </div>
 
             <div className="relative">
-              <Search className="w-4 h-4 text-zinc-400 absolute right-3 top-1/2 -translate-y-1/2" />
+              <ChandIcon name="search" className="w-4 h-4 text-zinc-400 absolute right-3 top-1/2 -translate-y-1/2" />
               <input
                 type="text"
                 value={searchQuery}
@@ -469,7 +458,7 @@ export const SupportView: React.FC<SupportViewProps> = ({ onOpenTicketModal }) =
                             : 'bg-emerald-700 text-white shadow-xs'
                         }`}
                       >
-                        {isMsgAdmin ? <Shield className="w-4 h-4" /> : <User className="w-4 h-4" />}
+                        {isMsgAdmin ? <ChandIcon name="shield" className="w-4 h-4" /> : <ChandIcon name="user" className="w-4 h-4" />}
                       </div>
 
                       <div
@@ -525,9 +514,9 @@ export const SupportView: React.FC<SupportViewProps> = ({ onOpenTicketModal }) =
                     className="p-2.5 rounded-xl font-cairo font-bold text-white transition flex items-center justify-center cursor-pointer bg-emerald-700 hover:bg-emerald-800 dark:bg-emerald-600 dark:hover:bg-emerald-500 disabled:opacity-50 shrink-0"
                   >
                     {isSendingReply ? (
-                      <Loader2 className="w-4 h-4 animate-spin" />
+                      <ChandIcon name="loader" className="w-4 h-4 animate-spin" />
                     ) : (
-                      <Send className="w-4 h-4 rotate-180" />
+                      <ChandIcon name="send" className="w-4 h-4 rotate-180" />
                     )}
                   </button>
                 </form>
@@ -535,7 +524,7 @@ export const SupportView: React.FC<SupportViewProps> = ({ onOpenTicketModal }) =
             </>
           ) : (
             <div className="h-full flex flex-col items-center justify-center p-8 text-center text-zinc-400 text-xs space-y-2">
-              <MessageSquarePlus className="w-8 h-8 text-zinc-300 dark:text-zinc-600 mb-1" />
+              <ChandIcon name="sms" className="w-8 h-8 text-zinc-300 dark:text-zinc-600 mb-1" />
               <p className="font-bold text-sm text-zinc-600 dark:text-zinc-400">تیکتی انتخاب نشده است</p>
               <p className="max-w-xs text-zinc-400">یک تیکت را از لیست سمت راست انتخاب کنید یا تیکت جدیدی ایجاد فرمایید.</p>
             </div>

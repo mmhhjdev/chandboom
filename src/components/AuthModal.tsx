@@ -1,29 +1,15 @@
 import React, { useState, useEffect, useRef, useMemo } from 'react';
 import {
-  X,
   Mail,
-  Lock,
-  User,
-  Shield,
-  AlertCircle,
-  Calendar,
-  Users,
-  CheckCircle2,
   RefreshCw,
-  KeyRound,
   Eye,
   EyeOff,
-  LogIn,
-  UserPlus,
-  Coins,
-  Check,
   Zap,
-  ArrowRight,
-  ShieldCheck,
 } from 'lucide-react';
 import { useApp } from '../context/AppContext';
 import { formatToman } from '../utils/formatters';
 import { sanitizeVerificationCode } from '../lib/supabase';
+import { ChandIcon } from './icons/ChandIcon';
 
 export const AuthModal: React.FC = () => {
   const {
@@ -452,7 +438,7 @@ export const AuthModal: React.FC = () => {
             className="absolute top-4 left-4 p-2 rounded-xl text-zinc-400 hover:text-zinc-700 dark:hover:text-zinc-200 hover:bg-zinc-100 dark:hover:bg-zinc-800/60 transition cursor-pointer"
             aria-label="بستن"
           >
-            <X className="w-5 h-5" />
+            <ChandIcon name="close" className="w-5 h-5" />
           </button>
 
           <div className="flex items-center gap-3">
@@ -507,7 +493,7 @@ export const AuthModal: React.FC = () => {
                     : 'text-zinc-500 hover:text-zinc-900 dark:hover:text-zinc-200'
                 }`}
               >
-                <LogIn className="w-3.5 h-3.5" />
+                <ChandIcon name="login" className="w-3.5 h-3.5" />
                 <span>ورود</span>
               </button>
 
@@ -524,7 +510,7 @@ export const AuthModal: React.FC = () => {
                     : 'text-zinc-500 hover:text-zinc-900 dark:hover:text-zinc-200'
                 }`}
               >
-                <UserPlus className="w-3.5 h-3.5" />
+                <ChandIcon name="user-plus" className="w-3.5 h-3.5" />
                 <span>ثبت‌نام جدید</span>
               </button>
 
@@ -541,7 +527,7 @@ export const AuthModal: React.FC = () => {
                     : 'text-zinc-500 hover:text-zinc-900 dark:hover:text-zinc-200'
                 }`}
               >
-                <KeyRound className="w-3.5 h-3.5" />
+                <ChandIcon name="key" className="w-3.5 h-3.5" />
                 <span>بازیابی رمز</span>
               </button>
             </div>
@@ -550,7 +536,7 @@ export const AuthModal: React.FC = () => {
           {/* Success Banner */}
           {successMsg && (
             <div className="p-3.5 rounded-2xl bg-emerald-50 dark:bg-emerald-950/40 text-emerald-800 dark:text-emerald-300 border border-emerald-300 dark:border-emerald-800 text-xs flex items-center gap-2.5 animate-in fade-in">
-              <CheckCircle2 className="w-4 h-4 text-emerald-600 dark:text-emerald-400 shrink-0" />
+              <ChandIcon name="check-circle" className="w-4 h-4 text-emerald-600 dark:text-emerald-400 shrink-0" />
               <span>{successMsg}</span>
             </div>
           )}
@@ -558,7 +544,7 @@ export const AuthModal: React.FC = () => {
           {/* Error Banner */}
           {error && (
             <div className="p-3.5 rounded-2xl bg-rose-50 dark:bg-rose-950/40 text-rose-700 dark:text-rose-300 border border-rose-200 dark:border-rose-900/60 text-xs flex items-center gap-2.5 animate-in shake">
-              <AlertCircle className="w-4 h-4 text-rose-500 shrink-0" />
+              <ChandIcon name="alert" className="w-4 h-4 text-rose-500 shrink-0" />
               <span className="leading-relaxed">{error}</span>
             </div>
           )}
@@ -609,7 +595,7 @@ export const AuthModal: React.FC = () => {
                       رمز عبور جدید (حداقل ۶ کاراکتر) *
                     </label>
                     <div className="relative">
-                      <Lock className="w-4 h-4 text-zinc-400 absolute right-3 top-1/2 -translate-y-1/2" />
+                      <ChandIcon name="key" className="w-4 h-4 text-zinc-400 absolute right-3 top-1/2 -translate-y-1/2" />
                       <input
                         type={showNewPassword ? 'text' : 'password'}
                         required
@@ -634,7 +620,7 @@ export const AuthModal: React.FC = () => {
                       تکرار رمز عبور جدید *
                     </label>
                     <div className="relative">
-                      <Lock className="w-4 h-4 text-zinc-400 absolute right-3 top-1/2 -translate-y-1/2" />
+                      <ChandIcon name="key" className="w-4 h-4 text-zinc-400 absolute right-3 top-1/2 -translate-y-1/2" />
                       <input
                         type="password"
                         required
@@ -683,7 +669,7 @@ export const AuthModal: React.FC = () => {
                     </>
                   ) : (
                     <>
-                      <CheckCircle2 className="w-4 h-4" />
+                      <ChandIcon name="check-circle" className="w-4 h-4" />
                       <span>
                         {otpAction === 'reset_password'
                           ? 'ذخیره رمز جدید و ورود'
@@ -785,7 +771,7 @@ export const AuthModal: React.FC = () => {
                       : 'text-zinc-500 hover:text-zinc-800 dark:hover:text-zinc-300'
                   }`}
                 >
-                  <KeyRound className="w-3 h-3" />
+                  <ChandIcon name="key" className="w-3 h-3" />
                   <span>کد یکبارمصرف ایمیلی</span>
                 </button>
               </div>
@@ -829,7 +815,7 @@ export const AuthModal: React.FC = () => {
                     </button>
                   </div>
                   <div className="relative">
-                    <Lock className="w-4 h-4 text-zinc-400 absolute right-3 top-1/2 -translate-y-1/2" />
+                    <ChandIcon name="key" className="w-4 h-4 text-zinc-400 absolute right-3 top-1/2 -translate-y-1/2" />
                     <input
                       type={showPassword ? 'text' : 'password'}
                       value={password}
@@ -865,12 +851,12 @@ export const AuthModal: React.FC = () => {
                   </>
                 ) : loginType === 'otp' ? (
                   <>
-                    <KeyRound className="w-4 h-4" />
+                    <ChandIcon name="key" className="w-4 h-4" />
                     <span>ارسال کد یکبارمصرف به ایمیل</span>
                   </>
                 ) : (
                   <>
-                    <LogIn className="w-4 h-4" />
+                    <ChandIcon name="login" className="w-4 h-4" />
                     <span>ورود به حساب کاربری</span>
                   </>
                 )}
@@ -912,7 +898,7 @@ export const AuthModal: React.FC = () => {
                   نام و نام خانوادگی *
                 </label>
                 <div className="relative">
-                  <User className="w-4 h-4 text-zinc-400 absolute right-3 top-1/2 -translate-y-1/2" />
+                  <ChandIcon name="user" className="w-4 h-4 text-zinc-400 absolute right-3 top-1/2 -translate-y-1/2" />
                   <input
                     type="text"
                     value={fullName}
@@ -950,7 +936,7 @@ export const AuthModal: React.FC = () => {
                     کلمه عبور *
                   </label>
                   <div className="relative">
-                    <Lock className="w-4 h-4 text-zinc-400 absolute right-3 top-1/2 -translate-y-1/2" />
+                    <ChandIcon name="key" className="w-4 h-4 text-zinc-400 absolute right-3 top-1/2 -translate-y-1/2" />
                     <input
                       type={showPassword ? 'text' : 'password'}
                       value={password}
@@ -976,7 +962,7 @@ export const AuthModal: React.FC = () => {
                     تکرار کلمه عبور *
                   </label>
                   <div className="relative">
-                    <Lock className="w-4 h-4 text-zinc-400 absolute right-3 top-1/2 -translate-y-1/2" />
+                    <ChandIcon name="key" className="w-4 h-4 text-zinc-400 absolute right-3 top-1/2 -translate-y-1/2" />
                     <input
                       type={showConfirmPassword ? 'text' : 'password'}
                       value={confirmPassword}
@@ -1029,7 +1015,7 @@ export const AuthModal: React.FC = () => {
                     سن شما (سال)
                   </label>
                   <div className="relative">
-                    <Calendar className="w-4 h-4 text-zinc-400 absolute right-3 top-1/2 -translate-y-1/2" />
+                    <ChandIcon name="calendar" className="w-4 h-4 text-zinc-400 absolute right-3 top-1/2 -translate-y-1/2" />
                     <input
                       type="number"
                       min={10}
@@ -1047,7 +1033,7 @@ export const AuthModal: React.FC = () => {
                     جنسیت
                   </label>
                   <div className="relative">
-                    <Users className="w-4 h-4 text-zinc-400 absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none" />
+                    <ChandIcon name="users" className="w-4 h-4 text-zinc-400 absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none" />
                     <select
                       value={gender}
                       onChange={(e) => setGender(e.target.value as any)}
@@ -1119,7 +1105,7 @@ export const AuthModal: React.FC = () => {
           {/* Trust Security Footer */}
           <div className="pt-2 border-t border-zinc-100 dark:border-zinc-800/80 flex items-center justify-between text-[11px] text-zinc-400">
             <span className="inline-flex items-center gap-1">
-              <ShieldCheck className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
+              <ChandIcon name="shield" className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
               <span>پایگاه داده ابری فعال</span>
             </span>
             <span>رمزنگاری ۲۵۶ بیتی داده‌ها</span>

@@ -1,7 +1,8 @@
 import React from 'react';
 import { SEOLayout } from '../components/SEOLayout';
 import { SEOHead } from '../components/SEOHead';
-import { ShieldCheck, Heart, Users, Target, Award, Lightbulb, Sparkles } from 'lucide-react';
+
+import { ChandIcon } from '../components/icons/ChandIcon';
 
 export const AboutPage: React.FC = () => {
   return (
@@ -16,7 +17,7 @@ export const AboutPage: React.FC = () => {
         {/* Hero Section */}
         <div className="text-center max-w-3xl mx-auto space-y-4">
           <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 text-xs font-bold border border-emerald-500/20">
-            <Sparkles className="w-3.5 h-3.5" />
+            <ChandIcon name="ai" className="w-3.5 h-3.5" />
             <span>رسالت و داستان چندبوم</span>
           </div>
           <h1 className="text-2xl sm:text-4xl font-black text-zinc-900 dark:text-white leading-tight">
@@ -31,8 +32,8 @@ export const AboutPage: React.FC = () => {
         {/* Core Principles Cards */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
           <div className="p-6 rounded-3xl bg-white dark:bg-[#0F1713] border border-[#E2E8E4] dark:border-[#1E2E25] shadow-xs space-y-3">
-            <div className="w-10 h-10 rounded-2xl bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 flex items-center justify-center">
-              <ShieldCheck className="w-5 h-5" />
+            <div className="w-10 h-10 rounded-2xl text-emerald-600 dark:text-emerald-400 flex items-center justify-center">
+              <ChandIcon name="shield" className="w-5 h-5" />
             </div>
             <h2 className="text-sm sm:text-base font-bold text-zinc-900 dark:text-white">
               حریم خصوصی در اولویت اول
@@ -43,8 +44,8 @@ export const AboutPage: React.FC = () => {
           </div>
 
           <div className="p-6 rounded-3xl bg-white dark:bg-[#0F1713] border border-[#E2E8E4] dark:border-[#1E2E25] shadow-xs space-y-3">
-            <div className="w-10 h-10 rounded-2xl bg-blue-500/10 text-blue-600 dark:text-blue-400 flex items-center justify-center">
-              <Lightbulb className="w-5 h-5" />
+            <div className="w-10 h-10 rounded-2xl text-blue-600 dark:text-blue-400 flex items-center justify-center">
+              <ChandIcon name="lightbulb" className="w-5 h-5" />
             </div>
             <h2 className="text-sm sm:text-base font-bold text-zinc-900 dark:text-white">
               سادگی و قدرت هوش مصنوعی
@@ -55,8 +56,8 @@ export const AboutPage: React.FC = () => {
           </div>
 
           <div className="p-6 rounded-3xl bg-white dark:bg-[#0F1713] border border-[#E2E8E4] dark:border-[#1E2E25] shadow-xs space-y-3">
-            <div className="w-10 h-10 rounded-2xl bg-amber-500/10 text-amber-600 dark:text-amber-400 flex items-center justify-center">
-              <Heart className="w-5 h-5" />
+            <div className="w-10 h-10 rounded-2xl text-amber-600 dark:text-amber-400 flex items-center justify-center">
+              <ChandIcon name="heart" className="w-5 h-5" />
             </div>
             <h2 className="text-sm sm:text-base font-bold text-zinc-900 dark:text-white">
               بومی‌سازی اصیل ایرانی

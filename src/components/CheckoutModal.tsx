@@ -1,17 +1,7 @@
 import React, { useState, useRef } from 'react';
 import {
-  X,
-  CreditCard,
-  Copy,
-  Check,
-  ShieldCheck,
-  Clock,
-  ArrowRight,
-  AlertCircle,
   FileCheck,
   Upload,
-  Image as ImageIcon,
-  Trash2,
 } from 'lucide-react';
 import { useApp } from '../context/AppContext';
 import { SubscriptionPlan } from '../types';
@@ -19,6 +9,7 @@ import { BANK_CARD_CONFIG } from '../data/initialData';
 import { formatToman, toPersianDigits, formatCardNumber } from '../utils/formatters';
 import { generateSecureTrackingCode } from '../utils/security';
 import { uploadPaymentReceipt } from '../lib/supabase';
+import { ChandIcon } from './icons/ChandIcon';
 
 interface CheckoutModalProps {
   isOpen: boolean;
@@ -147,8 +138,8 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
         {/* Modal Header */}
         <div className="flex items-center justify-between px-6 py-4 border-b border-[#E2E8E4] dark:border-[#1F2E27] bg-zinc-50/60 dark:bg-[#111A16]">
           <div className="flex items-center gap-2.5">
-            <div className="p-2 rounded-2xl bg-amber-100 text-amber-800 dark:bg-amber-950/60 dark:text-amber-300">
-              <CreditCard className="w-5 h-5" />
+            <div className="p-2 rounded-2xl text-amber-800 dark:text-amber-300">
+              <ChandIcon name="card" className="w-5 h-5" />
             </div>
             <div>
               <h3 className="font-cairo text-base sm:text-lg font-bold text-zinc-900 dark:text-zinc-100">
@@ -164,7 +155,7 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
             onClick={onClose}
             className="p-1.5 rounded-xl text-zinc-400 hover:text-zinc-700 dark:hover:text-zinc-200 hover:bg-zinc-100 dark:hover:bg-[#16221D] transition cursor-pointer"
           >
-            <X className="w-5 h-5" />
+            <ChandIcon name="close" className="w-5 h-5" />
           </button>
         </div>
 
@@ -196,12 +187,12 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
                     >
                       {copiedField === 'tracking' ? (
                         <>
-                          <Check className="w-3 h-3 text-emerald-950" />
+                          <ChandIcon name="check" className="w-3 h-3 text-emerald-950" />
                           <span>کپی شد</span>
                         </>
                       ) : (
                         <>
-                          <Copy className="w-3 h-3" />
+                          <ChandIcon name="copy" className="w-3 h-3" />
                           <span>کپی کد</span>
                         </>
                       )}
@@ -314,7 +305,7 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
                       title="کپی شماره شبا"
                       className="p-1 rounded-md bg-white/60 hover:bg-white text-zinc-700 transition cursor-pointer"
                     >
-                      {copiedField === 'iban' ? <Check className="w-3.5 h-3.5 text-emerald-600" /> : <Copy className="w-3.5 h-3.5" />}
+                      {copiedField === 'iban' ? <ChandIcon name="check" className="w-3.5 h-3.5 text-emerald-600" /> : <ChandIcon name="copy" className="w-3.5 h-3.5" />}
                     </button>
                   </div>
                   <span className="text-[10px] text-zinc-500 font-cairo">شماره شبا</span>
@@ -333,7 +324,7 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
                     onClick={() => handleCopy(BANK_CARD_CONFIG.cardNumber, 'card')}
                     className="px-2.5 py-1 rounded-xl bg-[#113B6B] hover:bg-[#0D2F57] text-white text-xs font-cairo font-bold flex items-center gap-1.5 transition cursor-pointer shadow-xs"
                   >
-                    {copiedField === 'card' ? <Check className="w-3.5 h-3.5 text-emerald-300" /> : <Copy className="w-3.5 h-3.5" />}
+                    {copiedField === 'card' ? <ChandIcon name="check" className="w-3.5 h-3.5 text-emerald-300" /> : <ChandIcon name="copy" className="w-3.5 h-3.5" />}
                     <span>{copiedField === 'card' ? 'کپی شد' : 'کپی کارت'}</span>
                   </button>
                 </div>
@@ -415,7 +406,7 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
                             {receiptFileName || 'عکس فیش انتخاب شد'}
                           </p>
                           <span className="text-[10px] text-emerald-600 dark:text-emerald-400 flex items-center gap-1 mt-0.5">
-                            <Check className="w-3 h-3" /> آماده ذخیره‌سازی در دیتابیس
+                            <ChandIcon name="check" className="w-3 h-3" /> آماده ذخیره‌سازی در دیتابیس
                           </span>
                         </div>
                       </div>
@@ -426,7 +417,7 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
                         className="p-2 rounded-xl text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/40 transition cursor-pointer"
                         title="حذف و انتخاب مجدد"
                       >
-                        <Trash2 className="w-4 h-4" />
+                        <ChandIcon name="trash" className="w-4 h-4" />
                       </button>
                     </div>
                   ) : (
@@ -435,8 +426,8 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
                       onClick={() => fileInputRef.current?.click()}
                       className="w-full border-2 border-dashed border-[#D2DCD5] dark:border-[#22352B] hover:border-amber-500/70 dark:hover:border-amber-400/70 p-6 rounded-2xl flex flex-col items-center justify-center gap-2 bg-zinc-50/50 dark:bg-[#121B17] hover:bg-amber-50/20 transition cursor-pointer"
                     >
-                      <div className="p-3 rounded-2xl bg-amber-100 text-amber-800 dark:bg-amber-950/60 dark:text-amber-300">
-                        <Upload className="w-5 h-5" />
+                      <div className="p-3 rounded-2xl text-amber-800 dark:text-amber-300">
+                        <ChandIcon name="upload" className="w-5 h-5" />
                       </div>
                       <div className="text-center">
                         <span className="font-cairo font-bold text-xs text-zinc-800 dark:text-zinc-200 block">
@@ -465,14 +456,14 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
 
                 {errorMessage && (
                   <div className="p-3 rounded-xl bg-rose-50 dark:bg-rose-950/40 border border-rose-300 dark:border-rose-900/60 text-xs text-rose-700 dark:text-rose-300 font-bold flex items-center gap-2">
-                    <AlertCircle className="w-4 h-4 shrink-0 text-rose-500" />
+                    <ChandIcon name="alert" className="w-4 h-4 shrink-0 text-rose-500" />
                     <span>{errorMessage}</span>
                   </div>
                 )}
 
                 <div className="flex items-center justify-between pt-3 border-t border-[#E2E8E4] dark:border-[#1F2E27]">
                   <div className="flex items-center gap-1.5 text-zinc-500 text-xs">
-                    <Clock className="w-4 h-4 text-amber-600" />
+                    <ChandIcon name="clock" className="w-4 h-4 text-amber-600" />
                     <span>ثبت امن فیش و صدور کد پیگیری اختصاصی</span>
                   </div>
                   <div className="flex items-center gap-2">
@@ -490,7 +481,7 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
                       className="px-6 py-2.5 rounded-xl bg-gradient-to-r from-amber-600 to-amber-700 hover:from-amber-700 hover:to-amber-800 text-white font-cairo font-bold text-xs shadow-md shadow-amber-900/20 transition flex items-center gap-2 cursor-pointer disabled:opacity-50"
                     >
                       {isSubmitting ? 'در حال ثبت رسید...' : 'تایید و صدور کد پیگیری'}
-                      <ArrowRight className="w-4 h-4 rotate-180" />
+                      <ChandIcon name="arrow-right" className="w-4 h-4 rotate-180" />
                     </button>
                   </div>
                 </div>

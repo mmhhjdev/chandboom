@@ -1,0 +1,55 @@
+name: Static Site Validation & Artifact Management
+
+on:
+  pull_request:
+    branches:
+      - main
+      - master
+  push:
+    branches-ignore:
+      - main
+      - master
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  validate-and-test:
+    name: Validate Static Build & Integrity
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+
+      - name: Install Dependencies
+        run: bun install --frozen-lockfile
+
+      - name: TypeScript Lint & Syntax Check
+        run: bun run lint
+
+      - name: Build Static Distribution
+        env:
+          VITE_GAPGPT_BASE_URL: 'https://api.gapgpt.app/v1'
+        run: bun run build
+
+      - name: Validate Generated Artifacts
+        run: |
+          echo "Checking essential static site files in dist/..."
+          test -f dist/index.html || (echo "Error: dist/index.html is missing!" && exit 1)
+          test -f dist/404.html || (echo "Warning: dist/404.html not found, copying from public" && cp public/404.html dist/404.html)
+          test -f dist/CNAME || (echo "Warning: dist/CNAME not found, copying from public" && cp public/CNAME dist/CNAME)
+          grep -q "chandboom.ir" dist/CNAME || (echo "Error: CNAME does not match chandboom.ir" && exit 1)
+          echo "Static validation passed successfully!"
+
+      - name: Upload Build Artifact for Inspection
+        uses: actions/upload-artifact@v4
+        with:
+          name: chandboom-static-preview
+          path: dist/
+          retention-days: 7

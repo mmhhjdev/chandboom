@@ -15,16 +15,13 @@ import {
   CartesianGrid,
 } from 'recharts';
 import {
-  BarChart3,
   TrendingUp,
-  PieChart as PieIcon,
-  PlusCircle,
-  Calendar,
   Layers,
 } from 'lucide-react';
 import { Transaction } from '../types';
 import { formatToman, toPersianDigits, formatShamsiDate } from '../utils/formatters';
 import { FinancialChartsErrorBoundary } from './FinancialChartsErrorBoundary';
+import { ChandIcon } from './icons/ChandIcon';
 
 interface FinancialChartsProps {
   transactions?: Transaction[] | null;
@@ -163,8 +160,8 @@ export const FinancialChartsContent: React.FC<FinancialChartsProps> = ({
   if (safeTransactions.length === 0) {
     return (
       <div className="p-8 sm:p-12 rounded-3xl bg-white dark:bg-[#0F1512] border border-[#E2E8E4] dark:border-[#1A2621] shadow-xs text-center flex flex-col items-center justify-center font-cairo">
-        <div className="w-16 h-16 rounded-3xl bg-emerald-500/10 text-emerald-500 flex items-center justify-center mb-4 border border-emerald-500/20">
-          <BarChart3 className="w-8 h-8" />
+        <div className="w-16 h-16 rounded-3xl text-emerald-500 flex items-center justify-center mb-4">
+          <ChandIcon name="chart" className="w-8 h-8" />
         </div>
         <h3 className="text-base sm:text-lg font-bold text-zinc-900 dark:text-zinc-100 mb-2">
           هنوز داده‌ای برای نمایش وجود ندارد
@@ -178,7 +175,7 @@ export const FinancialChartsContent: React.FC<FinancialChartsProps> = ({
             onClick={onOpenAddTransaction}
             className="px-5 py-2.5 rounded-2xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs sm:text-sm flex items-center gap-2 transition cursor-pointer shadow-md"
           >
-            <PlusCircle className="w-4 h-4" />
+            <ChandIcon name="add" className="w-4 h-4" />
             <span>ثبت اولین تراکنش</span>
           </button>
         )}
@@ -192,7 +189,7 @@ export const FinancialChartsContent: React.FC<FinancialChartsProps> = ({
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-[#E2E8E4] dark:border-[#1A2621]">
         <div>
           <h3 className="text-base font-bold text-zinc-900 dark:text-zinc-100 flex items-center gap-2">
-            <BarChart3 className="w-5 h-5 text-emerald-600 dark:text-emerald-400" />
+            <ChandIcon name="chart" className="w-5 h-5 text-emerald-600 dark:text-emerald-400" />
             <span>تحلیل تصویری و نمودارهای مالی</span>
           </h3>
           <p className="text-xs text-zinc-500 mt-0.5">

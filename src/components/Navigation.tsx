@@ -1,9 +1,5 @@
 import React, { useState } from 'react';
-import {
-  MoreHorizontal,
-  X,
-  ChevronLeft,
-} from 'lucide-react';
+
 import { ChandIcon } from './icons/ChandIcon';
 import { useApp } from '../context/AppContext';
 import { NavTab } from '../types';
@@ -178,7 +174,7 @@ export const Navigation: React.FC = () => {
             }`}
           >
             <div className="relative">
-              <MoreHorizontal className="w-4 h-4" />
+              <ChandIcon name="more" className="w-4 h-4" />
               {unpaidRemindersCount > 0 && (
                 <span className="absolute -top-1 -right-2 w-3.5 h-3.5 rounded-full bg-rose-600 text-white text-[9px] flex items-center justify-center font-mono">
                   {unpaidRemindersCount}
@@ -213,7 +209,7 @@ export const Navigation: React.FC = () => {
                 onClick={() => setIsMobileMoreOpen(false)}
                 className="p-1 rounded-xl text-zinc-400 hover:text-zinc-700 dark:hover:text-zinc-200 cursor-pointer"
               >
-                <X className="w-5 h-5" />
+                <ChandIcon name="close" className="w-5 h-5" />
               </button>
             </div>
 
@@ -235,7 +231,7 @@ export const Navigation: React.FC = () => {
                     }`}
                   >
                     <div className="flex items-center gap-3 min-w-0">
-                      <div className="p-2 rounded-xl bg-zinc-100 dark:bg-[#182620] shrink-0">
+                      <div className="shrink-0 text-zinc-700 dark:text-zinc-300">
                         {sec.icon}
                       </div>
                       <div className="min-w-0">
@@ -255,7 +251,7 @@ export const Navigation: React.FC = () => {
                       </div>
                     </div>
 
-                    <ChevronLeft className="w-4 h-4 text-zinc-400 shrink-0" />
+                    <ChandIcon name="chevron-left" className="w-4 h-4 text-zinc-400 shrink-0" />
                   </button>
                 );
               })}

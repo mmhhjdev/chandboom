@@ -3,17 +3,13 @@ import { ChandIcon } from './icons/ChandIcon';
 import { createDongGroup, findOrCreateDongGroup, addDongExpense } from '../services/dongService';
 import React, { useState, useEffect, useRef } from 'react';
 import {
-  Send,
   RotateCcw,
-  AlertCircle,
   Users,
   Target,
   Bell,
-  X,
   Receipt,
   Mic,
   MicOff,
-  Loader2,
 } from 'lucide-react';
 import { useApp } from '../context/AppContext';
 import { useSubscription } from '../hooks/useSubscription';
@@ -27,6 +23,7 @@ import {
 import { trackAiQuerySent, trackAiQuotaExceeded } from '../lib/analytics';
 import { toPersianDigits, formatToman } from '../utils/formatters';
 import { TransactionType } from '../types';
+import { ChandAsset } from './ChandAsset';
 
 const STORAGE_KEY = 'cb_session_ai_chat';
 
@@ -486,6 +483,7 @@ export const AIAssistant: React.FC<{ isOpen?: boolean; onClose?: () => void }> =
           </div>
           <div>
             <div className="flex items-center gap-2">
+              <ChandAsset name="ai" size={32} className="shrink-0 drop-shadow-md" />
               <h2 className="text-sm sm:text-base font-bold text-zinc-900 dark:text-white">
                 دستیار هوشمند و راهنمای <span className="font-brand text-emerald-700 dark:text-emerald-400">چندبوم</span>
               </h2>
@@ -556,7 +554,7 @@ export const AIAssistant: React.FC<{ isOpen?: boolean; onClose?: () => void }> =
               onClick={onClose}
               className="p-2 rounded-xl text-zinc-400 hover:text-zinc-600 dark:hover:text-white hover:bg-zinc-200 dark:hover:bg-zinc-800 transition cursor-pointer"
             >
-              <X className="w-4 h-4" />
+              <ChandIcon name="close" className="w-4 h-4" />
             </button>
           )}
         </div>
@@ -565,7 +563,7 @@ export const AIAssistant: React.FC<{ isOpen?: boolean; onClose?: () => void }> =
       {/* Access Gate: Subscription Requirement */}
       {!isSubscriptionActive ? (
         <div className="p-8 sm:p-12 flex flex-col items-center justify-center text-center bg-radial from-emerald-950/20 to-transparent">
-          <div className="w-16 h-16 rounded-3xl bg-amber-500/10 border border-amber-500/30 text-amber-500 flex items-center justify-center mb-4">
+          <div className="w-16 h-16 text-amber-500 flex items-center justify-center mb-4">
             <ChandIcon name="vip-crown" className="w-8 h-8" />
           </div>
           <h3 className="text-base sm:text-lg font-bold text-zinc-900 dark:text-white mb-2">
@@ -641,7 +639,7 @@ export const AIAssistant: React.FC<{ isOpen?: boolean; onClose?: () => void }> =
 
             {isLoading && (
               <div className="flex items-center gap-2.5 text-xs text-zinc-400 animate-pulse">
-                <div className="w-8 h-8 rounded-xl bg-emerald-600/20 text-emerald-500 flex items-center justify-center">
+                <div className="w-8 h-8 text-emerald-500 flex items-center justify-center">
                   <ChandIcon name="loader" className="w-4 h-4 animate-spin" />
                 </div>
                 <span>در حال تحلیل و تدوین پاسخ...</span>
@@ -650,7 +648,7 @@ export const AIAssistant: React.FC<{ isOpen?: boolean; onClose?: () => void }> =
 
             {errorMessage && (
               <div className="p-3 rounded-xl bg-rose-500/10 border border-rose-500/30 text-rose-500 text-xs flex items-center gap-2">
-                <AlertCircle className="w-4 h-4 shrink-0" />
+                <ChandIcon name="alert" className="w-4 h-4 shrink-0" />
                 <span>{errorMessage}</span>
               </div>
             )}
@@ -701,7 +699,7 @@ export const AIAssistant: React.FC<{ isOpen?: boolean; onClose?: () => void }> =
                 {isListening ? (
                   <MicOff className="w-4 h-4" />
                 ) : (
-                  <Mic className="w-4 h-4" />
+                  <ChandIcon name="mic" className="w-4 h-4" />
                 )}
               </button>
 
@@ -720,9 +718,9 @@ export const AIAssistant: React.FC<{ isOpen?: boolean; onClose?: () => void }> =
                 className="p-3 rounded-2xl bg-emerald-700 hover:bg-emerald-600 disabled:opacity-50 text-white transition cursor-pointer shadow-md shrink-0 flex items-center justify-center"
               >
                 {isLoading ? (
-                  <Loader2 className="w-4 h-4 animate-spin" />
+                  <ChandIcon name="loader" className="w-4 h-4 animate-spin" />
                 ) : (
-                  <Send className="w-4 h-4" />
+                  <ChandIcon name="send" className="w-4 h-4" />
                 )}
               </button>
             </form>

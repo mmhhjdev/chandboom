@@ -3,20 +3,9 @@ import { ChandMascot } from './ChandMascot';
 import { ChandIcon } from './icons/ChandIcon';
 import React, { useState } from 'react';
 import {
-  Wallet,
   TrendingDown,
   TrendingUp,
-  Plus,
-  Users,
-  Award,
-  Send,
-  User,
-  ArrowRight,
-  CheckCircle2,
-  Lock,
   Flame,
-  CreditCard,
-  Mic,
   MicOff,
 } from 'lucide-react';
 import { EmptyState, Badge } from './ui';
@@ -382,9 +371,12 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
       {/* Welcome & Predictive Alert Banner */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
+        <div className="flex items-center gap-3">
+          <ChandAsset name="dashboard" size={44} className="shrink-0 drop-shadow-md" />
           <h2 className="font-cairo text-2xl font-bold text-zinc-900 dark:text-zinc-100">
             سلام، {user.full_name} خوش آمدید 👋
           </h2>
+        </div>
           <p className="text-xs sm:text-sm text-zinc-600 dark:text-zinc-400 mt-1">
             خلاصه وضعیت مالی و فعالیت‌های اخیر شما در سامانه چندبوم در یک نگاه
           </p>
@@ -397,7 +389,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
               title="ثبت خودکار تراکنش با پیست کردن پیامک بانکی یا فیش"
               className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-blue-50 dark:bg-[#131F2A] text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-blue-900/60 hover:bg-blue-100 font-cairo font-bold text-xs transition cursor-pointer shadow-xs"
             >
-              <CreditCard className="w-4 h-4 text-blue-600 dark:text-blue-400" />
+              <ChandIcon name="card" className="w-4 h-4 text-blue-600 dark:text-blue-400" />
               <span>پردازش پیامک بانکی</span>
             </button>
           )}
@@ -417,7 +409,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
             onClick={() => setActiveTab('dong')}
             className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-white dark:bg-[#0F1512] text-zinc-700 dark:text-zinc-300 border border-[#E2E8E4] dark:border-[#1A2621] hover:bg-zinc-50 dark:hover:bg-[#16221D] font-cairo font-bold text-xs transition cursor-pointer shadow-xs"
           >
-            <Users className="w-4 h-4 text-emerald-700 dark:text-emerald-400" />
+            <ChandIcon name="users" className="w-4 h-4 text-emerald-700 dark:text-emerald-400" />
             <span>محاسبه دنگ</span>
           </button>
 
@@ -425,7 +417,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
             onClick={onOpenTransactionModal}
             className="flex items-center gap-2 px-4 py-2 rounded-xl bg-emerald-700 hover:bg-emerald-800 text-white font-cairo font-bold text-xs sm:text-sm shadow-xs transition cursor-pointer"
           >
-            <Plus className="w-4 h-4" />
+            <ChandIcon name="add" className="w-4 h-4" />
             <span>ثبت تراکنش سریع</span>
           </button>
         </div>
@@ -450,7 +442,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
               }`}
             >
               {isTodayCompleted ? (
-                <CheckCircle2 className="w-6 h-6 animate-in zoom-in" />
+                <ChandIcon name="check-circle" className="w-6 h-6 animate-in zoom-in" />
               ) : (
                 <ChandAsset name="quest" size={44} className="shrink-0 drop-shadow-lg" />
               )}
@@ -496,7 +488,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
             >
               {isTodayCompleted ? (
                 <>
-                  <CheckCircle2 className="w-4 h-4 text-emerald-700 dark:text-emerald-400" />
+                  <ChandIcon name="check-circle" className="w-4 h-4 text-emerald-700 dark:text-emerald-400" />
                   <span>انجام شد ✓</span>
                 </>
               ) : (
@@ -523,7 +515,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
         {questCelebration && (
           <div className="mt-3 p-2.5 rounded-xl bg-emerald-600 text-white text-xs font-cairo font-bold flex items-center justify-between animate-in fade-in zoom-in-95">
             <div className="flex items-center gap-2">
-              <Award className="w-4 h-4 text-yellow-300" />
+              <ChandIcon name="award" className="w-4 h-4 text-yellow-300" />
               <span>آفرین! تسک امروز شما با موفقیت ثبت شد و زنجیره تداوم تمدید گردید! 🎉</span>
             </div>
             <span className="text-[10px] bg-white/20 px-2 py-0.5 rounded-full font-mono">
@@ -544,13 +536,13 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
         >
           <div className="flex items-center gap-3">
             <div
-              className={`p-2 rounded-xl shrink-0 ${
+              className={`shrink-0 ${
                 budgetInsight.isWarning
-                  ? 'bg-amber-200 text-amber-800 dark:bg-amber-950 dark:text-amber-300'
-                  : 'bg-emerald-200 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300'
+                  ? 'text-amber-700 dark:text-amber-300'
+                  : 'text-emerald-700 dark:text-emerald-300'
               }`}
             >
-              <ChandIcon name="forecast" className="w-5 h-5" />
+              <ChandAsset name="budget" size={36} className="shrink-0 drop-shadow-md" />
             </div>
             <div>
               <h4 className="font-cairo font-bold text-xs sm:text-sm">
@@ -565,15 +557,15 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
             className="hidden sm:flex items-center gap-1 text-xs font-cairo font-bold shrink-0 hover:underline cursor-pointer"
           >
             <span>مشاهده تحلیل‌ها</span>
-            <ArrowRight className="w-3.5 h-3.5 rotate-180" />
+            <ChandIcon name="arrow-right" className="w-3.5 h-3.5 rotate-180" />
           </button>
         </div>
       ) : (
         /* Structural Preview for Non-Pro Users */
         <div className="p-4 sm:p-5 rounded-2xl border border-amber-300/60 dark:border-amber-800/60 bg-gradient-to-r from-amber-50/90 via-amber-100/40 to-yellow-50/80 dark:from-[#17140B] dark:via-[#1D190D] dark:to-[#120F08] flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div className="flex items-start sm:items-center gap-3">
-            <div className="p-2.5 rounded-xl bg-amber-500/20 text-amber-800 dark:text-amber-300 border border-amber-400/40 shrink-0">
-              <Lock className="w-5 h-5 text-amber-600 dark:text-amber-400" />
+            <div className="p-2.5 rounded-xl text-amber-800 dark:text-amber-300 shrink-0">
+              <ChandIcon name="key" className="w-5 h-5 text-amber-600 dark:text-amber-400" />
             </div>
             <div>
               <div className="flex items-center gap-2">
@@ -606,8 +598,8 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
         <div className="p-6 rounded-3xl bg-white dark:bg-[#0F1512] border border-[#E2E8E4] dark:border-[#1A2621] shadow-xs space-y-3">
           <div className="flex items-center justify-between">
             <span className="text-xs text-zinc-500">موجودی خالص حساب</span>
-            <div className="p-2 rounded-xl bg-emerald-100 text-emerald-800 dark:bg-[#15281F] dark:text-emerald-300">
-              <Wallet className="w-4 h-4" />
+            <div className="p-2 rounded-xl text-emerald-800 dark:text-emerald-300">
+              <ChandIcon name="wallet" className="w-4 h-4" />
             </div>
           </div>
           <div
@@ -719,7 +711,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                       : 'bg-zinc-800 text-white dark:bg-zinc-200 dark:text-zinc-900'
                   }`}
                 >
-                  {msg.sender === 'assistant' ? <ChandMascot size={18} /> : <User className="w-3.5 h-3.5" />}
+                  {msg.sender === 'assistant' ? <ChandMascot size={18} /> : <ChandIcon name="user" className="w-3.5 h-3.5" />}
                 </div>
 
                 <div
@@ -802,7 +794,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                     onClick={handleConfirmDraft}
                     className="flex-1 py-2 rounded-xl bg-emerald-700 hover:bg-emerald-800 text-white font-bold text-xs transition cursor-pointer flex items-center justify-center gap-1 shadow-xs"
                   >
-                    <CheckCircle2 className="w-3.5 h-3.5" />
+                    <ChandIcon name="check-circle" className="w-3.5 h-3.5" />
                     <span>تایید و ثبت نهایی در تراکنش‌ها</span>
                   </button>
                   <button
@@ -836,7 +828,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
           {!isAuthenticated ? (
             <div className="p-3.5 border-t border-amber-300/40 bg-gradient-to-r from-amber-500/10 via-amber-600/15 to-yellow-500/10 flex flex-col sm:flex-row items-center justify-between gap-3 text-right">
               <div className="flex items-center gap-2">
-                <Lock className="w-4 h-4 text-amber-600 dark:text-amber-400 shrink-0" />
+                <ChandIcon name="key" className="w-4 h-4 text-amber-600 dark:text-amber-400 shrink-0" />
                 <span className="text-xs text-amber-950 dark:text-amber-200 font-cairo font-bold">
                   هوش مصنوعی فقط برای کسانی که اشتراک پرو دارند فعال می‌شود. لطفاً ابتدا وارد حساب کاربری خود شوید.
                 </span>
@@ -852,7 +844,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
           ) : !hasAIAccess ? (
             <div className="p-3.5 border-t border-amber-300/40 bg-gradient-to-r from-amber-500/10 via-amber-600/15 to-yellow-500/10 flex flex-col sm:flex-row items-center justify-between gap-3 text-right">
               <div className="flex items-center gap-2">
-                <Lock className="w-4 h-4 text-amber-600 dark:text-amber-400 shrink-0" />
+                <ChandIcon name="key" className="w-4 h-4 text-amber-600 dark:text-amber-400 shrink-0" />
                 <span className="text-xs text-amber-950 dark:text-amber-200 font-cairo font-bold">
                   طرح پایه (رایگان) فاقد هوش مصنوعی است. برای استفاده، حساب خود را به برنزی یا پرو ارتقا دهید.
                 </span>
@@ -894,13 +886,13 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
               >
                 {!isProUser ? (
                   <>
-                    <Mic className="w-4 h-4" />
+                    <ChandIcon name="mic" className="w-4 h-4" />
                     <ChandIcon name="vip-crown" className="absolute -top-1 -right-1 w-3 h-3" />
                   </>
                 ) : isListening ? (
                   <MicOff className="w-4 h-4" />
                 ) : (
-                  <Mic className="w-4 h-4" />
+                  <ChandIcon name="mic" className="w-4 h-4" />
                 )}
               </button>
               <button
@@ -908,7 +900,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                 disabled={!aiInput.trim()}
                 className="p-2.5 rounded-xl bg-emerald-700 hover:bg-emerald-800 text-white font-cairo font-bold transition flex items-center justify-center cursor-pointer disabled:opacity-50"
               >
-                <Send className="w-4 h-4 rotate-180" />
+                <ChandIcon name="send" className="w-4 h-4 rotate-180" />
               </button>
             </form>
           )}
@@ -932,7 +924,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
             <div className="divide-y divide-zinc-100 dark:divide-[#1A2621]/60 mt-2">
               {recentTransactions.length === 0 ? (
                 <EmptyState
-                  icon={<Wallet className="w-6 h-6 text-emerald-600" />}
+                  icon={<ChandIcon name="wallet" className="w-6 h-6 text-emerald-600" />}
                   title="هنوز هیچ تراکنشی ثبت نشده است"
                   description="برای شروع ثبت حسابداری و تحلیل هوشمند بودجه، اولین تراکنش خود را ثبت کنید."
                   actionLabel="ثبت اولین تراکنش"
@@ -973,7 +965,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
             onClick={onOpenTransactionModal}
             className="w-full py-2.5 rounded-xl border border-dashed border-emerald-600/40 text-emerald-700 dark:text-emerald-400 hover:bg-emerald-50/50 dark:hover:bg-[#13221A] text-xs font-cairo font-bold transition flex items-center justify-center gap-1.5 cursor-pointer"
           >
-            <Plus className="w-4 h-4" />
+            <ChandIcon name="add" className="w-4 h-4" />
             <span>ثبت تراکنش تازه</span>
           </button>
         </div>

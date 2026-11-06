@@ -1,14 +1,6 @@
 import React, { useState } from 'react';
 import {
-  Crown,
-  CheckCircle2,
-  Award,
   Zap,
-  Shield,
-  CreditCard,
-  Clock,
-  ArrowRight,
-  Gift,
   HelpCircle,
 } from 'lucide-react';
 import { useApp } from '../context/AppContext';
@@ -17,6 +9,8 @@ import { SubscriptionPlan } from '../types';
 import { formatToman, formatShamsiDate } from '../utils/formatters';
 import { calculateRemainingProDays } from '../utils/security';
 import { CheckoutModal } from './CheckoutModal';
+import { ChandAsset } from './ChandAsset';
+import { ChandIcon } from './icons/ChandIcon';
 
 export const SubscriptionView: React.FC = () => {
   const { user, isProUser, manualPayments, isAuthenticated, openAuthGuard } = useApp();
@@ -43,13 +37,16 @@ export const SubscriptionView: React.FC = () => {
       <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-[#1A1505] via-[#241D09] to-[#0A0D0B] border-2 border-amber-500/40 p-6 sm:p-10 text-white shadow-2xl">
         <div className="relative z-10 max-w-3xl space-y-4">
           <div className="inline-flex items-center gap-2 px-3.5 py-1 rounded-full bg-amber-500/20 border border-amber-400/40 text-amber-300 text-xs font-cairo font-bold">
-            <Crown className="w-3.5 h-3.5 text-amber-400" />
+            <ChandIcon name="crown" className="w-3.5 h-3.5 text-amber-400" />
             <span>پلن‌های اشتراک ۱ ماهه و ۳ ماهه (برنزی • طلایی • VIP)</span>
           </div>
 
+        <div className="flex items-center gap-3">
+          <ChandAsset name="vip-crown" size={56} className="shrink-0 drop-shadow-lg" />
           <h2 className="font-cairo text-2xl sm:text-4xl font-extrabold text-white leading-tight">
             پلن‌های ارتقای حساب <span className="text-amber-400 font-brand">چندبوم هوشمند</span>
           </h2>
+        </div>
 
           <p className="text-xs sm:text-sm text-amber-100/90 leading-relaxed max-w-2xl">
             پلن متناسب با نیاز مالی خود را در دوره‌های ۱ ماهه یا ۳ ماهه (همراه با تخفیف ویژه) انتخاب کنید. با فعال‌سازی اشتراک، به دستیار هوشمند ثبت خودکار تراکنش‌ها، تحلیل بودجه، یادآورها و مدیریت دنگ دسترسی خواهید داشت.
@@ -57,7 +54,7 @@ export const SubscriptionView: React.FC = () => {
 
           {isProUser && remainingPro.isActive ? (
             <div className="inline-flex items-center gap-3.5 p-3.5 rounded-2xl bg-amber-500/15 backdrop-blur-xs border border-amber-400/50 text-xs">
-              <Crown className="w-6 h-6 text-amber-400 shrink-0" />
+              <ChandIcon name="crown" className="w-6 h-6 text-amber-400 shrink-0" />
               <div>
                 <p className="font-cairo font-bold text-amber-200">
                   اشتراک فعال شما: {user.tier === 'vip' ? 'وی‌آی‌پی (VIP)' : user.tier === 'bronze' ? 'برنزی' : 'طلایی (پرو)'}
@@ -69,7 +66,7 @@ export const SubscriptionView: React.FC = () => {
             </div>
           ) : isPendingReview ? (
             <div className="inline-flex items-center gap-3 p-4 rounded-2xl bg-amber-500/25 backdrop-blur-xs border-2 border-amber-400 text-xs text-amber-200 shadow-lg">
-              <Clock className="w-6 h-6 text-amber-300 shrink-0 animate-pulse" />
+              <ChandIcon name="clock" className="w-6 h-6 text-amber-300 shrink-0 animate-pulse" />
               <div>
                 <div className="flex items-center gap-2">
                   <span className="font-cairo font-black text-sm text-amber-300">
@@ -89,13 +86,13 @@ export const SubscriptionView: React.FC = () => {
           ) : (
             <div className="pt-2 flex flex-wrap gap-4 text-xs text-amber-200/90">
               <span className="flex items-center gap-1.5">
-                <CheckCircle2 className="w-4 h-4 text-amber-400" /> کارت به کارت مستقیم به بانک سامان
+                <ChandIcon name="check-circle" className="w-4 h-4 text-amber-400" /> کارت به کارت مستقیم به بانک سامان
               </span>
               <span className="flex items-center gap-1.5">
-                <CheckCircle2 className="w-4 h-4 text-amber-400" /> ثبت امن فیش و صدور کد پیگیری اختصاصی
+                <ChandIcon name="check-circle" className="w-4 h-4 text-amber-400" /> ثبت امن فیش و صدور کد پیگیری اختصاصی
               </span>
               <span className="flex items-center gap-1.5">
-                <CheckCircle2 className="w-4 h-4 text-amber-400" /> فعال‌سازی فوری هوش مصنوعی تحلیلی
+                <ChandIcon name="check-circle" className="w-4 h-4 text-amber-400" /> فعال‌سازی فوری هوش مصنوعی تحلیلی
               </span>
             </div>
           )}
@@ -186,7 +183,7 @@ export const SubscriptionView: React.FC = () => {
                       : 'bg-emerald-700 text-white'
                   }`}
                 >
-                  <Crown className="w-3 h-3" />
+                  <ChandIcon name="crown" className="w-3 h-3" />
                   <span>{plan.badge}</span>
                 </div>
               )}
@@ -216,7 +213,7 @@ export const SubscriptionView: React.FC = () => {
                     }`}
                   >
                     <span>{plan.nameFa}</span>
-                    <Crown className="w-4 h-4 text-amber-500" />
+                    <ChandIcon name="crown" className="w-4 h-4 text-amber-500" />
                   </h3>
                   <p
                     className={`text-xs mt-1.5 leading-relaxed min-h-[38px] ${
@@ -268,7 +265,7 @@ export const SubscriptionView: React.FC = () => {
                 >
                   {plan.features.map((feature, i) => (
                     <li key={i} className="flex items-start gap-2">
-                      <CheckCircle2 className="w-3.5 h-3.5 text-amber-400 shrink-0 mt-0.5" />
+                      <ChandIcon name="check-circle" className="w-3.5 h-3.5 text-amber-400 shrink-0 mt-0.5" />
                       <span className="leading-relaxed">{feature}</span>
                     </li>
                   ))}
@@ -286,7 +283,7 @@ export const SubscriptionView: React.FC = () => {
                     disabled
                     className="w-full py-3 rounded-2xl font-cairo font-bold text-xs sm:text-sm bg-amber-500/15 border-2 border-amber-400/60 text-amber-300 flex items-center justify-center gap-2 cursor-not-allowed opacity-90 shadow-sm"
                   >
-                    <Clock className="w-4 h-4 text-amber-300 animate-pulse" />
+                    <ChandIcon name="clock" className="w-4 h-4 text-amber-300 animate-pulse" />
                     <span>در حال بررسی فیش</span>
                   </button>
                 ) : (
@@ -312,9 +309,9 @@ export const SubscriptionView: React.FC = () => {
                         : 'bg-emerald-700 hover:bg-emerald-800 text-white'
                     }`}
                   >
-                    <CreditCard className="w-4 h-4" />
+                    <ChandIcon name="card" className="w-4 h-4" />
                     <span>{isSelected ? 'تایید و پرداخت کارت به کارت' : 'انتخاب این پلن'}</span>
-                    <ArrowRight className="w-4 h-4 rotate-180" />
+                    <ChandIcon name="arrow-right" className="w-4 h-4 rotate-180" />
                   </button>
                 )}
               </div>
@@ -463,8 +460,8 @@ export const SubscriptionView: React.FC = () => {
         {/* Pros Card */}
         <div className="p-6 rounded-3xl bg-emerald-50/60 dark:bg-[#0D1C14] border border-emerald-200 dark:border-emerald-800/60 space-y-4">
           <div className="flex items-center gap-2.5 text-emerald-800 dark:text-emerald-300">
-            <div className="p-2 rounded-xl bg-emerald-100 dark:bg-emerald-950/80">
-              <CheckCircle2 className="w-5 h-5 text-emerald-700 dark:text-emerald-400" />
+            <div className="p-2 rounded-xl">
+              <ChandIcon name="check-circle" className="w-5 h-5 text-emerald-700 dark:text-emerald-400" />
             </div>
             <h4 className="font-cairo text-base font-bold">
               مزایای اصلی اشتراک‌های ارتقایافته چندبوم
@@ -523,7 +520,7 @@ export const SubscriptionView: React.FC = () => {
       <div className="p-6 rounded-3xl bg-white dark:bg-[#0E1511] border border-[#E2E8E4] dark:border-[#1F2E27] shadow-xs flex flex-col md:flex-row items-center justify-between gap-6">
         <div className="space-y-2 max-w-2xl">
           <div className="flex items-center gap-2 text-amber-700 dark:text-amber-400 font-cairo font-bold text-base">
-            <Shield className="w-5 h-5" />
+            <ChandIcon name="shield" className="w-5 h-5" />
             <span>فرآیند تسویه شفاف و بدون واسطه</span>
           </div>
           <p className="text-xs text-zinc-600 dark:text-zinc-400 leading-relaxed">

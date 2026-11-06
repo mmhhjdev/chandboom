@@ -1,13 +1,7 @@
 import React, { useState } from 'react';
-import {
-  X,
-  MessageSquarePlus,
-  LifeBuoy,
-  ShieldCheck,
-  Loader2,
-  AlertCircle,
-} from 'lucide-react';
+
 import { TicketDepartment, TicketPriority } from '../types';
+import { ChandIcon } from './icons/ChandIcon';
 
 interface TicketModalProps {
   isOpen: boolean;
@@ -78,8 +72,8 @@ export const TicketModal: React.FC<TicketModalProps> = ({ isOpen, onClose, onSub
         {/* Header */}
         <div className="flex items-center justify-between px-6 py-4 border-b border-[#E2E8E4] dark:border-[#1F2E27] bg-zinc-50/70 dark:bg-[#121B17]">
           <div className="flex items-center gap-2.5">
-            <div className="p-2 rounded-2xl bg-emerald-100 text-emerald-800 dark:bg-[#15271E] dark:text-emerald-300">
-              <LifeBuoy className="w-5 h-5" />
+            <div className="p-2 rounded-2xl text-emerald-800 dark:text-emerald-300">
+              <ChandIcon name="support" className="w-5 h-5" />
             </div>
             <div>
               <h3 className="font-cairo text-base sm:text-lg font-bold text-zinc-900 dark:text-zinc-100">
@@ -93,7 +87,7 @@ export const TicketModal: React.FC<TicketModalProps> = ({ isOpen, onClose, onSub
             onClick={onClose}
             className="p-1.5 rounded-xl text-zinc-400 hover:text-zinc-700 dark:hover:text-zinc-200 hover:bg-zinc-100 dark:hover:bg-[#16221D] transition cursor-pointer"
           >
-            <X className="w-5 h-5" />
+            <ChandIcon name="close" className="w-5 h-5" />
           </button>
         </div>
 
@@ -101,7 +95,7 @@ export const TicketModal: React.FC<TicketModalProps> = ({ isOpen, onClose, onSub
         <form onSubmit={handleSubmit} className="p-5 sm:p-6 space-y-4 overflow-y-auto flex-1">
           {errorMsg && (
             <div className="p-3 rounded-2xl bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-900/60 text-xs text-rose-700 dark:text-rose-300 flex items-center gap-2 font-bold">
-              <AlertCircle className="w-4 h-4 shrink-0" />
+              <ChandIcon name="alert" className="w-4 h-4 shrink-0" />
               <span>{errorMsg}</span>
             </div>
           )}
@@ -174,7 +168,7 @@ export const TicketModal: React.FC<TicketModalProps> = ({ isOpen, onClose, onSub
           </div>
 
           <div className="flex items-center gap-2 p-3 bg-emerald-50/60 dark:bg-[#121F19] rounded-2xl border border-emerald-200/50 dark:border-emerald-900/40 text-xs text-zinc-600 dark:text-zinc-300">
-            <ShieldCheck className="w-4 h-4 text-emerald-700 dark:text-emerald-400 shrink-0" />
+            <ChandIcon name="shield" className="w-4 h-4 text-emerald-700 dark:text-emerald-400 shrink-0" />
             <span>تیکت شما بلافاصله در سوپابیس ذخیره شده و به اطلاع تیم پشتیبانی می‌رسد.</span>
           </div>
 
@@ -195,12 +189,12 @@ export const TicketModal: React.FC<TicketModalProps> = ({ isOpen, onClose, onSub
             >
               {isUploading ? (
                 <>
-                  <Loader2 className="w-4 h-4 animate-spin" />
+                  <ChandIcon name="loader" className="w-4 h-4 animate-spin" />
                   <span>در حال ثبت تیکت...</span>
                 </>
               ) : (
                 <>
-                  <MessageSquarePlus className="w-4 h-4" />
+                  <ChandIcon name="sms" className="w-4 h-4" />
                   <span>ارسال تیکت به پشتیبانی</span>
                 </>
               )}

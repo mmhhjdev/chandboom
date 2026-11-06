@@ -1,29 +1,15 @@
 import React, { useState } from 'react';
 import {
   Target,
-  Plus,
-  Sparkles,
-  TrendingUp,
-  Calendar,
-  CheckCircle2,
-  Clock,
-  ArrowRight,
-  Trash2,
-  Edit2,
   Coins,
-  Bot,
-  AlertCircle,
-  HelpCircle,
-  PiggyBank,
-  DollarSign,
-  ChevronRight,
-  ShieldCheck,
 } from 'lucide-react';
 import { useApp } from '../context/AppContext';
 import { FinancialGoal } from '../types';
 import { formatToman, formatShamsiDate, toPersianDigits } from '../utils/formatters';
 import { getConversationalAdvice } from '../services/aiService';
 import { getCachedGoalInsights, setCachedGoalInsight } from '../utils/aiCache';
+import { ChandAsset } from './ChandAsset';
+import { ChandIcon } from './icons/ChandIcon';
 
 export const GoalsView: React.FC = () => {
   const { goals, addGoal, updateGoal, deleteGoal, contributeToGoal, metrics, user, isProUser, hasAIAccess, openSubscriptionModal, setActiveTab } = useApp();
@@ -222,6 +208,7 @@ export const GoalsView: React.FC = () => {
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <div className="flex items-center gap-2">
+            <ChandAsset name="goals" size={44} className="shrink-0 drop-shadow-md" />
             <h2 className="font-cairo text-2xl font-bold text-zinc-900 dark:text-zinc-100">
               اهداف مالی و برنامه‌ریزی هوشمند
             </h2>
@@ -238,7 +225,7 @@ export const GoalsView: React.FC = () => {
           onClick={handleOpenAdd}
           className="px-4 py-2.5 rounded-2xl bg-emerald-700 hover:bg-emerald-800 text-white font-cairo font-bold text-xs sm:text-sm flex items-center justify-center gap-2 shadow-sm transition cursor-pointer shrink-0"
         >
-          <Plus className="w-4 h-4" />
+          <ChandIcon name="add" className="w-4 h-4" />
           <span>تعریف هدف جدید</span>
         </button>
       </div>
@@ -249,7 +236,7 @@ export const GoalsView: React.FC = () => {
         <div className="p-5 rounded-2xl bg-white dark:bg-[#0E1511] border border-[#E2E8E4] dark:border-[#1F2E27] shadow-xs space-y-3">
           <div className="flex items-center justify-between text-xs text-zinc-500">
             <span>مجموع پس‌انداز نسبت به کل اهداف</span>
-            <PiggyBank className="w-4 h-4 text-emerald-600" />
+            <ChandIcon name="goals" className="w-4 h-4 text-emerald-600" />
           </div>
           <div className="flex items-baseline gap-2">
             <span className="font-cairo text-2xl font-black text-zinc-900 dark:text-white">
@@ -273,7 +260,7 @@ export const GoalsView: React.FC = () => {
         <div className="p-5 rounded-2xl bg-white dark:bg-[#0E1511] border border-[#E2E8E4] dark:border-[#1F2E27] shadow-xs space-y-2">
           <div className="flex items-center justify-between text-xs text-zinc-500">
             <span>تعداد اهداف ثبت شده</span>
-            <Target className="w-4 h-4 text-amber-500" />
+            <ChandIcon name="goals" className="w-4 h-4 text-amber-500" />
           </div>
           <div className="font-cairo text-2xl font-black text-amber-600 dark:text-amber-400">
             {toPersianDigits(goals.length)} <span className="text-xs font-normal text-zinc-400">هدف مالی</span>
@@ -302,8 +289,8 @@ export const GoalsView: React.FC = () => {
       <div className="space-y-4">
         {goals.length === 0 ? (
           <div className="p-12 text-center bg-white dark:bg-[#0E1511] rounded-3xl border border-[#E2E8E4] dark:border-[#1F2E27] space-y-4">
-            <div className="w-16 h-16 rounded-full bg-emerald-50 text-emerald-600 dark:bg-emerald-950/40 dark:text-emerald-400 flex items-center justify-center mx-auto">
-              <Target className="w-8 h-8" />
+            <div className="w-16 h-16 rounded-full text-emerald-600 dark:text-emerald-400 flex items-center justify-center mx-auto">
+              <ChandIcon name="goals" className="w-8 h-8" />
             </div>
             <div className="max-w-md mx-auto space-y-1">
               <h3 className="font-cairo text-base font-bold text-zinc-900 dark:text-white">
@@ -317,7 +304,7 @@ export const GoalsView: React.FC = () => {
               onClick={handleOpenAdd}
               className="px-5 py-2 rounded-xl bg-emerald-700 hover:bg-emerald-800 text-white font-cairo font-bold text-xs inline-flex items-center gap-1.5 shadow-xs cursor-pointer"
             >
-              <Plus className="w-4 h-4" />
+              <ChandIcon name="add" className="w-4 h-4" />
               <span>ایجاد اولین هدف مالی</span>
             </button>
           </div>
@@ -338,8 +325,8 @@ export const GoalsView: React.FC = () => {
                 {/* Header Row */}
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                   <div className="flex items-center gap-3">
-                    <div className="p-3 rounded-2xl bg-emerald-50 dark:bg-[#15231D] text-emerald-700 dark:text-emerald-300">
-                      <Target className="w-6 h-6" />
+                    <div className="p-3 rounded-2xl text-emerald-700 dark:text-emerald-300">
+                      <ChandIcon name="goals" className="w-6 h-6" />
                     </div>
                     <div>
                       <div className="flex items-center gap-2">
@@ -351,12 +338,12 @@ export const GoalsView: React.FC = () => {
                         </span>
                         {goal.status === 'achieved' && (
                           <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300 flex items-center gap-1">
-                            <CheckCircle2 className="w-3 h-3" /> محقق شده
+                            <ChandIcon name="check-circle" className="w-3 h-3" /> محقق شده
                           </span>
                         )}
                       </div>
                       <p className="text-xs text-zinc-400 mt-0.5 flex items-center gap-2">
-                        <Calendar className="w-3.5 h-3.5" />
+                        <ChandIcon name="calendar" className="w-3.5 h-3.5" />
                         <span>سررسید هدف: {formatShamsiDate(goal.deadline)}</span>
                       </p>
                     </div>
@@ -376,7 +363,7 @@ export const GoalsView: React.FC = () => {
                       disabled={isAnalyzing}
                       className="px-3.5 py-1.5 rounded-xl bg-gradient-to-r from-amber-500 to-yellow-500 hover:from-amber-600 hover:to-yellow-600 text-zinc-950 font-cairo font-bold text-xs flex items-center gap-1.5 shadow-xs transition cursor-pointer disabled:opacity-50"
                     >
-                      <Sparkles className="w-3.5 h-3.5" />
+                      <ChandIcon name="ai" className="w-3.5 h-3.5" />
                       <span>{isAnalyzing ? 'در حال تحلیل...' : 'سنجش هوش مصنوعی'}</span>
                     </button>
 
@@ -389,7 +376,7 @@ export const GoalsView: React.FC = () => {
                       className="p-2 rounded-xl text-zinc-400 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/30 transition cursor-pointer"
                       title="حذف هدف"
                     >
-                      <Trash2 className="w-4 h-4" />
+                      <ChandIcon name="trash" className="w-4 h-4" />
                     </button>
                   </div>
                 </div>
@@ -410,7 +397,7 @@ export const GoalsView: React.FC = () => {
 
                   {/* Impulse Buy Shield Hours Badge */}
                   <div className="flex items-center gap-1.5 text-[11px] text-zinc-500 dark:text-zinc-400 bg-zinc-50 dark:bg-[#121B16] px-2.5 py-1 rounded-xl border border-[#E2E8E4] dark:border-[#1F2E27] w-fit">
-                    <ShieldCheck className="w-3.5 h-3.5 text-emerald-600" />
+                    <ChandIcon name="shield" className="w-3.5 h-3.5 text-emerald-600" />
                     <span>
                       معادل <b className="text-zinc-900 dark:text-zinc-100 font-bold">{toPersianDigits(Math.round(goal.target_amount / userHourlyWage))}</b> ساعت کار شما
                     </span>
@@ -436,7 +423,7 @@ export const GoalsView: React.FC = () => {
                   <div className="p-4 rounded-2xl bg-amber-50/70 dark:bg-[#1C1608] border border-amber-300 dark:border-amber-800/80 space-y-3 animate-in fade-in duration-200">
                     <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-amber-200 dark:border-amber-900/60 pb-2.5">
                       <div className="flex items-center gap-2">
-                        <Bot className="w-4 h-4 text-amber-500" />
+                        <ChandIcon name="ai" className="w-4 h-4 text-amber-500" />
                         <h5 className="font-cairo font-bold text-xs text-amber-900 dark:text-amber-200">
                           نتیجه ارزیابی دستیار هوشمند چندبوم:
                         </h5>
@@ -468,7 +455,7 @@ export const GoalsView: React.FC = () => {
           <div className="w-full max-w-lg bg-white dark:bg-[#0E1511] rounded-3xl shadow-2xl border border-[#E2E8E4] dark:border-[#1F2E27] overflow-hidden p-6 space-y-4 animate-in fade-in zoom-in-95 duration-150">
             <div className="flex items-center justify-between border-b border-[#E2E8E4] dark:border-[#1F2E27] pb-3">
               <h3 className="font-cairo text-base font-bold text-zinc-900 dark:text-white flex items-center gap-2">
-                <Target className="w-5 h-5 text-emerald-600" />
+                <ChandIcon name="goals" className="w-5 h-5 text-emerald-600" />
                 <span>تعریف هدف مالی جدید</span>
               </h3>
               <button
@@ -482,7 +469,7 @@ export const GoalsView: React.FC = () => {
             <form onSubmit={handleCreateGoal} className="space-y-3.5">
               {createError && (
                 <div className="p-3 rounded-xl bg-rose-50 dark:bg-rose-950/40 border border-rose-300 dark:border-rose-900/60 text-xs text-rose-700 dark:text-rose-300 font-bold flex items-center gap-2">
-                  <AlertCircle className="w-4 h-4 shrink-0 text-rose-500" />
+                  <ChandIcon name="alert" className="w-4 h-4 shrink-0 text-rose-500" />
                   <span>{createError}</span>
                 </div>
               )}
@@ -516,7 +503,7 @@ export const GoalsView: React.FC = () => {
                   />
                   {numericTarget > 0 && (
                     <div className="mt-1.5 p-2 rounded-xl bg-emerald-50/90 dark:bg-emerald-950/40 border border-emerald-300 dark:border-emerald-800 text-[11px] text-emerald-900 dark:text-emerald-200 flex items-start gap-1.5 leading-relaxed">
-                      <ShieldCheck className="w-3.5 h-3.5 text-emerald-600 shrink-0 mt-0.5" />
+                      <ChandIcon name="shield" className="w-3.5 h-3.5 text-emerald-600 shrink-0 mt-0.5" />
                       <span>
                         این هدف معادل <b>{toPersianDigits(targetWorkHours)} ساعت</b> از زمان کاری شما بر اساس درآمد ساعتی ثبت‌شده است.
                       </span>
@@ -626,7 +613,7 @@ export const GoalsView: React.FC = () => {
             <form onSubmit={handleExecuteContribute} className="space-y-4">
               {contributeError && (
                 <div className="p-3 rounded-xl bg-rose-50 dark:bg-rose-950/40 border border-rose-300 dark:border-rose-900/60 text-xs text-rose-700 dark:text-rose-300 font-bold flex items-center gap-2">
-                  <AlertCircle className="w-4 h-4 shrink-0 text-rose-500" />
+                  <ChandIcon name="alert" className="w-4 h-4 shrink-0 text-rose-500" />
                   <span>{contributeError}</span>
                 </div>
               )}

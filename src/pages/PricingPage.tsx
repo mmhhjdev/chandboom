@@ -3,8 +3,9 @@ import { Link } from 'react-router-dom';
 import { SEOLayout } from '../components/SEOLayout';
 import { SEOHead } from '../components/SEOHead';
 import { ArticleLinks } from '../components/ArticleLinks';
-import { Crown, Check, CreditCard, ShieldCheck, ArrowRight, Award, Zap } from 'lucide-react';
+
 import { formatToman } from '../utils/formatters';
+import { ChandIcon } from '../components/icons/ChandIcon';
 
 export const PricingPage: React.FC = () => {
   const [billingCycle, setBillingCycle] = useState<'monthly' | 'annual'>('monthly');
@@ -31,7 +32,7 @@ export const PricingPage: React.FC = () => {
         {/* Header */}
         <div className="text-center max-w-2xl mx-auto space-y-3">
           <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-amber-500/10 text-amber-600 dark:text-amber-400 text-xs font-bold border border-amber-500/20">
-            <Crown className="w-3.5 h-3.5" />
+            <ChandIcon name="crown" className="w-3.5 h-3.5" />
             <span>تعرفه شفاف و سرمایه‌گذاری برای آینده مالی</span>
           </div>
           <h1 className="text-2xl sm:text-4xl font-black text-zinc-900 dark:text-white leading-tight">
@@ -93,15 +94,15 @@ export const PricingPage: React.FC = () => {
 
               <ul className="space-y-2.5 text-xs text-zinc-600 dark:text-zinc-300">
                 <li className="flex items-center gap-2">
-                  <Check className="w-3.5 h-3.5 text-emerald-500 shrink-0" />
+                  <ChandIcon name="check" className="w-3.5 h-3.5 text-emerald-500 shrink-0" />
                   <span>ثبت نامحدود تراکنش‌های درآمد و هزینه</span>
                 </li>
                 <li className="flex items-center gap-2">
-                  <Check className="w-3.5 h-3.5 text-emerald-500 shrink-0" />
+                  <ChandIcon name="check" className="w-3.5 h-3.5 text-emerald-500 shrink-0" />
                   <span>دسترسی به نمودارهای پایه تراز مالی</span>
                 </li>
                 <li className="flex items-center gap-2">
-                  <Check className="w-3.5 h-3.5 text-emerald-500 shrink-0" />
+                  <ChandIcon name="check" className="w-3.5 h-3.5 text-emerald-500 shrink-0" />
                   <span>ایجاد تا ۲ گروه دنگ و ۲ هدف مالی</span>
                 </li>
                 <li className="flex items-center gap-2 text-rose-500 font-medium">
@@ -147,19 +148,19 @@ export const PricingPage: React.FC = () => {
 
               <ul className="space-y-2.5 text-xs text-zinc-600 dark:text-zinc-300">
                 <li className="flex items-center gap-2">
-                  <Check className="w-3.5 h-3.5 text-emerald-500 shrink-0" />
+                  <ChandIcon name="check" className="w-3.5 h-3.5 text-emerald-500 shrink-0" />
                   <span>۲۰ پرسش ماهانه از هوش مصنوعی چندبوم</span>
                 </li>
                 <li className="flex items-center gap-2">
-                  <Check className="w-3.5 h-3.5 text-emerald-500 shrink-0" />
+                  <ChandIcon name="check" className="w-3.5 h-3.5 text-emerald-500 shrink-0" />
                   <span>ثبت صوتی تراکنش با هوش مصنوعی</span>
                 </li>
                 <li className="flex items-center gap-2">
-                  <Check className="w-3.5 h-3.5 text-emerald-500 shrink-0" />
+                  <ChandIcon name="check" className="w-3.5 h-3.5 text-emerald-500 shrink-0" />
                   <span>استخراج پیامک بانکی با هوش مصنوعی</span>
                 </li>
                 <li className="flex items-center gap-2">
-                  <Check className="w-3.5 h-3.5 text-emerald-500 shrink-0" />
+                  <ChandIcon name="check" className="w-3.5 h-3.5 text-emerald-500 shrink-0" />
                   <span>دنگ گروهی و یادآورهای اقساط نامحدود</span>
                 </li>
               </ul>
@@ -177,7 +178,7 @@ export const PricingPage: React.FC = () => {
           <div className="p-6 rounded-3xl bg-gradient-to-b from-[#18261F] to-[#0D1812] border-2 border-emerald-500/80 shadow-xl flex flex-col justify-between space-y-6 relative overflow-hidden">
             <div className="absolute top-3 left-3">
               <span className="text-[9px] px-2 py-0.5 rounded-full bg-amber-400 text-zinc-950 font-black flex items-center gap-1">
-                <Crown className="w-3 h-3" />
+                <ChandIcon name="crown" className="w-3 h-3" />
                 <span>محبوب‌ترین</span>
               </span>
             </div>
@@ -206,19 +207,19 @@ export const PricingPage: React.FC = () => {
 
               <ul className="space-y-2.5 text-xs text-zinc-200">
                 <li className="flex items-center gap-2">
-                  <Check className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
+                  <ChandIcon name="check" className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
                   <span>سهمیه ۱۰۰ الی ۱۵۰ پرسش هوش مصنوعی</span>
                 </li>
                 <li className="flex items-center gap-2">
-                  <Check className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
+                  <ChandIcon name="check" className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
                   <span>پیش‌بینی هوشمند بودجه ۳ ماهه و هشدار کسری</span>
                 </li>
                 <li className="flex items-center gap-2">
-                  <Check className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
+                  <ChandIcon name="check" className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
                   <span>سپر ضد خرید هیجانی و مشاور اختصاصی</span>
                 </li>
                 <li className="flex items-center gap-2">
-                  <Check className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
+                  <ChandIcon name="check" className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
                   <span>خروجی اکسل رسمی با تراز حسابداری</span>
                 </li>
               </ul>
@@ -228,7 +229,7 @@ export const PricingPage: React.FC = () => {
               to="/"
               className="w-full py-2.5 rounded-2xl bg-gradient-to-r from-emerald-500 to-emerald-600 hover:from-emerald-400 hover:to-emerald-500 text-zinc-950 text-xs font-black text-center transition cursor-pointer shadow-md flex items-center justify-center gap-1.5"
             >
-              <Crown className="w-3.5 h-3.5" />
+              <ChandIcon name="crown" className="w-3.5 h-3.5" />
               <span>خرید اشتراک طلایی پرو</span>
             </Link>
           </div>
@@ -237,7 +238,7 @@ export const PricingPage: React.FC = () => {
           <div className="p-6 rounded-3xl bg-gradient-to-b from-[#1F1A07] to-[#120F05] border-2 border-amber-500/90 shadow-xl flex flex-col justify-between space-y-6 relative overflow-hidden">
             <div className="absolute top-3 left-3">
               <span className="text-[9px] px-2 py-0.5 rounded-full bg-gradient-to-r from-amber-400 to-yellow-400 text-zinc-950 font-black flex items-center gap-1">
-                <Award className="w-3 h-3" />
+                <ChandIcon name="award" className="w-3 h-3" />
                 <span>حداکثر سهمیه</span>
               </span>
             </div>
@@ -266,19 +267,19 @@ export const PricingPage: React.FC = () => {
 
               <ul className="space-y-2.5 text-xs text-zinc-200">
                 <li className="flex items-center gap-2">
-                  <Check className="w-3.5 h-3.5 text-amber-400 shrink-0" />
+                  <ChandIcon name="check" className="w-3.5 h-3.5 text-amber-400 shrink-0" />
                   <span>۵۰۰ پرسش ماهانه هوش مصنوعی اختصاصی</span>
                 </li>
                 <li className="flex items-center gap-2">
-                  <Check className="w-3.5 h-3.5 text-amber-400 shrink-0" />
+                  <ChandIcon name="check" className="w-3.5 h-3.5 text-amber-400 shrink-0" />
                   <span>پیش‌بینی جامع جریان نقدینگی</span>
                 </li>
                 <li className="flex items-center gap-2">
-                  <Check className="w-3.5 h-3.5 text-amber-400 shrink-0" />
+                  <ChandIcon name="check" className="w-3.5 h-3.5 text-amber-400 shrink-0" />
                   <span>بیشترین درصد تخفیف دوره‌ای</span>
                 </li>
                 <li className="flex items-center gap-2">
-                  <Check className="w-3.5 h-3.5 text-amber-400 shrink-0" />
+                  <ChandIcon name="check" className="w-3.5 h-3.5 text-amber-400 shrink-0" />
                   <span>تایید فوری فیش زیر ۵ دقیقه + پشتیبانی VIP</span>
                 </li>
               </ul>
@@ -288,7 +289,7 @@ export const PricingPage: React.FC = () => {
               to="/"
               className="w-full py-2.5 rounded-2xl bg-gradient-to-r from-amber-500 to-yellow-500 hover:from-amber-400 hover:to-yellow-400 text-zinc-950 text-xs font-black text-center transition cursor-pointer shadow-md flex items-center justify-center gap-1.5"
             >
-              <Crown className="w-3.5 h-3.5" />
+              <ChandIcon name="crown" className="w-3.5 h-3.5" />
               <span>خرید اشتراک VIP</span>
             </Link>
           </div>
@@ -297,7 +298,7 @@ export const PricingPage: React.FC = () => {
         {/* Security & Payment Instructions Note */}
         <div className="max-w-2xl mx-auto p-5 rounded-2xl bg-white dark:bg-[#0F1713] border border-[#E2E8E4] dark:border-[#1E2E25] text-xs space-y-2 text-zinc-600 dark:text-zinc-300">
           <div className="flex items-center gap-2 font-bold text-zinc-900 dark:text-white">
-            <CreditCard className="w-4 h-4 text-emerald-600" />
+            <ChandIcon name="card" className="w-4 h-4 text-emerald-600" />
             <span>نحوه پرداخت و تایید حساب</span>
           </div>
           <p className="leading-relaxed">

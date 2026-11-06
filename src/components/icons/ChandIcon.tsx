@@ -143,7 +143,7 @@ const ICON_CONTENT = (name: ChandIconName): React.ReactElement => {
   }
 };
 
-export const ChandIcon: React.FC<ChandIconProps> = ({ name, size, className, title }) => (
+export const ChandIcon: React.FC<ChandIconProps> = ({ name, size = 24, className, title }) => (
   <svg
     viewBox="0 0 24 24"
     width={size}

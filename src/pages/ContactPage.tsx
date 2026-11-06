@@ -1,7 +1,11 @@
 import React, { useState } from 'react';
 import { SEOLayout } from '../components/SEOLayout';
 import { SEOHead } from '../components/SEOHead';
-import { Mail, Clock, Send, CheckCircle2, MessageSquare, Headphones } from 'lucide-react';
+import {
+  Mail,
+  Headphones,
+} from 'lucide-react';
+import { ChandIcon } from '../components/icons/ChandIcon';
 
 export const ContactPage: React.FC = () => {
   const [name, setName] = useState('');
@@ -69,7 +73,7 @@ export const ContactPage: React.FC = () => {
 
             <div className="p-6 rounded-3xl bg-white dark:bg-[#0F1713] border border-[#E2E8E4] dark:border-[#1E2E25] shadow-xs space-y-3">
               <h2 className="text-base font-bold text-zinc-900 dark:text-white flex items-center gap-2">
-                <Clock className="w-4 h-4 text-blue-500" />
+                <ChandIcon name="clock" className="w-4 h-4 text-blue-500" />
                 <span>ساعات کاری و زمان پاسخگویی</span>
               </h2>
               <p className="text-xs text-zinc-500 dark:text-zinc-400 leading-relaxed">
@@ -81,13 +85,13 @@ export const ContactPage: React.FC = () => {
           {/* Contact Message Form */}
           <div className="p-6 sm:p-7 rounded-3xl bg-white dark:bg-[#0F1713] border border-[#E2E8E4] dark:border-[#1E2E25] shadow-xs">
             <h2 className="text-base font-bold text-zinc-900 dark:text-white mb-4 flex items-center gap-2">
-              <MessageSquare className="w-4 h-4 text-emerald-600" />
+              <ChandIcon name="sms" className="w-4 h-4 text-emerald-600" />
               <span>ارسال پیام مستقیم به پشتیبانی</span>
             </h2>
 
             {isSubmitted ? (
               <div className="p-6 rounded-2xl bg-emerald-500/10 border border-emerald-500/30 text-center space-y-3">
-                <CheckCircle2 className="w-10 h-10 text-emerald-500 mx-auto" />
+                <ChandIcon name="check-circle" className="w-10 h-10 text-emerald-500 mx-auto" />
                 <h4 className="text-sm font-bold text-emerald-600 dark:text-emerald-400">
                   پیام شما با موفقیت دریافت شد
                 </h4>
@@ -144,7 +148,7 @@ export const ContactPage: React.FC = () => {
                   type="submit"
                   className="w-full py-3 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs flex items-center justify-center gap-2 transition cursor-pointer shadow-md"
                 >
-                  <Send className="w-3.5 h-3.5" />
+                  <ChandIcon name="send" className="w-3.5 h-3.5" />
                   <span>ارسال پیام به پشتیبانی</span>
                 </button>
               </form>

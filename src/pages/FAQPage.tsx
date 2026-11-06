@@ -2,7 +2,12 @@ import React, { useState } from 'react';
 import { SEOLayout } from '../components/SEOLayout';
 import { SEOHead } from '../components/SEOHead';
 import { ArticleLinks } from '../components/ArticleLinks';
-import { ChevronDown, HelpCircle, Search, Shield, Zap, Sparkles } from 'lucide-react';
+import {
+  ChevronDown,
+  HelpCircle,
+  Search,
+} from 'lucide-react';
+import { ChandIcon } from '../components/icons/ChandIcon';
 
 interface FAQItem {
   q: string;
@@ -115,7 +120,7 @@ export const FAQPage: React.FC = () => {
               placeholder="جستجو در بین سوالات متداول..."
               className="w-full px-4 py-3 pr-10 rounded-2xl bg-white dark:bg-[#111A15] border border-[#E2E8E4] dark:border-[#1E2D25] text-xs sm:text-sm outline-none focus:border-emerald-500 transition shadow-xs text-zinc-900 dark:text-white"
             />
-            <Search className="w-4 h-4 text-zinc-400 absolute right-3.5 top-5" />
+            <ChandIcon name="search" className="w-4 h-4 text-zinc-400 absolute right-3.5 top-5" />
           </div>
         </div>
 

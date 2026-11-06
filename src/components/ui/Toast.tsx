@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useState, useCallback, ReactNode } from 'react';
-import { CheckCircle2, AlertCircle, Info, AlertTriangle, X } from 'lucide-react';
+
+import { ChandIcon } from '../icons/ChandIcon';
 
 export type ToastType = 'success' | 'error' | 'warning' | 'info';
 
@@ -22,10 +23,10 @@ interface ToastContextType {
 const ToastContext = createContext<ToastContextType | undefined>(undefined);
 
 const toastIcons: Record<ToastType, ReactNode> = {
-  success: <CheckCircle2 className="w-4 h-4 text-emerald-500 shrink-0" />,
-  error: <AlertCircle className="w-4 h-4 text-rose-500 shrink-0" />,
-  warning: <AlertTriangle className="w-4 h-4 text-amber-500 shrink-0" />,
-  info: <Info className="w-4 h-4 text-sky-500 shrink-0" />,
+  success: <ChandIcon name="check-circle" className="w-4 h-4 text-emerald-500 shrink-0" />,
+  error: <ChandIcon name="alert" className="w-4 h-4 text-rose-500 shrink-0" />,
+  warning: <ChandIcon name="alert" className="w-4 h-4 text-amber-500 shrink-0" />,
+  info: <ChandIcon name="info" className="w-4 h-4 text-sky-500 shrink-0" />,
 };
 
 const toastColors: Record<ToastType, string> = {
@@ -84,7 +85,7 @@ export const ToastProvider: React.FC<{ children: ReactNode }> = ({ children }) =
               onClick={() => removeToast(t.id)}
               className="p-1 rounded-lg hover:bg-black/5 dark:hover:bg-white/10 text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-200 transition cursor-pointer"
             >
-              <X className="w-3.5 h-3.5" />
+              <ChandIcon name="close" className="w-3.5 h-3.5" />
             </button>
           </div>
         ))}

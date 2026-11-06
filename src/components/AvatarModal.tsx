@@ -1,8 +1,11 @@
 import React, { useState, useRef } from 'react';
-import { X, Check, Upload, Image as ImageIcon, CheckCircle2, AlertCircle, Loader2 } from 'lucide-react';
+import {
+  Upload,
+} from 'lucide-react';
 import { useApp } from '../context/AppContext';
 import { DEFAULT_AVATAR_PRESETS, MALE_AVATAR_SVG, FEMALE_AVATAR_SVG } from '../utils/avatars';
 import { uploadUserAvatar } from '../lib/supabase';
+import { ChandIcon } from './icons/ChandIcon';
 
 interface AvatarModalProps {
   isOpen: boolean;
@@ -95,13 +98,13 @@ export const AvatarModal: React.FC<AvatarModalProps> = ({ isOpen, onClose }) => 
             onClick={onClose}
             className="p-1 rounded-lg text-zinc-400 hover:text-zinc-700 dark:hover:text-zinc-200 transition cursor-pointer"
           >
-            <X className="w-5 h-5" />
+            <ChandIcon name="close" className="w-5 h-5" />
           </button>
         </div>
 
         {error && (
           <div className="p-3 rounded-xl bg-rose-50 text-rose-700 dark:bg-rose-950/40 dark:text-rose-400 border border-rose-200 text-xs flex items-center gap-2">
-            <AlertCircle className="w-4 h-4 shrink-0" />
+            <ChandIcon name="alert" className="w-4 h-4 shrink-0" />
             <span>{error}</span>
           </div>
         )}
@@ -162,8 +165,8 @@ export const AvatarModal: React.FC<AvatarModalProps> = ({ isOpen, onClose }) => 
                     </span>
                   </div>
                   {isSelected && (
-                    <div className="mr-auto w-5 h-5 rounded-full bg-emerald-600 text-white flex items-center justify-center shrink-0">
-                      <Check className="w-3.5 h-3.5" />
+                    <div className="mr-auto w-5 h-5 rounded-full text-white flex items-center justify-center shrink-0">
+                      <ChandIcon name="check" className="w-3.5 h-3.5" />
                     </div>
                   )}
                 </button>
@@ -191,7 +194,7 @@ export const AvatarModal: React.FC<AvatarModalProps> = ({ isOpen, onClose }) => 
             onClick={() => fileInputRef.current?.click()}
             className="w-full py-3 px-4 rounded-2xl border-2 border-dashed border-[#CBD5CD] dark:border-[#273830] hover:border-emerald-600 bg-zinc-50 dark:bg-[#141F1A] text-zinc-700 dark:text-zinc-300 flex items-center justify-center gap-2.5 transition cursor-pointer group"
           >
-            <Upload className="w-4 h-4 text-emerald-600 group-hover:scale-110 transition" />
+            <ChandIcon name="upload" className="w-4 h-4 text-emerald-600 group-hover:scale-110 transition" />
             <span className="text-xs font-bold">
               {customFile ? `فایل انتخاب شد: ${customFile.name}` : 'انتخاب و آپلود فایل عکس دلخواه'}
             </span>
@@ -219,12 +222,12 @@ export const AvatarModal: React.FC<AvatarModalProps> = ({ isOpen, onClose }) => 
           >
             {isUploading ? (
               <>
-                <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                <ChandIcon name="loader" className="w-3.5 h-3.5 animate-spin" />
                 <span>در حال آپلود و ذخیره...</span>
               </>
             ) : (
               <>
-                <CheckCircle2 className="w-3.5 h-3.5" />
+                <ChandIcon name="check-circle" className="w-3.5 h-3.5" />
                 <span>تایید و ذخیره آواتار</span>
               </>
             )}

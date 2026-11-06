@@ -1,28 +1,16 @@
 import React, { useState, useEffect } from 'react';
 import {
-  PieChart,
-  TrendingDown,
-  TrendingUp,
   Percent,
-  Sparkles,
-  Calendar,
-  AlertCircle,
-  CheckCircle2,
   Coins,
-  ShieldAlert,
-  Bot,
-  Lock,
-  Crown,
-  ArrowRight,
   Sliders,
-  X,
   Save,
-  Tag,
 } from 'lucide-react';
 import { useApp } from '../context/AppContext';
 import { formatToman, toPersianDigits } from '../utils/formatters';
 import { EXPENSE_CATEGORIES } from '../data/initialData';
 import { FinancialCharts } from './FinancialCharts';
+import { ChandAsset } from './ChandAsset';
+import { ChandIcon } from './icons/ChandIcon';
 
 const DEFAULT_CATEGORY_LIMITS: Record<string, number> = {
   'خوراک و غذا': 6000000,
@@ -97,9 +85,12 @@ export const AnalyticsView: React.FC = () => {
     <div className="space-y-6 animate-in fade-in duration-200 font-cairo">
       {/* Top Header */}
       <div>
+      <div className="flex items-center gap-3">
+        <ChandAsset name="analytics" size={44} className="shrink-0 drop-shadow-md" />
         <h2 className="font-cairo text-2xl font-bold text-zinc-900 dark:text-zinc-100">
           تحلیل هوشمند و نمودارهای مالی
         </h2>
+      </div>
         <p className="text-xs sm:text-sm text-zinc-600 dark:text-zinc-400 mt-1">
           بررسی نسبت پس‌انداز، بودجه‌بندی و سقف مخارج دسته‌ها، و هشدارهای پیش‌بینی چندبوم
         </p>
@@ -121,9 +112,9 @@ export const AnalyticsView: React.FC = () => {
           }`}
         >
           {budgetInsight.isWarning ? (
-            <ShieldAlert className="w-5 h-5" />
+            <ChandIcon name="shield-alert" className="w-5 h-5" />
           ) : (
-            <Sparkles className="w-5 h-5" />
+            <ChandIcon name="ai" className="w-5 h-5" />
           )}
         </div>
         <div className="space-y-1">
@@ -218,7 +209,7 @@ export const AnalyticsView: React.FC = () => {
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-[#E2E8E4] dark:border-[#1A2621]">
           <div>
             <h3 className="font-cairo text-base font-bold text-zinc-900 dark:text-zinc-100 flex items-center gap-2">
-              <PieChart className="w-5 h-5 text-emerald-700 dark:text-emerald-400" />
+              <ChandIcon name="chart" className="w-5 h-5 text-emerald-700 dark:text-emerald-400" />
               <span>بودجه‌بندی و سقف مخارج به تفکیک دسته‌بندی</span>
             </h3>
             <p className="text-xs text-zinc-500 mt-0.5">
@@ -329,8 +320,8 @@ export const AnalyticsView: React.FC = () => {
       <div className="bg-white dark:bg-[#0F1512] rounded-3xl border border-[#E2E8E4] dark:border-[#1A2621] shadow-xs p-6 space-y-6 overflow-hidden relative">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-4 border-b border-[#E2E8E4] dark:border-[#1F2E27]">
           <div className="flex items-center gap-2.5">
-            <div className="w-9 h-9 rounded-2xl bg-gradient-to-tr from-amber-400 to-yellow-500 text-zinc-950 flex items-center justify-center shadow-md">
-              <Bot className="w-5 h-5" />
+            <div className="w-9 h-9 rounded-2xl from-amber-400 to-yellow-500 text-zinc-950 flex items-center justify-center">
+              <ChandIcon name="ai" className="w-5 h-5" />
             </div>
             <div>
               <h3 className="font-cairo text-base font-bold text-zinc-900 dark:text-zinc-100 flex items-center gap-2">
@@ -350,7 +341,7 @@ export const AnalyticsView: React.FC = () => {
               onClick={() => setActiveTab('subscription')}
               className="px-3.5 py-1.5 rounded-xl bg-gradient-to-r from-amber-500 to-yellow-500 hover:from-amber-600 hover:to-yellow-600 text-zinc-950 font-cairo font-bold text-xs flex items-center gap-1.5 shadow-xs transition cursor-pointer shrink-0"
             >
-              <Crown className="w-3.5 h-3.5" />
+              <ChandIcon name="crown" className="w-3.5 h-3.5" />
               <span>خرید اشتراک طلایی پرو</span>
             </button>
           )}
@@ -390,18 +381,18 @@ export const AnalyticsView: React.FC = () => {
             {/* Smart Strategic Recommendations */}
             <div className="p-5 rounded-2xl bg-zinc-50 dark:bg-[#121B16] border border-[#E2E8E4] dark:border-[#1F2E27] space-y-3">
               <h4 className="font-cairo font-bold text-xs text-zinc-900 dark:text-white flex items-center gap-2">
-                <Sparkles className="w-4 h-4 text-amber-500" />
+                <ChandIcon name="ai" className="w-4 h-4 text-amber-500" />
                 <span>توصیه‌های تحلیلی هوش مصنوعی چندبوم:</span>
               </h4>
               <ul className="space-y-2 text-xs text-zinc-600 dark:text-zinc-300">
                 <li className="flex items-start gap-2">
-                  <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0 mt-0.5" />
+                  <ChandIcon name="check-circle" className="w-4 h-4 text-emerald-600 shrink-0 mt-0.5" />
                   <span>
                     سرعت سوزاندن بودجه ({formatToman(budgetInsight.dailyBurnRate)} در روز) با سقف بودجه مصوب شما همخوانی دارد.
                   </span>
                 </li>
                 <li className="flex items-start gap-2">
-                  <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0 mt-0.5" />
+                  <ChandIcon name="check-circle" className="w-4 h-4 text-emerald-600 shrink-0 mt-0.5" />
                   <span>
                     بیشترین صرفه‌جویی بالقوه در دسته‌بندی «{sortedCategories[0]?.[0] || 'خوراک و غذا'}» شناسایی شد.
                   </span>
@@ -412,8 +403,8 @@ export const AnalyticsView: React.FC = () => {
         ) : (
           /* Non-Pro User: Attractive Golden Paywall Teaser */
           <div className="relative rounded-2xl overflow-hidden p-6 sm:p-8 bg-gradient-to-br from-[#1C170A] via-[#261E0A] to-[#120F05] text-white border-2 border-amber-500/60 shadow-xl text-center space-y-4">
-            <div className="w-14 h-14 rounded-full bg-amber-500/20 text-amber-300 flex items-center justify-center mx-auto shadow-inner border border-amber-400/40">
-              <Lock className="w-7 h-7" />
+            <div className="w-14 h-14 rounded-full text-amber-300 flex items-center justify-center mx-auto">
+              <ChandIcon name="key" className="w-7 h-7" />
             </div>
 
             <div className="max-w-lg mx-auto space-y-2">
@@ -430,9 +421,9 @@ export const AnalyticsView: React.FC = () => {
                 onClick={() => setActiveTab('subscription')}
                 className="px-6 py-2.5 rounded-xl bg-gradient-to-r from-amber-500 via-amber-600 to-yellow-600 hover:from-amber-600 hover:to-yellow-700 text-zinc-950 font-cairo font-black text-xs sm:text-sm transition cursor-pointer shadow-lg inline-flex items-center gap-2"
               >
-                <Crown className="w-4 h-4 text-zinc-950" />
+                <ChandIcon name="crown" className="w-4 h-4 text-zinc-950" />
                 <span>مشاهده و خرید اشتراک طلایی پرو (پلن‌های ۱، ۳ و ۶ ماهه)</span>
-                <ArrowRight className="w-4 h-4 rotate-180" />
+                <ChandIcon name="arrow-right" className="w-4 h-4 rotate-180" />
               </button>
             </div>
           </div>
@@ -465,7 +456,7 @@ export const AnalyticsView: React.FC = () => {
                 onClick={() => setIsEditLimitsModalOpen(false)}
                 className="p-1 rounded-lg text-zinc-400 hover:text-zinc-700 dark:hover:text-zinc-200 transition cursor-pointer"
               >
-                <X className="w-5 h-5" />
+                <ChandIcon name="close" className="w-5 h-5" />
               </button>
             </div>
 
@@ -474,7 +465,7 @@ export const AnalyticsView: React.FC = () => {
                 {EXPENSE_CATEGORIES.map((cat) => (
                   <div key={cat} className="flex items-center justify-between gap-3 p-2.5 rounded-xl bg-zinc-50 dark:bg-[#141E1A] border border-[#E2E8E4] dark:border-[#1F2E27]">
                     <span className="text-xs font-bold text-zinc-800 dark:text-zinc-200 flex items-center gap-1.5">
-                      <Tag className="w-3.5 h-3.5 text-emerald-600" />
+                      <ChandIcon name="tag" className="w-3.5 h-3.5 text-emerald-600" />
                       {cat}
                     </span>
 

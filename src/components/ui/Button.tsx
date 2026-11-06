@@ -1,5 +1,6 @@
 import React, { ButtonHTMLAttributes, forwardRef, ReactNode } from 'react';
-import { Loader2 } from 'lucide-react';
+
+import { ChandIcon } from '../icons/ChandIcon';
 
 export type ButtonVariant = 'primary' | 'secondary' | 'outline' | 'ghost' | 'danger' | 'gold';
 export type ButtonSize = 'sm' | 'md' | 'lg';
@@ -63,7 +64,7 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
         {...props}
       >
         {isLoading ? (
-          <Loader2 className="w-4 h-4 animate-spin shrink-0" />
+          <ChandIcon name="loader" className="w-4 h-4 animate-spin shrink-0" />
         ) : (
           leftIcon && <span className="shrink-0">{leftIcon}</span>
         )}

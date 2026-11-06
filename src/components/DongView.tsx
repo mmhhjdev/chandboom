@@ -1,7 +1,7 @@
 import { computeSettlement } from '../utils/dongSettlement';
 import { parseMoneyInput, formatMoneyInput } from '../utils/money';
 import React, { useState, useEffect } from 'react';
-import { Users, Plus, Calculator, Trash2, ArrowRight, Receipt, UserPlus, X, Home, ShoppingCart, Copy } from 'lucide-react';
+
 import { formatToman, toPersianDigits } from '../utils/formatters';
 import { getSupabaseClient } from '../lib/supabase';
 import { DongCollaborationPanel } from './DongCollaborationPanel';
@@ -9,6 +9,8 @@ import { friendsOverview, type FriendEntry } from '../services/friendsService';
 import { buildGroupMemberLabels } from '../utils/friendLabels';
 import { DongGroupAI } from './DongGroupAI';
 import type { ExpenseDraft } from './DongGroupAI';
+import { ChandAsset } from './ChandAsset';
+import { ChandIcon } from './icons/ChandIcon';
 
 interface FamilyMember {
   name: string;
@@ -416,23 +418,26 @@ export const DongView: React.FC = () => {
       <div className="space-y-6 animate-in fade-in duration-200 font-cairo">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white dark:bg-[#0F1512] p-6 rounded-2xl border border-[#E2E8E4] dark:border-[#1A2621] shadow-xs">
           <div>
+          <div className="flex items-center gap-3">
+            <ChandAsset name="dong" size={44} className="shrink-0 drop-shadow-md" />
             <h2 className="font-cairo text-2xl font-bold text-zinc-900 dark:text-zinc-100">
               مدیریت <span className="text-emerald-700 dark:text-emerald-400">دنگ و تسویه حساب</span>
             </h2>
+          </div>
             <p className="text-xs sm:text-sm text-zinc-600 dark:text-zinc-400 mt-1">
               گروه دوستانه یا جمع خانوادگی بسازید و خرج‌ها را به عادلانه‌ترین شکل تقسیم کنید.
             </p>
             {profileUsername && <div className="mt-3 inline-flex flex-wrap items-center gap-2 rounded-xl bg-emerald-50 dark:bg-emerald-950/30 px-3 py-2 text-xs">
               <span className="text-zinc-600 dark:text-zinc-300">{profileDisplayName || 'نام کاربری شما'}:</span>
               <b dir="ltr" className="text-emerald-800 dark:text-emerald-300">@{profileUsername}</b>
-              <button type="button" title="کپی نام کاربری" onClick={() => { if (navigator.clipboard?.writeText) { void navigator.clipboard.writeText(`@${profileUsername}`).then(() => alert('نام کاربری کپی شد.')).catch(() => alert(`نام کاربری: @${profileUsername}`)); } else { alert(`نام کاربری: @${profileUsername}`); } }} className="p-1 rounded hover:bg-emerald-100 dark:hover:bg-emerald-900"><Copy className="w-3.5 h-3.5"/></button>
+              <button type="button" title="کپی نام کاربری" onClick={() => { if (navigator.clipboard?.writeText) { void navigator.clipboard.writeText(`@${profileUsername}`).then(() => alert('نام کاربری کپی شد.')).catch(() => alert(`نام کاربری: @${profileUsername}`)); } else { alert(`نام کاربری: @${profileUsername}`); } }} className="p-1 rounded hover:bg-emerald-100 dark:hover:bg-emerald-900"><ChandIcon name="copy" className="w-3.5 h-3.5" /></button>
             </div>}
           </div>
           <button
             onClick={() => setIsNewGroupModalOpen(true)}
             className="flex items-center justify-center gap-2 px-4 py-2.5 bg-emerald-700 hover:bg-emerald-800 text-white rounded-xl text-xs font-cairo font-bold transition shadow-xs cursor-pointer"
           >
-            <Plus className="w-4 h-4" />
+            <ChandIcon name="add" className="w-4 h-4" />
             ایجاد گروه جدید
           </button>
         </div>
@@ -440,7 +445,7 @@ export const DongView: React.FC = () => {
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
           {groups.length === 0 ? (
             <div className="col-span-full py-12 text-center bg-white dark:bg-[#0F1512] rounded-2xl border border-[#E2E8E4] dark:border-[#1A2621] p-8">
-              <Users className="w-12 h-12 text-zinc-300 dark:text-zinc-700 mx-auto mb-3" />
+              <ChandIcon name="users" className="w-12 h-12 text-zinc-300 dark:text-zinc-700 mx-auto mb-3" />
               <p className="text-sm font-bold text-zinc-700 dark:text-zinc-300">هنوز هیچ گروهی ساخته نشده است</p>
             </div>
           ) : (
@@ -454,9 +459,9 @@ export const DongView: React.FC = () => {
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-2">
                       {group.isFamilyMode ? (
-                        <Home className="w-4 h-4 text-amber-600" />
+                        <ChandIcon name="home" className="w-4 h-4 text-amber-600" />
                       ) : (
-                        <Users className="w-4 h-4 text-emerald-600" />
+                        <ChandIcon name="users" className="w-4 h-4 text-emerald-600" />
                       )}
                       <h3 className="font-cairo text-lg font-bold text-zinc-900 dark:text-zinc-100">{group.name}</h3>
                     </div>
@@ -465,7 +470,7 @@ export const DongView: React.FC = () => {
                       className="p-1.5 text-zinc-400 hover:text-rose-600 transition"
                       title="حذف گروه"
                     >
-                      <Trash2 className="w-4 h-4" />
+                      <ChandIcon name="trash" className="w-4 h-4" />
                     </button>
                   </div>
                   <p className="text-xs text-zinc-500 mt-2">
@@ -480,7 +485,7 @@ export const DongView: React.FC = () => {
                 <div className="flex items-center justify-between pt-3 border-t border-[#E2E8E4] dark:border-[#1A2621] text-xs">
                   <span className="text-zinc-500">{toPersianDigits(group.expenses.length)} هزینه ثبت‌شده</span>
                   <span className="text-emerald-700 dark:text-emerald-400 font-bold flex items-center gap-1">
-                    مدیریت گروه <ArrowRight className="w-3.5 h-3.5 rotate-180" />
+                    مدیریت گروه <ChandIcon name="arrow-right" className="w-3.5 h-3.5 rotate-180" />
                   </span>
                 </div>
               </div>
@@ -537,7 +542,7 @@ export const DongView: React.FC = () => {
                         onClick={() => setFamilyInputs([...familyInputs, { name: '', count: 2 }])}
                         className="text-emerald-700 dark:text-emerald-400 font-bold flex items-center gap-1 hover:underline cursor-pointer text-[11px]"
                       >
-                        <UserPlus className="w-3.5 h-3.5" /> افزودن خانواده
+                        <ChandIcon name="user-plus" className="w-3.5 h-3.5" /> افزودن خانواده
                       </button>
                     </div>
                     <div className="max-h-48 overflow-y-auto space-y-2 pr-1">
@@ -573,7 +578,7 @@ export const DongView: React.FC = () => {
                               onClick={() => setFamilyInputs(familyInputs.filter((_, i) => i !== index))}
                               className="p-2 text-rose-500 rounded-xl"
                             >
-                              <X className="w-4 h-4" />
+                              <ChandIcon name="close" className="w-4 h-4" />
                             </button>
                           )}
                         </div>
@@ -654,14 +659,14 @@ export const DongView: React.FC = () => {
             className="p-2 rounded-xl border border-[#E2E8E4] dark:border-[#1A2621] text-zinc-600 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition cursor-pointer"
             title="بازگشت به لیست گروه‌ها"
           >
-            <ArrowRight className="w-5 h-5" />
+            <ChandIcon name="arrow-right" className="w-5 h-5" />
           </button>
           <div>
             <div className="flex items-center gap-2">
               {activeGroup.isFamilyMode ? (
-                <Home className="w-5 h-5 text-amber-600" />
+                <ChandIcon name="home" className="w-5 h-5 text-amber-600" />
               ) : (
-                <Users className="w-5 h-5 text-emerald-700" />
+                <ChandIcon name="users" className="w-5 h-5 text-emerald-700" />
               )}
               <h2 className="font-cairo text-xl font-bold text-zinc-900 dark:text-zinc-100">{activeGroup.name}</h2>
             </div>
@@ -686,7 +691,7 @@ export const DongView: React.FC = () => {
           }}
           className="flex items-center justify-center gap-2 px-4 py-2.5 bg-emerald-700 hover:bg-emerald-800 text-white rounded-xl text-xs font-cairo font-bold transition shadow-xs cursor-pointer"
         >
-          <Plus className="w-4 h-4" />
+          <ChandIcon name="add" className="w-4 h-4" />
           ثبت هزینه جدید در گروه
         </button>
       </div>
@@ -697,7 +702,7 @@ export const DongView: React.FC = () => {
 
       <div className="bg-gradient-to-br from-emerald-50 to-teal-50 dark:from-[#122019] dark:to-[#0F1814] p-5 rounded-2xl border border-emerald-200/60 dark:border-emerald-900/50 shadow-xs space-y-4">
         <div className="flex items-center gap-2 text-emerald-900 dark:text-emerald-300">
-          <Calculator className="w-5 h-5" />
+          <ChandIcon name="calculator" className="w-5 h-5" />
           <h3 className="font-cairo font-bold text-base">تسویه حساب نهایی و کمترین تراکنش ممکن</h3>
         </div>
 
@@ -740,7 +745,7 @@ export const DongView: React.FC = () => {
       <div className="bg-white dark:bg-[#0F1512] rounded-2xl border border-[#E2E8E4] dark:border-[#1A2621] shadow-xs overflow-hidden">
         <div className="p-4 border-b border-[#E2E8E4] dark:border-[#1A2621] flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <Receipt className="w-5 h-5 text-emerald-700 dark:text-emerald-400" />
+            <ChandIcon name="receipt" className="w-5 h-5 text-emerald-700 dark:text-emerald-400" />
             <h3 className="font-cairo text-base font-bold text-zinc-900 dark:text-zinc-100">
               ریز هزینه‌های انجام شده در گروه
             </h3>
@@ -782,7 +787,7 @@ export const DongView: React.FC = () => {
                       title="حذف هزینه"
                       className="p-2 bg-rose-50 hover:bg-rose-100 text-rose-600 dark:bg-rose-950/40 dark:text-rose-400 rounded-lg transition cursor-pointer"
                     >
-                      <Trash2 className="w-4 h-4" />
+                      <ChandIcon name="trash" className="w-4 h-4" />
                     </button>
                   </div>
                 </div>
@@ -914,14 +919,14 @@ export const DongView: React.FC = () => {
                 <div className="space-y-3 pt-2 border-t border-dashed border-zinc-300 dark:border-zinc-800">
                   <div className="flex items-center justify-between">
                     <span className="font-bold text-zinc-700 dark:text-zinc-300 flex items-center gap-1">
-                      <ShoppingCart className="w-4 h-4 text-amber-600" /> اقلام فاکتور (غذاها، نوشیدنی‌ها...)
+                      <ChandIcon name="cart" className="w-4 h-4 text-amber-600" /> اقلام فاکتور (غذاها، نوشیدنی‌ها...)
                     </span>
                     <button
                       type="button"
                       onClick={() => setBillItems([...billItems, { title: '', price: '', consumers: [] }])}
                       className="text-emerald-700 dark:text-emerald-400 font-bold flex items-center gap-1 text-[11px]"
                     >
-                      <Plus className="w-3.5 h-3.5" /> افزودن آیتم جدید
+                      <ChandIcon name="add" className="w-3.5 h-3.5" /> افزودن آیتم جدید
                     </button>
                   </div>
 
@@ -960,7 +965,7 @@ export const DongView: React.FC = () => {
                               onClick={() => setBillItems(billItems.filter((_, i) => i !== index))}
                               className="p-2 text-rose-500 rounded-lg"
                             >
-                              <X className="w-4 h-4" />
+                              <ChandIcon name="close" className="w-4 h-4" />
                             </button>
                           )}
                         </div>

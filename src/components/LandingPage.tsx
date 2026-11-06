@@ -1,49 +1,18 @@
 import React, { useState, useEffect } from 'react';
 import {
-  Shield,
-  ArrowRight,
-  ArrowLeft,
-  CheckCircle2,
   Zap,
   TrendingUp,
-  PieChart,
-  Users,
-  Bell,
-  Lock,
-  Star,
-  ChevronDown,
-  ChevronUp,
   Laptop,
-  CreditCard,
-  HelpCircle,
-  ShieldCheck,
-  Check,
-  LogIn,
-  Mic,
-  Target,
-  BarChart3,
-  Calendar,
-  Wallet,
-  Clock,
-  Award,
   Globe,
-  Smartphone,
-  Eye,
-  Plus,
   ArrowUp,
   Headphones,
-  FileText,
-  X,
-  Share2,
-  Bookmark,
-  TrendingDown,
-  Activity,
 } from 'lucide-react';
 import { useApp } from '../context/AppContext';
 import { Link } from 'react-router-dom';
 import { ARTICLES } from '../data/articles';
 import { ArticleCover } from './ArticleCover';
 import { formatArticleDate, readingTimeLabel } from '../utils/articleFormat';
+import { ChandIcon } from './icons/ChandIcon';
 
 const LANDING_ARTICLES = (() => {
   const featured = ARTICLES.filter((a) => a.isFeatured).slice(0, 3);
@@ -310,7 +279,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({
               <div className="absolute -bottom-10 -left-6 sm:left-0 z-20 w-64 p-4 bg-white/95 backdrop-blur-md rounded-3xl shadow-2xl border border-emerald-100 hidden md:block">
                 <div className="flex items-center justify-between pb-2 border-b border-zinc-100">
                   <div className="flex items-center gap-1.5">
-                    <Users className="w-4 h-4 text-emerald-700" />
+                    <ChandIcon name="users" className="w-4 h-4 text-emerald-700" />
                     <span className="font-extrabold text-xs text-zinc-900">دونگ و خرج گروهی</span>
                   </div>
                   <span className="px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800 text-[10px] font-bold">فعال</span>
@@ -361,7 +330,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({
             <div className="order-1 lg:order-2 lg:col-span-5 text-right space-y-6">
               {/* Badge */}
               <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-emerald-50 text-emerald-800 text-xs font-bold border border-emerald-200/80 shadow-2xs">
-                <Award className="w-3.5 h-3.5 text-emerald-600" />
+                <ChandIcon name="award" className="w-3.5 h-3.5 text-emerald-600" />
                 <span>نسخه جدید چندبوم با هوش مالی پیشرفته</span>
               </div>
 
@@ -389,7 +358,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({
                   href="#features"
                   className="flex items-center justify-center gap-2 px-6 py-3.5 rounded-2xl border-2 border-emerald-700 text-emerald-800 hover:bg-emerald-50 font-bold text-sm transition-all duration-200 cursor-pointer"
                 >
-                  <ArrowLeft className="w-4 h-4" />
+                  <ChandIcon name="arrow-left" className="w-4 h-4" />
                   <span>آشنایی با امکانات</span>
                 </a>
               </div>
@@ -434,8 +403,8 @@ export const LandingPage: React.FC<LandingPageProps> = ({
             <div className="lg:col-span-4 space-y-6">
               {/* Card 1: امنیت داده‌ها */}
               <div className="p-6 bg-white/95 backdrop-blur-md rounded-3xl shadow-lg border border-emerald-100 hover:shadow-xl transition-all duration-300 text-right space-y-3 group">
-                <div className="w-14 h-14 rounded-2xl bg-gradient-to-tr from-emerald-600 to-teal-700 text-white flex items-center justify-center shadow-md shadow-emerald-700/20 group-hover:scale-105 transition-transform">
-                  <ShieldCheck className="w-7 h-7" />
+                <div className="w-14 h-14 rounded-2xl from-emerald-600 to-teal-700 text-white flex items-center justify-center group-hover:scale-105 transition-transform">
+                  <ChandIcon name="shield" className="w-7 h-7" />
                 </div>
                 <h3 className="font-extrabold text-lg text-emerald-950">
                   امنیت داده‌ها
@@ -447,8 +416,8 @@ export const LandingPage: React.FC<LandingPageProps> = ({
 
               {/* Card 2: کاربردی برای همه */}
               <div className="p-6 bg-white/95 backdrop-blur-md rounded-3xl shadow-lg border border-emerald-100 hover:shadow-xl transition-all duration-300 text-right space-y-3 group">
-                <div className="w-14 h-14 rounded-2xl bg-gradient-to-tr from-teal-500 to-emerald-600 text-white flex items-center justify-center shadow-md shadow-teal-600/20 group-hover:scale-105 transition-transform">
-                  <Users className="w-7 h-7" />
+                <div className="w-14 h-14 rounded-2xl from-teal-500 to-emerald-600 text-white flex items-center justify-center group-hover:scale-105 transition-transform">
+                  <ChandIcon name="users" className="w-7 h-7" />
                 </div>
                 <h3 className="font-extrabold text-lg text-emerald-950">
                   کاربردی برای همه
@@ -484,7 +453,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({
                     onClick={handleLaunchApp}
                     className="w-full py-2.5 rounded-xl bg-white text-emerald-800 font-extrabold text-xs shadow-md hover:bg-emerald-50 transition cursor-pointer flex items-center justify-center gap-1.5"
                   >
-                    <ArrowLeft className="w-3.5 h-3.5" />
+                    <ChandIcon name="arrow-left" className="w-3.5 h-3.5" />
                     <span>شروع کنید</span>
                   </button>
 
@@ -523,8 +492,8 @@ export const LandingPage: React.FC<LandingPageProps> = ({
 
               {/* Card 4: تحلیل مالی و هوش مصنوعی */}
               <div className="p-6 bg-white/95 backdrop-blur-md rounded-3xl shadow-lg border border-emerald-100 hover:shadow-xl transition-all duration-300 text-right space-y-3 group">
-                <div className="w-14 h-14 rounded-2xl bg-gradient-to-tr from-teal-600 to-emerald-700 text-white flex items-center justify-center shadow-md shadow-emerald-700/20 group-hover:scale-105 transition-transform">
-                  <BarChart3 className="w-7 h-7" />
+                <div className="w-14 h-14 rounded-2xl from-teal-600 to-emerald-700 text-white flex items-center justify-center group-hover:scale-105 transition-transform">
+                  <ChandIcon name="chart" className="w-7 h-7" />
                 </div>
                 <h3 className="font-extrabold text-lg text-emerald-950">
                   تحلیل مالی و پیش‌بینی هوشمند
@@ -555,7 +524,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({
                 <div className="space-y-3 text-right">
                   <div className="flex items-center justify-between pb-2 border-b border-zinc-100 text-xs font-bold text-zinc-800">
                     <span>گروه‌های هم‌خرج من</span>
-                    <Users className="w-4 h-4 text-emerald-700" />
+                    <ChandIcon name="users" className="w-4 h-4 text-emerald-700" />
                   </div>
 
                   {/* List of groups */}
@@ -598,7 +567,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({
                     onClick={handleLaunchDong}
                     className="w-full py-2.5 rounded-2xl bg-emerald-700 hover:bg-emerald-800 text-white font-bold text-xs shadow-md transition cursor-pointer flex items-center justify-center gap-1.5"
                   >
-                    <Plus className="w-4 h-4" />
+                    <ChandIcon name="add" className="w-4 h-4" />
                     <span>ثبت گروه دنگ جدید</span>
                   </button>
                 </div>
@@ -622,8 +591,8 @@ export const LandingPage: React.FC<LandingPageProps> = ({
                     <span className="text-2xl font-black text-emerald-950 block font-mono">+۱۲۵</span>
                     <span className="text-xs text-zinc-500 font-bold">گروه هم‌خرج</span>
                   </div>
-                  <div className="w-10 h-10 rounded-xl bg-emerald-100 text-emerald-800 flex items-center justify-center">
-                    <Users className="w-5 h-5" />
+                  <div className="w-10 h-10 rounded-xl text-emerald-800 flex items-center justify-center">
+                    <ChandIcon name="users" className="w-5 h-5" />
                   </div>
                 </div>
 
@@ -632,8 +601,8 @@ export const LandingPage: React.FC<LandingPageProps> = ({
                     <span className="text-2xl font-black text-emerald-950 block font-mono">+۶۸۰</span>
                     <span className="text-xs text-zinc-500 font-bold">کاربران هم‌خرج</span>
                   </div>
-                  <div className="w-10 h-10 rounded-xl bg-teal-100 text-teal-800 flex items-center justify-center">
-                    <Award className="w-5 h-5" />
+                  <div className="w-10 h-10 rounded-xl text-teal-800 flex items-center justify-center">
+                    <ChandIcon name="award" className="w-5 h-5" />
                   </div>
                 </div>
 
@@ -642,8 +611,8 @@ export const LandingPage: React.FC<LandingPageProps> = ({
                     <span className="text-2xl font-black text-emerald-950 block font-mono">+۲۳۰۰</span>
                     <span className="text-xs text-zinc-500 font-bold">تراکنش ثبت‌شده</span>
                   </div>
-                  <div className="w-10 h-10 rounded-xl bg-emerald-100 text-emerald-800 flex items-center justify-center">
-                    <CreditCard className="w-5 h-5" />
+                  <div className="w-10 h-10 rounded-xl text-emerald-800 flex items-center justify-center">
+                    <ChandIcon name="card" className="w-5 h-5" />
                   </div>
                 </div>
 
@@ -652,8 +621,8 @@ export const LandingPage: React.FC<LandingPageProps> = ({
                     <span className="text-2xl font-black text-emerald-950 block font-mono">۸۷٪</span>
                     <span className="text-xs text-zinc-500 font-bold">تسویه موفق</span>
                   </div>
-                  <div className="w-10 h-10 rounded-xl bg-teal-100 text-teal-800 flex items-center justify-center">
-                    <CheckCircle2 className="w-5 h-5" />
+                  <div className="w-10 h-10 rounded-xl text-teal-800 flex items-center justify-center">
+                    <ChandIcon name="check-circle" className="w-5 h-5" />
                   </div>
                 </div>
               </div>
@@ -715,8 +684,8 @@ export const LandingPage: React.FC<LandingPageProps> = ({
             <div className="grid grid-cols-1 md:grid-cols-2 gap-8 items-center relative">
               <div className="order-1 flex justify-center">
                 <div className="p-4 bg-white rounded-3xl shadow-xl border border-emerald-100 max-w-xs w-full text-center space-y-2">
-                  <div className="w-16 h-16 rounded-2xl bg-teal-50 text-teal-700 mx-auto flex items-center justify-center">
-                    <CreditCard className="w-8 h-8" />
+                  <div className="w-16 h-16 rounded-2xl text-teal-700 mx-auto flex items-center justify-center">
+                    <ChandIcon name="card" className="w-8 h-8" />
                   </div>
                   <span className="text-xs font-bold text-zinc-800 block">ثبت هوشمند یا پیامکی</span>
                 </div>
@@ -845,7 +814,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({
                       <span className="text-[10px] text-emerald-200 block">همگام‌سازی لحظه‌ای</span>
                       <span className="font-extrabold text-xs text-white">پایگاه داده ابری و ایمن</span>
                     </div>
-                    <ShieldCheck className="w-6 h-6 text-white" />
+                    <ChandIcon name="shield" className="w-6 h-6 text-white" />
                   </button>
 
                   <button
@@ -856,7 +825,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({
                       <span className="text-[10px] text-emerald-700 font-bold block">شروع فوری</span>
                       <span className="font-black text-xs text-emerald-950">ورود به نسخه تحت وب</span>
                     </div>
-                    <ArrowLeft className="w-5 h-5 text-emerald-800" />
+                    <ChandIcon name="arrow-left" className="w-5 h-5 text-emerald-800" />
                   </button>
                 </div>
               </div>
@@ -927,7 +896,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({
               </p>
             </div>
             <Link to="/articles" className="inline-flex w-fit items-center gap-2 rounded-full border border-emerald-200 bg-white px-5 py-2.5 text-sm font-extrabold text-emerald-800 hover:border-emerald-400 transition">
-              همه مقالات <ArrowLeft className="w-4 h-4" />
+              همه مقالات <ChandIcon name="arrow-left" className="w-4 h-4" />
             </Link>
           </div>
 
@@ -947,7 +916,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({
                 <p className="line-clamp-3 text-sm leading-7 text-zinc-600">{article.description}</p>
                 <div className="mt-auto flex items-center justify-between border-t border-zinc-100 pt-4 text-xs text-zinc-500">
                   <span>{formatArticleDate(article.publishedAt)} · {readingTimeLabel(article.readingTime)}</span>
-                  <span className="inline-flex items-center gap-1 font-extrabold text-emerald-700">ادامه مطلب <ArrowLeft className="w-3.5 h-3.5" /></span>
+                  <span className="inline-flex items-center gap-1 font-extrabold text-emerald-700">ادامه مطلب <ChandIcon name="arrow-left" className="w-3.5 h-3.5" /></span>
                 </div>
                 </div>
               </Link>

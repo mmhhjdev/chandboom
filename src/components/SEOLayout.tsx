@@ -1,6 +1,7 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { ArrowRight, Sparkles, ShieldCheck } from 'lucide-react';
+
+import { ChandIcon } from './icons/ChandIcon';
 
 interface SEOLayoutProps {
   children: React.ReactNode;
@@ -51,7 +52,7 @@ export const SEOLayout: React.FC<SEOLayoutProps> = ({ children }) => {
               to="/"
               className="px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold flex items-center gap-1.5 transition shadow-sm cursor-pointer"
             >
-              <Sparkles className="w-3.5 h-3.5" />
+              <ChandIcon name="ai" className="w-3.5 h-3.5" />
               <span>ورود به سامانه</span>
             </Link>
           </div>
@@ -78,7 +79,7 @@ export const SEOLayout: React.FC<SEOLayoutProps> = ({ children }) => {
                 سامانه هوشمند مدیریت مالی شخصی، ثبت خودکار پیامک بانکی، هوش مصنوعی تحلیل بودجه و تقسیم عادلانه دنگ سفر.
               </p>
               <div className="flex items-center gap-1 text-[11px] text-emerald-600 dark:text-emerald-400 font-bold">
-                <ShieldCheck className="w-4 h-4" />
+                <ChandIcon name="shield" className="w-4 h-4" />
                 <span>حفاظت از حریم خصوصی و امنیت داده‌ها</span>
               </div>
             </div>

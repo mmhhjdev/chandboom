@@ -1,23 +1,15 @@
 import React, { useState } from 'react';
 import {
-  X,
-  CreditCard,
-  CheckCircle2,
-  AlertCircle,
-  Sparkles,
-  Building2,
-  Calendar,
   ArrowDownLeft,
   ArrowUpRight,
-  Tag,
   FileText,
-  Loader2,
 } from 'lucide-react';
 import { TransactionCategory, TransactionType } from '../types';
 import { EXPENSE_CATEGORIES, INCOME_CATEGORIES } from '../data/initialData';
 import { formatToman, toPersianDigits } from '../utils/formatters';
 import { parseTransactionWithSystemOne } from '../services/aiService';
 import { useApp } from '../context/AppContext';
+import { ChandIcon } from './icons/ChandIcon';
 
 interface BankSmsModalProps {
   isOpen: boolean;
@@ -131,8 +123,8 @@ export const BankSmsModal: React.FC<BankSmsModalProps> = ({
         {/* Header */}
         <div className="flex items-center justify-between border-b border-[#E2E8E4] dark:border-[#1F2E27] pb-3">
           <div className="flex items-center gap-2.5">
-            <div className="p-2.5 rounded-2xl bg-emerald-100 text-emerald-800 dark:bg-[#15271E] dark:text-emerald-300">
-              <Sparkles className="w-5 h-5" />
+            <div className="p-2.5 rounded-2xl text-emerald-800 dark:text-emerald-300">
+              <ChandIcon name="ai" className="w-5 h-5" />
             </div>
             <div>
               <h3 className="font-cairo text-base font-bold text-zinc-900 dark:text-zinc-100">
@@ -147,14 +139,14 @@ export const BankSmsModal: React.FC<BankSmsModalProps> = ({
             onClick={onClose}
             className="p-1 rounded-lg text-zinc-400 hover:text-zinc-700 dark:hover:text-zinc-200 transition cursor-pointer"
           >
-            <X className="w-5 h-5" />
+            <ChandIcon name="close" className="w-5 h-5" />
           </button>
         </div>
 
         {parseError && (
           <div className="p-3 rounded-xl bg-rose-50 text-rose-700 dark:bg-rose-950/40 dark:text-rose-400 border border-rose-200 text-xs flex flex-col sm:flex-row items-center justify-between gap-2">
             <div className="flex items-center gap-2">
-              <AlertCircle className="w-4 h-4 shrink-0" />
+              <ChandIcon name="alert" className="w-4 h-4 shrink-0" />
               <span>{parseError}</span>
             </div>
             {parseError.includes('اشتراک') && (
@@ -200,12 +192,12 @@ export const BankSmsModal: React.FC<BankSmsModalProps> = ({
               >
                 {isProcessing ? (
                   <>
-                    <Loader2 className="w-4 h-4 animate-spin" />
+                    <ChandIcon name="loader" className="w-4 h-4 animate-spin" />
                     <span>در حال پردازش هوشمند...</span>
                   </>
                 ) : (
                   <>
-                    <Sparkles className="w-4 h-4" />
+                    <ChandIcon name="ai" className="w-4 h-4" />
                     <span>استخراج و مرحله بعد</span>
                   </>
                 )}
@@ -219,7 +211,7 @@ export const BankSmsModal: React.FC<BankSmsModalProps> = ({
             <div className="p-4 rounded-2xl bg-zinc-50 dark:bg-[#141E1A] border border-[#E2E8E4] dark:border-[#1F2E27] space-y-3">
               <div className="flex items-center justify-between pb-2 border-b border-[#E2E8E4] dark:border-[#1F2E27]">
                 <span className="text-xs text-zinc-500 flex items-center gap-1.5">
-                  <Building2 className="w-4 h-4 text-emerald-600" />
+                  <ChandIcon name="bank" className="w-4 h-4 text-emerald-600" />
                   بانک شناسایی‌شده:
                 </span>
                 <span className="font-bold text-xs text-zinc-900 dark:text-white">
@@ -254,7 +246,7 @@ export const BankSmsModal: React.FC<BankSmsModalProps> = ({
 
               <div className="flex items-center justify-between text-xs">
                 <span className="text-zinc-500 flex items-center gap-1.5">
-                  <Calendar className="w-4 h-4 text-zinc-400" />
+                  <ChandIcon name="calendar" className="w-4 h-4 text-zinc-400" />
                   تاریخ ثبت:
                 </span>
                 <span className="font-mono text-zinc-700 dark:text-zinc-300">
@@ -266,7 +258,7 @@ export const BankSmsModal: React.FC<BankSmsModalProps> = ({
             {/* Interactive User Selection for Category (No Auto-guessing) */}
             <div className="space-y-2">
               <label className="block text-xs font-cairo font-bold text-zinc-800 dark:text-zinc-200 flex items-center gap-1.5">
-                <Tag className="w-4 h-4 text-emerald-600" />
+                <ChandIcon name="tag" className="w-4 h-4 text-emerald-600" />
                 <span>لطفاً دسته‌بندی این تراکنش را مشخص فرمایید *</span>
               </label>
 
@@ -320,7 +312,7 @@ export const BankSmsModal: React.FC<BankSmsModalProps> = ({
                 type="submit"
                 className="px-6 py-2.5 rounded-xl bg-emerald-700 hover:bg-emerald-800 text-white font-cairo font-bold text-xs shadow-xs transition cursor-pointer flex items-center gap-1.5"
               >
-                <CheckCircle2 className="w-4 h-4" />
+                <ChandIcon name="check-circle" className="w-4 h-4" />
                 <span>ثبت نهایی تراکنش در چندبوم</span>
               </button>
             </div>

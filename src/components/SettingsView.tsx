@@ -2,23 +2,9 @@ import { ChandAsset } from './ChandAsset';
 import { ChandIcon } from './icons/ChandIcon';
 import React, { useEffect, useState } from 'react';
 import {
-  User,
-  Shield,
-  Moon,
-  Sun,
   Save,
   RotateCcw,
-  CheckCircle2,
-  Lock,
-  Info,
-  Clock,
-  Award,
-  CreditCard,
-  Copy,
-  Check,
   Eye,
-  X,
-  AlertCircle,
 } from 'lucide-react';
 import { useApp } from '../context/AppContext';
 import { formatToman, formatShamsiDate, formatShamsiDateTime, toPersianDigits } from '../utils/formatters';
@@ -190,9 +176,12 @@ export const SettingsView: React.FC<SettingsViewProps> = ({ onOpenAvatarModal })
   return (
     <div className="space-y-6 animate-in fade-in duration-200 font-cairo max-w-4xl">
       <div>
+      <div className="flex items-center gap-3">
+        <ChandIcon name="settings" className="w-8 h-8 shrink-0 text-emerald-700 dark:text-emerald-400" />
         <h2 className="font-cairo text-2xl font-bold text-zinc-900 dark:text-zinc-100">
           پروفایل کاربری و وضعیت اشتراک
         </h2>
+      </div>
         <p className="text-xs sm:text-sm text-zinc-600 dark:text-zinc-400 mt-1">
           مشاهده مانده اعتبار اشتراک طلایی، سوابق فیش‌های ارتقا، مشخصات کاربری و تنظیمات سامانه
         </p>
@@ -200,13 +189,13 @@ export const SettingsView: React.FC<SettingsViewProps> = ({ onOpenAvatarModal })
 
       {isSaved && (
         <div className="p-4 rounded-2xl bg-emerald-50 text-emerald-800 dark:bg-emerald-950/60 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800 text-xs flex items-center gap-2">
-          <CheckCircle2 className="w-4 h-4 shrink-0" />
+          <ChandIcon name="check-circle" className="w-4 h-4 shrink-0" />
           <span>تنظیمات شما با موفقیت ذخیره گردید.</span>
         </div>
       )}
       {profileSaveError && (
         <div role="alert" className="p-4 rounded-2xl bg-rose-50 text-rose-800 dark:bg-rose-950/40 dark:text-rose-300 border border-rose-200 dark:border-rose-800 text-xs flex items-center gap-2">
-          <AlertCircle className="w-4 h-4 shrink-0" />
+          <ChandIcon name="alert" className="w-4 h-4 shrink-0" />
           <span>{profileSaveError}</span>
         </div>
       )}
@@ -216,8 +205,8 @@ export const SettingsView: React.FC<SettingsViewProps> = ({ onOpenAvatarModal })
         <div className="p-6 rounded-3xl bg-zinc-900 border-2 border-zinc-700 shadow-xl text-white relative overflow-hidden">
           <div className="relative z-10 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
             <div className="flex items-start gap-3.5">
-              <div className="p-3 rounded-2xl bg-zinc-800 text-zinc-300 shadow-md">
-                <Lock className="w-6 h-6 text-amber-400" />
+              <div className="shrink-0 text-zinc-300">
+                <ChandIcon name="key" className="w-6 h-6 text-amber-400" />
               </div>
               <div>
                 <h3 className="font-cairo font-bold text-lg text-white">
@@ -250,7 +239,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({ onOpenAvatarModal })
         <div className="p-6 rounded-3xl bg-gradient-to-br from-[#121B17] via-[#16221C] to-[#0D1512] border-2 border-emerald-600/40 shadow-xl text-white relative overflow-hidden">
           <div className="relative z-10 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
             <div className="flex items-start gap-3.5">
-              <div className="p-3 rounded-2xl bg-emerald-800/60 text-emerald-300 shadow-md">
+              <div className="shrink-0">
                 <ChandAsset name="vip-crown" size={56} className="shrink-0 drop-shadow-lg" />
               </div>
               <div>
@@ -273,7 +262,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({ onOpenAvatarModal })
                 onClick={() => setActiveTab('subscription')}
                 className="px-5 py-2.5 rounded-xl bg-gradient-to-r from-amber-500 via-amber-600 to-yellow-600 hover:from-amber-600 hover:to-yellow-700 text-zinc-950 font-cairo font-black text-xs transition cursor-pointer shadow-md flex items-center gap-1.5"
               >
-                <Award className="w-3.5 h-3.5" />
+                <ChandIcon name="award" className="w-3.5 h-3.5" />
                 <span>خرید اشتراک طلایی پرو</span>
               </button>
             </div>
@@ -283,7 +272,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({ onOpenAvatarModal })
         <div className="p-6 rounded-3xl bg-gradient-to-br from-[#1C170A] via-[#261E0A] to-[#120F05] border-2 border-amber-500/50 shadow-xl text-white relative overflow-hidden">
           <div className="relative z-10 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
             <div className="flex items-start gap-3.5">
-              <div className="p-3 rounded-2xl bg-gradient-to-tr from-amber-500 to-yellow-500 text-zinc-950 shadow-md">
+              <div className="shrink-0">
                 <ChandAsset name="vip-crown" size={56} className="shrink-0 drop-shadow-lg" />
               </div>
               <div>
@@ -298,7 +287,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({ onOpenAvatarModal })
 
                 <div className="mt-2 space-y-1 text-xs">
                   <p className="text-amber-200 flex items-center gap-1.5 font-bold">
-                    <Clock className="w-4 h-4 text-amber-400" />
+                    <ChandIcon name="clock" className="w-4 h-4 text-amber-400" />
                     <span>مانده اشتراک:</span>
                     <span className="font-cairo font-black text-sm text-white">
                       {remainingPro.humanText}
@@ -318,7 +307,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({ onOpenAvatarModal })
                 onClick={() => setActiveTab('subscription')}
                 className="px-4 py-2.5 rounded-xl bg-gradient-to-r from-amber-500 to-yellow-500 hover:from-amber-600 hover:to-yellow-600 text-zinc-950 font-cairo font-bold text-xs transition cursor-pointer shadow-md flex items-center gap-1.5"
               >
-                <Award className="w-3.5 h-3.5" />
+                <ChandIcon name="award" className="w-3.5 h-3.5" />
                 <span>تمدید اشتراک طلایی</span>
               </button>
             </div>
@@ -337,7 +326,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({ onOpenAvatarModal })
         <div className="flex items-center justify-between pb-3 border-b border-[#E2E8E4] dark:border-[#1F2E27]">
           <div>
             <h3 className="font-cairo font-bold text-base text-zinc-900 dark:text-zinc-100 flex items-center gap-2">
-              <CreditCard className="w-4 h-4 text-amber-600 dark:text-amber-400" />
+              <ChandIcon name="card" className="w-4 h-4 text-amber-600 dark:text-amber-400" />
               <span>سوابق تراکنش‌ها و سفارش‌های ارتقا به پرو</span>
             </h3>
             <p className="text-xs text-zinc-500 mt-0.5">
@@ -400,9 +389,9 @@ export const SettingsView: React.FC<SettingsViewProps> = ({ onOpenAvatarModal })
                       title="کپی کد پیگیری"
                     >
                       {copiedCode === pay.tracking_code ? (
-                        <Check className="w-3.5 h-3.5 text-emerald-600" />
+                        <ChandIcon name="check" className="w-3.5 h-3.5 text-emerald-600" />
                       ) : (
-                        <Copy className="w-3.5 h-3.5" />
+                        <ChandIcon name="copy" className="w-3.5 h-3.5" />
                       )}
                     </button>
                     <span className="text-zinc-400">•</span>
@@ -497,7 +486,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({ onOpenAvatarModal })
                 آدرس ایمیل (غیرقابل تغییر)
               </label>
               <span className="text-[10px] text-amber-600 dark:text-amber-400 flex items-center gap-1 font-bold">
-                <Lock className="w-3 h-3" />
+                <ChandIcon name="key" className="w-3 h-3" />
                 قفل امنیتی
               </span>
             </div>
@@ -511,7 +500,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({ onOpenAvatarModal })
                 className="w-full px-4 py-2.5 bg-zinc-100/80 dark:bg-[#111915] border border-zinc-200 dark:border-[#1F2E27] rounded-xl text-xs sm:text-sm text-zinc-500 dark:text-zinc-400 font-mono text-left cursor-not-allowed select-none opacity-80"
                 dir="ltr"
               />
-              <Lock className="w-3.5 h-3.5 text-zinc-400 absolute right-3 top-1/2 -translate-y-1/2" />
+              <ChandIcon name="key" className="w-3.5 h-3.5 text-zinc-400 absolute right-3 top-1/2 -translate-y-1/2" />
             </div>
             <p className="text-[10px] text-zinc-400 mt-1">
               تغییر آدرس ایمیل به دلیل امنیت حساب و حفظ یکپارچگی هویتی مسدود است.
@@ -597,7 +586,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({ onOpenAvatarModal })
         >
           <div className="pb-3 border-b border-[#E2E8E4] dark:border-[#1F2E27]">
             <h4 className="font-cairo font-bold text-base text-zinc-900 dark:text-white flex items-center gap-2">
-              <Lock className="w-5 h-5 text-amber-500" />
+              <ChandIcon name="key" className="w-5 h-5 text-amber-500" />
               <span>تغییر کلمه عبور حساب کاربری</span>
             </h4>
             <p className="text-xs text-zinc-500 mt-0.5">
@@ -607,14 +596,14 @@ export const SettingsView: React.FC<SettingsViewProps> = ({ onOpenAvatarModal })
 
           {passwordSuccess && (
             <div className="p-3.5 rounded-2xl bg-emerald-50 text-emerald-800 dark:bg-emerald-950/60 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800 text-xs flex items-center gap-2">
-              <CheckCircle2 className="w-4 h-4 shrink-0" />
+              <ChandIcon name="check-circle" className="w-4 h-4 shrink-0" />
               <span>{passwordSuccess}</span>
             </div>
           )}
 
           {passwordError && (
             <div className="p-3.5 rounded-2xl bg-rose-50 text-rose-800 dark:bg-rose-950/60 dark:text-rose-300 border border-rose-200 dark:border-rose-800 text-xs flex items-center gap-2">
-              <AlertCircle className="w-4 h-4 shrink-0" />
+              <ChandIcon name="alert" className="w-4 h-4 shrink-0" />
               <span>{passwordError}</span>
             </div>
           )}
@@ -669,7 +658,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({ onOpenAvatarModal })
               disabled={passwordLoading || !newPassword}
               className="flex items-center justify-center gap-2 px-6 py-2.5 rounded-xl bg-amber-600 hover:bg-amber-700 disabled:opacity-50 text-white font-cairo font-bold text-xs shadow-xs transition cursor-pointer"
             >
-              <Lock className="w-4 h-4" />
+              <ChandIcon name="key" className="w-4 h-4" />
               <span>{passwordLoading ? 'در حال ذخیره‌سازی...' : 'به‌روزرسانی رمز عبور در پایگاه داده'}</span>
             </button>
           </div>
@@ -678,7 +667,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({ onOpenAvatarModal })
 
       <div className="p-5 bg-white dark:bg-[#0E1511] rounded-3xl border border-[#E2E8E4] dark:border-[#1F2E27] space-y-2">
         <h3 className="font-cairo font-bold text-zinc-900 dark:text-white">نام کاربری دنگ</h3>
-        {username ? <div className="flex items-center justify-between gap-3"><code dir="ltr" className="text-emerald-700 dark:text-emerald-300">@{username}</code><button type="button" onClick={() => handleCopy(`@${username}`)} className="inline-flex items-center gap-2 rounded-xl border px-3 py-2 text-xs"><Copy className="w-4 h-4"/> کپی نام کاربری</button></div> : <p className="text-xs text-zinc-500">{usernameLoading ? 'در حال دریافت نام کاربری…' : isAuthenticated ? 'نام کاربری در دسترس نیست؛ Migration مربوط به profiles را بررسی کنید.' : 'برای مشاهده نام کاربری وارد حساب شوید.'}</p>}
+        {username ? <div className="flex items-center justify-between gap-3"><code dir="ltr" className="text-emerald-700 dark:text-emerald-300">@{username}</code><button type="button" onClick={() => handleCopy(`@${username}`)} className="inline-flex items-center gap-2 rounded-xl border px-3 py-2 text-xs"><ChandIcon name="copy" className="w-4 h-4" /> کپی نام کاربری</button></div> : <p className="text-xs text-zinc-500">{usernameLoading ? 'در حال دریافت نام کاربری…' : isAuthenticated ? 'نام کاربری در دسترس نیست؛ Migration مربوط به profiles را بررسی کنید.' : 'برای مشاهده نام کاربری وارد حساب شوید.'}</p>}
       </div>
 
       {/* 4. Theme & Appearance Settings (منتقل‌شده از هدر به تنظیمات پروفایل) */}
@@ -687,9 +676,9 @@ export const SettingsView: React.FC<SettingsViewProps> = ({ onOpenAvatarModal })
           <div>
             <h4 className="font-cairo font-bold text-base text-zinc-900 dark:text-white flex items-center gap-2">
               {theme === 'dark' ? (
-                <Moon className="w-5 h-5 text-emerald-400" />
+                <ChandIcon name="moon" className="w-5 h-5 text-emerald-400" />
               ) : (
-                <Sun className="w-5 h-5 text-amber-500" />
+                <ChandIcon name="sun" className="w-5 h-5 text-amber-500" />
               )}
               <span>تنظیمات ظاهر سامانه و تم رنگی (Theme Settings)</span>
             </h4>
@@ -719,8 +708,8 @@ export const SettingsView: React.FC<SettingsViewProps> = ({ onOpenAvatarModal })
             }`}
           >
             <div className="flex items-center gap-3">
-              <div className={`p-2.5 rounded-xl ${theme === 'light' ? 'bg-amber-500 text-white shadow-md' : 'bg-zinc-200 dark:bg-zinc-800 text-zinc-500'}`}>
-                <Sun className="w-5 h-5" />
+              <div className={`shrink-0 ${theme === 'light' ? 'text-amber-500' : 'text-zinc-500'}`}>
+                <ChandIcon name="sun" className="w-6 h-6" />
               </div>
               <div>
                 <p className="font-cairo font-bold text-sm text-zinc-900 dark:text-white">
@@ -732,7 +721,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({ onOpenAvatarModal })
               </div>
             </div>
             {theme === 'light' && (
-              <CheckCircle2 className="w-5 h-5 text-amber-500 shrink-0" />
+              <ChandIcon name="check-circle" className="w-5 h-5 text-amber-500 shrink-0" />
             )}
           </button>
 
@@ -749,8 +738,8 @@ export const SettingsView: React.FC<SettingsViewProps> = ({ onOpenAvatarModal })
             }`}
           >
             <div className="flex items-center gap-3">
-              <div className={`p-2.5 rounded-xl ${theme === 'dark' ? 'bg-emerald-600 text-white shadow-md' : 'bg-zinc-200 dark:bg-zinc-800 text-zinc-500'}`}>
-                <Moon className="w-5 h-5" />
+              <div className={`shrink-0 ${theme === 'dark' ? 'text-emerald-500' : 'text-zinc-500'}`}>
+                <ChandIcon name="moon" className="w-6 h-6" />
               </div>
               <div>
                 <p className="font-cairo font-bold text-sm text-zinc-900 dark:text-white">
@@ -762,7 +751,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({ onOpenAvatarModal })
               </div>
             </div>
             {theme === 'dark' && (
-              <CheckCircle2 className="w-5 h-5 text-emerald-500 shrink-0" />
+              <ChandIcon name="check-circle" className="w-5 h-5 text-emerald-500 shrink-0" />
             )}
           </button>
         </div>
@@ -771,7 +760,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({ onOpenAvatarModal })
       {/* Security Architecture Info */}
       <div className="p-6 bg-white dark:bg-[#0E1511] rounded-3xl border border-[#E2E8E4] dark:border-[#1F2E27] shadow-xs space-y-3">
         <div className="flex items-center gap-2 text-emerald-700 dark:text-emerald-400 font-cairo font-bold text-sm">
-          <Shield className="w-5 h-5" />
+          <ChandIcon name="shield" className="w-5 h-5" />
           <span>حفاظت حریم خصوصی و امنیت داده‌ها در چندبوم</span>
         </div>
 
@@ -804,7 +793,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({ onOpenAvatarModal })
                 onClick={() => setSelectedReceiptForPreview(null)}
                 className="p-1 rounded-lg text-zinc-400 hover:text-white cursor-pointer"
               >
-                <X className="w-5 h-5" />
+                <ChandIcon name="close" className="w-5 h-5" />
               </button>
             </div>
             <div className="max-h-[75vh] overflow-auto flex items-center justify-center rounded-2xl bg-zinc-900/60 p-2">

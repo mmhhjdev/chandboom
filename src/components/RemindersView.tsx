@@ -1,19 +1,13 @@
 import React, { useState } from 'react';
 import {
-  Bell,
-  Plus,
-  CheckCircle,
   Circle,
-  Calendar,
-  Trash2,
-  Edit2,
-  Clock,
-  AlertTriangle,
 } from 'lucide-react';
 import { useApp } from '../context/AppContext';
 import { Reminder } from '../types';
 import { formatToman, formatShamsiDate } from '../utils/formatters';
 import { ReminderModal } from './ReminderModal';
+import { ChandAsset } from './ChandAsset';
+import { ChandIcon } from './icons/ChandIcon';
 
 export const RemindersView: React.FC = () => {
   const { reminders, toggleReminderPaid, deleteReminder } = useApp();
@@ -30,9 +24,12 @@ export const RemindersView: React.FC = () => {
       {/* Top Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
+        <div className="flex items-center gap-3">
+          <ChandAsset name="reminders" size={44} className="shrink-0 drop-shadow-md" />
           <h2 className="font-cairo text-2xl font-bold text-zinc-900 dark:text-zinc-100">
             یادآورهای سررسید اقساط و قبوض
           </h2>
+        </div>
           <p className="text-xs sm:text-sm text-zinc-600 dark:text-zinc-400 mt-1">
             پیگیری سررسید چک‌ها، اقساط بانکی، اجاره و قبوض ماهانه با اعلان دقیق
           </p>
@@ -46,7 +43,7 @@ export const RemindersView: React.FC = () => {
           }}
           className="flex items-center gap-2 px-4 py-2 rounded-xl bg-emerald-700 hover:bg-emerald-800 text-white text-xs sm:text-sm font-cairo font-bold shadow-xs transition cursor-pointer"
         >
-          <Plus className="w-4 h-4" />
+          <ChandIcon name="add" className="w-4 h-4" />
           <span>افزودن یادآور جدید</span>
         </button>
       </div>
@@ -78,7 +75,7 @@ export const RemindersView: React.FC = () => {
       {/* Unpaid List */}
       <div className="space-y-3">
         <h3 className="font-cairo text-base font-bold text-zinc-900 dark:text-zinc-100 flex items-center gap-2">
-          <Clock className="w-4 h-4 text-amber-600" />
+          <ChandIcon name="clock" className="w-4 h-4 text-amber-600" />
           <span>سررسیدهای در انتظار پرداخت</span>
         </h3>
 
@@ -131,13 +128,13 @@ export const RemindersView: React.FC = () => {
                       }}
                       className="p-1.5 rounded-lg text-zinc-400 hover:text-emerald-700 hover:bg-emerald-50 dark:hover:bg-[#16251E] transition cursor-pointer"
                     >
-                      <Edit2 className="w-4 h-4" />
+                      <ChandIcon name="edit" className="w-4 h-4" />
                     </button>
                     <button
                       onClick={() => deleteReminder(rem.id)}
                       className="p-1.5 rounded-lg text-zinc-400 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-[#281515] transition cursor-pointer"
                     >
-                      <Trash2 className="w-4 h-4" />
+                      <ChandIcon name="trash" className="w-4 h-4" />
                     </button>
                   </div>
                 </div>
@@ -151,7 +148,7 @@ export const RemindersView: React.FC = () => {
       {paidReminders.length > 0 && (
         <div className="space-y-3 pt-4">
           <h3 className="font-cairo text-sm font-bold text-zinc-500 dark:text-zinc-400 flex items-center gap-2">
-            <CheckCircle className="w-4 h-4 text-emerald-600" />
+            <ChandIcon name="check-circle" className="w-4 h-4 text-emerald-600" />
             <span>پرداخت‌شده‌ها (بایگانی سررسید)</span>
           </h3>
 
@@ -167,7 +164,7 @@ export const RemindersView: React.FC = () => {
                     className="text-emerald-600 cursor-pointer p-1"
                     title="بازگرداندن به حالت تسویه نشده"
                   >
-                    <CheckCircle className="w-5 h-5" />
+                    <ChandIcon name="check-circle" className="w-5 h-5" />
                   </button>
 
                   <div>
@@ -188,7 +185,7 @@ export const RemindersView: React.FC = () => {
                     onClick={() => deleteReminder(rem.id)}
                     className="p-1 text-zinc-400 hover:text-rose-600 transition cursor-pointer"
                   >
-                    <Trash2 className="w-3.5 h-3.5" />
+                    <ChandIcon name="trash" className="w-3.5 h-3.5" />
                   </button>
                 </div>
               </div>
