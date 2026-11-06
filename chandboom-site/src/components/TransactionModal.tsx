@@ -512,7 +512,7 @@ export const TransactionModal: React.FC<TransactionModalProps> = ({
 
             <div>
               <label className="block text-xs font-cairo font-bold text-zinc-300 mb-1.5 flex items-center gap-1.5">
-                <CalendarIcon className="w-3.5 h-3.5 text-zinc-400" />
+                <ChandIcon name="calendar" className="w-3.5 h-3.5 text-zinc-400" />
                 <span>تاریخ تراکنش (شمسی)</span>
               </label>
               <input
@@ -543,7 +543,7 @@ export const TransactionModal: React.FC<TransactionModalProps> = ({
           {/* 7. Tags matching image.png */}
           <div>
             <label className="block text-xs font-cairo font-bold text-zinc-300 mb-1.5 flex items-center gap-1.5">
-              <TagIcon className="w-3.5 h-3.5 text-zinc-400" />
+              <ChandIcon name="tag" className="w-3.5 h-3.5 text-zinc-400" />
               <span>برچسب‌ها (اینتر برای افزودن)</span>
             </label>
             <input

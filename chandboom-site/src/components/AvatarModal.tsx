@@ -1,6 +1,7 @@
 import React, { useState, useRef } from 'react';
 import {
   Upload,
+  Image as ImageIcon,
 } from 'lucide-react';
 import { useApp } from '../context/AppContext';
 import { DEFAULT_AVATAR_PRESETS, MALE_AVATAR_SVG, FEMALE_AVATAR_SVG } from '../utils/avatars';
