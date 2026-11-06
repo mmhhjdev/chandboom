@@ -4,10 +4,12 @@ import { ArrowLeft, ArrowRight, CalendarDays, Clock3, ShieldCheck } from 'lucide
 import { SEOHead } from '../components/SEOHead';
 import { SEOLayout } from '../components/SEOLayout';
 import { ARTICLES, ArticleBlock, LEGACY_SLUGS, getArticleBySlug } from '../data/articles';
+import { ArticleCover } from '../components/ArticleCover';
 import { formatArticleDate, readingTimeLabel, sectionAnchor } from '../utils/articleFormat';
 
 const SITE = 'https://chandboom.ir';
 const DEFAULT_IMAGE = `${SITE}/chandboom-smart-personal-finance-hero.jpg`;
+const absolute = (path: string | null) => (path ? `${SITE}${path}` : DEFAULT_IMAGE);
 
 const Block: React.FC<{ block: ArticleBlock }> = ({ block }) => {
   switch (block.type) {
@@ -76,7 +78,13 @@ export const ArticlePage: React.FC = () => {
       headline: article.title,
       description: article.description,
       keywords: article.keywords.join(', '),
-      image: DEFAULT_IMAGE,
+      image: {
+        '@type': 'ImageObject',
+        url: absolute(article.coverImage),
+        width: article.coverWidth,
+        height: article.coverHeight,
+        caption: article.coverAlt,
+      },
       mainEntityOfPage: url,
       datePublished: article.publishedAt,
       dateModified: article.updatedAt,
@@ -110,7 +118,10 @@ export const ArticlePage: React.FC = () => {
         title={article.seoTitle}
         description={article.description}
         keywords={article.keywords.join(', ')}
-        image={DEFAULT_IMAGE}
+        image={absolute(article.coverImage)}
+        imageAlt={article.coverAlt}
+        imageWidth={article.coverWidth}
+        imageHeight={article.coverHeight}
         canonicalPath={`/articles/${article.slug}`}
         structuredData={{ '@context': 'https://schema.org', '@graph': graph }}
       />
@@ -143,6 +154,10 @@ export const ArticlePage: React.FC = () => {
             </span>
           </div>
         </header>
+
+        <figure className="mb-10 overflow-hidden rounded-3xl border border-emerald-100 dark:border-emerald-900/60">
+          <ArticleCover article={article} priority sizes="(max-width: 640px) 100vw, 768px" />
+        </figure>
 
         <nav aria-label="فهرست مطالب" className="mb-8 rounded-2xl border border-emerald-100 bg-emerald-50/70 p-5 text-sm leading-8 text-emerald-950 dark:border-emerald-900/50 dark:bg-emerald-950/30 dark:text-emerald-100">
           <strong className="mb-2 block">فهرست مطالب</strong>

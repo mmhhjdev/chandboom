@@ -39,7 +39,13 @@ export interface BlogArticle {
   /** ISO date of the last real content change. */
   updatedAt: string;
   readingTime: number;
+  /** JPG fallback, 1200×675 (16:9). */
   coverImage: string | null;
+  coverWebp: string;
+  coverWebp800: string;
+  coverAlt: string;
+  coverWidth: number;
+  coverHeight: number;
   sections: ArticleSection[];
 }
 

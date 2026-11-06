@@ -4,6 +4,7 @@ import { ArrowLeft, BookOpen, CalendarDays, Clock3, Search } from 'lucide-react'
 import { SEOHead } from '../components/SEOHead';
 import { SEOLayout } from '../components/SEOLayout';
 import { ARTICLES, BlogArticle } from '../data/articles';
+import { ArticleCover } from '../components/ArticleCover';
 import { formatArticleDate, readingTimeLabel, toPersianDigits } from '../utils/articleFormat';
 
 const ALL = 'همه';
@@ -14,7 +15,11 @@ const ArticleCard: React.FC<{ article: BlogArticle; featured?: boolean }> = ({ a
       featured ? 'border-emerald-300 dark:border-emerald-700' : 'border-zinc-200 dark:border-zinc-800'
     }`}
   >
-    <Link to={`/articles/${article.slug}`} className="flex flex-1 flex-col gap-4 p-6" aria-label={`مطالعه ${article.title}`}>
+    <Link to={`/articles/${article.slug}`} className="flex flex-1 flex-col" aria-label={`مطالعه ${article.title}`}>
+      <div className="overflow-hidden">
+        <ArticleCover article={article} className="transition-transform duration-500 group-hover:scale-105" sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 384px" />
+      </div>
+      <div className="flex flex-1 flex-col gap-4 p-6">
       <span className="w-fit rounded-full bg-emerald-100 px-3 py-1 text-xs font-extrabold text-emerald-900 dark:bg-emerald-900/40 dark:text-emerald-200">
         {article.category}
       </span>
@@ -30,6 +35,7 @@ const ArticleCard: React.FC<{ article: BlogArticle; featured?: boolean }> = ({ a
         <span className="inline-flex items-center gap-1 font-extrabold text-emerald-700 dark:text-emerald-300">
           ادامه مطلب <ArrowLeft className="h-4 w-4" aria-hidden="true" />
         </span>
+      </div>
       </div>
     </Link>
   </article>

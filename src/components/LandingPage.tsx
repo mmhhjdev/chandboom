@@ -42,6 +42,7 @@ import {
 import { useApp } from '../context/AppContext';
 import { Link } from 'react-router-dom';
 import { ARTICLES } from '../data/articles';
+import { ArticleCover } from './ArticleCover';
 import { formatArticleDate, readingTimeLabel } from '../utils/articleFormat';
 
 const LANDING_ARTICLES = (() => {
@@ -935,14 +936,19 @@ export const LandingPage: React.FC<LandingPageProps> = ({
               <Link
                 key={article.slug}
                 to={`/articles/${article.slug}`}
-                className="group flex flex-col gap-4 rounded-3xl border border-emerald-100 bg-white p-6 shadow-lg hover:shadow-xl transition-all text-right"
+                className="group flex flex-col overflow-hidden rounded-3xl border border-emerald-100 bg-white shadow-lg hover:shadow-xl transition-all text-right"
               >
+                <div className="overflow-hidden">
+                  <ArticleCover article={article} className="transition-transform duration-500 group-hover:scale-105" sizes="(max-width: 768px) 100vw, 380px" />
+                </div>
+                <div className="flex flex-1 flex-col gap-4 p-6">
                 <span className="w-fit rounded-full bg-emerald-50 px-3 py-1 text-xs font-extrabold text-emerald-800">{article.category}</span>
                 <h3 className="text-lg font-black leading-8 text-zinc-900 group-hover:text-emerald-700">{article.title}</h3>
                 <p className="line-clamp-3 text-sm leading-7 text-zinc-600">{article.description}</p>
                 <div className="mt-auto flex items-center justify-between border-t border-zinc-100 pt-4 text-xs text-zinc-500">
                   <span>{formatArticleDate(article.publishedAt)} · {readingTimeLabel(article.readingTime)}</span>
                   <span className="inline-flex items-center gap-1 font-extrabold text-emerald-700">ادامه مطلب <ArrowLeft className="w-3.5 h-3.5" /></span>
+                </div>
                 </div>
               </Link>
             ))}

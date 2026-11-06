@@ -19,7 +19,7 @@
   "publishedAt": "2026-11-06",
   "updatedAt": "2026-11-06",
   "readingTime": 7,
-  "coverImage": null,
+  "coverImage": "/images/articles/best-personal-finance-app.jpg",
   "sections": [
    {
     "heading": "مقدمه: چرا مدیریت مالی شخصی به یک ابزار مناسب نیاز دارد؟",
@@ -478,7 +478,12 @@
      }
     ]
    }
-  ]
+  ],
+  "coverWebp": "/images/articles/best-personal-finance-app.webp",
+  "coverWebp800": "/images/articles/best-personal-finance-app-800.webp",
+  "coverAlt": "جام قهرمانی کنار نمای اپلیکیشن با عبارت بهترین اپلیکیشن مدیریت مالی شخصی و ستاره‌های امتیاز",
+  "coverWidth": 1200,
+  "coverHeight": 675
  },
  {
   "slug": "personal-finance-management-with-ai",
@@ -500,7 +505,7 @@
   "publishedAt": "2026-11-06",
   "updatedAt": "2026-11-06",
   "readingTime": 7,
-  "coverImage": null,
+  "coverImage": "/images/articles/personal-finance-management-with-ai.jpg",
   "sections": [
    {
     "heading": "مقدمه: وقتی هوش مصنوعی وارد مدیریت پول می‌شود",
@@ -964,7 +969,12 @@
      }
     ]
    }
-  ]
+  ],
+  "coverWebp": "/images/articles/personal-finance-management-with-ai.webp",
+  "coverWebp800": "/images/articles/personal-finance-management-with-ai-800.webp",
+  "coverAlt": "نمای گوشی با نمودار مالی و آیکون‌های سپر، هشدار و نمودار کنار سکه‌ها؛ نماد مدیریت مالی با هوش مصنوعی",
+  "coverWidth": 1200,
+  "coverHeight": 675
  },
  {
   "slug": "what-is-ai-for-personal-finance",
@@ -986,7 +996,7 @@
   "publishedAt": "2026-11-06",
   "updatedAt": "2026-11-06",
   "readingTime": 6,
-  "coverImage": null,
+  "coverImage": "/images/articles/what-is-ai-for-personal-finance.jpg",
   "sections": [
    {
     "heading": "مقدمه",
@@ -1377,7 +1387,12 @@
      }
     ]
    }
-  ]
+  ],
+  "coverWebp": "/images/articles/what-is-ai-for-personal-finance.webp",
+  "coverWebp800": "/images/articles/what-is-ai-for-personal-finance-800.webp",
+  "coverAlt": "مغز هوش مصنوعی روی زمینه آبی با آیکون‌های تراشه، نمودار و سکه؛ نماد هوش مصنوعی در مدیریت مالی شخصی",
+  "coverWidth": 1200,
+  "coverHeight": 675
  },
  {
   "slug": "chandboom-ai-assistant",
@@ -1400,7 +1415,7 @@
   "publishedAt": "2026-11-06",
   "updatedAt": "2026-11-06",
   "readingTime": 8,
-  "coverImage": null,
+  "coverImage": "/images/articles/chandboom-ai-assistant.jpg",
   "sections": [
    {
     "heading": "مقدمه: هوش مصنوعی چگونه می‌تواند مدیریت پول را ساده‌تر کند؟",
@@ -1812,7 +1827,12 @@
      }
     ]
    }
-  ]
+  ],
+  "coverWebp": "/images/articles/chandboom-ai-assistant.webp",
+  "coverWebp800": "/images/articles/chandboom-ai-assistant-800.webp",
+  "coverAlt": "ربات هوش مصنوعی دوستانه کنار آیکون خانه با نام چندبوم؛ نماد دستیار مالی هوشمند چندبوم",
+  "coverWidth": 1200,
+  "coverHeight": 675
  },
  {
   "slug": "personal-budgeting-guide",
@@ -1835,7 +1855,7 @@
   "publishedAt": "2026-11-06",
   "updatedAt": "2026-11-06",
   "readingTime": 7,
-  "coverImage": null,
+  "coverImage": "/images/articles/personal-budgeting-guide.jpg",
   "sections": [
    {
     "heading": "مقدمه: چرا باید برای پول خود برنامه داشته باشیم؟",
@@ -2399,7 +2419,12 @@
      }
     ]
    }
-  ]
+  ],
+  "coverWebp": "/images/articles/personal-budgeting-guide.webp",
+  "coverWebp800": "/images/articles/personal-budgeting-guide-800.webp",
+  "coverAlt": "راهنمای بودجه‌بندی شخصی روی دفترچه کنار ساعت زنگ‌دار و نمودار رشد",
+  "coverWidth": 1200,
+  "coverHeight": 675
  },
  {
   "slug": "50-30-20-budget-rule",
@@ -2422,7 +2447,7 @@
   "publishedAt": "2026-11-06",
   "updatedAt": "2026-11-06",
   "readingTime": 7,
-  "coverImage": null,
+  "coverImage": "/images/articles/50-30-20-budget-rule.jpg",
   "sections": [
    {
     "heading": "مقدمه: چگونه درآمد خود را تقسیم کنیم؟",
@@ -2890,7 +2915,12 @@
      }
     ]
    }
-  ]
+  ],
+  "coverWebp": "/images/articles/50-30-20-budget-rule.webp",
+  "coverWebp800": "/images/articles/50-30-20-budget-rule-800.webp",
+  "coverAlt": "نمودار دایره‌ای قانون ۵۰/۳۰/۲۰: ۵۰ درصد نیازها، ۳۰ درصد خواسته‌ها و ۲۰ درصد پس‌انداز",
+  "coverWidth": 1200,
+  "coverHeight": 675
  },
  {
   "slug": "manage-daily-expenses",
@@ -2913,7 +2943,7 @@
   "publishedAt": "2026-11-06",
   "updatedAt": "2026-11-06",
   "readingTime": 7,
-  "coverImage": null,
+  "coverImage": "/images/articles/manage-daily-expenses.jpg",
   "sections": [
    {
     "heading": "مقدمه: چرا هزینه‌های کوچک اهمیت دارند؟",
@@ -3368,7 +3398,12 @@
      }
     ]
    }
-  ]
+  ],
+  "coverWebp": "/images/articles/manage-daily-expenses.webp",
+  "coverWebp800": "/images/articles/manage-daily-expenses-800.webp",
+  "coverAlt": "فهرست هزینه‌های روزمره با دسته‌های خوراک، حمل‌ونقل، خرید و سرگرمی کنار ماشین‌حساب و کیف پول",
+  "coverWidth": 1200,
+  "coverHeight": 675
  },
  {
   "slug": "smart-financial-goals",
@@ -3391,7 +3426,7 @@
   "publishedAt": "2026-11-06",
   "updatedAt": "2026-11-06",
   "readingTime": 6,
-  "coverImage": null,
+  "coverImage": "/images/articles/smart-financial-goals.jpg",
   "sections": [
    {
     "heading": "مقدمه: چرا پس‌انداز بدون هدف دشوار است؟",
@@ -3816,7 +3851,12 @@
      }
     ]
    }
-  ]
+  ],
+  "coverWebp": "/images/articles/smart-financial-goals.webp",
+  "coverWebp800": "/images/articles/smart-financial-goals-800.webp",
+  "coverAlt": "تیر که به هدف خورده، مکعب‌های چوبی با حروف SMART و آیکون‌های نمودار و ساعت؛ نماد اهداف مالی SMART",
+  "coverWidth": 1200,
+  "coverHeight": 675
  },
  {
   "slug": "emergency-fund-guide",
@@ -3839,7 +3879,7 @@
   "publishedAt": "2026-11-06",
   "updatedAt": "2026-11-06",
   "readingTime": 6,
-  "coverImage": null,
+  "coverImage": "/images/articles/emergency-fund-guide.jpg",
   "sections": [
    {
     "heading": "مقدمه: برای اتفاقات غیرمنتظره آماده هستید؟",
@@ -4280,7 +4320,12 @@
      }
     ]
    }
-  ]
+  ],
+  "coverWebp": "/images/articles/emergency-fund-guide.webp",
+  "coverWebp800": "/images/articles/emergency-fund-guide-800.webp",
+  "coverAlt": "شیشه پر از سکه با برچسب صندوق اضطراری، سپر محافظ و خوک‌صندوق؛ نماد پس‌انداز برای هزینه‌های غیرمنتظره",
+  "coverWidth": 1200,
+  "coverHeight": 675
  },
  {
   "slug": "debt-snowball-vs-avalanche",
@@ -4303,7 +4348,7 @@
   "publishedAt": "2026-11-06",
   "updatedAt": "2026-11-06",
   "readingTime": 7,
-  "coverImage": null,
+  "coverImage": "/images/articles/debt-snowball-vs-avalanche.jpg",
   "sections": [
    {
     "heading": "مقدمه: چگونه بدهی‌های خود را بهتر مدیریت کنیم؟",
@@ -4830,6 +4875,11 @@
      }
     ]
    }
-  ]
+  ],
+  "coverWebp": "/images/articles/debt-snowball-vs-avalanche.webp",
+  "coverWebp800": "/images/articles/debt-snowball-vs-avalanche-800.webp",
+  "coverAlt": "گلوله‌های برفی با برچسب بدهی و تابلوی راهنمای روش گلوله‌برفی و روش بهمن",
+  "coverWidth": 1200,
+  "coverHeight": 675
  }
 ]

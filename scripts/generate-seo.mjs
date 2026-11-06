@@ -18,6 +18,7 @@ const root = process.cwd();
 const distDir = path.join(root, 'dist');
 const indexPath = path.join(distDir, 'index.html');
 const articlesPath = path.join(root, 'src/data/articles.json');
+const publicDir = path.join(root, 'public');
 const DEFAULT_IMAGE = `${SITE}/chandboom-smart-personal-finance-hero.jpg`;
 // Lastmod for static pages. Update it when a static page's content changes.
 const STATIC_LASTMOD = '2026-11-06';
@@ -40,7 +41,7 @@ const jsonLdBlock = (obj) =>
 const allArticles = JSON.parse(fs.readFileSync(articlesPath, 'utf8'));
 const articles = allArticles.filter((a) => a.status === 'published' && a.isIndexable);
 
-const REQUIRED = ['slug', 'title', 'seoTitle', 'description', 'keyword', 'keywords', 'category', 'publishedAt', 'updatedAt', 'sections'];
+const REQUIRED = ['slug', 'title', 'seoTitle', 'description', 'keyword', 'keywords', 'category', 'publishedAt', 'updatedAt', 'sections', 'coverImage', 'coverWebp', 'coverWebp800', 'coverAlt', 'coverWidth', 'coverHeight'];
 const seen = { slug: new Set(), seoTitle: new Set(), description: new Set() };
 for (const a of articles) {
   for (const key of REQUIRED) {
@@ -54,6 +55,10 @@ for (const a of articles) {
     if (seen[key].has(a[key])) throw new Error(`Duplicate ${key} in article "${a.slug}": "${a[key]}".`);
     seen[key].add(a[key]);
   }
+  for (const file of [a.coverImage, a.coverWebp, a.coverWebp800]) {
+    if (!fs.existsSync(path.join(publicDir, file))) throw new Error(`Article "${a.slug}": image file public${file} is missing.`);
+  }
+  if (a.coverAlt.length > 125) console.warn(`SEO: coverAlt of "${a.slug}" is ${a.coverAlt.length} chars (recommended <= 125).`);
   if (a.description.length > 170) console.warn(`SEO: description of "${a.slug}" is ${a.description.length} chars (recommended <= 160).`);
   if (a.seoTitle.length > 65) console.warn(`SEO: seoTitle of "${a.slug}" is ${a.seoTitle.length} chars (recommended <= 60).`);
 }
@@ -107,6 +112,9 @@ const PAGES = [
 
 // ---------- Prerendered body HTML (crawlers and no-JS readers see the content) ----------
 const SITE_NAME = 'چندبوم';
+const absImage = (p) => `${SITE}${p}`;
+const pictureTag = (a, { priority = false, sizes = '(max-width: 640px) 100vw, 768px' } = {}) =>
+  `<picture><source type="image/webp" srcset="${a.coverWebp800} 800w, ${a.coverWebp} 1200w" sizes="${sizes}"><img src="${a.coverImage}" alt="${esc(a.coverAlt)}" width="${a.coverWidth}" height="${a.coverHeight}" loading="${priority ? 'eager' : 'lazy'}"${priority ? ' fetchpriority="high"' : ''} decoding="async"></picture>`;
 const fa = (v) => String(v).replace(/\d/g, (d) => '۰۱۲۳۴۵۶۷۸۹'[Number(d)]);
 const faDate = new Intl.DateTimeFormat('fa-IR-u-ca-persian', { year: 'numeric', month: 'long', day: 'numeric', timeZone: 'Asia/Tehran' });
 const formatDate = (iso) => faDate.format(new Date(`${iso}T12:00:00Z`));
@@ -132,6 +140,7 @@ function renderArticleBody(a, all) {
 <nav aria-label="مسیر راهنما"><ol><li><a href="/articles">مجله ${SITE_NAME}</a></li><li>${esc(a.category)}</li></ol></nav>
 <header><p>${esc(a.category)}</p><h1>${esc(a.title)}</h1><p>${esc(a.description)}</p>
 <p>انتشار: ${formatDate(a.publishedAt)} · به‌روزرسانی: ${formatDate(a.updatedAt)} · زمان مطالعه: ${fa(a.readingTime)} دقیقه</p></header>
+<figure>${pictureTag(a, { priority: true })}</figure>
 <nav aria-label="فهرست مطالب"><strong>فهرست مطالب</strong><ol>${toc}</ol></nav>
 ${body}
 <aside><p>این مطلب آموزشی است و جایگزین مشاوره تخصصی مالی یا حقوقی نیست.</p></aside>
@@ -142,7 +151,7 @@ ${body}
 }
 
 function renderBlogIndexBody(all) {
-  const cards = all.map((a) => `<li><article><p>${esc(a.category)}</p><h2><a href="/articles/${a.slug}">${esc(a.title)}</a></h2><p>${esc(a.description)}</p><p>${formatDate(a.publishedAt)} · زمان مطالعه: ${fa(a.readingTime)} دقیقه</p></article></li>`).join('');
+  const cards = all.map((a) => `<li><article><a href="/articles/${a.slug}">${pictureTag(a, { sizes: '(max-width: 640px) 100vw, 384px' })}</a><p>${esc(a.category)}</p><h2><a href="/articles/${a.slug}">${esc(a.title)}</a></h2><p>${esc(a.description)}</p><p>${formatDate(a.publishedAt)} · زمان مطالعه: ${fa(a.readingTime)} دقیقه</p></article></li>`).join('');
   return `<main dir="rtl"><header><h1>دانش مالی؛ برای تصمیم‌های هوشمندانه‌تر</h1><p>${fa(all.length)} راهنمای آموزشی درباره بودجه‌بندی، پس‌انداز، مدیریت بدهی و نقش هوش مصنوعی در مدیریت مالی شخصی.</p></header><ul>${cards}</ul><p><a href="/features">امکانات چندبوم</a> · <a href="/">صفحه اصلی</a></p></main>`;
 }
 
@@ -159,7 +168,7 @@ const ARTICLE_PAGES = articles.map((a) => {
       headline: a.title,
       description: a.description,
       keywords: a.keywords.join(', '),
-      image: DEFAULT_IMAGE,
+      image: { '@type': 'ImageObject', url: absImage(a.coverImage), width: a.coverWidth, height: a.coverHeight, caption: a.coverAlt },
       mainEntityOfPage: url,
       datePublished: a.publishedAt,
       dateModified: a.updatedAt,
@@ -189,6 +198,11 @@ const ARTICLE_PAGES = articles.map((a) => {
   }
   return {
     path: `/articles/${a.slug}`,
+    image: absImage(a.coverImage),
+    imageAlt: a.coverAlt,
+    imageWidth: a.coverWidth,
+    imageHeight: a.coverHeight,
+    imageTitle: a.title,
     title: a.seoTitle,
     description: a.description,
     keywords: a.keywords.join(', '),
@@ -236,12 +250,16 @@ function buildHtml(page) {
     `<meta property="og:title" content="${esc(page.title)}" />`,
     `<meta property="og:description" content="${esc(page.description)}" />`,
     `<meta property="og:image" content="${image}" />`,
+    page.imageAlt ? `<meta property="og:image:alt" content="${esc(page.imageAlt)}" />` : '',
+    page.imageWidth ? `<meta property="og:image:width" content="${page.imageWidth}" />` : '',
+    page.imageHeight ? `<meta property="og:image:height" content="${page.imageHeight}" />` : '',
     '<meta property="og:site_name" content="چندبوم (Chandboom)" />',
     '<meta property="og:locale" content="fa_IR" />',
     '<meta name="twitter:card" content="summary_large_image" />',
     `<meta name="twitter:title" content="${esc(page.title)}" />`,
     `<meta name="twitter:description" content="${esc(page.description)}" />`,
     `<meta name="twitter:image" content="${image}" />`,
+    page.imageAlt ? `<meta name="twitter:image:alt" content="${esc(page.imageAlt)}" />` : '',
     page.path === '/' ? rootGraphBlock : jsonLdBlock(page.jsonLd || {
       '@context': 'https://schema.org',
       '@type': 'WebPage',
@@ -269,9 +287,14 @@ const urls = ALL_PAGES.map((p) => `  <url>
     <loc>${SITE}${p.path}</loc>
     <lastmod>${p.lastmod}</lastmod>
     <changefreq>${p.changefreq}</changefreq>
-    <priority>${p.priority}</priority>
+    <priority>${p.priority}</priority>${p.image ? `
+    <image:image>
+      <image:loc>${p.image}</image:loc>
+      <image:title>${esc(p.imageTitle)}</image:title>
+      <image:caption>${esc(p.imageAlt)}</image:caption>
+    </image:image>` : ''}
   </url>`).join('\n');
 fs.writeFileSync(path.join(distDir, 'sitemap.xml'),
-  `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n${urls}\n</urlset>\n`, 'utf8');
+  `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9" xmlns:image="http://www.google.com/schemas/sitemap-image/1.1">\n${urls}\n</urlset>\n`, 'utf8');
 
-console.log(`SEO: prerendered ${ARTICLE_PAGES.length} article bodies. wrote ${ALL_PAGES.length} pages (${ARTICLE_PAGES.length} articles) and sitemap.xml.`);
+console.log(`SEO: image sitemap entries: ${ARTICLE_PAGES.length}. prerendered ${ARTICLE_PAGES.length} article bodies. wrote ${ALL_PAGES.length} pages (${ARTICLE_PAGES.length} articles) and sitemap.xml.`);

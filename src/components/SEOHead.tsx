@@ -6,6 +6,9 @@ interface SEOHeadProps {
   canonicalPath: string;
   keywords?: string;
   image?: string;
+  imageAlt?: string;
+  imageWidth?: number;
+  imageHeight?: number;
   structuredData?: Record<string, any>;
 }
 
@@ -15,6 +18,9 @@ export const SEOHead: React.FC<SEOHeadProps> = ({
   canonicalPath,
   keywords,
   image,
+  imageAlt,
+  imageWidth,
+  imageHeight,
   structuredData,
 }) => {
   useEffect(() => {
@@ -40,6 +46,8 @@ export const SEOHead: React.FC<SEOHeadProps> = ({
     setMetaTag('name', 'robots', 'index,follow,max-image-preview:large,max-snippet:-1,max-video-preview:-1');
     setMetaTag('property', 'og:type', canonicalPath.startsWith('/articles/') ? 'article' : 'website');
     if (image) { setMetaTag('property', 'og:image', image); setMetaTag('name', 'twitter:card', 'summary_large_image'); setMetaTag('name', 'twitter:image', image); }
+    if (image && imageAlt) { setMetaTag('property', 'og:image:alt', imageAlt); setMetaTag('name', 'twitter:image:alt', imageAlt); }
+    if (image && imageWidth && imageHeight) { setMetaTag('property', 'og:image:width', String(imageWidth)); setMetaTag('property', 'og:image:height', String(imageHeight)); }
     setMetaTag('property', 'og:title', title);
     setMetaTag('property', 'og:description', description);
     setMetaTag('property', 'og:url', `https://chandboom.ir${canonicalPath}`);
@@ -74,7 +82,7 @@ export const SEOHead: React.FC<SEOHeadProps> = ({
         jsonLdScript.remove();
       }
     };
-  }, [title, description, canonicalPath, keywords, image, structuredData]);
+  }, [title, description, canonicalPath, keywords, image, imageAlt, imageWidth, imageHeight, structuredData]);
 
   return null;
 };
