@@ -1,3 +1,4 @@
+import { ChandAsset } from './ChandAsset';
 import { ChandIcon } from './icons/ChandIcon';
 import React, { useEffect, useState } from 'react';
 import {
@@ -250,7 +251,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({ onOpenAvatarModal })
           <div className="relative z-10 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
             <div className="flex items-start gap-3.5">
               <div className="p-3 rounded-2xl bg-emerald-800/60 text-emerald-300 shadow-md">
-                <ChandIcon name="vip-crown" className="w-6 h-6" />
+                <ChandAsset name="vip-crown" size={56} className="shrink-0 drop-shadow-lg" />
               </div>
               <div>
                 <div className="flex items-center gap-2">
@@ -283,7 +284,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({ onOpenAvatarModal })
           <div className="relative z-10 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
             <div className="flex items-start gap-3.5">
               <div className="p-3 rounded-2xl bg-gradient-to-tr from-amber-500 to-yellow-500 text-zinc-950 shadow-md">
-                <ChandIcon name="vip-crown" className="w-6 h-6" />
+                <ChandAsset name="vip-crown" size={56} className="shrink-0 drop-shadow-lg" />
               </div>
               <div>
                 <div className="flex items-center gap-2">

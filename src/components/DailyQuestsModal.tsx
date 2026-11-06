@@ -1,3 +1,4 @@
+import { ChandMascot } from './ChandMascot';
 import { ChandIcon } from './icons/ChandIcon';
 import React, { useState } from 'react';
 import {
@@ -120,7 +121,7 @@ export const DailyQuestsModal: React.FC<DailyQuestsModalProps> = ({
         {celebrationDay && (
           <div className="mx-6 mt-3 p-3 rounded-2xl bg-emerald-50 text-emerald-800 dark:bg-emerald-950/70 dark:text-emerald-300 border border-emerald-300 dark:border-emerald-800 text-xs flex items-center justify-between animate-in fade-in zoom-in-95">
             <div className="flex items-center gap-2">
-              <ChandIcon name="ai" className="w-4 h-4 text-emerald-600" />
+              <ChandMascot size={20} />
               <span className="font-bold">
                 آفرین! تسک روز {toPersianDigits(celebrationDay)} با موفقیت انجام شد و به زنجیره تداوم افزوده گردید!
               </span>

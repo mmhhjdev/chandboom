@@ -7,7 +7,9 @@
  */
 
 // Modern, minimalist Male Avatar with rich emerald gradient and clean geometric contours
-export const MALE_AVATAR_SVG =
+export const MALE_AVATAR_SVG = '/icons3d/vip/avatar-male-256.png';
+// (previous inline SVG removed)
+const _UNUSED_MALE_AVATAR_SVG =
   'data:image/svg+xml;utf8,' +
   encodeURIComponent(`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120" width="120" height="120">
   <defs>
@@ -72,7 +74,8 @@ export const MALE_AVATAR_SVG =
 </svg>`);
 
 // Modern, minimalist Female Avatar with vibrant emerald-teal aesthetic and stylish silhouette
-export const FEMALE_AVATAR_SVG =
+export const FEMALE_AVATAR_SVG = '/icons3d/vip/avatar-female-256.png';
+const _UNUSED_FEMALE_AVATAR_SVG =
   'data:image/svg+xml;utf8,' +
   encodeURIComponent(`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120" width="120" height="120">
   <defs>

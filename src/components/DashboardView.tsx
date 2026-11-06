@@ -1,3 +1,5 @@
+import { ChandAsset } from './ChandAsset';
+import { ChandMascot } from './ChandMascot';
 import { ChandIcon } from './icons/ChandIcon';
 import React, { useState } from 'react';
 import {
@@ -450,7 +452,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
               {isTodayCompleted ? (
                 <CheckCircle2 className="w-6 h-6 animate-in zoom-in" />
               ) : (
-                <ChandIcon name="quest" className="w-6 h-6" />
+                <ChandAsset name="quest" size={44} className="shrink-0 drop-shadow-lg" />
               )}
             </div>
 
@@ -674,8 +676,8 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
         <div className="lg:col-span-7 bg-white dark:bg-[#0F1512] rounded-3xl border border-[#E2E8E4] dark:border-[#1A2621] shadow-xs flex flex-col overflow-hidden">
           <div className="p-4 border-b border-[#E2E8E4] dark:border-[#1A2621] bg-zinc-50/50 dark:bg-[#121A16] flex items-center justify-between">
             <div className="flex items-center gap-2.5">
-              <div className="w-8 h-8 rounded-xl bg-gradient-to-tr from-emerald-700 to-teal-800 text-white flex items-center justify-center shadow-xs">
-                <ChandIcon name="ai" className="w-4 h-4" />
+              <div className="w-9 h-9 flex items-center justify-center shrink-0">
+                <ChandMascot size={20} />
               </div>
               <div>
                 <h3 className="font-cairo text-sm font-bold text-zinc-900 dark:text-zinc-100 flex items-center gap-2">
@@ -713,11 +715,11 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                 <div
                   className={`w-7 h-7 rounded-full flex items-center justify-center text-[10px] shrink-0 ${
                     msg.sender === 'assistant'
-                      ? 'bg-emerald-700 text-white'
+                      ? 'bg-transparent'
                       : 'bg-zinc-800 text-white dark:bg-zinc-200 dark:text-zinc-900'
                   }`}
                 >
-                  {msg.sender === 'assistant' ? <ChandIcon name="ai" className="w-3.5 h-3.5" /> : <User className="w-3.5 h-3.5" />}
+                  {msg.sender === 'assistant' ? <ChandMascot size={18} /> : <User className="w-3.5 h-3.5" />}
                 </div>
 
                 <div
@@ -753,7 +755,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
               <div className="p-4 rounded-2xl bg-amber-50/70 dark:bg-[#16251E] border-2 border-amber-400/80 shadow-md space-y-3 animate-in fade-in zoom-in-95 font-cairo text-right">
                 <div className="flex items-center justify-between border-b border-amber-200 dark:border-emerald-800/40 pb-2">
                   <div className="flex items-center gap-1.5 text-amber-800 dark:text-amber-300 font-bold text-xs">
-                    <ChandIcon name="ai" className="w-4 h-4" />
+                    <ChandMascot size={20} />
                     <span>پیش‌نویس تراکنش هوشمند (انتخاب دستی دسته‌بندی)</span>
                   </div>
                   <span className="text-[10px] px-2 py-0.5 rounded-full font-bold bg-amber-400/20 text-amber-800 dark:text-amber-300 border border-amber-400/40">

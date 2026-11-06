@@ -378,7 +378,7 @@ export const FloatingAIAssistant: React.FC = () => {
         <button
           id="floating-ai-launcher-btn"
           onClick={() => setIsOpen((prev) => !prev)}
-          className="group relative flex items-center justify-center w-14 h-14 rounded-full bg-gradient-to-tr from-[#064E3B] via-[#047857] to-[#0D1512] text-white shadow-2xl hover:shadow-emerald-500/30 border-2 border-emerald-400/50 hover:border-amber-400 transition-all duration-300 cursor-pointer active:scale-95"
+          className="group relative flex items-center justify-center w-16 h-16 bg-transparent border-0 shadow-none focus:outline-none cursor-pointer active:scale-95 transition-transform duration-300"
           title="هوش مصنوعی چندبوم (Chandboom AI)"
         >
           {/* Subtle pulse ring */}
@@ -387,7 +387,7 @@ export const FloatingAIAssistant: React.FC = () => {
             <span className="relative inline-flex rounded-full h-3.5 w-3.5 bg-emerald-500 border-2 border-[#0E1512]" />
           </span>
 
-          <ChandMascot size={44} className="select-none drop-shadow-md group-hover:scale-110 transition" />
+          <ChandMascot size={56} className="select-none drop-shadow-lg group-hover:scale-110 transition duration-300" />
         </button>
       </div>
 
@@ -401,8 +401,8 @@ export const FloatingAIAssistant: React.FC = () => {
           {/* Header */}
           <div className="p-4 border-b border-[#1A2822] bg-gradient-to-r from-[#064E3B] to-[#0F1B16] text-white flex items-center justify-between">
             <div className="flex items-center gap-2.5">
-              <div className="w-10 h-10 rounded-2xl bg-gradient-to-tr from-amber-400 to-yellow-500 text-zinc-950 flex items-center justify-center font-mono font-black text-sm shadow-md">
-                AI
+              <div className="shrink-0 flex items-center justify-center">
+                <ChandMascot size={40} />
               </div>
               <div>
                 <h3 className="font-cairo text-sm font-bold flex items-center gap-1.5 text-white">
@@ -437,7 +437,7 @@ export const FloatingAIAssistant: React.FC = () => {
                   : 'bg-[#121E19] text-zinc-400 hover:text-white'
               }`}
             >
-              <ChandIcon name="ai" className="w-3 h-3" />
+              <ChandMascot size={16} />
               <span>دستیار اجرایی (ثبت سریع)</span>
             </button>
             <button
@@ -558,7 +558,7 @@ export const FloatingAIAssistant: React.FC = () => {
               <div className="p-3.5 rounded-2xl bg-[#14231D] border-2 border-amber-400/70 shadow-xl space-y-3 animate-in fade-in zoom-in-95 font-cairo">
                 <div className="flex items-center justify-between border-b border-emerald-800/40 pb-2">
                   <div className="flex items-center gap-1.5 text-amber-300 font-bold text-xs">
-                    <ChandIcon name="ai" className="w-4 h-4" />
+                    <ChandMascot size={20} />
                     <span>پیش‌نویس تراکنش هوشمند</span>
                   </div>
                   <span className="text-[10px] px-2 py-0.5 rounded-full font-bold bg-amber-400/20 text-amber-300 border border-amber-400/40">
@@ -624,7 +624,7 @@ export const FloatingAIAssistant: React.FC = () => {
               <div className="p-3.5 rounded-2xl bg-[#14231D] border-2 border-amber-400/80 shadow-xl space-y-2.5 animate-in fade-in zoom-in-95 font-cairo">
                 <div className="flex items-center justify-between border-b border-emerald-800/40 pb-2">
                   <div className="flex items-center gap-1.5 text-amber-300 font-bold text-xs">
-                    <ChandIcon name="ai" className="w-4 h-4" />
+                    <ChandMascot size={20} />
                     <span>پیشنهاد اقدام هوشمند</span>
                   </div>
                   <span className="text-[10px] px-2 py-0.5 rounded-full font-bold bg-amber-400/20 text-amber-300 border border-amber-400/40">

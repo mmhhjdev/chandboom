@@ -591,8 +591,8 @@ export const AIAssistant: React.FC<{ isOpen?: boolean; onClose?: () => void }> =
           <div className="flex-1 p-4 sm:p-6 overflow-y-auto max-h-[500px] min-h-[350px] space-y-4">
             {messages.length === 0 ? (
               <div className="h-full flex flex-col items-center justify-center py-6 text-center">
-                <div className="w-12 h-12 rounded-2xl bg-emerald-500/10 text-emerald-500 flex items-center justify-center mb-3">
-                  <ChandIcon name="ai" className="w-6 h-6" />
+                <div className="flex items-center justify-center mb-3">
+                  <ChandMascot size={28} />
                 </div>
                 <h4 className="text-sm font-bold text-zinc-800 dark:text-zinc-200 mb-1">
                   سلام! چطور می‌تونم در مدیریت مالی یا ثبت عملیات به شما کمک کنم؟
@@ -642,7 +642,7 @@ export const AIAssistant: React.FC<{ isOpen?: boolean; onClose?: () => void }> =
             {isLoading && (
               <div className="flex items-center gap-2.5 text-xs text-zinc-400 animate-pulse">
                 <div className="w-8 h-8 rounded-xl bg-emerald-600/20 text-emerald-500 flex items-center justify-center">
-                  <ChandIcon name="ai" className="w-4 h-4 animate-spin" />
+                  <ChandIcon name="loader" className="w-4 h-4 animate-spin" />
                 </div>
                 <span>در حال تحلیل و تدوین پاسخ...</span>
               </div>
@@ -729,7 +729,7 @@ export const AIAssistant: React.FC<{ isOpen?: boolean; onClose?: () => void }> =
 
             <div className="mt-2 flex items-center justify-between text-[10px] text-zinc-400 px-1">
               <div className="flex items-center gap-1.5">
-                <ChandIcon name="ai" className="w-3 h-3 text-emerald-500" />
+                <ChandMascot size={16} />
                 <span>دستیار هوشمند چندبوم با ورودی صوت فارسی (fa-IR)</span>
               </div>
               <span className="hidden sm:inline">حفاظت شده توسط سهمیه هوشمند ابری</span>
