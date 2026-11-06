@@ -231,7 +231,7 @@ export const FinancialChartsContent: React.FC<FinancialChartsProps> = ({
                 : 'text-zinc-500 hover:text-zinc-900 dark:hover:text-white'
             }`}
           >
-            <PieIcon className="w-3.5 h-3.5" />
+            <ChandIcon name="chart" className="w-3.5 h-3.5" />
             <span>تفکیک دسته‌ها</span>
           </button>
         </div>
