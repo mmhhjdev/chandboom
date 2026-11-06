@@ -1,17 +1,15 @@
+import { ChandIcon } from './icons/ChandIcon';
 import React, { useEffect, useState } from 'react';
 import {
   User,
   Shield,
   Moon,
   Sun,
-  DollarSign,
   Save,
   RotateCcw,
   CheckCircle2,
   Lock,
-  Smartphone,
   Info,
-  Crown,
   Clock,
   Award,
   CreditCard,
@@ -239,9 +237,9 @@ export const SettingsView: React.FC<SettingsViewProps> = ({ onOpenAvatarModal })
               </button>
               <button
                 onClick={() => setActiveTab('subscription')}
-                className="px-4 py-2.5 rounded-xl bg-gradient-to-r from-amber-500 to-yellow-500 hover:from-amber-600 text-zinc-950 font-cairo font-bold text-xs transition cursor-pointer shadow-md flex items-center gap-1.5"
+                className="px-4 py-2.5 rounded-xl bg-gradient-to-r from-emerald-600 to-emerald-500 hover:from-emerald-700 text-white font-cairo font-bold text-xs transition cursor-pointer shadow-md flex items-center gap-1.5"
               >
-                <Crown className="w-3.5 h-3.5" />
+                <ChandIcon name="vip-crown" className="w-3.5 h-3.5" />
                 <span>خرید اشتراک طلایی پرو</span>
               </button>
             </div>
@@ -252,7 +250,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({ onOpenAvatarModal })
           <div className="relative z-10 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
             <div className="flex items-start gap-3.5">
               <div className="p-3 rounded-2xl bg-emerald-800/60 text-emerald-300 shadow-md">
-                <Crown className="w-6 h-6 text-amber-400" />
+                <ChandIcon name="vip-crown" className="w-6 h-6" />
               </div>
               <div>
                 <div className="flex items-center gap-2">
@@ -285,7 +283,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({ onOpenAvatarModal })
           <div className="relative z-10 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
             <div className="flex items-start gap-3.5">
               <div className="p-3 rounded-2xl bg-gradient-to-tr from-amber-500 to-yellow-500 text-zinc-950 shadow-md">
-                <Crown className="w-6 h-6" />
+                <ChandIcon name="vip-crown" className="w-6 h-6" />
               </div>
               <div>
                 <div className="flex items-center gap-2">

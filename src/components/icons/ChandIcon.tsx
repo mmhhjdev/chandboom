@@ -1,19 +1,16 @@
 import React from 'react';
 
 /**
- * مجموعه‌ی آیکون چندبوم (۵۸ آیکون، شبکه‌ی ۲۴، خط ۱٫۸).
- * رنگ‌ها از متغیرهای CSS گرفته می‌شوند: --icon-soft و --icon-accent (در index.css برای تم روشن و تیره تعریف شده‌اند).
- * خطِ آیکون با currentColor است، پس با color متن والد تنظیم می‌شود.
- * تولیدشده از منبع واحد؛ برای تغییر، فایل منبع را ویرایش کنید و دوباره تولید کنید.
+ * مجموعه‌ی آیکون چندبوم. شبکه‌ی ۲۴. آیکون‌های ساده با currentColor و متغیرهای --icon-soft / --icon-accent.
+ * آیکون‌های براق (ai، goals، quest، forecast، vip-crown) گرادیانت ثابت سبز دارند تا در هر تم یکسان بمانند.
+ * تولیدشده از منبع واحد: icons/source.py + icons/extra.py + icons/generate.py
  */
-export type ChandIconName = "dashboard"|"transactions"|"goals"|"dong"|"analytics"|"reminders"|"support"|"settings"|"subscription"|"ai"|"more"|"wallet"|"card"|"receipt"|"sms"|"bank"|"tag"|"cart"|"chart"|"calculator"|"calendar"|"clock"|"add"|"edit"|"trash"|"search"|"upload"|"copy"|"mic"|"send"|"logout"|"login"|"user"|"users"|"user-plus"|"home"|"crown"|"award"|"heart"|"shield"|"shield-alert"|"key"|"check"|"check-circle"|"alert"|"info"|"bell"|"lightbulb"|"loader"|"close"|"chevron-left"|"chevron-right"|"chevron-down"|"chevron-up"|"arrow-left"|"arrow-right"|"sun"|"moon";
+export type ChandIconName = "dashboard"|"transactions"|"goals"|"dong"|"analytics"|"reminders"|"support"|"settings"|"subscription"|"ai"|"more"|"wallet"|"card"|"receipt"|"sms"|"bank"|"tag"|"cart"|"chart"|"calculator"|"calendar"|"clock"|"add"|"edit"|"trash"|"search"|"upload"|"copy"|"mic"|"send"|"logout"|"login"|"user"|"users"|"user-plus"|"home"|"crown"|"award"|"heart"|"shield"|"shield-alert"|"key"|"check"|"check-circle"|"alert"|"info"|"bell"|"lightbulb"|"loader"|"close"|"chevron-left"|"chevron-right"|"chevron-down"|"chevron-up"|"arrow-left"|"arrow-right"|"sun"|"moon"|"quest"|"forecast"|"vip-crown";
 
 export interface ChandIconProps {
   name: ChandIconName;
-  /** اندازه‌ی ثابت به پیکسل. اگر ندهید با className (مثل w-5 h-5) اندازه می‌گیرد. */
   size?: number;
   className?: string;
-  /** برای آیکون‌هایی که معنی مستقل دارند (بدون متن کنارشان). */
   title?: string;
 }
 
@@ -24,7 +21,7 @@ const ICON_CONTENT = (name: ChandIconName): React.ReactElement => {
     case "transactions":
       return (<><path d="M7.5 4v15.5"/><path d="M4 16l3.5 3.5L11 16"/><path d="M16.5 20.5V5"/><path d="M13 8l3.5-3.5L20 8"/></>);
     case "goals":
-      return (<><circle cx="12" cy="12" r="8.5" fill="var(--icon-soft)"/><circle cx="12" cy="12" r="4.5"/><circle cx="12" cy="12" r="1.2" fill="var(--icon-accent)" stroke="none"/><path d="M12 12l5.5-5.5"/></>);
+      return (<><defs><linearGradient id="cb-chest-body" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stopColor="#34D399"/><stop offset="1" stopColor="#064E3B"/></linearGradient><linearGradient id="cb-chest-lid" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stopColor="#10B981"/><stop offset="1" stopColor="#065F46"/></linearGradient></defs><path d="M4 11v7.4a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V11z" fill="url(#cb-chest-body)" stroke="#064E3B" strokeWidth=".6"/><path d="M4 11a8 6 0 0 1 16 0z" fill="url(#cb-chest-lid)" stroke="#064E3B" strokeWidth=".6"/><path d="M4 11h16" stroke="#064E3B"/><rect x="10.6" y="10" width="2.8" height="4" rx=".8" fill="#FFFFFF" stroke="none"/><circle cx="7.6" cy="6.8" r="1.7" fill="#D1FAE5" stroke="#064E3B" strokeWidth=".5"/><circle cx="12" cy="5.4" r="2" fill="#34D399" stroke="#064E3B" strokeWidth=".5"/><circle cx="16.4" cy="6.8" r="1.7" fill="#D1FAE5" stroke="#064E3B" strokeWidth=".5"/></>);
     case "dong":
       return (<><circle cx="9" cy="8.5" r="3.2" fill="var(--icon-soft)"/><path d="M3.5 19.5c.6-3 2.8-4.5 5.5-4.5s4.9 1.5 5.5 4.5"/><circle cx="16.8" cy="9.2" r="2.5"/><path d="M15.6 14.6c2.4-.3 4.5.9 5.1 3.6"/></>);
     case "analytics":
@@ -38,7 +35,7 @@ const ICON_CONTENT = (name: ChandIconName): React.ReactElement => {
     case "subscription":
       return (<><path d="M3.5 8.5l4.5 4 4-6 4 6 4.5-4-1.8 10H5.3z" fill="var(--icon-soft)"/><path d="M5.3 18.5h13.4"/></>);
     case "ai":
-      return (<><path d="M12 3.5l1.8 5.2 5.2 1.8-5.2 1.8L12 17.5l-1.8-5.2L5 10.5l5.2-1.8z" fill="var(--icon-soft)"/><path d="M19 3v3M17.5 4.5h3" /></>);
+      return (<><defs><radialGradient id="cb-ai-orb" cx="34%" cy="28%" r="78%"><stop offset="0" stopColor="#D1FAE5"/><stop offset=".35" stopColor="#34D399"/><stop offset=".75" stopColor="#059669"/><stop offset="1" stopColor="#064E3B"/></radialGradient></defs><ellipse cx="12" cy="21" rx="6.5" ry="1.3" fill="#064E3B" opacity=".25" stroke="none"/><circle cx="12" cy="11.5" r="8.5" fill="url(#cb-ai-orb)" stroke="#064E3B" strokeWidth=".6"/><ellipse cx="9" cy="7.9" rx="2.8" ry="1.5" fill="#FFFFFF" opacity=".55" stroke="none" transform="rotate(-25 9 7.9)"/><path d="M12 7.6l.9 2.4 2.4.9-2.4.9-.9 2.4-.9-2.4-2.4-.9 2.4-.9z" fill="#FFFFFF" stroke="none"/><circle cx="17" cy="4.5" r=".9" fill="#34D399" stroke="none"/><circle cx="6" cy="18.5" r=".7" fill="#34D399" stroke="none"/></>);
     case "more":
       return (<><circle cx="5.5" cy="12" r="1.8" fill="currentColor" stroke="none"/><circle cx="12" cy="12" r="1.8" fill="currentColor" stroke="none"/><circle cx="18.5" cy="12" r="1.8" fill="currentColor" stroke="none"/></>);
     case "wallet":
@@ -135,6 +132,12 @@ const ICON_CONTENT = (name: ChandIconName): React.ReactElement => {
       return (<><circle cx="12" cy="12" r="4" fill="var(--icon-soft)"/><path d="M12 2.5v2M12 19.5v2M2.5 12h2M19.5 12h2M5.3 5.3l1.4 1.4M17.3 17.3l1.4 1.4M5.3 18.7l1.4-1.4M17.3 6.7l1.4-1.4"/></>);
     case "moon":
       return (<><path d="M20 14.5A8 8 0 0 1 9.5 4a8 8 0 1 0 10.5 10.5z" fill="var(--icon-soft)"/></>);
+    case "quest":
+      return (<><defs><linearGradient id="cb-quest-card" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stopColor="#FFFFFF"/><stop offset="1" stopColor="#D1FAE5"/></linearGradient><linearGradient id="cb-quest-badge" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stopColor="#34D399"/><stop offset="1" stopColor="#059669"/></linearGradient></defs><rect x="3.5" y="4.5" width="17" height="16" rx="4" fill="url(#cb-quest-card)"/><path d="M7.4 10.6l1.6 1.6 3-3.2"/><path d="M13.6 9.9h3.6M7.4 16h9.8"/><circle cx="17.6" cy="5.4" r="3.1" fill="url(#cb-quest-badge)" stroke="#064E3B" strokeWidth=".8"/><path d="M17.6 3.9l.5 1.1 1.2.2-.9.8.2 1.2-1-.6-1 .6.2-1.2-.9-.8 1.2-.2z" fill="#FFFFFF" stroke="none"/></>);
+    case "forecast":
+      return (<><defs><radialGradient id="cb-fc-orb" cx="36%" cy="30%" r="76%"><stop offset="0" stopColor="#FFFFFF"/><stop offset=".45" stopColor="#D1FAE5"/><stop offset="1" stopColor="#059669"/></radialGradient></defs><ellipse cx="12" cy="21.3" rx="6" ry="1.2" fill="#064E3B" opacity=".25" stroke="none"/><circle cx="12" cy="11" r="8.5" fill="url(#cb-fc-orb)" stroke="#064E3B" strokeWidth=".6"/><path d="M6.8 14.2l3-3 2.4 2 4-4.2"/><path d="M14.6 8.2h2.6v2.6"/><path d="M8 17.4h8" strokeDasharray="1.2 1.6" opacity=".7"/></>);
+    case "vip-crown":
+      return (<><defs><linearGradient id="cb-vip-body" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stopColor="#6EE7B7"/><stop offset=".55" stopColor="#10B981"/><stop offset="1" stopColor="#064E3B"/></linearGradient></defs><path d="M3 8.5l4.6 4 4.4-6.5 4.4 6.5 4.6-4-2 10.5H5z" fill="url(#cb-vip-body)" stroke="#064E3B" strokeWidth=".7"/><path d="M5 19.4h14" stroke="#064E3B" strokeWidth="1.6"/><path d="M6.6 15.6l1.1-3.6" stroke="#FFFFFF" opacity=".7" strokeWidth="1"/><circle cx="12" cy="13.6" r="1.4" fill="#FFFFFF" stroke="none"/><circle cx="3" cy="8" r="1.2" fill="#D1FAE5" stroke="none"/><circle cx="21" cy="8" r="1.2" fill="#D1FAE5" stroke="none"/><circle cx="12" cy="4.6" r="1.3" fill="#D1FAE5" stroke="none"/></>);
     default:
       return <></>;
   }

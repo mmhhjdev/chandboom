@@ -1,3 +1,4 @@
+import { ChandIcon } from './icons/ChandIcon';
 import React, { useState } from 'react';
 import {
   Wallet,
@@ -5,25 +6,14 @@ import {
   TrendingUp,
   Plus,
   Users,
-  Bell,
-  Zap,
   Award,
   Send,
-  Bot,
   User,
   ArrowRight,
-  ShieldCheck,
   CheckCircle2,
-  AlertCircle,
-  HelpCircle,
-  Crown,
   Lock,
-  Trophy,
   Flame,
-  CheckSquare,
-  Square,
   CreditCard,
-  Calendar,
   Mic,
   MicOff,
 } from 'lucide-react';
@@ -416,7 +406,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
               title="مشاهده تقویم و چالش ۳۰ روزه مدیریت پول"
               className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-amber-50 dark:bg-[#221B0F] text-amber-800 dark:text-amber-300 border border-amber-300/80 dark:border-amber-800 hover:bg-amber-100 font-cairo font-bold text-xs transition cursor-pointer shadow-xs"
             >
-              <Trophy className="w-4 h-4 text-amber-500" />
+              <ChandIcon name="quest" className="w-4 h-4 text-amber-500" />
               <span>چالش ۳۰ روزه</span>
             </button>
           )}
@@ -460,7 +450,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
               {isTodayCompleted ? (
                 <CheckCircle2 className="w-6 h-6 animate-in zoom-in" />
               ) : (
-                <Trophy className="w-6 h-6" />
+                <ChandIcon name="quest" className="w-6 h-6" />
               )}
             </div>
 
@@ -509,7 +499,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                 </>
               ) : (
                 <>
-                  <Zap className="w-4 h-4 text-zinc-950" />
+                  <ChandIcon name="check" className="w-4 h-4" />
                   <span>انجام دادم!</span>
                 </>
               )}
@@ -558,7 +548,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                   : 'bg-emerald-200 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300'
               }`}
             >
-              <Zap className="w-5 h-5" />
+              <ChandIcon name="forecast" className="w-5 h-5" />
             </div>
             <div>
               <h4 className="font-cairo font-bold text-xs sm:text-sm">
@@ -602,7 +592,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
             onClick={() => setActiveTab('subscription')}
             className="shrink-0 px-4 py-2 rounded-xl bg-gradient-to-r from-amber-500 via-amber-600 to-yellow-600 hover:from-amber-600 hover:to-yellow-700 text-zinc-950 font-cairo font-black text-xs transition cursor-pointer shadow-md flex items-center justify-center gap-1.5"
           >
-            <Crown className="w-3.5 h-3.5 text-zinc-950" />
+            <ChandIcon name="vip-crown" className="w-3.5 h-3.5" />
             <span>خرید اشتراک طلایی پرو</span>
           </button>
         </div>
@@ -685,7 +675,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
           <div className="p-4 border-b border-[#E2E8E4] dark:border-[#1A2621] bg-zinc-50/50 dark:bg-[#121A16] flex items-center justify-between">
             <div className="flex items-center gap-2.5">
               <div className="w-8 h-8 rounded-xl bg-gradient-to-tr from-emerald-700 to-teal-800 text-white flex items-center justify-center shadow-xs">
-                <Bot className="w-4 h-4" />
+                <ChandIcon name="ai" className="w-4 h-4" />
               </div>
               <div>
                 <h3 className="font-cairo text-sm font-bold text-zinc-900 dark:text-zinc-100 flex items-center gap-2">
@@ -705,7 +695,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                 onClick={() => (openSubscriptionModal ? openSubscriptionModal() : setActiveTab('subscription'))}
                 className="text-[11px] font-cairo font-bold text-amber-700 dark:text-amber-400 hover:underline cursor-pointer flex items-center gap-1"
               >
-                <Crown className="w-3.5 h-3.5 text-amber-500" />
+                <ChandIcon name="vip-crown" className="w-3.5 h-3.5" />
                 <span>ارتقا به پلن برنزی یا طلایی</span>
               </button>
             )}
@@ -727,7 +717,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                       : 'bg-zinc-800 text-white dark:bg-zinc-200 dark:text-zinc-900'
                   }`}
                 >
-                  {msg.sender === 'assistant' ? <Bot className="w-3.5 h-3.5" /> : <User className="w-3.5 h-3.5" />}
+                  {msg.sender === 'assistant' ? <ChandIcon name="ai" className="w-3.5 h-3.5" /> : <User className="w-3.5 h-3.5" />}
                 </div>
 
                 <div
@@ -763,7 +753,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
               <div className="p-4 rounded-2xl bg-amber-50/70 dark:bg-[#16251E] border-2 border-amber-400/80 shadow-md space-y-3 animate-in fade-in zoom-in-95 font-cairo text-right">
                 <div className="flex items-center justify-between border-b border-amber-200 dark:border-emerald-800/40 pb-2">
                   <div className="flex items-center gap-1.5 text-amber-800 dark:text-amber-300 font-bold text-xs">
-                    <Zap className="w-4 h-4 text-amber-500" />
+                    <ChandIcon name="ai" className="w-4 h-4" />
                     <span>پیش‌نویس تراکنش هوشمند (انتخاب دستی دسته‌بندی)</span>
                   </div>
                   <span className="text-[10px] px-2 py-0.5 rounded-full font-bold bg-amber-400/20 text-amber-800 dark:text-amber-300 border border-amber-400/40">
@@ -870,7 +860,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                 onClick={() => (openSubscriptionModal ? openSubscriptionModal() : setActiveTab('subscription'))}
                 className="shrink-0 px-4 py-2 rounded-xl bg-gradient-to-r from-amber-500 via-amber-600 to-yellow-600 hover:from-amber-600 hover:to-yellow-700 text-zinc-950 font-cairo font-bold text-xs transition cursor-pointer shadow-md flex items-center gap-1.5"
               >
-                <Crown className="w-3.5 h-3.5" />
+                <ChandIcon name="vip-crown" className="w-3.5 h-3.5" />
                 <span>مشاهده پلن‌ها و فعال‌سازی هوش مصنوعی</span>
               </button>
             </div>
@@ -903,7 +893,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                 {!isProUser ? (
                   <>
                     <Mic className="w-4 h-4" />
-                    <Crown className="absolute -top-1 -right-1 w-3 h-3 text-amber-500" />
+                    <ChandIcon name="vip-crown" className="absolute -top-1 -right-1 w-3 h-3" />
                   </>
                 ) : isListening ? (
                   <MicOff className="w-4 h-4" />

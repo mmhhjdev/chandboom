@@ -1,26 +1,17 @@
+import { ChandIcon } from './icons/ChandIcon';
 import { createDongGroup, findOrCreateDongGroup, addDongExpense } from '../services/dongService';
 import React, { useState, useEffect, useRef } from 'react';
 import {
-  Bot,
   Send,
-  Crown,
   RotateCcw,
-  CheckCircle2,
   AlertCircle,
-  HelpCircle,
   Users,
   Target,
   Bell,
   X,
-  CreditCard,
-  Zap,
-  ArrowRight,
-  PlusCircle,
   Receipt,
-  Calendar,
   Mic,
   MicOff,
-  Sparkles,
   Loader2,
 } from 'lucide-react';
 import { useApp } from '../context/AppContext';
@@ -490,7 +481,7 @@ export const AIAssistant: React.FC<{ isOpen?: boolean; onClose?: () => void }> =
       <div className="p-4 sm:p-5 border-b border-[#E2E8E4] dark:border-[#1E2D24] bg-zinc-50 dark:bg-[#131F19] flex items-center justify-between">
         <div className="flex items-center gap-3">
           <div className="w-10 h-10 rounded-2xl bg-emerald-500/10 dark:bg-emerald-500/20 border border-emerald-500/30 flex items-center justify-center text-emerald-600 dark:text-emerald-400">
-            <Bot className="w-5 h-5" />
+            <ChandIcon name="ai" className="w-5 h-5" />
           </div>
           <div>
             <div className="flex items-center gap-2">
@@ -498,7 +489,7 @@ export const AIAssistant: React.FC<{ isOpen?: boolean; onClose?: () => void }> =
                 دستیار هوشمند و راهنمای <span className="font-brand text-emerald-700 dark:text-emerald-400">چندبوم</span>
               </h2>
               <span className="text-[10px] px-2 py-0.5 rounded-md bg-amber-400 text-zinc-950 font-black flex items-center gap-1">
-                <Crown className="w-3 h-3" />
+                <ChandIcon name="vip-crown" className="w-3 h-3" />
                 <span>
                   {user.tier === 'vip'
                     ? 'اشتراک ۳ ماهه VIP'
@@ -574,7 +565,7 @@ export const AIAssistant: React.FC<{ isOpen?: boolean; onClose?: () => void }> =
       {!isSubscriptionActive ? (
         <div className="p-8 sm:p-12 flex flex-col items-center justify-center text-center bg-radial from-emerald-950/20 to-transparent">
           <div className="w-16 h-16 rounded-3xl bg-amber-500/10 border border-amber-500/30 text-amber-500 flex items-center justify-center mb-4">
-            <Crown className="w-8 h-8" />
+            <ChandIcon name="vip-crown" className="w-8 h-8" />
           </div>
           <h3 className="text-base sm:text-lg font-bold text-zinc-900 dark:text-white mb-2">
             ویژه کاربران دارای اشتراک ۱ ماهه و ۳ ماهه چندبوم
@@ -589,7 +580,7 @@ export const AIAssistant: React.FC<{ isOpen?: boolean; onClose?: () => void }> =
             }}
             className="px-6 py-3 rounded-2xl bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-zinc-950 font-bold text-xs sm:text-sm flex items-center gap-2 shadow-lg transition cursor-pointer"
           >
-            <Crown className="w-4 h-4" />
+            <ChandIcon name="vip-crown" className="w-4 h-4" />
             <span>مشاهده پلن‌های ۱ و ۳ ماهه و ارتقای حساب</span>
           </button>
         </div>
@@ -600,7 +591,7 @@ export const AIAssistant: React.FC<{ isOpen?: boolean; onClose?: () => void }> =
             {messages.length === 0 ? (
               <div className="h-full flex flex-col items-center justify-center py-6 text-center">
                 <div className="w-12 h-12 rounded-2xl bg-emerald-500/10 text-emerald-500 flex items-center justify-center mb-3">
-                  <Zap className="w-6 h-6" />
+                  <ChandIcon name="ai" className="w-6 h-6" />
                 </div>
                 <h4 className="text-sm font-bold text-zinc-800 dark:text-zinc-200 mb-1">
                   سلام! چطور می‌تونم در مدیریت مالی یا ثبت عملیات به شما کمک کنم؟
@@ -650,7 +641,7 @@ export const AIAssistant: React.FC<{ isOpen?: boolean; onClose?: () => void }> =
             {isLoading && (
               <div className="flex items-center gap-2.5 text-xs text-zinc-400 animate-pulse">
                 <div className="w-8 h-8 rounded-xl bg-emerald-600/20 text-emerald-500 flex items-center justify-center">
-                  <Bot className="w-4 h-4 animate-spin" />
+                  <ChandIcon name="ai" className="w-4 h-4 animate-spin" />
                 </div>
                 <span>در حال تحلیل و تدوین پاسخ...</span>
               </div>
@@ -737,7 +728,7 @@ export const AIAssistant: React.FC<{ isOpen?: boolean; onClose?: () => void }> =
 
             <div className="mt-2 flex items-center justify-between text-[10px] text-zinc-400 px-1">
               <div className="flex items-center gap-1.5">
-                <Sparkles className="w-3 h-3 text-emerald-500" />
+                <ChandIcon name="ai" className="w-3 h-3 text-emerald-500" />
                 <span>دستیار هوشمند چندبوم با ورودی صوت فارسی (fa-IR)</span>
               </div>
               <span className="hidden sm:inline">حفاظت شده توسط سهمیه هوشمند ابری</span>

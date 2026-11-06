@@ -1,25 +1,17 @@
+import { ChandIcon } from './icons/ChandIcon';
 import { createDongGroup, findOrCreateDongGroup, addDongExpense } from '../services/dongService';
 import React, { useState, useRef } from 'react';
 import {
-  Bot,
-  Zap,
   Send,
   X,
   Lock,
-  Crown,
   CheckCircle2,
   AlertCircle,
   TrendingUp,
-  Receipt,
   User,
-  ShieldAlert,
   Mic,
   MicOff,
   Loader2,
-  Calendar,
-  Target,
-  Users,
-  Bell,
 } from 'lucide-react';
 import { useApp } from '../context/AppContext';
 import { useSubscription } from '../hooks/useSubscription';
@@ -452,7 +444,7 @@ export const FloatingAIAssistant: React.FC = () => {
                   : 'bg-[#121E19] text-zinc-400 hover:text-white'
               }`}
             >
-              <Zap className="w-3 h-3 text-amber-400" />
+              <ChandIcon name="ai" className="w-3 h-3" />
               <span>دستیار اجرایی (ثبت سریع)</span>
             </button>
             <button
@@ -493,7 +485,7 @@ export const FloatingAIAssistant: React.FC = () => {
             /* Gate 2: Authenticated but No AI Access (Free Tier) */
             <div className="p-4 bg-gradient-to-r from-amber-500/20 via-amber-600/25 to-yellow-500/15 border-b border-amber-400/40 text-right space-y-2">
               <div className="flex items-center gap-2 text-amber-300 text-xs font-cairo font-bold">
-                <Crown className="w-4 h-4 text-amber-400 shrink-0" />
+                <ChandIcon name="vip-crown" className="w-4 h-4 shrink-0" />
                 <span>دسترسی به هوش مصنوعی نیازمند پلن ۱ ماهه طلایی یا ۳ ماهه VIP است</span>
               </div>
               <p className="text-[11px] text-zinc-300 leading-relaxed">
@@ -507,7 +499,7 @@ export const FloatingAIAssistant: React.FC = () => {
                 }}
                 className="w-full py-2 rounded-xl bg-gradient-to-r from-amber-500 to-yellow-500 hover:from-amber-600 hover:to-yellow-600 text-zinc-950 font-cairo font-black text-xs flex items-center justify-center gap-1.5 shadow-md transition cursor-pointer"
               >
-                <Crown className="w-3.5 h-3.5 text-zinc-950" />
+                <ChandIcon name="vip-crown" className="w-3.5 h-3.5" />
                 <span>مشاهده پلن‌ها و فعال‌سازی هوش مصنوعی</span>
               </button>
             </div>
@@ -573,7 +565,7 @@ export const FloatingAIAssistant: React.FC = () => {
               <div className="p-3.5 rounded-2xl bg-[#14231D] border-2 border-amber-400/70 shadow-xl space-y-3 animate-in fade-in zoom-in-95 font-cairo">
                 <div className="flex items-center justify-between border-b border-emerald-800/40 pb-2">
                   <div className="flex items-center gap-1.5 text-amber-300 font-bold text-xs">
-                    <Zap className="w-4 h-4 text-amber-400" />
+                    <ChandIcon name="ai" className="w-4 h-4" />
                     <span>پیش‌نویس تراکنش هوشمند</span>
                   </div>
                   <span className="text-[10px] px-2 py-0.5 rounded-full font-bold bg-amber-400/20 text-amber-300 border border-amber-400/40">
@@ -639,7 +631,7 @@ export const FloatingAIAssistant: React.FC = () => {
               <div className="p-3.5 rounded-2xl bg-[#14231D] border-2 border-amber-400/80 shadow-xl space-y-2.5 animate-in fade-in zoom-in-95 font-cairo">
                 <div className="flex items-center justify-between border-b border-emerald-800/40 pb-2">
                   <div className="flex items-center gap-1.5 text-amber-300 font-bold text-xs">
-                    <Zap className="w-4 h-4 text-amber-400" />
+                    <ChandIcon name="ai" className="w-4 h-4" />
                     <span>پیشنهاد اقدام هوشمند</span>
                   </div>
                   <span className="text-[10px] px-2 py-0.5 rounded-full font-bold bg-amber-400/20 text-amber-300 border border-amber-400/40">

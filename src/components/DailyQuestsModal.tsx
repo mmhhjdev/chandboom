@@ -1,14 +1,9 @@
+import { ChandIcon } from './icons/ChandIcon';
 import React, { useState } from 'react';
 import {
   X,
-  Trophy,
   Flame,
   CheckCircle2,
-  Calendar,
-  Sparkles,
-  ArrowRight,
-  Target,
-  Shield,
   Coins,
 } from 'lucide-react';
 import {
@@ -58,7 +53,7 @@ export const DailyQuestsModal: React.FC<DailyQuestsModalProps> = ({
         <div className="flex items-center justify-between px-6 py-4 border-b border-[#E2E8E4] dark:border-[#1F2E26] bg-zinc-50/70 dark:bg-[#111A15]">
           <div className="flex items-center gap-3">
             <div className="p-2.5 rounded-2xl bg-amber-500 text-zinc-950 shadow-md">
-              <Trophy className="w-5 h-5" />
+              <ChandIcon name="quest" className="w-5 h-5" />
             </div>
             <div>
               <div className="flex items-center gap-2">
@@ -125,7 +120,7 @@ export const DailyQuestsModal: React.FC<DailyQuestsModalProps> = ({
         {celebrationDay && (
           <div className="mx-6 mt-3 p-3 rounded-2xl bg-emerald-50 text-emerald-800 dark:bg-emerald-950/70 dark:text-emerald-300 border border-emerald-300 dark:border-emerald-800 text-xs flex items-center justify-between animate-in fade-in zoom-in-95">
             <div className="flex items-center gap-2">
-              <Sparkles className="w-4 h-4 text-emerald-600" />
+              <ChandIcon name="ai" className="w-4 h-4 text-emerald-600" />
               <span className="font-bold">
                 آفرین! تسک روز {toPersianDigits(celebrationDay)} با موفقیت انجام شد و به زنجیره تداوم افزوده گردید!
               </span>
