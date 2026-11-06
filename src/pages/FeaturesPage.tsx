@@ -2,6 +2,7 @@ import React from 'react';
 import { Link } from 'react-router-dom';
 import { SEOLayout } from '../components/SEOLayout';
 import { SEOHead } from '../components/SEOHead';
+import { ArticleLinks } from '../components/ArticleLinks';
 import {
   MessageSquareText,
   Bot,
@@ -147,6 +148,7 @@ export const FeaturesPage: React.FC = () => {
           </div>
         </div>
       </div>
+          <ArticleLinks />
     </SEOLayout>
   );
 };

@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { SEOLayout } from '../components/SEOLayout';
 import { SEOHead } from '../components/SEOHead';
+import { ArticleLinks } from '../components/ArticleLinks';
 import { Crown, Check, CreditCard, ShieldCheck, ArrowRight, Award, Zap } from 'lucide-react';
 import { formatToman } from '../utils/formatters';
 
@@ -304,6 +305,7 @@ export const PricingPage: React.FC = () => {
           </p>
         </div>
       </div>
+          <ArticleLinks />
     </SEOLayout>
   );
 };

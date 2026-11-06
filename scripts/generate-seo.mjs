@@ -104,6 +104,52 @@ const PAGES = [
   },
 ].map((p) => ({ ...p, lastmod: STATIC_LASTMOD }));
 
+
+// ---------- Prerendered body HTML (crawlers and no-JS readers see the content) ----------
+const SITE_NAME = 'چندبوم';
+const fa = (v) => String(v).replace(/\d/g, (d) => '۰۱۲۳۴۵۶۷۸۹'[Number(d)]);
+const faDate = new Intl.DateTimeFormat('fa-IR-u-ca-persian', { year: 'numeric', month: 'long', day: 'numeric', timeZone: 'Asia/Tehran' });
+const formatDate = (iso) => faDate.format(new Date(`${iso}T12:00:00Z`));
+const anchor = (i) => `section-${i + 1}`;
+
+function renderBlock(b) {
+  switch (b.type) {
+    case 'p': return `<p>${esc(b.text)}</p>`;
+    case 'ul': return `<ul>${b.items.map((i) => `<li>${esc(i)}</li>`).join('')}</ul>`;
+    case 'table': return `<table><tbody>${b.rows.map((r, ri) => `<tr>${r.map((c) => (ri === 0 ? `<th>${esc(c)}</th>` : `<td>${esc(c)}</td>`)).join('')}</tr>`).join('')}</tbody></table>`;
+    case 'faq': return b.items.map((q) => `<h3>${esc(q.q)}</h3><p>${esc(q.a)}</p>`).join('');
+    default: return '';
+  }
+}
+
+function renderArticleBody(a, all) {
+  const toc = a.sections.map((s, i) => `<li><a href="#${anchor(i)}">${esc(s.heading)}</a></li>`).join('');
+  const body = a.sections.map((s, i) =>
+    `<section id="${anchor(i)}"><h2>${esc(s.heading)}</h2>${s.blocks.map(renderBlock).join('')}</section>`).join('');
+  const related = all.filter((x) => x.slug !== a.slug).slice(0, 3)
+    .map((x) => `<li><a href="/articles/${x.slug}">${esc(x.title)}</a></li>`).join('');
+  return `<main dir="rtl"><article>
+<nav aria-label="مسیر راهنما"><ol><li><a href="/articles">مجله ${SITE_NAME}</a></li><li>${esc(a.category)}</li></ol></nav>
+<header><p>${esc(a.category)}</p><h1>${esc(a.title)}</h1><p>${esc(a.description)}</p>
+<p>انتشار: ${formatDate(a.publishedAt)} · به‌روزرسانی: ${formatDate(a.updatedAt)} · زمان مطالعه: ${fa(a.readingTime)} دقیقه</p></header>
+<nav aria-label="فهرست مطالب"><strong>فهرست مطالب</strong><ol>${toc}</ol></nav>
+${body}
+<aside><p>این مطلب آموزشی است و جایگزین مشاوره تخصصی مالی یا حقوقی نیست.</p></aside>
+<p>امکانات مرتبط با این موضوع در <a href="/features">صفحه امکانات چندبوم</a> توضیح داده شده‌اند.</p>
+<section><h2>مطالب مرتبط</h2><ul>${related}</ul></section>
+<p><a href="/articles">همه مقالات</a> · <a href="/">ورود به چندبوم</a></p>
+</article></main>`;
+}
+
+function renderBlogIndexBody(all) {
+  const cards = all.map((a) => `<li><article><p>${esc(a.category)}</p><h2><a href="/articles/${a.slug}">${esc(a.title)}</a></h2><p>${esc(a.description)}</p><p>${formatDate(a.publishedAt)} · زمان مطالعه: ${fa(a.readingTime)} دقیقه</p></article></li>`).join('');
+  return `<main dir="rtl"><header><h1>دانش مالی؛ برای تصمیم‌های هوشمندانه‌تر</h1><p>${fa(all.length)} راهنمای آموزشی درباره بودجه‌بندی، پس‌انداز، مدیریت بدهی و نقش هوش مصنوعی در مدیریت مالی شخصی.</p></header><ul>${cards}</ul><p><a href="/features">امکانات چندبوم</a> · <a href="/">صفحه اصلی</a></p></main>`;
+}
+
+const BLOG_INDEX_BODY = renderBlogIndexBody(articles);
+for (const p of PAGES) if (p.path === '/articles') p.body = BLOG_INDEX_BODY;
+
+
 // ---------- Article routes ----------
 const ARTICLE_PAGES = articles.map((a) => {
   const url = `${SITE}/articles/${a.slug}`;
@@ -151,8 +197,10 @@ const ARTICLE_PAGES = articles.map((a) => {
     lastmod: a.updatedAt,
     type: 'article',
     jsonLd: { '@context': 'https://schema.org', '@graph': graph },
+    body: renderArticleBody(a, articles),
   };
 });
+
 
 const ALL_PAGES = [...PAGES, ...ARTICLE_PAGES];
 
@@ -205,7 +253,8 @@ function buildHtml(page) {
     }),
   ].filter(Boolean).join('\n    ');
   html = html.replace('</head>', `    ${headBlock}\n  </head>`);
-  html = html.replace('<div id="root"></div>', noscriptNav);
+  const root = page.body ? `<div id="root">${page.body}</div>` : '<div id="root"></div>';
+  html = html.replace('<div id="root"></div>', noscriptNav.replace('<div id="root"></div>', root));
   return html;
 }
 
@@ -225,4 +274,4 @@ const urls = ALL_PAGES.map((p) => `  <url>
 fs.writeFileSync(path.join(distDir, 'sitemap.xml'),
   `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n${urls}\n</urlset>\n`, 'utf8');
 
-console.log(`SEO: wrote ${ALL_PAGES.length} pages (${ARTICLE_PAGES.length} articles) and sitemap.xml.`);
+console.log(`SEO: prerendered ${ARTICLE_PAGES.length} article bodies. wrote ${ALL_PAGES.length} pages (${ARTICLE_PAGES.length} articles) and sitemap.xml.`);

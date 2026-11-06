@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { SEOLayout } from '../components/SEOLayout';
 import { SEOHead } from '../components/SEOHead';
+import { ArticleLinks } from '../components/ArticleLinks';
 import { ChevronDown, HelpCircle, Search, Shield, Zap, Sparkles } from 'lucide-react';
 
 interface FAQItem {
@@ -174,6 +175,7 @@ export const FAQPage: React.FC = () => {
           )}
         </div>
       </div>
+          <ArticleLinks />
     </SEOLayout>
   );
 };

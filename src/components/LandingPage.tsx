@@ -40,6 +40,14 @@ import {
   Activity,
 } from 'lucide-react';
 import { useApp } from '../context/AppContext';
+import { Link } from 'react-router-dom';
+import { ARTICLES } from '../data/articles';
+import { formatArticleDate, readingTimeLabel } from '../utils/articleFormat';
+
+const LANDING_ARTICLES = (() => {
+  const featured = ARTICLES.filter((a) => a.isFeatured).slice(0, 3);
+  return featured.length > 0 ? featured : ARTICLES.slice(0, 3);
+})();
 
 interface LandingPageProps {
   onEnterApp: () => void;
@@ -47,18 +55,6 @@ interface LandingPageProps {
   onOpenSubscription?: () => void;
 }
 
-interface ArticleData {
-  id: string;
-  title: string;
-  slug: string;
-  date: string;
-  readTime: string;
-  category: string;
-  image: string;
-  summary: string;
-  content: string[];
-  keyTakeaways: string[];
-}
 
 export const LandingPage: React.FC<LandingPageProps> = ({
   onEnterApp,
@@ -68,7 +64,6 @@ export const LandingPage: React.FC<LandingPageProps> = ({
   const { isAuthenticated, openAuthGuard, openSubscriptionModal, setActiveTab } = useApp();
   const [openFaq, setOpenFaq] = useState<number | null>(0);
   const [showScrollTop, setShowScrollTop] = useState(false);
-  const [selectedArticle, setSelectedArticle] = useState<ArticleData | null>(null);
 
   // Scroll listener for back-to-top button
   useEffect(() => {
@@ -131,67 +126,6 @@ export const LandingPage: React.FC<LandingPageProps> = ({
     },
   ];
 
-  const articles: ArticleData[] = [
-    {
-      id: 'financial-movies',
-      title: '۷ فیلم برتر اقتصادی و مالی که نگرش شما به پول را تغییر می‌دهند',
-      slug: 'best-financial-movies',
-      date: '۲۲ تیر ۱۴۰۴',
-      readTime: '۶ دقیقه مطالعه',
-      category: 'هوش مالی و سرمایه',
-      image: 'https://images.unsplash.com/photo-1489599849927-2ee91cede3ba?w=600&auto=format&fit=crop&q=80',
-      summary: 'آشنایی با برترین فیلم‌های تاریخ سینما در زمینه وال‌استریت، بحران‌های اقتصادی و هوش مالی که هر فرد برای موفقیت مالی باید ببیند.',
-      content: [
-        'سینما همواره یکی از جذاب‌ترین ابزارها برای درک مفاهیم پیچیده اقتصادی و روان‌شناسی بازار بوده است. فیلم‌هایی چون «گرگ وال استریت»، «رکود بزرگ (The Big Short)» و «در جستجوی خوشبختی» زوایای پنهان قدرت پول و اشتباهات مهلک مالی را نمایش می‌دهند.',
-        'در این فیلم‌ها می‌آموزیم که چگونه حرص، ترس و تصمیم‌گیری‌های شتاب‌زده می‌توانند بزرگ‌ترین دارایی‌ها را نابود کنند، در حالی که برنامه‌ریزی منضبط و مدیریت بودجه تضمین‌کننده بقا و رشد پایدار مالی است.',
-        'چندبوم با تکیه بر اصول مدیریت بودجه و الگوریتم‌های هوشمند، به شما کمک می‌کند رفتارهای هیجانی مالی خود را مهار کنید و همانند یک مدیر دارایی حرفه‌ای حساب‌هایتان را کنترل نمایید.',
-      ],
-      keyTakeaways: [
-        'شناخت سوگیری‌های هیجانی در هنگام خرید یا سرمایه‌گذاری',
-        'اهمیت پایبندی به بودجه ماهانه در دوران بحران اقتصادی',
-        'لزوم تنوع‌بخشی به دارایی‌ها و جلوگیری از تمرکز ریسک',
-      ],
-    },
-    {
-      id: 'dong-guide',
-      title: 'راهنمای کامل محاسبه دنگ و مدیریت هزینه‌های گروهی در سفر',
-      slug: 'dong-and-group-expense-guide',
-      date: '۱۸ تیر ۱۴۰۴',
-      readTime: '۴ دقیقه مطالعه',
-      category: 'دنگ و خرج جمعی',
-      image: 'https://images.unsplash.com/photo-1556742049-0a67c5574f73?w=600&auto=format&fit=crop&q=80',
-      summary: 'چگونه بدون دلخوری و با شفافیت کامل، مخارج سفرها، کافه‌ها و خریدهای مشترک را بین دوستان تقسیم و تسویه کنیم.',
-      content: [
-        'یکی از دغدغه‌های همیشگی در سفرهای دوستانه یا خانوادگی، نحوه یادداشت خرج‌ها، مشخص کردن فرد خریدار و در نهایت تراز بدهی‌ها و طلب‌هاست.',
-        'استفاده از ابزار دنگ گروهی چندبوم به شما امکان می‌دهد با ثبت ساده هر هزینه، سهم هر نفر را به صورت مساوی یا سفارشی تفکیک کنید و در پایان سفر تنها با یک کلیک، کمترین تعداد تراکنش لازم برای تسویه حساب را دریافت نمایید.',
-      ],
-      keyTakeaways: [
-        'ثبت آنی و لحظه‌ای هزینه‌ها مانع از فراموشی اقلام ریز می‌شود',
-        'شفافیت مالی دوستی‌ها را عمیق‌تر و سفرها را لذت‌بخش‌تر می‌کند',
-        'کاهش نقل و انتقالات مالی با محاسبه خودکار تراز بدهی/طلب',
-      ],
-    },
-    {
-      id: 'personal-budget-rule',
-      title: 'قانون طلایی ۵۰/۳۰/۲۰ برای بودجه‌بندی هوشمند درآمد ماهانه',
-      slug: '50-30-20-budgeting-rule',
-      date: '۱۲ تیر ۱۴۰۴',
-      readTime: '۵ دقیقه مطالعه',
-      category: 'آموزش بودجه‌بندی',
-      image: 'https://images.unsplash.com/photo-1551288049-bebda4e38f71?w=600&auto=format&fit=crop&q=80',
-      summary: 'فرمول استاندارد جهانی برای تقسیم حقوق ماهانه بین نیازهای ضروری، تفریحات و پس‌انداز بلندمدت.',
-      content: [
-        'قانون ۵۰/۳۰/۲۰ یکی از ساده‌ترین و کارآمدترین روش‌های بودجه‌بندی شخصی در دنیاست: ۵۰ درصد از درآمد خالص به نیازهای اولیه (اجاره، خوراک، قبوض)، ۳۰ درصد به خواسته‌ها (رستوران، تفریح، خرید شخصی) و ۲۰ درصد به پس‌انداز و سرمایه‌گذاری اختصاص می‌یابد.',
-        'در پنل چندبوم، این نسبت‌ها به طور پیوسته روی تراکنش‌های واقعی شما تحلیل شده و هرگاه هزینه‌ای از حد تعیین‌شده فراتر رود، هشدارهای هوشمند برای شما ارسال می‌شود.',
-      ],
-      keyTakeaways: [
-        'تفکیک دقیق مرز بین «نیاز» و «خواسته»',
-        'تثبیت سهم ۲۰ درصدی پس‌انداز پیش از شروع هزینه‌کرد ماهانه',
-        'ایجاد آرامش روانی و آمادگی کامل برای هزینه‌های پیش‌بینی‌نشده',
-      ],
-    },
-  ];
-
   return (
     <div
       className="min-h-screen bg-white text-zinc-900 selection:bg-emerald-600 selection:text-white overflow-x-hidden font-cairo"
@@ -243,9 +177,9 @@ export const LandingPage: React.FC<LandingPageProps> = ({
             <a href="#web-app" className="hover:text-emerald-700 transition-colors">
               نسخه تحت وب
             </a>
-            <a href="#blog" className="hover:text-emerald-700 transition-colors">
-              بلاگ
-            </a>
+            <Link to="/articles" className="hover:text-emerald-700 transition-colors">
+              مجله
+            </Link>
             <a href="#faq" className="hover:text-emerald-700 transition-colors">
               سوالات متداول
             </a>
@@ -980,83 +914,39 @@ export const LandingPage: React.FC<LandingPageProps> = ({
       </section>
 
       {/* SECTION 7: خواندن آخرین مطالب اقتصادی و مدیریت مالی (Blog / Articles) */}
-      <section id="blog" className="relative z-10 py-20">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          
-          <div className="text-center max-w-2xl mx-auto mb-16 space-y-3">
-            <h2 className="text-3xl sm:text-4xl font-black text-emerald-950">
-              خواندن آخرین <span className="text-emerald-700">مطالب اقتصادی</span> و مدیریت مالی
-            </h2>
-            <p className="text-sm sm:text-base text-zinc-600 font-medium">
-              جدیدترین مقالات و راهنمایی‌ها در زمینه مدیریت مالی شخصی، سرمایه‌گذاری و پس‌انداز
-            </p>
+      {/* ARTICLES TEASER: full journal lives on /articles */}
+      <section id="blog" className="relative z-10 py-20" aria-labelledby="blog-heading">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-10">
+          <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-6 text-right">
+            <div className="space-y-3 max-w-2xl">
+              <span className="inline-flex items-center rounded-full bg-emerald-100 px-3 py-1 text-xs font-extrabold text-emerald-900">مجله چندبوم</span>
+              <h2 id="blog-heading" className="text-3xl sm:text-4xl font-black text-emerald-950">راهنمای عملی مدیریت مالی شخصی</h2>
+              <p className="text-zinc-600 leading-8">
+                بودجه‌بندی، پس‌انداز، مدیریت بدهی و استفاده از هوش مصنوعی؛ هر مقاله با مثال و گام‌های قابل اجرا.
+              </p>
+            </div>
+            <Link to="/articles" className="inline-flex w-fit items-center gap-2 rounded-full border border-emerald-200 bg-white px-5 py-2.5 text-sm font-extrabold text-emerald-800 hover:border-emerald-400 transition">
+              همه مقالات <ArrowLeft className="w-4 h-4" />
+            </Link>
           </div>
 
-          {/* 3 Articles Grid */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-            {articles.map((art) => (
-              <div
-                key={art.id}
-                className="bg-white rounded-3xl overflow-hidden shadow-lg border border-emerald-100 hover:shadow-xl transition-all duration-300 flex flex-col group text-right"
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            {LANDING_ARTICLES.map((article) => (
+              <Link
+                key={article.slug}
+                to={`/articles/${article.slug}`}
+                className="group flex flex-col gap-4 rounded-3xl border border-emerald-100 bg-white p-6 shadow-lg hover:shadow-xl transition-all text-right"
               >
-                {/* Article Header Image Graphic */}
-                <div className="h-48 bg-gradient-to-tr from-emerald-100 to-teal-100 relative overflow-hidden flex items-center justify-center">
-                  <div className="absolute inset-0 bg-black/5 group-hover:bg-transparent transition-colors" />
-                  
-                  {art.id === 'financial-movies' ? (
-                    <div className="w-full h-full bg-cover bg-center flex items-end p-4 text-white relative" style={{ backgroundImage: `url('https://images.unsplash.com/photo-1489599849927-2ee91cede3ba?w=600&auto=format&fit=crop&q=80')` }}>
-                      <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent" />
-                      <span className="relative z-10 text-xs font-bold px-2.5 py-1 rounded-full bg-black/50 backdrop-blur-md">
-                        {art.date}
-                      </span>
-                    </div>
-                  ) : art.id === 'dong-guide' ? (
-                    <div className="w-full h-full bg-cover bg-center flex items-end p-4 text-white relative" style={{ backgroundImage: `url('https://images.unsplash.com/photo-1556742049-0a67c5574f73?w=600&auto=format&fit=crop&q=80')` }}>
-                      <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent" />
-                      <span className="relative z-10 text-xs font-bold px-2.5 py-1 rounded-full bg-black/50 backdrop-blur-md">
-                        {art.date}
-                      </span>
-                    </div>
-                  ) : (
-                    <div className="w-full h-full bg-cover bg-center flex items-end p-4 text-white relative" style={{ backgroundImage: `url('https://images.unsplash.com/photo-1551288049-bebda4e38f71?w=600&auto=format&fit=crop&q=80')` }}>
-                      <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent" />
-                      <span className="relative z-10 text-xs font-bold px-2.5 py-1 rounded-full bg-black/50 backdrop-blur-md">
-                        {art.date}
-                      </span>
-                    </div>
-                  )}
-
-                  <span className="absolute top-3 right-3 px-3 py-1 rounded-full bg-white/95 backdrop-blur-md text-emerald-800 text-[10px] font-extrabold shadow-sm border border-emerald-100">
-                    {art.category}
-                  </span>
+                <span className="w-fit rounded-full bg-emerald-50 px-3 py-1 text-xs font-extrabold text-emerald-800">{article.category}</span>
+                <h3 className="text-lg font-black leading-8 text-zinc-900 group-hover:text-emerald-700">{article.title}</h3>
+                <p className="line-clamp-3 text-sm leading-7 text-zinc-600">{article.description}</p>
+                <div className="mt-auto flex items-center justify-between border-t border-zinc-100 pt-4 text-xs text-zinc-500">
+                  <span>{formatArticleDate(article.publishedAt)} · {readingTimeLabel(article.readingTime)}</span>
+                  <span className="inline-flex items-center gap-1 font-extrabold text-emerald-700">ادامه مطلب <ArrowLeft className="w-3.5 h-3.5" /></span>
                 </div>
-
-                {/* Article Content */}
-                <div className="p-6 flex-1 flex flex-col justify-between space-y-4">
-                  <div className="space-y-2">
-                    <h3 className="font-extrabold text-base text-emerald-950 group-hover:text-emerald-700 transition-colors leading-snug">
-                      {art.title}
-                    </h3>
-                    <p className="text-xs text-zinc-500 leading-relaxed line-clamp-3">
-                      {art.summary}
-                    </p>
-                  </div>
-
-                  <div className="pt-3 border-t border-zinc-100 flex items-center justify-between text-xs">
-                    <span className="text-zinc-400 text-[11px] font-medium">{art.readTime}</span>
-                    <button
-                      onClick={() => setSelectedArticle(art)}
-                      className="text-emerald-700 font-bold hover:text-emerald-800 transition flex items-center gap-1 cursor-pointer"
-                    >
-                      <span>ادامه مطلب</span>
-                      <ArrowLeft className="w-3.5 h-3.5" />
-                    </button>
-                  </div>
-                </div>
-              </div>
+              </Link>
             ))}
           </div>
-
         </div>
       </section>
 
@@ -1131,79 +1021,6 @@ export const LandingPage: React.FC<LandingPageProps> = ({
         </div>
       </button>
 
-      {/* ARTICLE READER MODAL */}
-      {selectedArticle && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-150">
-          <div className="relative max-w-2xl w-full bg-white rounded-3xl overflow-hidden shadow-2xl border border-emerald-100 max-h-[85vh] flex flex-col text-right font-cairo">
-            
-            {/* Header */}
-            <div className="p-6 border-b border-zinc-100 flex items-center justify-between">
-              <button
-                onClick={() => setSelectedArticle(null)}
-                className="p-2 rounded-xl text-zinc-400 hover:bg-zinc-100 hover:text-zinc-700 transition cursor-pointer"
-              >
-                <X className="w-5 h-5" />
-              </button>
-              <div className="flex items-center gap-2">
-                <span className="text-xs font-bold text-zinc-500">{selectedArticle.readTime}</span>
-                <span className="px-3 py-1 rounded-full bg-emerald-100 text-emerald-800 text-xs font-bold">
-                  {selectedArticle.category}
-                </span>
-              </div>
-            </div>
-
-            {/* Scrollable Body */}
-            <div className="p-6 overflow-y-auto space-y-4">
-              <h2 className="text-xl sm:text-2xl font-black text-emerald-950 leading-snug">
-                {selectedArticle.title}
-              </h2>
-
-              <p className="text-xs sm:text-sm text-emerald-800 font-bold bg-emerald-50 p-3.5 rounded-2xl border border-emerald-100">
-                {selectedArticle.summary}
-              </p>
-
-              <div className="space-y-3 pt-2 text-xs sm:text-sm text-zinc-700 leading-relaxed">
-                {selectedArticle.content.map((p, i) => (
-                  <p key={i}>{p}</p>
-                ))}
-              </div>
-
-              {/* Key takeaways */}
-              <div className="p-4 rounded-2xl bg-zinc-50 border border-zinc-200/80 space-y-2 mt-4">
-                <h4 className="font-extrabold text-xs text-emerald-950 flex items-center gap-1.5">
-                  <CheckCircle2 className="w-4 h-4 text-emerald-600" />
-                  <span>نکات کلیدی این مقاله برای مدیریت مالی شما:</span>
-                </h4>
-                <ul className="space-y-1.5 text-xs text-zinc-600 pr-5 list-disc">
-                  {selectedArticle.keyTakeaways.map((tip, i) => (
-                    <li key={i}>{tip}</li>
-                  ))}
-                </ul>
-              </div>
-            </div>
-
-            {/* Footer */}
-            <div className="p-4 bg-zinc-50 border-t border-zinc-100 flex items-center justify-between">
-              <button
-                onClick={() => {
-                  setSelectedArticle(null);
-                  handleLaunchApp();
-                }}
-                className="px-5 py-2.5 rounded-xl bg-emerald-700 hover:bg-emerald-800 text-white font-bold text-xs shadow-md transition cursor-pointer"
-              >
-                شروع مدیریت مالی با چندبوم
-              </button>
-              <button
-                onClick={() => setSelectedArticle(null)}
-                className="px-4 py-2.5 rounded-xl border border-zinc-200 text-zinc-600 font-bold text-xs hover:bg-zinc-100 transition cursor-pointer"
-              >
-                بستن
-              </button>
-            </div>
-
-          </div>
-        </div>
-      )}
     </div>
   );
 };
