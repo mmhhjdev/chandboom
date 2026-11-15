@@ -260,9 +260,9 @@ export const GoalsView: React.FC = () => {
         <div className="p-5 rounded-2xl bg-white dark:bg-[#0E1511] border border-[#E2E8E4] dark:border-[#1F2E27] shadow-xs space-y-2">
           <div className="flex items-center justify-between text-xs text-zinc-500">
             <span>تعداد اهداف ثبت شده</span>
-            <ChandIcon name="goals" className="w-4 h-4 text-amber-500" />
+            <ChandIcon name="goals" className="w-4 h-4 text-emerald-500" />
           </div>
-          <div className="font-cairo text-2xl font-black text-amber-600 dark:text-amber-400">
+          <div className="font-cairo text-2xl font-black text-emerald-600 dark:text-emerald-400">
             {toPersianDigits(goals.length)} <span className="text-xs font-normal text-zinc-400">هدف مالی</span>
           </div>
           <p className="text-[11px] text-zinc-400">
@@ -361,7 +361,7 @@ export const GoalsView: React.FC = () => {
                     <button
                       onClick={() => runAiFeasibility(goal)}
                       disabled={isAnalyzing}
-                      className="px-3.5 py-1.5 rounded-xl bg-gradient-to-r from-amber-500 to-yellow-500 hover:from-amber-600 hover:to-yellow-600 text-zinc-950 font-cairo font-bold text-xs flex items-center gap-1.5 shadow-xs transition cursor-pointer disabled:opacity-50"
+                      className="px-3.5 py-1.5 rounded-xl bg-gradient-to-r from-emerald-500 to-emerald-500 hover:from-emerald-600 hover:to-emerald-600 text-zinc-950 font-cairo font-bold text-xs flex items-center gap-1.5 shadow-xs transition cursor-pointer disabled:opacity-50"
                     >
                       <ChandIcon name="ai" className="w-3.5 h-3.5" />
                       <span>{isAnalyzing ? 'در حال تحلیل...' : 'سنجش هوش مصنوعی'}</span>
@@ -406,7 +406,7 @@ export const GoalsView: React.FC = () => {
                   <div className="w-full h-3 bg-zinc-100 dark:bg-zinc-800 rounded-full overflow-hidden">
                     <div
                       className={`h-full rounded-full transition-all duration-500 ${
-                        progress >= 100 ? 'bg-emerald-500' : progress >= 50 ? 'bg-emerald-600' : 'bg-amber-500'
+                        progress >= 100 ? 'bg-emerald-500' : progress >= 50 ? 'bg-emerald-600' : 'bg-emerald-500'
                       }`}
                       style={{ width: `${progress}%` }}
                     />
@@ -420,25 +420,25 @@ export const GoalsView: React.FC = () => {
 
                 {/* AI Feasibility Card if analyzed */}
                 {aiRes && (
-                  <div className="p-4 rounded-2xl bg-amber-50/70 dark:bg-[#1C1608] border border-amber-300 dark:border-amber-800/80 space-y-3 animate-in fade-in duration-200">
-                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-amber-200 dark:border-amber-900/60 pb-2.5">
+                  <div className="p-4 rounded-2xl bg-emerald-50/70 dark:bg-[#081C15] border border-emerald-300 dark:border-emerald-800/80 space-y-3 animate-in fade-in duration-200">
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-emerald-200 dark:border-emerald-900/60 pb-2.5">
                       <div className="flex items-center gap-2">
-                        <ChandIcon name="ai" className="w-4 h-4 text-amber-500" />
-                        <h5 className="font-cairo font-bold text-xs text-amber-900 dark:text-amber-200">
+                        <ChandIcon name="ai" className="w-4 h-4 text-emerald-500" />
+                        <h5 className="font-cairo font-bold text-xs text-emerald-900 dark:text-emerald-200">
                           نتیجه ارزیابی دستیار هوشمند چندبوم:
                         </h5>
-                        <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-200 text-amber-800 dark:bg-amber-900 dark:text-amber-200">
+                        <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-200 text-emerald-800 dark:bg-emerald-900 dark:text-emerald-200">
                           {aiRes.statusText}
                         </span>
                       </div>
 
-                      <div className="flex items-center gap-3 text-xs font-bold text-amber-800 dark:text-amber-300">
+                      <div className="flex items-center gap-3 text-xs font-bold text-emerald-800 dark:text-emerald-300">
                         <span>امتیاز امکان‌پذیری: {toPersianDigits(aiRes.score)}٪</span>
                         <span>پس‌انداز ماهانه لازم: {formatToman(aiRes.requiredMonthly)}</span>
                       </div>
                     </div>
 
-                    <p className="text-xs text-amber-950 dark:text-amber-100 leading-relaxed">
+                    <p className="text-xs text-emerald-950 dark:text-emerald-100 leading-relaxed">
                       {aiRes.advice}
                     </p>
                   </div>

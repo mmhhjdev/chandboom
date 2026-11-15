@@ -75,7 +75,7 @@ export const RemindersView: React.FC = () => {
       {/* Unpaid List */}
       <div className="space-y-3">
         <h3 className="font-cairo text-base font-bold text-zinc-900 dark:text-zinc-100 flex items-center gap-2">
-          <ChandIcon name="clock" className="w-4 h-4 text-amber-600" />
+          <ChandIcon name="clock" className="w-4 h-4 text-emerald-600" />
           <span>سررسیدهای در انتظار پرداخت</span>
         </h3>
 
@@ -108,7 +108,7 @@ export const RemindersView: React.FC = () => {
                       <span>•</span>
                       <span>{rem.category}</span>
                       <span>•</span>
-                      <span className="text-[11px] text-amber-700 dark:text-amber-400">
+                      <span className="text-[11px] text-emerald-700 dark:text-emerald-400">
                         {rem.recurrence === 'monthly' ? 'تکرار ماهانه' : 'یک‌باره'}
                       </span>
                     </div>

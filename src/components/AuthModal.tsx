@@ -76,7 +76,7 @@ export const AuthModal: React.FC = () => {
   const strengthColors = [
     'bg-zinc-200 dark:bg-zinc-800',
     'bg-rose-500',
-    'bg-amber-500',
+    'bg-emerald-500',
     'bg-teal-500',
     'bg-emerald-500',
   ];

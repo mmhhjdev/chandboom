@@ -31,11 +31,11 @@ interface FinancialChartsProps {
 const PALETTE = [
   '#10B981', // emerald
   '#3B82F6', // blue
-  '#F59E0B', // amber
+  '#0BF5A7', // amber
   '#EC4899', // pink
   '#8B5CF6', // violet
   '#06B6D4', // cyan
-  '#F97316', // orange
+  '#16F9AE', // orange
   '#6366F1', // indigo
   '#14B8A6', // teal
   '#A855F7', // purple

@@ -398,9 +398,9 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
             <button
               onClick={onOpenDailyQuestsModal}
               title="مشاهده تقویم و چالش ۳۰ روزه مدیریت پول"
-              className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-amber-50 dark:bg-[#221B0F] text-amber-800 dark:text-amber-300 border border-amber-300/80 dark:border-amber-800 hover:bg-amber-100 font-cairo font-bold text-xs transition cursor-pointer shadow-xs"
+              className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-emerald-50 dark:bg-[#0F221C] text-emerald-800 dark:text-emerald-300 border border-emerald-300/80 dark:border-emerald-800 hover:bg-emerald-100 font-cairo font-bold text-xs transition cursor-pointer shadow-xs"
             >
-              <ChandIcon name="quest" className="w-4 h-4 text-amber-500" />
+              <ChandIcon name="quest" className="w-4 h-4 text-emerald-500" />
               <span>چالش ۳۰ روزه</span>
             </button>
           )}
@@ -429,7 +429,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
         className={`p-4 sm:p-5 rounded-3xl border transition-all duration-300 relative overflow-hidden shadow-xs ${
           isTodayCompleted
             ? 'bg-gradient-to-r from-emerald-50 via-teal-50/50 to-white dark:from-[#11221A] dark:via-[#0F1C16] dark:to-[#0C1511] border-emerald-300 dark:border-emerald-800/80'
-            : 'bg-gradient-to-r from-amber-50/90 via-orange-50/40 to-white dark:from-[#1C160B] dark:via-[#161208] dark:to-[#0F1512] border-amber-200 dark:border-amber-900/60'
+            : 'bg-gradient-to-r from-emerald-50/90 via-emerald-50/40 to-white dark:from-[#0B1C16] dark:via-[#081611] dark:to-[#0F1512] border-emerald-200 dark:border-emerald-900/60'
         }`}
       >
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
@@ -438,7 +438,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
               className={`p-3 rounded-2xl shrink-0 transition-transform duration-300 ${
                 isTodayCompleted
                   ? 'bg-emerald-600 text-white shadow-md shadow-emerald-500/20'
-                  : 'bg-amber-500 text-zinc-950 shadow-md shadow-amber-500/20'
+                  : 'bg-emerald-500 text-zinc-950 shadow-md shadow-emerald-500/20'
               }`}
             >
               {isTodayCompleted ? (
@@ -450,7 +450,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
 
             <div className="space-y-1">
               <div className="flex flex-wrap items-center gap-2">
-                <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-amber-200 text-amber-900 dark:bg-amber-950 dark:text-amber-200 border border-amber-300 dark:border-amber-800 flex items-center gap-1">
+                <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-emerald-200 text-emerald-900 dark:bg-emerald-950 dark:text-emerald-200 border border-emerald-300 dark:border-emerald-800 flex items-center gap-1">
                   <span>تسک امروز</span>
                   <span>(روز {toPersianDigits(todayDay)} از ۳۰)</span>
                 </span>
@@ -460,8 +460,8 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                 </span>
 
                 {activeStreak > 0 && (
-                  <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-orange-100 text-orange-700 dark:bg-orange-950/80 dark:text-orange-300 flex items-center gap-1">
-                    <Flame className="w-3 h-3 text-orange-500" />
+                  <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-100 text-emerald-700 dark:bg-emerald-950/80 dark:text-emerald-300 flex items-center gap-1">
+                    <Flame className="w-3 h-3 text-emerald-500" />
                     <span>{toPersianDigits(activeStreak)} روز استریک پیوسته</span>
                   </span>
                 )}
@@ -483,7 +483,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
               className={`px-4 py-2.5 rounded-2xl font-cairo font-bold text-xs transition cursor-pointer flex items-center gap-2 shadow-xs ${
                 isTodayCompleted
                   ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300 border border-emerald-300 dark:border-emerald-700 hover:bg-emerald-200'
-                  : 'bg-gradient-to-r from-amber-500 to-yellow-500 hover:from-amber-600 hover:to-yellow-600 text-zinc-950 shadow-md shadow-amber-500/20 active:scale-95'
+                  : 'bg-gradient-to-r from-emerald-500 to-emerald-500 hover:from-emerald-600 hover:to-emerald-600 text-zinc-950 shadow-md shadow-emerald-500/20 active:scale-95'
               }`}
             >
               {isTodayCompleted ? (
@@ -515,7 +515,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
         {questCelebration && (
           <div className="mt-3 p-2.5 rounded-xl bg-emerald-600 text-white text-xs font-cairo font-bold flex items-center justify-between animate-in fade-in zoom-in-95">
             <div className="flex items-center gap-2">
-              <ChandIcon name="award" className="w-4 h-4 text-yellow-300" />
+              <ChandIcon name="award" className="w-4 h-4 text-emerald-300" />
               <span>آفرین! تسک امروز شما با موفقیت ثبت شد و زنجیره تداوم تمدید گردید! 🎉</span>
             </div>
             <span className="text-[10px] bg-white/20 px-2 py-0.5 rounded-full font-mono">
@@ -530,7 +530,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
         <div
           className={`p-4 sm:p-5 rounded-2xl border flex items-center justify-between gap-4 ${
             budgetInsight.isWarning
-              ? 'bg-amber-50/80 dark:bg-amber-950/30 border-amber-200 dark:border-amber-900/60 text-amber-900 dark:text-amber-200'
+              ? 'bg-emerald-50/80 dark:bg-emerald-950/30 border-emerald-200 dark:border-emerald-900/60 text-emerald-900 dark:text-emerald-200'
               : 'bg-emerald-50/80 dark:bg-emerald-950/30 border-emerald-200 dark:border-emerald-900/60 text-emerald-900 dark:text-emerald-200'
           }`}
         >
@@ -538,7 +538,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
             <div
               className={`shrink-0 ${
                 budgetInsight.isWarning
-                  ? 'text-amber-700 dark:text-amber-300'
+                  ? 'text-emerald-700 dark:text-emerald-300'
                   : 'text-emerald-700 dark:text-emerald-300'
               }`}
             >
@@ -562,17 +562,17 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
         </div>
       ) : (
         /* Structural Preview for Non-Pro Users */
-        <div className="p-4 sm:p-5 rounded-2xl border border-amber-300/60 dark:border-amber-800/60 bg-gradient-to-r from-amber-50/90 via-amber-100/40 to-yellow-50/80 dark:from-[#17140B] dark:via-[#1D190D] dark:to-[#120F08] flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div className="p-4 sm:p-5 rounded-2xl border border-emerald-300/60 dark:border-emerald-800/60 bg-gradient-to-r from-emerald-50/90 via-emerald-100/40 to-emerald-50/80 dark:from-[#0B1713] dark:via-[#0D1D18] dark:to-[#08120F] flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div className="flex items-start sm:items-center gap-3">
-            <div className="p-2.5 rounded-xl text-amber-800 dark:text-amber-300 shrink-0">
-              <ChandIcon name="key" className="w-5 h-5 text-amber-600 dark:text-amber-400" />
+            <div className="p-2.5 rounded-xl text-emerald-800 dark:text-emerald-300 shrink-0">
+              <ChandIcon name="key" className="w-5 h-5 text-emerald-600 dark:text-emerald-400" />
             </div>
             <div>
               <div className="flex items-center gap-2">
                 <h4 className="font-cairo font-bold text-xs sm:text-sm text-zinc-900 dark:text-zinc-100">
                   پیش‌بینی هوشمند بودجه و نرخ مصرف مالی (هوش مصنوعی)
                 </h4>
-                <span className="px-2 py-0.5 rounded-full text-[10px] bg-amber-500/20 text-amber-800 dark:text-amber-300 font-bold border border-amber-400/40">
+                <span className="px-2 py-0.5 rounded-full text-[10px] bg-emerald-500/20 text-emerald-800 dark:text-emerald-300 font-bold border border-emerald-400/40">
                   ویژه کاربران پرو
                 </span>
               </div>
@@ -584,7 +584,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
 
           <button
             onClick={() => setActiveTab('subscription')}
-            className="shrink-0 px-4 py-2 rounded-xl bg-gradient-to-r from-amber-500 via-amber-600 to-yellow-600 hover:from-amber-600 hover:to-yellow-700 text-zinc-950 font-cairo font-black text-xs transition cursor-pointer shadow-md flex items-center justify-center gap-1.5"
+            className="shrink-0 px-4 py-2 rounded-xl bg-gradient-to-r from-emerald-500 via-emerald-600 to-emerald-600 hover:from-emerald-600 hover:to-emerald-700 text-zinc-950 font-cairo font-black text-xs transition cursor-pointer shadow-md flex items-center justify-center gap-1.5"
           >
             <ChandIcon name="vip-crown" className="w-3.5 h-3.5" />
             <span>خرید اشتراک طلایی پرو</span>
@@ -648,7 +648,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                   budgetUsagePercent > 85
                     ? 'bg-rose-600'
                     : budgetUsagePercent > 65
-                    ? 'bg-amber-500'
+                    ? 'bg-emerald-500'
                     : 'bg-emerald-600'
                 }`}
                 style={{ width: `${budgetUsagePercent}%` }}
@@ -674,7 +674,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
               <div>
                 <h3 className="font-cairo text-sm font-bold text-zinc-900 dark:text-zinc-100 flex items-center gap-2">
                   <span>دستیار هوشمند چندبوم</span>
-                  <span className="px-2 py-0.5 rounded-full text-[9px] bg-amber-100 dark:bg-amber-950/80 text-amber-800 dark:text-amber-300 font-bold border border-amber-300 dark:border-amber-800">
+                  <span className="px-2 py-0.5 rounded-full text-[9px] bg-emerald-100 dark:bg-emerald-950/80 text-emerald-800 dark:text-emerald-300 font-bold border border-emerald-300 dark:border-emerald-800">
                     دستیار اختصاصی مالی
                   </span>
                 </h3>
@@ -687,7 +687,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
             {!hasAIAccess && (
               <button
                 onClick={() => (openSubscriptionModal ? openSubscriptionModal() : setActiveTab('subscription'))}
-                className="text-[11px] font-cairo font-bold text-amber-700 dark:text-amber-400 hover:underline cursor-pointer flex items-center gap-1"
+                className="text-[11px] font-cairo font-bold text-emerald-700 dark:text-emerald-400 hover:underline cursor-pointer flex items-center gap-1"
               >
                 <ChandIcon name="vip-crown" className="w-3.5 h-3.5" />
                 <span>ارتقا به پلن برنزی یا طلایی</span>
@@ -744,13 +744,13 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
 
             {/* Smart Interactive Draft Confirmation Card */}
             {pendingDraft && (
-              <div className="p-4 rounded-2xl bg-amber-50/70 dark:bg-[#16251E] border-2 border-amber-400/80 shadow-md space-y-3 animate-in fade-in zoom-in-95 font-cairo text-right">
-                <div className="flex items-center justify-between border-b border-amber-200 dark:border-emerald-800/40 pb-2">
-                  <div className="flex items-center gap-1.5 text-amber-800 dark:text-amber-300 font-bold text-xs">
+              <div className="p-4 rounded-2xl bg-emerald-50/70 dark:bg-[#16251E] border-2 border-emerald-400/80 shadow-md space-y-3 animate-in fade-in zoom-in-95 font-cairo text-right">
+                <div className="flex items-center justify-between border-b border-emerald-200 dark:border-emerald-800/40 pb-2">
+                  <div className="flex items-center gap-1.5 text-emerald-800 dark:text-emerald-300 font-bold text-xs">
                     <ChandMascot size={20} />
                     <span>پیش‌نویس تراکنش هوشمند (انتخاب دستی دسته‌بندی)</span>
                   </div>
-                  <span className="text-[10px] px-2 py-0.5 rounded-full font-bold bg-amber-400/20 text-amber-800 dark:text-amber-300 border border-amber-400/40">
+                  <span className="text-[10px] px-2 py-0.5 rounded-full font-bold bg-emerald-400/20 text-emerald-800 dark:text-emerald-300 border border-emerald-400/40">
                     {pendingDraft.type === 'expense' ? 'هزینه' : 'درآمد'}
                   </span>
                 </div>
@@ -817,7 +817,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                 key={idx}
                 type="button"
                 onClick={() => handleSendPrompt(prompt)}
-                className="shrink-0 px-2.5 py-1 rounded-xl bg-white dark:bg-[#16221D] border border-[#E2E8E4] dark:border-[#1F2F28] hover:border-amber-400 text-zinc-700 dark:text-zinc-300 hover:text-amber-700 dark:hover:text-amber-300 transition cursor-pointer"
+                className="shrink-0 px-2.5 py-1 rounded-xl bg-white dark:bg-[#16221D] border border-[#E2E8E4] dark:border-[#1F2F28] hover:border-emerald-400 text-zinc-700 dark:text-zinc-300 hover:text-emerald-700 dark:hover:text-emerald-300 transition cursor-pointer"
               >
                 {prompt}
               </button>
@@ -826,10 +826,10 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
 
           {/* Chat Form or Pro Paywall Lock */}
           {!isAuthenticated ? (
-            <div className="p-3.5 border-t border-amber-300/40 bg-gradient-to-r from-amber-500/10 via-amber-600/15 to-yellow-500/10 flex flex-col sm:flex-row items-center justify-between gap-3 text-right">
+            <div className="p-3.5 border-t border-emerald-300/40 bg-gradient-to-r from-emerald-500/10 via-emerald-600/15 to-emerald-500/10 flex flex-col sm:flex-row items-center justify-between gap-3 text-right">
               <div className="flex items-center gap-2">
-                <ChandIcon name="key" className="w-4 h-4 text-amber-600 dark:text-amber-400 shrink-0" />
-                <span className="text-xs text-amber-950 dark:text-amber-200 font-cairo font-bold">
+                <ChandIcon name="key" className="w-4 h-4 text-emerald-600 dark:text-emerald-400 shrink-0" />
+                <span className="text-xs text-emerald-950 dark:text-emerald-200 font-cairo font-bold">
                   هوش مصنوعی فقط برای کسانی که اشتراک پرو دارند فعال می‌شود. لطفاً ابتدا وارد حساب کاربری خود شوید.
                 </span>
               </div>
@@ -842,17 +842,17 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
               </button>
             </div>
           ) : !hasAIAccess ? (
-            <div className="p-3.5 border-t border-amber-300/40 bg-gradient-to-r from-amber-500/10 via-amber-600/15 to-yellow-500/10 flex flex-col sm:flex-row items-center justify-between gap-3 text-right">
+            <div className="p-3.5 border-t border-emerald-300/40 bg-gradient-to-r from-emerald-500/10 via-emerald-600/15 to-emerald-500/10 flex flex-col sm:flex-row items-center justify-between gap-3 text-right">
               <div className="flex items-center gap-2">
-                <ChandIcon name="key" className="w-4 h-4 text-amber-600 dark:text-amber-400 shrink-0" />
-                <span className="text-xs text-amber-950 dark:text-amber-200 font-cairo font-bold">
+                <ChandIcon name="key" className="w-4 h-4 text-emerald-600 dark:text-emerald-400 shrink-0" />
+                <span className="text-xs text-emerald-950 dark:text-emerald-200 font-cairo font-bold">
                   طرح پایه (رایگان) فاقد هوش مصنوعی است. برای استفاده، حساب خود را به برنزی یا پرو ارتقا دهید.
                 </span>
               </div>
               <button
                 type="button"
                 onClick={() => (openSubscriptionModal ? openSubscriptionModal() : setActiveTab('subscription'))}
-                className="shrink-0 px-4 py-2 rounded-xl bg-gradient-to-r from-amber-500 via-amber-600 to-yellow-600 hover:from-amber-600 hover:to-yellow-700 text-zinc-950 font-cairo font-bold text-xs transition cursor-pointer shadow-md flex items-center gap-1.5"
+                className="shrink-0 px-4 py-2 rounded-xl bg-gradient-to-r from-emerald-500 via-emerald-600 to-emerald-600 hover:from-emerald-600 hover:to-emerald-700 text-zinc-950 font-cairo font-bold text-xs transition cursor-pointer shadow-md flex items-center gap-1.5"
               >
                 <ChandIcon name="vip-crown" className="w-3.5 h-3.5" />
                 <span>مشاهده پلن‌ها و فعال‌سازی هوش مصنوعی</span>
@@ -878,7 +878,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                 aria-pressed={isListening}
                 className={`relative shrink-0 p-2.5 rounded-xl border transition flex items-center justify-center ${
                   !isProUser
-                    ? 'border-amber-300 bg-amber-50 text-amber-700 dark:bg-amber-950/30 dark:text-amber-300 dark:border-amber-800'
+                    ? 'border-emerald-300 bg-emerald-50 text-emerald-700 dark:bg-emerald-950/30 dark:text-emerald-300 dark:border-emerald-800'
                     : isListening
                     ? 'border-rose-300 bg-rose-50 text-rose-600 dark:bg-rose-950/30 dark:border-rose-800 animate-pulse'
                     : 'border-emerald-200 bg-emerald-50 text-emerald-700 hover:bg-emerald-100 dark:bg-[#15231C] dark:border-[#294536] dark:text-emerald-300'

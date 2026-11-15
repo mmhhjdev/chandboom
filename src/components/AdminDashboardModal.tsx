@@ -933,7 +933,7 @@ export const AdminDashboardModal: React.FC<AdminDashboardModalProps> = ({ isOpen
                         <h4 className="font-cairo text-base font-bold text-zinc-900 dark:text-zinc-100">
                           مدیریت سفارش‌ها و درخواست‌های اشتراک (subscription_orders / manual_payments)
                         </h4>
-                        <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-100 text-amber-800 dark:bg-amber-950 dark:text-amber-300">
+                        <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300">
                           {toPersianDigits(livePayments.filter((p) => p.status === 'pending').length)} در انتظار بررسی
                         </span>
                       </div>
@@ -969,7 +969,7 @@ export const AdminDashboardModal: React.FC<AdminDashboardModalProps> = ({ isOpen
                               <span
                                 className={`px-2.5 py-0.5 rounded-full text-xs font-cairo font-bold ${
                                   pay.status === 'pending'
-                                    ? 'bg-amber-100 text-amber-800 dark:bg-amber-950 dark:text-amber-300'
+                                    ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300'
                                     : pay.status === 'approved'
                                     ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300'
                                     : 'bg-rose-100 text-rose-800 dark:bg-rose-950 dark:text-rose-300'
@@ -999,7 +999,7 @@ export const AdminDashboardModal: React.FC<AdminDashboardModalProps> = ({ isOpen
                             </div>
                             <div>
                               <span className="text-zinc-500 block">کد پیگیری سیستمی:</span>
-                              <span className="font-mono font-bold text-amber-700 dark:text-amber-400 select-all" dir="ltr">
+                              <span className="font-mono font-bold text-emerald-700 dark:text-emerald-400 select-all" dir="ltr">
                                 {pay.tracking_code || pay.reference_code}
                               </span>
                             </div>
@@ -1228,9 +1228,9 @@ export const AdminDashboardModal: React.FC<AdminDashboardModalProps> = ({ isOpen
                                       u.tier === 'vip'
                                         ? 'bg-purple-100 text-purple-800 dark:bg-purple-950 dark:text-purple-300 border border-purple-300'
                                         : u.tier === 'pro'
-                                        ? 'bg-amber-100 text-amber-800 dark:bg-amber-950 dark:text-amber-300 border border-amber-300'
+                                        ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300 border border-emerald-300'
                                         : u.tier === 'bronze'
-                                        ? 'bg-orange-100 text-orange-800 dark:bg-orange-950 dark:text-orange-300 border border-orange-300'
+                                        ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300 border border-emerald-300'
                                         : 'bg-zinc-100 text-zinc-600 dark:bg-zinc-800 dark:text-zinc-400'
                                     }`}
                                   >
@@ -1308,7 +1308,7 @@ export const AdminDashboardModal: React.FC<AdminDashboardModalProps> = ({ isOpen
                                     <button
                                       onClick={() => updateUserSubscriptionDays(u.id, 90, 'تمدید ۹۰ روزه توسط مدیر ارشد')}
                                       title="افزودن ۹۰ روز به اعتبار اشتراک کاربر"
-                                      className="px-2 py-1 rounded-lg bg-amber-50 dark:bg-amber-950/40 text-amber-800 dark:text-amber-300 hover:bg-amber-100 text-[10px] font-bold border border-amber-300 dark:border-amber-800 cursor-pointer"
+                                      className="px-2 py-1 rounded-lg bg-emerald-50 dark:bg-emerald-950/40 text-emerald-800 dark:text-emerald-300 hover:bg-emerald-100 text-[10px] font-bold border border-emerald-300 dark:border-emerald-800 cursor-pointer"
                                     >
                                       +۹۰ روز
                                     </button>
@@ -1349,8 +1349,8 @@ export const AdminDashboardModal: React.FC<AdminDashboardModalProps> = ({ isOpen
                                         title="تنظیم یا تمدید اشتراک برنزی (۳۰ روزه)"
                                         className={`px-2 py-0.5 rounded-lg text-[10px] font-bold transition cursor-pointer ${
                                           u.tier === 'bronze'
-                                            ? 'bg-orange-500 text-white shadow-xs'
-                                            : 'text-orange-700 dark:text-orange-400 hover:bg-orange-100 dark:hover:bg-orange-950/60'
+                                            ? 'bg-emerald-500 text-white shadow-xs'
+                                            : 'text-emerald-700 dark:text-emerald-400 hover:bg-emerald-100 dark:hover:bg-emerald-950/60'
                                         }`}
                                       >
                                         برنزی
@@ -1361,8 +1361,8 @@ export const AdminDashboardModal: React.FC<AdminDashboardModalProps> = ({ isOpen
                                         title="تنظیم یا تمدید اشتراک پرو طلایی (۳۰ روزه)"
                                         className={`px-2 py-0.5 rounded-lg text-[10px] font-bold transition cursor-pointer ${
                                           u.tier === 'pro'
-                                            ? 'bg-amber-500 text-white shadow-xs'
-                                            : 'text-amber-700 dark:text-amber-400 hover:bg-amber-100 dark:hover:bg-amber-950/60'
+                                            ? 'bg-emerald-500 text-white shadow-xs'
+                                            : 'text-emerald-700 dark:text-emerald-400 hover:bg-emerald-100 dark:hover:bg-emerald-950/60'
                                         }`}
                                       >
                                         پرو
@@ -1564,7 +1564,7 @@ export const AdminDashboardModal: React.FC<AdminDashboardModalProps> = ({ isOpen
               <span
                 className={`px-2.5 py-0.5 rounded-full text-[10px] font-bold ${
                   selectedUserForMessage.tier === 'pro' || selectedUserForMessage.tier === 'vip'
-                    ? 'bg-amber-100 text-amber-800 dark:bg-amber-950 dark:text-amber-300 border border-amber-300'
+                    ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300 border border-emerald-300'
                     : 'bg-zinc-200 text-zinc-700 dark:bg-zinc-800 dark:text-zinc-300'
                 }`}
               >
@@ -1599,7 +1599,7 @@ export const AdminDashboardModal: React.FC<AdminDashboardModalProps> = ({ isOpen
                         }}
                         className="px-2.5 py-1 rounded-xl bg-zinc-100 hover:bg-zinc-200 dark:bg-[#15221C] dark:hover:bg-[#1E2E27] text-zinc-700 dark:text-zinc-300 text-[10px] font-bold transition cursor-pointer border border-transparent hover:border-emerald-500/30 flex items-center gap-1"
                       >
-                        <ChandIcon name="award" className="w-3 h-3 text-amber-500" />
+                        <ChandIcon name="award" className="w-3 h-3 text-emerald-500" />
                         <span>{tmpl.title}</span>
                       </button>
                     ))}

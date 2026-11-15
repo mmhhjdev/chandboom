@@ -56,7 +56,7 @@ export const AboutPage: React.FC = () => {
           </div>
 
           <div className="p-6 rounded-3xl bg-white dark:bg-[#0F1713] border border-[#E2E8E4] dark:border-[#1E2E25] shadow-xs space-y-3">
-            <div className="w-10 h-10 rounded-2xl text-amber-600 dark:text-amber-400 flex items-center justify-center">
+            <div className="w-10 h-10 rounded-2xl text-emerald-600 dark:text-emerald-400 flex items-center justify-center">
               <ChandIcon name="heart" className="w-5 h-5" />
             </div>
             <h2 className="text-sm sm:text-base font-bold text-zinc-900 dark:text-white">

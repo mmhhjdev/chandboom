@@ -437,20 +437,20 @@ export const FloatingAIAssistant: React.FC = () => {
               onClick={() => setAiMode('advisor')}
               className={`flex-1 py-1 px-2 rounded-lg font-bold transition flex items-center justify-center gap-1 cursor-pointer text-[10px] ${
                 aiMode === 'advisor'
-                  ? 'bg-amber-600 text-white shadow-xs'
+                  ? 'bg-emerald-600 text-white shadow-xs'
                   : 'bg-[#121E19] text-zinc-400 hover:text-white'
               }`}
             >
-              <TrendingUp className="w-3 h-3 text-amber-300" />
+              <TrendingUp className="w-3 h-3 text-emerald-300" />
               <span>مشاور جامع مالی (تحلیل ۶ ماهه)</span>
             </button>
           </div>
 
           {/* Gate 1: Not Authenticated */}
           {!isAuthenticated ? (
-            <div className="p-4 bg-gradient-to-r from-amber-500/15 to-yellow-500/10 border-b border-amber-400/30 text-right space-y-2">
-              <div className="flex items-center gap-2 text-amber-300 text-xs font-cairo font-bold">
-                <ChandIcon name="key" className="w-4 h-4 text-amber-400 shrink-0" />
+            <div className="p-4 bg-gradient-to-r from-emerald-500/15 to-emerald-500/10 border-b border-emerald-400/30 text-right space-y-2">
+              <div className="flex items-center gap-2 text-emerald-300 text-xs font-cairo font-bold">
+                <ChandIcon name="key" className="w-4 h-4 text-emerald-400 shrink-0" />
                 <span>برای استفاده از هوش مصنوعی چندبوم، ابتدا باید وارد شوید</span>
               </div>
               <p className="text-[11px] text-zinc-300 leading-relaxed">
@@ -468,8 +468,8 @@ export const FloatingAIAssistant: React.FC = () => {
             </div>
           ) : !hasAIAccess ? (
             /* Gate 2: Authenticated but No AI Access (Free Tier) */
-            <div className="p-4 bg-gradient-to-r from-amber-500/20 via-amber-600/25 to-yellow-500/15 border-b border-amber-400/40 text-right space-y-2">
-              <div className="flex items-center gap-2 text-amber-300 text-xs font-cairo font-bold">
+            <div className="p-4 bg-gradient-to-r from-emerald-500/20 via-emerald-600/25 to-emerald-500/15 border-b border-emerald-400/40 text-right space-y-2">
+              <div className="flex items-center gap-2 text-emerald-300 text-xs font-cairo font-bold">
                 <ChandIcon name="vip-crown" className="w-4 h-4 shrink-0" />
                 <span>دسترسی به هوش مصنوعی نیازمند پلن ۱ ماهه طلایی یا ۳ ماهه VIP است</span>
               </div>
@@ -482,7 +482,7 @@ export const FloatingAIAssistant: React.FC = () => {
                   if (openSubscriptionModal) openSubscriptionModal();
                   else setActiveTab('subscription');
                 }}
-                className="w-full py-2 rounded-xl bg-gradient-to-r from-amber-500 to-yellow-500 hover:from-amber-600 hover:to-yellow-600 text-zinc-950 font-cairo font-black text-xs flex items-center justify-center gap-1.5 shadow-md transition cursor-pointer"
+                className="w-full py-2 rounded-xl bg-gradient-to-r from-emerald-500 to-emerald-500 hover:from-emerald-600 hover:to-emerald-600 text-zinc-950 font-cairo font-black text-xs flex items-center justify-center gap-1.5 shadow-md transition cursor-pointer"
               >
                 <ChandIcon name="vip-crown" className="w-3.5 h-3.5" />
                 <span>مشاهده پلن‌ها و فعال‌سازی هوش مصنوعی</span>
@@ -492,7 +492,7 @@ export const FloatingAIAssistant: React.FC = () => {
 
           {/* Feedback Notice */}
           {notice && (
-            <div className="px-4 py-2 bg-amber-950/60 border-b border-amber-500/30 text-amber-300 text-xs font-cairo font-bold flex items-center gap-2">
+            <div className="px-4 py-2 bg-emerald-950/60 border-b border-emerald-500/30 text-emerald-300 text-xs font-cairo font-bold flex items-center gap-2">
               <ChandIcon name="alert" className="w-4 h-4 shrink-0" />
               <span>{notice}</span>
             </div>
@@ -547,13 +547,13 @@ export const FloatingAIAssistant: React.FC = () => {
 
             {/* Smart Interactive Draft Modal / Card (Category MUST be manually chosen!) */}
             {pendingDraft && (
-              <div className="p-3.5 rounded-2xl bg-[#14231D] border-2 border-amber-400/70 shadow-xl space-y-3 animate-in fade-in zoom-in-95 font-cairo">
+              <div className="p-3.5 rounded-2xl bg-[#14231D] border-2 border-emerald-400/70 shadow-xl space-y-3 animate-in fade-in zoom-in-95 font-cairo">
                 <div className="flex items-center justify-between border-b border-emerald-800/40 pb-2">
-                  <div className="flex items-center gap-1.5 text-amber-300 font-bold text-xs">
+                  <div className="flex items-center gap-1.5 text-emerald-300 font-bold text-xs">
                     <ChandMascot size={20} />
                     <span>پیش‌نویس تراکنش هوشمند</span>
                   </div>
-                  <span className="text-[10px] px-2 py-0.5 rounded-full font-bold bg-amber-400/20 text-amber-300 border border-amber-400/40">
+                  <span className="text-[10px] px-2 py-0.5 rounded-full font-bold bg-emerald-400/20 text-emerald-300 border border-emerald-400/40">
                     {pendingDraft.type === 'expense' ? 'هزینه' : 'درآمد'}
                   </span>
                 </div>
@@ -613,13 +613,13 @@ export const FloatingAIAssistant: React.FC = () => {
 
             {/* Smart Interactive Action Proposal Card */}
             {pendingAction && (
-              <div className="p-3.5 rounded-2xl bg-[#14231D] border-2 border-amber-400/80 shadow-xl space-y-2.5 animate-in fade-in zoom-in-95 font-cairo">
+              <div className="p-3.5 rounded-2xl bg-[#14231D] border-2 border-emerald-400/80 shadow-xl space-y-2.5 animate-in fade-in zoom-in-95 font-cairo">
                 <div className="flex items-center justify-between border-b border-emerald-800/40 pb-2">
-                  <div className="flex items-center gap-1.5 text-amber-300 font-bold text-xs">
+                  <div className="flex items-center gap-1.5 text-emerald-300 font-bold text-xs">
                     <ChandMascot size={20} />
                     <span>پیشنهاد اقدام هوشمند</span>
                   </div>
-                  <span className="text-[10px] px-2 py-0.5 rounded-full font-bold bg-amber-400/20 text-amber-300 border border-amber-400/40">
+                  <span className="text-[10px] px-2 py-0.5 rounded-full font-bold bg-emerald-400/20 text-emerald-300 border border-emerald-400/40">
                     نیازمند تایید شما
                   </span>
                 </div>
@@ -770,7 +770,7 @@ export const FloatingAIAssistant: React.FC = () => {
                 key={idx}
                 type="button"
                 onClick={() => handleSendMessage(q)}
-                className="shrink-0 px-2.5 py-1 rounded-xl bg-[#14221C] border border-[#1F342B] hover:border-amber-400 text-zinc-300 hover:text-amber-300 transition cursor-pointer text-xs"
+                className="shrink-0 px-2.5 py-1 rounded-xl bg-[#14221C] border border-[#1F342B] hover:border-emerald-400 text-zinc-300 hover:text-emerald-300 transition cursor-pointer text-xs"
               >
                 {q}
               </button>

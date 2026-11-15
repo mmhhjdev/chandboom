@@ -69,7 +69,7 @@ export const Navigation: React.FC = () => {
       id: 'reminders',
       label: 'یادآورها و سررسید اقساط',
       desc: 'پیگیری چک‌ها، قبوض و اقساط ماهانه',
-      icon: <ChandIcon name="reminders" className="w-5 h-5 text-amber-600 dark:text-amber-400" />,
+      icon: <ChandIcon name="reminders" className="w-5 h-5 text-emerald-600 dark:text-emerald-400" />,
       badge: unpaidRemindersCount > 0 ? unpaidRemindersCount : undefined,
     },
     {
@@ -88,7 +88,7 @@ export const Navigation: React.FC = () => {
       id: 'subscription',
       label: isProUser ? 'وضعیت اشتراک طلایی' : 'خرید اشتراک و پلن‌ها',
       desc: isProUser ? 'مدیریت و تمدید اشتراک فعال شما' : 'پلن‌های برنزی، طلایی و سازمانی',
-      icon: <ChandIcon name="subscription" className="w-5 h-5 text-amber-500" />,
+      icon: <ChandIcon name="subscription" className="w-5 h-5 text-emerald-500" />,
     },
   ];
 

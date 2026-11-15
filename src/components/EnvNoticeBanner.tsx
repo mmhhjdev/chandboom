@@ -34,13 +34,13 @@ export const EnvNoticeBanner: React.FC = () => {
   };
 
   return (
-    <aside aria-label="وضعیت پیکربندی متغیرهای محیطی" className="bg-amber-500/10 dark:bg-amber-950/40 border-b border-amber-500/30 text-amber-900 dark:text-amber-200 px-4 py-2.5 text-xs font-cairo transition-all">
+    <aside aria-label="وضعیت پیکربندی متغیرهای محیطی" className="bg-emerald-500/10 dark:bg-emerald-950/40 border-b border-emerald-500/30 text-emerald-900 dark:text-emerald-200 px-4 py-2.5 text-xs font-cairo transition-all">
       <div className="max-w-7xl mx-auto flex items-center justify-between gap-3 flex-wrap">
         <div className="flex items-center gap-2">
-          <ChandIcon name="alert" className="w-4 h-4 text-amber-600 dark:text-amber-400 shrink-0" />
+          <ChandIcon name="alert" className="w-4 h-4 text-emerald-600 dark:text-emerald-400 shrink-0" />
           <span>
             <strong>پیکربندی محیطی:</strong> برخی متغیرهای محیطی سامانه (
-            <code className="mx-1 px-1.5 py-0.5 rounded bg-amber-500/20 font-mono text-[11px]">
+            <code className="mx-1 px-1.5 py-0.5 rounded bg-emerald-500/20 font-mono text-[11px]">
               {report.missingVariables.join(', ')}
             </code>
             ) در محیط جاری یافت نشد. لطفاً در تنظیمات مخزن گیت‌هاب (GitHub Secrets) یا فایل .env مقداردهی فرمایید.
@@ -48,7 +48,7 @@ export const EnvNoticeBanner: React.FC = () => {
         </div>
         <button
           onClick={handleDismiss}
-          className="p-1 rounded-md hover:bg-amber-500/20 text-amber-700 dark:text-amber-300 transition cursor-pointer"
+          className="p-1 rounded-md hover:bg-emerald-500/20 text-emerald-700 dark:text-emerald-300 transition cursor-pointer"
           title="بستن اعلان"
         >
           <ChandIcon name="close" className="w-3.5 h-3.5" />

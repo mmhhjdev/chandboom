@@ -34,29 +34,29 @@ export const SubscriptionView: React.FC = () => {
   return (
     <div className="space-y-8 animate-in fade-in duration-200 font-cairo pb-12" dir="rtl">
       {/* Top Banner - Luxurious Golden & Dark Theme */}
-      <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-[#1A1505] via-[#241D09] to-[#0A0D0B] border-2 border-amber-500/40 p-6 sm:p-10 text-white shadow-2xl">
+      <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-[#051A13] via-[#09241B] to-[#0A0D0B] border-2 border-emerald-500/40 p-6 sm:p-10 text-white shadow-2xl">
         <div className="relative z-10 max-w-3xl space-y-4">
-          <div className="inline-flex items-center gap-2 px-3.5 py-1 rounded-full bg-amber-500/20 border border-amber-400/40 text-amber-300 text-xs font-cairo font-bold">
-            <ChandIcon name="crown" className="w-3.5 h-3.5 text-amber-400" />
+          <div className="inline-flex items-center gap-2 px-3.5 py-1 rounded-full bg-emerald-500/20 border border-emerald-400/40 text-emerald-300 text-xs font-cairo font-bold">
+            <ChandIcon name="crown" className="w-3.5 h-3.5 text-emerald-400" />
             <span>پلن‌های اشتراک ۱ ماهه و ۳ ماهه (برنزی • طلایی • VIP)</span>
           </div>
 
         <div className="flex items-center gap-3">
           <ChandAsset name="vip-crown" size={56} className="shrink-0 drop-shadow-lg" />
           <h2 className="font-cairo text-2xl sm:text-4xl font-extrabold text-white leading-tight">
-            پلن‌های ارتقای حساب <span className="text-amber-400 font-brand">چندبوم هوشمند</span>
+            پلن‌های ارتقای حساب <span className="text-emerald-400 font-brand">چندبوم هوشمند</span>
           </h2>
         </div>
 
-          <p className="text-xs sm:text-sm text-amber-100/90 leading-relaxed max-w-2xl">
+          <p className="text-xs sm:text-sm text-emerald-100/90 leading-relaxed max-w-2xl">
             پلن متناسب با نیاز مالی خود را در دوره‌های ۱ ماهه یا ۳ ماهه (همراه با تخفیف ویژه) انتخاب کنید. با فعال‌سازی اشتراک، به دستیار هوشمند ثبت خودکار تراکنش‌ها، تحلیل بودجه، یادآورها و مدیریت دنگ دسترسی خواهید داشت.
           </p>
 
           {isProUser && remainingPro.isActive ? (
-            <div className="inline-flex items-center gap-3.5 p-3.5 rounded-2xl bg-amber-500/15 backdrop-blur-xs border border-amber-400/50 text-xs">
-              <ChandIcon name="crown" className="w-6 h-6 text-amber-400 shrink-0" />
+            <div className="inline-flex items-center gap-3.5 p-3.5 rounded-2xl bg-emerald-500/15 backdrop-blur-xs border border-emerald-400/50 text-xs">
+              <ChandIcon name="crown" className="w-6 h-6 text-emerald-400 shrink-0" />
               <div>
-                <p className="font-cairo font-bold text-amber-200">
+                <p className="font-cairo font-bold text-emerald-200">
                   اشتراک فعال شما: {user.tier === 'vip' ? 'وی‌آی‌پی (VIP)' : user.tier === 'bronze' ? 'برنزی' : 'طلایی (پرو)'}
                 </p>
                 <p className="text-white font-cairo text-[11px] font-bold mt-0.5">
@@ -65,18 +65,18 @@ export const SubscriptionView: React.FC = () => {
               </div>
             </div>
           ) : isPendingReview ? (
-            <div className="inline-flex items-center gap-3 p-4 rounded-2xl bg-amber-500/25 backdrop-blur-xs border-2 border-amber-400 text-xs text-amber-200 shadow-lg">
-              <ChandIcon name="clock" className="w-6 h-6 text-amber-300 shrink-0 animate-pulse" />
+            <div className="inline-flex items-center gap-3 p-4 rounded-2xl bg-emerald-500/25 backdrop-blur-xs border-2 border-emerald-400 text-xs text-emerald-200 shadow-lg">
+              <ChandIcon name="clock" className="w-6 h-6 text-emerald-300 shrink-0 animate-pulse" />
               <div>
                 <div className="flex items-center gap-2">
-                  <span className="font-cairo font-black text-sm text-amber-300">
+                  <span className="font-cairo font-black text-sm text-emerald-300">
                     فیش واریزی شما در حال بررسی است
                   </span>
-                  <span className="px-2 py-0.5 rounded-full text-[10px] bg-amber-400 text-zinc-950 font-bold">
+                  <span className="px-2 py-0.5 rounded-full text-[10px] bg-emerald-400 text-zinc-950 font-bold">
                     در صف تایید مدیریت
                   </span>
                 </div>
-                <p className="text-[11px] text-amber-100 mt-1">
+                <p className="text-[11px] text-emerald-100 mt-1">
                   {pendingPayment?.tracking_code
                     ? `کد پیگیری: ${pendingPayment.tracking_code} • فیش شما در حال راستی‌آزمایی با صورتحساب بانکی است.`
                     : 'درخواست ارتقای حساب شما ثبت شده و ظرف حداکثر ۱۵ دقیقه فعال خواهد شد.'}
@@ -84,23 +84,23 @@ export const SubscriptionView: React.FC = () => {
               </div>
             </div>
           ) : (
-            <div className="pt-2 flex flex-wrap gap-4 text-xs text-amber-200/90">
+            <div className="pt-2 flex flex-wrap gap-4 text-xs text-emerald-200/90">
               <span className="flex items-center gap-1.5">
-                <ChandIcon name="check-circle" className="w-4 h-4 text-amber-400" /> کارت به کارت مستقیم به بانک سامان
+                <ChandIcon name="check-circle" className="w-4 h-4 text-emerald-400" /> کارت به کارت مستقیم به بانک سامان
               </span>
               <span className="flex items-center gap-1.5">
-                <ChandIcon name="check-circle" className="w-4 h-4 text-amber-400" /> ثبت امن فیش و صدور کد پیگیری اختصاصی
+                <ChandIcon name="check-circle" className="w-4 h-4 text-emerald-400" /> ثبت امن فیش و صدور کد پیگیری اختصاصی
               </span>
               <span className="flex items-center gap-1.5">
-                <ChandIcon name="check-circle" className="w-4 h-4 text-amber-400" /> فعال‌سازی فوری هوش مصنوعی تحلیلی
+                <ChandIcon name="check-circle" className="w-4 h-4 text-emerald-400" /> فعال‌سازی فوری هوش مصنوعی تحلیلی
               </span>
             </div>
           )}
         </div>
 
         {/* Golden glow decorations */}
-        <div className="absolute left-[-10%] top-[-30%] w-96 h-96 rounded-full bg-amber-500/15 blur-3xl pointer-events-none" />
-        <div className="absolute right-[-10%] bottom-[-30%] w-96 h-96 rounded-full bg-yellow-500/15 blur-3xl pointer-events-none" />
+        <div className="absolute left-[-10%] top-[-30%] w-96 h-96 rounded-full bg-emerald-500/15 blur-3xl pointer-events-none" />
+        <div className="absolute right-[-10%] bottom-[-30%] w-96 h-96 rounded-full bg-emerald-500/15 blur-3xl pointer-events-none" />
       </div>
 
       {/* Duration Cycle Selector (1 Month vs 3 Months) */}
@@ -134,7 +134,7 @@ export const SubscriptionView: React.FC = () => {
             }}
             className={`px-6 py-2.5 rounded-xl font-cairo font-bold text-xs sm:text-sm transition flex items-center gap-2 cursor-pointer ${
               selectedDuration === 3
-                ? 'bg-gradient-to-r from-amber-500 to-yellow-500 text-zinc-950 font-black shadow-md'
+                ? 'bg-gradient-to-r from-emerald-500 to-emerald-500 text-zinc-950 font-black shadow-md'
                 : 'text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white'
             }`}
           >
@@ -166,20 +166,20 @@ export const SubscriptionView: React.FC = () => {
               className={`relative rounded-3xl p-6 sm:p-7 flex flex-col justify-between transition-all duration-300 cursor-pointer ${
                 isSelected
                   ? isVip
-                    ? 'bg-gradient-to-b from-[#1E1609] via-[#2A1F0B] to-[#140F05] border-2 border-yellow-400 shadow-2xl shadow-yellow-950/40 -translate-y-1.5 ring-2 ring-yellow-400/40 text-white'
+                    ? 'bg-gradient-to-b from-[#091E17] via-[#0B2A20] to-[#05140F] border-2 border-emerald-400 shadow-2xl shadow-emerald-950/40 -translate-y-1.5 ring-2 ring-emerald-400/40 text-white'
                     : isBronze
-                    ? 'bg-gradient-to-b from-[#1C1713] via-[#261E18] to-[#120F0D] border-2 border-amber-700 shadow-2xl shadow-amber-950/40 -translate-y-1.5 ring-2 ring-amber-600/40 text-white'
-                    : 'bg-gradient-to-b from-[#1C170A] via-[#241D09] to-[#120F06] border-2 border-amber-500 shadow-2xl shadow-amber-950/40 -translate-y-1.5 ring-2 ring-amber-400/40 text-white'
-                  : 'bg-white dark:bg-[#0E1511] border border-[#E2E8E4] dark:border-[#1F2E27] shadow-sm hover:border-amber-400/60 text-zinc-900 dark:text-zinc-100 hover:-translate-y-1'
+                    ? 'bg-gradient-to-b from-[#1C1713] via-[#261E18] to-[#120F0D] border-2 border-emerald-700 shadow-2xl shadow-emerald-950/40 -translate-y-1.5 ring-2 ring-emerald-600/40 text-white'
+                    : 'bg-gradient-to-b from-[#0A1C16] via-[#09241B] to-[#06120E] border-2 border-emerald-500 shadow-2xl shadow-emerald-950/40 -translate-y-1.5 ring-2 ring-emerald-400/40 text-white'
+                  : 'bg-white dark:bg-[#0E1511] border border-[#E2E8E4] dark:border-[#1F2E27] shadow-sm hover:border-emerald-400/60 text-zinc-900 dark:text-zinc-100 hover:-translate-y-1'
               }`}
             >
               {plan.badge && (
                 <div
                   className={`absolute -top-3.5 right-6 px-3 py-1 rounded-full font-cairo font-bold text-[10px] sm:text-[11px] shadow-sm flex items-center gap-1 ${
                     isVip
-                      ? 'bg-gradient-to-r from-amber-400 to-yellow-500 text-zinc-950 font-black'
+                      ? 'bg-gradient-to-r from-emerald-400 to-emerald-500 text-zinc-950 font-black'
                       : isBronze
-                      ? 'bg-amber-800 text-amber-100'
+                      ? 'bg-emerald-800 text-emerald-100'
                       : 'bg-emerald-700 text-white'
                   }`}
                 >
@@ -194,9 +194,9 @@ export const SubscriptionView: React.FC = () => {
                     <span
                       className={`text-[10px] font-bold px-2 py-0.5 rounded-md ${
                         isVip
-                          ? 'bg-yellow-400/20 text-yellow-300 border border-yellow-400/40'
+                          ? 'bg-emerald-400/20 text-emerald-300 border border-emerald-400/40'
                           : isBronze
-                          ? 'bg-amber-700/20 text-amber-300 border border-amber-700/40'
+                          ? 'bg-emerald-700/20 text-emerald-300 border border-emerald-700/40'
                           : 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/40'
                       }`}
                     >
@@ -213,7 +213,7 @@ export const SubscriptionView: React.FC = () => {
                     }`}
                   >
                     <span>{plan.nameFa}</span>
-                    <ChandIcon name="crown" className="w-4 h-4 text-amber-500" />
+                    <ChandIcon name="crown" className="w-4 h-4 text-emerald-500" />
                   </h3>
                   <p
                     className={`text-xs mt-1.5 leading-relaxed min-h-[38px] ${
@@ -226,7 +226,7 @@ export const SubscriptionView: React.FC = () => {
 
                 <div
                   className={`py-3.5 border-y ${
-                    isSelected ? 'border-amber-500/30' : 'border-[#E2E8E4] dark:border-[#22332B]'
+                    isSelected ? 'border-emerald-500/30' : 'border-[#E2E8E4] dark:border-[#22332B]'
                   }`}
                 >
                   {plan.originalPrice && (
@@ -240,7 +240,7 @@ export const SubscriptionView: React.FC = () => {
                     </div>
                   )}
                   <div className="flex items-baseline gap-1.5">
-                    <span className="font-cairo text-2xl sm:text-3xl font-black text-amber-400">
+                    <span className="font-cairo text-2xl sm:text-3xl font-black text-emerald-400">
                       {formatToman(plan.price)}
                     </span>
                     <span
@@ -265,7 +265,7 @@ export const SubscriptionView: React.FC = () => {
                 >
                   {plan.features.map((feature, i) => (
                     <li key={i} className="flex items-start gap-2">
-                      <ChandIcon name="check-circle" className="w-3.5 h-3.5 text-amber-400 shrink-0 mt-0.5" />
+                      <ChandIcon name="check-circle" className="w-3.5 h-3.5 text-emerald-400 shrink-0 mt-0.5" />
                       <span className="leading-relaxed">{feature}</span>
                     </li>
                   ))}
@@ -274,16 +274,16 @@ export const SubscriptionView: React.FC = () => {
 
               <div
                 className={`pt-5 mt-5 border-t ${
-                  isSelected ? 'border-amber-500/30' : 'border-[#E2E8E4] dark:border-[#22332B]'
+                  isSelected ? 'border-emerald-500/30' : 'border-[#E2E8E4] dark:border-[#22332B]'
                 }`}
               >
                 {isPendingReview ? (
                   <button
                     type="button"
                     disabled
-                    className="w-full py-3 rounded-2xl font-cairo font-bold text-xs sm:text-sm bg-amber-500/15 border-2 border-amber-400/60 text-amber-300 flex items-center justify-center gap-2 cursor-not-allowed opacity-90 shadow-sm"
+                    className="w-full py-3 rounded-2xl font-cairo font-bold text-xs sm:text-sm bg-emerald-500/15 border-2 border-emerald-400/60 text-emerald-300 flex items-center justify-center gap-2 cursor-not-allowed opacity-90 shadow-sm"
                   >
-                    <ChandIcon name="clock" className="w-4 h-4 text-amber-300 animate-pulse" />
+                    <ChandIcon name="clock" className="w-4 h-4 text-emerald-300 animate-pulse" />
                     <span>در حال بررسی فیش</span>
                   </button>
                 ) : (
@@ -304,8 +304,8 @@ export const SubscriptionView: React.FC = () => {
                     className={`w-full py-3.5 rounded-2xl font-cairo font-bold text-xs sm:text-sm transition flex items-center justify-center gap-2 cursor-pointer shadow-md ${
                       isSelected
                         ? isVip
-                          ? 'bg-gradient-to-r from-amber-400 via-amber-500 to-yellow-500 hover:from-amber-500 hover:to-yellow-600 text-zinc-950 font-black shadow-amber-950/20'
-                          : 'bg-gradient-to-r from-amber-500 via-amber-600 to-yellow-600 hover:from-amber-600 hover:to-yellow-700 text-zinc-950 font-black shadow-amber-950/20'
+                          ? 'bg-gradient-to-r from-emerald-400 via-emerald-500 to-emerald-500 hover:from-emerald-500 hover:to-emerald-600 text-zinc-950 font-black shadow-emerald-950/20'
+                          : 'bg-gradient-to-r from-emerald-500 via-emerald-600 to-emerald-600 hover:from-emerald-600 hover:to-emerald-700 text-zinc-950 font-black shadow-emerald-950/20'
                         : 'bg-emerald-700 hover:bg-emerald-800 text-white'
                     }`}
                   >
@@ -345,7 +345,7 @@ export const SubscriptionView: React.FC = () => {
       {/* Comprehensive Comparison Table: Free vs Bronze vs Gold (Pro) vs VIP */}
       <div className="bg-white dark:bg-[#0E1511] rounded-3xl border border-[#E2E8E4] dark:border-[#1F2E27] shadow-xs p-6 sm:p-8 space-y-6">
         <div className="text-center max-w-xl mx-auto space-y-2">
-          <span className="px-3 py-1 rounded-full text-[11px] font-cairo font-bold bg-amber-100 text-amber-800 dark:bg-amber-950/60 dark:text-amber-300 border border-amber-300">
+          <span className="px-3 py-1 rounded-full text-[11px] font-cairo font-bold bg-emerald-100 text-emerald-800 dark:bg-emerald-950/60 dark:text-emerald-300 border border-emerald-300">
             مقایسه شفاف سطوح اشتراک
           </span>
           <h3 className="font-cairo text-xl sm:text-2xl font-bold text-zinc-900 dark:text-zinc-100">
@@ -362,13 +362,13 @@ export const SubscriptionView: React.FC = () => {
               <tr>
                 <th className="p-3.5 sm:p-4">قابلیت و امکانات</th>
                 <th className="p-3.5 sm:p-4 text-center">طرح پایه (رایگان)</th>
-                <th className="p-3.5 sm:p-4 text-center text-amber-600 dark:text-amber-400">
+                <th className="p-3.5 sm:p-4 text-center text-emerald-600 dark:text-emerald-400">
                   پلن برنزی
                 </th>
-                <th className="p-3.5 sm:p-4 text-center text-amber-700 dark:text-amber-300 bg-amber-50/50 dark:bg-amber-950/20">
+                <th className="p-3.5 sm:p-4 text-center text-emerald-700 dark:text-emerald-300 bg-emerald-50/50 dark:bg-emerald-950/20">
                   پلن طلایی (پرو)
                 </th>
-                <th className="p-3.5 sm:p-4 text-center text-yellow-500 font-black">
+                <th className="p-3.5 sm:p-4 text-center text-emerald-500 font-black">
                   پلن وی‌آی‌پی (VIP)
                 </th>
               </tr>
@@ -382,10 +382,10 @@ export const SubscriptionView: React.FC = () => {
                 <td className="p-3.5 text-center font-bold text-zinc-700 dark:text-zinc-300">
                   ۳۰ پرسش در ماه
                 </td>
-                <td className="p-3.5 text-center font-bold text-emerald-700 dark:text-emerald-400 bg-amber-50/20 dark:bg-amber-950/10">
+                <td className="p-3.5 text-center font-bold text-emerald-700 dark:text-emerald-400 bg-emerald-50/20 dark:bg-emerald-950/10">
                   ۱۰۰ پرسش در ماه
                 </td>
-                <td className="p-3.5 text-center font-bold text-yellow-500">۲۵۰ تا ۵۰۰ پرسش (نامحدود)</td>
+                <td className="p-3.5 text-center font-bold text-emerald-500">۲۵۰ تا ۵۰۰ پرسش (نامحدود)</td>
               </tr>
               <tr>
                 <td className="p-3.5 font-bold text-zinc-800 dark:text-zinc-200">
@@ -395,10 +395,10 @@ export const SubscriptionView: React.FC = () => {
                 <td className="p-3.5 text-center font-bold text-emerald-700 dark:text-emerald-400">
                   دارد
                 </td>
-                <td className="p-3.5 text-center font-bold text-emerald-700 dark:text-emerald-400 bg-amber-50/20 dark:bg-amber-950/10">
+                <td className="p-3.5 text-center font-bold text-emerald-700 dark:text-emerald-400 bg-emerald-50/20 dark:bg-emerald-950/10">
                   نامحدود
                 </td>
-                <td className="p-3.5 text-center font-bold text-yellow-500">نامحدود با سرعت بالا</td>
+                <td className="p-3.5 text-center font-bold text-emerald-500">نامحدود با سرعت بالا</td>
               </tr>
               <tr>
                 <td className="p-3.5 font-bold text-zinc-800 dark:text-zinc-200">
@@ -408,10 +408,10 @@ export const SubscriptionView: React.FC = () => {
                 <td className="p-3.5 text-center text-zinc-600 dark:text-zinc-300">
                   تحلیل ماه جاری
                 </td>
-                <td className="p-3.5 text-center font-bold text-emerald-700 dark:text-emerald-400 bg-amber-50/20 dark:bg-amber-950/10">
+                <td className="p-3.5 text-center font-bold text-emerald-700 dark:text-emerald-400 bg-emerald-50/20 dark:bg-emerald-950/10">
                   پیش‌بینی ۳ ماهه
                 </td>
-                <td className="p-3.5 text-center font-bold text-yellow-500">پیش‌بینی جامع ۶ ماهه</td>
+                <td className="p-3.5 text-center font-bold text-emerald-500">پیش‌بینی جامع ۶ ماهه</td>
               </tr>
               <tr>
                 <td className="p-3.5 font-bold text-zinc-800 dark:text-zinc-200">
@@ -421,10 +421,10 @@ export const SubscriptionView: React.FC = () => {
                 <td className="p-3.5 text-center text-zinc-600 dark:text-zinc-300">
                   تا ۵ گروه و یادآور
                 </td>
-                <td className="p-3.5 text-center font-bold text-emerald-700 dark:text-emerald-400 bg-amber-50/20 dark:bg-amber-950/10">
+                <td className="p-3.5 text-center font-bold text-emerald-700 dark:text-emerald-400 bg-emerald-50/20 dark:bg-emerald-950/10">
                   نامحدود
                 </td>
-                <td className="p-3.5 text-center font-bold text-yellow-500">نامحدود با حالت خانوادگی</td>
+                <td className="p-3.5 text-center font-bold text-emerald-500">نامحدود با حالت خانوادگی</td>
               </tr>
               <tr>
                 <td className="p-3.5 font-bold text-zinc-800 dark:text-zinc-200">
@@ -434,10 +434,10 @@ export const SubscriptionView: React.FC = () => {
                 <td className="p-3.5 text-center text-zinc-600 dark:text-zinc-300">
                   استاندارد
                 </td>
-                <td className="p-3.5 text-center font-bold text-emerald-700 dark:text-emerald-400 bg-amber-50/20 dark:bg-amber-950/10">
+                <td className="p-3.5 text-center font-bold text-emerald-700 dark:text-emerald-400 bg-emerald-50/20 dark:bg-emerald-950/10">
                   فرمت رسمی ارزی
                 </td>
-                <td className="p-3.5 text-center font-bold text-yellow-500">گزارش کامل اختصاصی</td>
+                <td className="p-3.5 text-center font-bold text-emerald-500">گزارش کامل اختصاصی</td>
               </tr>
               <tr>
                 <td className="p-3.5 font-bold text-zinc-800 dark:text-zinc-200">
@@ -445,10 +445,10 @@ export const SubscriptionView: React.FC = () => {
                 </td>
                 <td className="p-3.5 text-center text-zinc-400">-</td>
                 <td className="p-3.5 text-center text-zinc-600 dark:text-zinc-300">عادی</td>
-                <td className="p-3.5 text-center font-bold text-amber-700 dark:text-amber-400 bg-amber-50/20 dark:bg-amber-950/10">
+                <td className="p-3.5 text-center font-bold text-emerald-700 dark:text-emerald-400 bg-emerald-50/20 dark:bg-emerald-950/10">
                   زیر ۱۵ دقیقه
                 </td>
-                <td className="p-3.5 text-center font-bold text-yellow-500">فوری زیر ۵ دقیقه</td>
+                <td className="p-3.5 text-center font-bold text-emerald-500">فوری زیر ۵ دقیقه</td>
               </tr>
             </tbody>
           </table>
@@ -519,7 +519,7 @@ export const SubscriptionView: React.FC = () => {
       {/* Manual Payment Explanation Banner */}
       <div className="p-6 rounded-3xl bg-white dark:bg-[#0E1511] border border-[#E2E8E4] dark:border-[#1F2E27] shadow-xs flex flex-col md:flex-row items-center justify-between gap-6">
         <div className="space-y-2 max-w-2xl">
-          <div className="flex items-center gap-2 text-amber-700 dark:text-amber-400 font-cairo font-bold text-base">
+          <div className="flex items-center gap-2 text-emerald-700 dark:text-emerald-400 font-cairo font-bold text-base">
             <ChandIcon name="shield" className="w-5 h-5" />
             <span>فرآیند تسویه شفاف و بدون واسطه</span>
           </div>
@@ -531,7 +531,7 @@ export const SubscriptionView: React.FC = () => {
         <div className="flex items-center gap-3 shrink-0">
           <div className="text-left text-xs font-cairo">
             <span className="text-zinc-400 block">پشتیبانی و تایید واریزی:</span>
-            <span className="font-bold text-amber-700 dark:text-amber-400">سید ماهان هجرتی (مدیریت چندبوم)</span>
+            <span className="font-bold text-emerald-700 dark:text-emerald-400">سید ماهان هجرتی (مدیریت چندبوم)</span>
           </div>
         </div>
       </div>

@@ -23,13 +23,13 @@ interface CategoryOption {
 }
 
 const EXPENSE_CATEGORY_OPTIONS: CategoryOption[] = [
-  { name: 'خوراک و رستوران', dotColor: 'bg-orange-500' },
+  { name: 'خوراک و رستوران', dotColor: 'bg-emerald-500' },
   { name: 'مسکن و اجاره', dotColor: 'bg-blue-500' },
   { name: 'حمل‌ونقل و خودرو', dotColor: 'bg-cyan-500' },
   { name: 'خرید و پوشاک', dotColor: 'bg-pink-500' },
   { name: 'سرگرمی و تفریح', dotColor: 'bg-purple-500' },
   { name: 'سلامت و درمان', dotColor: 'bg-red-500' },
-  { name: 'قبوض و شارژ', dotColor: 'bg-yellow-500' },
+  { name: 'قبوض و شارژ', dotColor: 'bg-emerald-500' },
   { name: 'آموزش و کتاب', dotColor: 'bg-teal-500' },
   { name: 'سایر و متفرقه', dotColor: 'bg-slate-400' },
 ];
@@ -38,7 +38,7 @@ const INCOME_CATEGORY_OPTIONS: CategoryOption[] = [
   { name: 'حقوق و دستمزد', dotColor: 'bg-emerald-500' },
   { name: 'سرمایه‌گذاری و سود', dotColor: 'bg-blue-500' },
   { name: 'هدیه و پاداش', dotColor: 'bg-purple-500' },
-  { name: 'فروش و کسب‌وکار', dotColor: 'bg-orange-500' },
+  { name: 'فروش و کسب‌وکار', dotColor: 'bg-emerald-500' },
   { name: 'سایر دریافتی‌ها', dotColor: 'bg-slate-400' },
 ];
 
@@ -372,7 +372,7 @@ export const TransactionModal: React.FC<TransactionModalProps> = ({
               <div className="flex items-center gap-1.5 text-xs font-cairo font-bold text-emerald-300">
                 <ChandIcon name="ai" className="w-4 h-4 text-emerald-400" />
                 <span>تکمیل هوشمند با هوش مصنوعی چندبوم</span>
-                <span className="text-[9px] px-1.5 py-0.2 rounded-md bg-amber-400 text-zinc-950 font-black">
+                <span className="text-[9px] px-1.5 py-0.2 rounded-md bg-emerald-400 text-zinc-950 font-black">
                   Pro
                 </span>
               </div>
@@ -384,7 +384,7 @@ export const TransactionModal: React.FC<TransactionModalProps> = ({
                     onClose();
                     setActiveTab('subscription');
                   }}
-                  className="text-[10px] text-amber-300 hover:underline flex items-center gap-1 font-bold"
+                  className="text-[10px] text-emerald-300 hover:underline flex items-center gap-1 font-bold"
                 >
                   <ChandIcon name="crown" className="w-3 h-3" />
                   <span>خرید اشتراک طلایی پرو</span>
@@ -434,7 +434,7 @@ export const TransactionModal: React.FC<TransactionModalProps> = ({
             </div>
 
             {aiFeedback && (
-              <p className="text-[11px] text-amber-300 font-bold animate-in fade-in duration-150">
+              <p className="text-[11px] text-emerald-300 font-bold animate-in fade-in duration-150">
                 {aiFeedback}
               </p>
             )}

@@ -206,7 +206,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({ onOpenAvatarModal })
           <div className="relative z-10 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
             <div className="flex items-start gap-3.5">
               <div className="shrink-0 text-zinc-300">
-                <ChandIcon name="key" className="w-6 h-6 text-amber-400" />
+                <ChandIcon name="key" className="w-6 h-6 text-emerald-400" />
               </div>
               <div>
                 <h3 className="font-cairo font-bold text-lg text-white">
@@ -260,7 +260,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({ onOpenAvatarModal })
             <div className="shrink-0 flex items-center gap-2">
               <button
                 onClick={() => setActiveTab('subscription')}
-                className="px-5 py-2.5 rounded-xl bg-gradient-to-r from-amber-500 via-amber-600 to-yellow-600 hover:from-amber-600 hover:to-yellow-700 text-zinc-950 font-cairo font-black text-xs transition cursor-pointer shadow-md flex items-center gap-1.5"
+                className="px-5 py-2.5 rounded-xl bg-gradient-to-r from-emerald-500 via-emerald-600 to-emerald-600 hover:from-emerald-600 hover:to-emerald-700 text-zinc-950 font-cairo font-black text-xs transition cursor-pointer shadow-md flex items-center gap-1.5"
               >
                 <ChandIcon name="award" className="w-3.5 h-3.5" />
                 <span>خرید اشتراک طلایی پرو</span>
@@ -269,7 +269,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({ onOpenAvatarModal })
           </div>
         </div>
       ) : (
-        <div className="p-6 rounded-3xl bg-gradient-to-br from-[#1C170A] via-[#261E0A] to-[#120F05] border-2 border-amber-500/50 shadow-xl text-white relative overflow-hidden">
+        <div className="p-6 rounded-3xl bg-gradient-to-br from-[#0A1C16] via-[#0A261D] to-[#05120E] border-2 border-emerald-500/50 shadow-xl text-white relative overflow-hidden">
           <div className="relative z-10 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
             <div className="flex items-start gap-3.5">
               <div className="shrink-0">
@@ -280,14 +280,14 @@ export const SettingsView: React.FC<SettingsViewProps> = ({ onOpenAvatarModal })
                   <h3 className="font-cairo font-bold text-lg text-white">
                     وضعیت اشتراک: {user.tier === 'vip' ? 'حساب VIP فعال' : user.tier === 'bronze' ? 'حساب برنزی فعال' : 'حساب پرو فعال'}
                   </h3>
-                  <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-amber-400 text-zinc-950 font-black">
+                  <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-emerald-400 text-zinc-950 font-black">
                     {user.tier === 'vip' ? 'VIP فعال' : user.tier === 'bronze' ? 'برنزی فعال' : 'پرو فعال'}
                   </span>
                 </div>
 
                 <div className="mt-2 space-y-1 text-xs">
-                  <p className="text-amber-200 flex items-center gap-1.5 font-bold">
-                    <ChandIcon name="clock" className="w-4 h-4 text-amber-400" />
+                  <p className="text-emerald-200 flex items-center gap-1.5 font-bold">
+                    <ChandIcon name="clock" className="w-4 h-4 text-emerald-400" />
                     <span>مانده اشتراک:</span>
                     <span className="font-cairo font-black text-sm text-white">
                       {remainingPro.humanText}
@@ -305,7 +305,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({ onOpenAvatarModal })
             <div className="shrink-0 flex items-center gap-2">
               <button
                 onClick={() => setActiveTab('subscription')}
-                className="px-4 py-2.5 rounded-xl bg-gradient-to-r from-amber-500 to-yellow-500 hover:from-amber-600 hover:to-yellow-600 text-zinc-950 font-cairo font-bold text-xs transition cursor-pointer shadow-md flex items-center gap-1.5"
+                className="px-4 py-2.5 rounded-xl bg-gradient-to-r from-emerald-500 to-emerald-500 hover:from-emerald-600 hover:to-emerald-600 text-zinc-950 font-cairo font-bold text-xs transition cursor-pointer shadow-md flex items-center gap-1.5"
               >
                 <ChandIcon name="award" className="w-3.5 h-3.5" />
                 <span>تمدید اشتراک طلایی</span>
@@ -314,7 +314,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({ onOpenAvatarModal })
           </div>
 
           {/* Golden glow decoration */}
-          <div className="absolute right-[-10%] bottom-[-40%] w-64 h-64 rounded-full bg-amber-500/10 blur-2xl pointer-events-none" />
+          <div className="absolute right-[-10%] bottom-[-40%] w-64 h-64 rounded-full bg-emerald-500/10 blur-2xl pointer-events-none" />
         </div>
       )}
 
@@ -326,7 +326,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({ onOpenAvatarModal })
         <div className="flex items-center justify-between pb-3 border-b border-[#E2E8E4] dark:border-[#1F2E27]">
           <div>
             <h3 className="font-cairo font-bold text-base text-zinc-900 dark:text-zinc-100 flex items-center gap-2">
-              <ChandIcon name="card" className="w-4 h-4 text-amber-600 dark:text-amber-400" />
+              <ChandIcon name="card" className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
               <span>سوابق تراکنش‌ها و سفارش‌های ارتقا به پرو</span>
             </h3>
             <p className="text-xs text-zinc-500 mt-0.5">
@@ -343,7 +343,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({ onOpenAvatarModal })
             <p>شما تاکنون سفارش ارتقای حسابی ثبت نکرده‌اید.</p>
             <button
               onClick={() => setActiveTab('subscription')}
-              className="text-amber-600 dark:text-amber-400 hover:underline font-cairo font-bold"
+              className="text-emerald-600 dark:text-emerald-400 hover:underline font-cairo font-bold"
             >
               مشاهده پلن‌های طلایی ۱، ۳ و ۶ ماهه
             </button>
@@ -366,7 +366,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({ onOpenAvatarModal })
                           ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300 border border-emerald-300'
                           : pay.status === 'rejected'
                           ? 'bg-rose-100 text-rose-800 dark:bg-rose-950 dark:text-rose-300 border border-rose-300'
-                          : 'bg-amber-100 text-amber-800 dark:bg-amber-950 dark:text-amber-300 border border-amber-300'
+                          : 'bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300 border border-emerald-300'
                       }`}
                     >
                       {pay.status === 'approved'
@@ -380,7 +380,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({ onOpenAvatarModal })
                   {/* Tracking Code with copy button */}
                   <div className="flex items-center gap-2 text-xs">
                     <span className="text-zinc-500">کد پیگیری:</span>
-                    <span className="font-mono font-bold text-amber-800 dark:text-amber-300 select-all" dir="ltr">
+                    <span className="font-mono font-bold text-emerald-800 dark:text-emerald-300 select-all" dir="ltr">
                       {pay.tracking_code}
                     </span>
                     <button
@@ -417,7 +417,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({ onOpenAvatarModal })
                       onClick={() => setSelectedReceiptForPreview(pay.receipt_url || null)}
                       className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-[#E2E8E4] dark:border-[#1F2E27] text-xs font-cairo font-bold hover:bg-white dark:hover:bg-[#16241D] text-zinc-700 dark:text-zinc-300 transition cursor-pointer shadow-xs"
                     >
-                      <Eye className="w-3.5 h-3.5 text-amber-600" />
+                      <Eye className="w-3.5 h-3.5 text-emerald-600" />
                       <span>مشاهده فیش</span>
                     </button>
                   )}
@@ -485,7 +485,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({ onOpenAvatarModal })
               <label className="block text-xs font-cairo font-bold text-zinc-700 dark:text-zinc-300">
                 آدرس ایمیل (غیرقابل تغییر)
               </label>
-              <span className="text-[10px] text-amber-600 dark:text-amber-400 flex items-center gap-1 font-bold">
+              <span className="text-[10px] text-emerald-600 dark:text-emerald-400 flex items-center gap-1 font-bold">
                 <ChandIcon name="key" className="w-3 h-3" />
                 قفل امنیتی
               </span>
@@ -586,7 +586,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({ onOpenAvatarModal })
         >
           <div className="pb-3 border-b border-[#E2E8E4] dark:border-[#1F2E27]">
             <h4 className="font-cairo font-bold text-base text-zinc-900 dark:text-white flex items-center gap-2">
-              <ChandIcon name="key" className="w-5 h-5 text-amber-500" />
+              <ChandIcon name="key" className="w-5 h-5 text-emerald-500" />
               <span>تغییر کلمه عبور حساب کاربری</span>
             </h4>
             <p className="text-xs text-zinc-500 mt-0.5">
@@ -656,7 +656,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({ onOpenAvatarModal })
             <button
               type="submit"
               disabled={passwordLoading || !newPassword}
-              className="flex items-center justify-center gap-2 px-6 py-2.5 rounded-xl bg-amber-600 hover:bg-amber-700 disabled:opacity-50 text-white font-cairo font-bold text-xs shadow-xs transition cursor-pointer"
+              className="flex items-center justify-center gap-2 px-6 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 disabled:opacity-50 text-white font-cairo font-bold text-xs shadow-xs transition cursor-pointer"
             >
               <ChandIcon name="key" className="w-4 h-4" />
               <span>{passwordLoading ? 'در حال ذخیره‌سازی...' : 'به‌روزرسانی رمز عبور در پایگاه داده'}</span>
@@ -678,7 +678,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({ onOpenAvatarModal })
               {theme === 'dark' ? (
                 <ChandIcon name="moon" className="w-5 h-5 text-emerald-400" />
               ) : (
-                <ChandIcon name="sun" className="w-5 h-5 text-amber-500" />
+                <ChandIcon name="sun" className="w-5 h-5 text-emerald-500" />
               )}
               <span>تنظیمات ظاهر سامانه و تم رنگی (Theme Settings)</span>
             </h4>
@@ -703,12 +703,12 @@ export const SettingsView: React.FC<SettingsViewProps> = ({ onOpenAvatarModal })
             }}
             className={`p-4 rounded-2xl border text-right transition cursor-pointer flex items-center justify-between ${
               theme === 'light'
-                ? 'bg-amber-50/60 dark:bg-amber-950/20 border-amber-400/80 ring-2 ring-amber-400/30'
+                ? 'bg-emerald-50/60 dark:bg-emerald-950/20 border-emerald-400/80 ring-2 ring-emerald-400/30'
                 : 'bg-zinc-50 dark:bg-[#141E1A] border-[#E2E8E4] dark:border-[#1F2E27] hover:border-zinc-300 dark:hover:border-zinc-700'
             }`}
           >
             <div className="flex items-center gap-3">
-              <div className={`shrink-0 ${theme === 'light' ? 'text-amber-500' : 'text-zinc-500'}`}>
+              <div className={`shrink-0 ${theme === 'light' ? 'text-emerald-500' : 'text-zinc-500'}`}>
                 <ChandIcon name="sun" className="w-6 h-6" />
               </div>
               <div>
@@ -721,7 +721,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({ onOpenAvatarModal })
               </div>
             </div>
             {theme === 'light' && (
-              <ChandIcon name="check-circle" className="w-5 h-5 text-amber-500 shrink-0" />
+              <ChandIcon name="check-circle" className="w-5 h-5 text-emerald-500 shrink-0" />
             )}
           </button>
 

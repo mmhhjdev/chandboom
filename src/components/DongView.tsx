@@ -459,7 +459,7 @@ export const DongView: React.FC = () => {
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-2">
                       {group.isFamilyMode ? (
-                        <ChandIcon name="home" className="w-4 h-4 text-amber-600" />
+                        <ChandIcon name="home" className="w-4 h-4 text-emerald-600" />
                       ) : (
                         <ChandIcon name="users" className="w-4 h-4 text-emerald-600" />
                       )}
@@ -664,7 +664,7 @@ export const DongView: React.FC = () => {
           <div>
             <div className="flex items-center gap-2">
               {activeGroup.isFamilyMode ? (
-                <ChandIcon name="home" className="w-5 h-5 text-amber-600" />
+                <ChandIcon name="home" className="w-5 h-5 text-emerald-600" />
               ) : (
                 <ChandIcon name="users" className="w-5 h-5 text-emerald-700" />
               )}
@@ -707,7 +707,7 @@ export const DongView: React.FC = () => {
         </div>
 
         {settlementIssues.length > 0 && (
-          <div role="alert" className="mb-3 space-y-1 rounded-xl border border-amber-300 bg-amber-50 p-3 text-xs font-cairo text-amber-800 dark:border-amber-700/50 dark:bg-amber-950/30 dark:text-amber-200">
+          <div role="alert" className="mb-3 space-y-1 rounded-xl border border-emerald-300 bg-emerald-50 p-3 text-xs font-cairo text-emerald-800 dark:border-emerald-700/50 dark:bg-emerald-950/30 dark:text-emerald-200">
             <p className="font-bold">برخی هزینه‌ها در تسویه لحاظ نشدند:</p>
             {settlementIssues.map((msg, i) => (
               <p key={i}>{msg}</p>
@@ -771,7 +771,7 @@ export const DongView: React.FC = () => {
                         پرداخت توسط: {item.payer}
                       </span>
                       {item.isItemized && (
-                        <span className="text-[10px] px-2 py-0.5 bg-amber-100 text-amber-800 dark:bg-amber-950 dark:text-amber-300 rounded-full font-bold">
+                        <span className="text-[10px] px-2 py-0.5 bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300 rounded-full font-bold">
                           فاکتور تفکیک‌شده رستوران
                         </span>
                       )}
@@ -919,7 +919,7 @@ export const DongView: React.FC = () => {
                 <div className="space-y-3 pt-2 border-t border-dashed border-zinc-300 dark:border-zinc-800">
                   <div className="flex items-center justify-between">
                     <span className="font-bold text-zinc-700 dark:text-zinc-300 flex items-center gap-1">
-                      <ChandIcon name="cart" className="w-4 h-4 text-amber-600" /> اقلام فاکتور (غذاها، نوشیدنی‌ها...)
+                      <ChandIcon name="cart" className="w-4 h-4 text-emerald-600" /> اقلام فاکتور (غذاها، نوشیدنی‌ها...)
                     </span>
                     <button
                       type="button"

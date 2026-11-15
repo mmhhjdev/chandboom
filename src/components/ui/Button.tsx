@@ -26,7 +26,7 @@ const variantStyles: Record<ButtonVariant, string> = {
   danger:
     'bg-rose-600 hover:bg-rose-700 active:bg-rose-800 text-white shadow-xs border border-rose-500/30',
   gold:
-    'bg-gradient-to-r from-amber-500 via-amber-600 to-yellow-600 hover:from-amber-600 hover:to-yellow-700 text-zinc-950 font-black shadow-md shadow-amber-950/20 border border-amber-400/40',
+    'bg-gradient-to-r from-emerald-500 via-emerald-600 to-emerald-600 hover:from-emerald-600 hover:to-emerald-700 text-zinc-950 font-black shadow-md shadow-emerald-950/20 border border-emerald-400/40',
 };
 
 const sizeStyles: Record<ButtonSize, string> = {

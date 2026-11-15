@@ -213,7 +213,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({
                           <circle cx="18" cy="18" r="14" fill="none" stroke="#E2E8F0" strokeWidth="4" />
                           <circle cx="18" cy="18" r="14" fill="none" stroke="#059669" strokeWidth="4" strokeDasharray="38, 100" />
                           <circle cx="18" cy="18" r="14" fill="none" stroke="#0D9488" strokeWidth="4" strokeDasharray="28, 100" strokeDashoffset="-38" />
-                          <circle cx="18" cy="18" r="14" fill="none" stroke="#F59E0B" strokeWidth="4" strokeDasharray="14, 100" strokeDashoffset="-66" />
+                          <circle cx="18" cy="18" r="14" fill="none" stroke="#0BF5A7" strokeWidth="4" strokeDasharray="14, 100" strokeDashoffset="-66" />
                           <circle cx="18" cy="18" r="14" fill="none" stroke="#10B981" strokeWidth="4" strokeDasharray="20, 100" strokeDashoffset="-80" />
                         </svg>
                         <div className="absolute text-center">
@@ -226,7 +226,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({
                       <div className="text-[10px] space-y-1 text-zinc-600">
                         <div className="flex items-center gap-1.5"><span className="w-2 h-2 rounded-full bg-emerald-600" /> غذا و خوراکی</div>
                         <div className="flex items-center gap-1.5"><span className="w-2 h-2 rounded-full bg-teal-600" /> حمل و نقل</div>
-                        <div className="flex items-center gap-1.5"><span className="w-2 h-2 rounded-full bg-amber-500" /> مسکن و قبوض</div>
+                        <div className="flex items-center gap-1.5"><span className="w-2 h-2 rounded-full bg-emerald-500" /> مسکن و قبوض</div>
                         <div className="flex items-center gap-1.5"><span className="w-2 h-2 rounded-full bg-emerald-400" /> پس‌انداز و رشد</div>
                       </div>
                     </div>
@@ -366,10 +366,10 @@ export const LandingPage: React.FC<LandingPageProps> = ({
               {/* Social Proof Avatars */}
               <div className="pt-4 flex items-center gap-3">
                 <div className="flex -space-x-2.5 space-x-reverse">
-                  <img src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100&h=100&fit=crop&crop=faces" alt="کاربر چندبوم" className="w-10 h-10 rounded-full border-2 border-white object-cover shadow-sm" />
-                  <img src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100&h=100&fit=crop&crop=faces" alt="کاربر چندبوم" className="w-10 h-10 rounded-full border-2 border-white object-cover shadow-sm" />
-                  <img src="https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=100&h=100&fit=crop&crop=faces" alt="کاربر چندبوم" className="w-10 h-10 rounded-full border-2 border-white object-cover shadow-sm" />
-                  <img src="https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=100&h=100&fit=crop&crop=faces" alt="کاربر چندبوم" className="w-10 h-10 rounded-full border-2 border-white object-cover shadow-sm" />
+                  <img src="/icons3d/vip/avatar-male-256.png" alt="کاربر چندبوم" className="w-10 h-10 rounded-full border-2 border-white object-cover shadow-sm" />
+                  <img src="/icons3d/vip/avatar-female-256.png" alt="کاربر چندبوم" className="w-10 h-10 rounded-full border-2 border-white object-cover shadow-sm" />
+                  <img src="/icons3d/vip/avatar-male-256.png" alt="کاربر چندبوم" className="w-10 h-10 rounded-full border-2 border-white object-cover shadow-sm" />
+                  <img src="/icons3d/vip/avatar-female-256.png" alt="کاربر چندبوم" className="w-10 h-10 rounded-full border-2 border-white object-cover shadow-sm" />
                 </div>
                 <div>
                   <span className="font-extrabold text-sm text-emerald-950 block">+۱۲ هزار</span>

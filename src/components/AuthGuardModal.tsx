@@ -26,11 +26,11 @@ export const AuthGuardModal: React.FC<AuthGuardModalProps> = ({
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md animate-in fade-in font-cairo">
       <div
-        className="relative w-full max-w-md rounded-3xl bg-[#090F0C] border border-amber-500/40 p-6 sm:p-7 shadow-2xl shadow-emerald-950/80 text-right"
+        className="relative w-full max-w-md rounded-3xl bg-[#090F0C] border border-emerald-500/40 p-6 sm:p-7 shadow-2xl shadow-emerald-950/80 text-right"
         dir="rtl"
       >
         {/* Glow corner */}
-        <div className="absolute top-0 right-0 w-32 h-32 bg-amber-500/10 rounded-full blur-2xl pointer-events-none" />
+        <div className="absolute top-0 right-0 w-32 h-32 bg-emerald-500/10 rounded-full blur-2xl pointer-events-none" />
 
         {/* Close Button */}
         <button
@@ -65,7 +65,7 @@ export const AuthGuardModal: React.FC<AuthGuardModalProps> = ({
         <div className="flex flex-col gap-2.5">
           <button
             onClick={handleOpenAuth}
-            className="w-full flex items-center justify-center gap-2 py-3.5 rounded-2xl bg-gradient-to-r from-amber-400 via-amber-500 to-yellow-500 hover:from-amber-300 hover:to-yellow-400 text-zinc-950 font-black text-sm shadow-xl shadow-amber-500/20 transition-all cursor-pointer"
+            className="w-full flex items-center justify-center gap-2 py-3.5 rounded-2xl bg-gradient-to-r from-emerald-400 via-emerald-500 to-emerald-500 hover:from-emerald-300 hover:to-emerald-400 text-zinc-950 font-black text-sm shadow-xl shadow-emerald-500/20 transition-all cursor-pointer"
           >
             <ChandIcon name="user-plus" className="w-4 h-4" />
             <span>ثبت‌نام یا ورود به حساب کاربری</span>

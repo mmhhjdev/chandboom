@@ -31,7 +31,7 @@ export const PricingPage: React.FC = () => {
       <div className="space-y-12 animate-in fade-in duration-200">
         {/* Header */}
         <div className="text-center max-w-2xl mx-auto space-y-3">
-          <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-amber-500/10 text-amber-600 dark:text-amber-400 text-xs font-bold border border-amber-500/20">
+          <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 text-xs font-bold border border-emerald-500/20">
             <ChandIcon name="crown" className="w-3.5 h-3.5" />
             <span>تعرفه شفاف و سرمایه‌گذاری برای آینده مالی</span>
           </div>
@@ -120,11 +120,11 @@ export const PricingPage: React.FC = () => {
           </div>
 
           {/* Bronze Tier */}
-          <div className="p-6 rounded-3xl bg-white dark:bg-[#0F1713] border border-amber-300 dark:border-amber-700/60 shadow-xs flex flex-col justify-between space-y-6">
+          <div className="p-6 rounded-3xl bg-white dark:bg-[#0F1713] border border-emerald-300 dark:border-emerald-700/60 shadow-xs flex flex-col justify-between space-y-6">
             <div>
               <div className="flex items-center justify-between mb-2">
                 <h2 className="text-base font-bold text-zinc-900 dark:text-white">اشتراک برنزی</h2>
-                <span className="text-[10px] px-2.5 py-1 rounded-xl bg-orange-100 text-orange-800 dark:bg-orange-950 dark:text-orange-300 font-bold">
+                <span className="text-[10px] px-2.5 py-1 rounded-xl bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300 font-bold">
                   اقتصادی
                 </span>
               </div>
@@ -134,7 +134,7 @@ export const PricingPage: React.FC = () => {
 
               <div className="mb-4">
                 <div className="flex items-baseline gap-2">
-                  <span className="text-2xl font-black text-orange-600 dark:text-orange-400">
+                  <span className="text-2xl font-black text-emerald-600 dark:text-emerald-400">
                     {formatToman(bronzePrice).replace(' تومان', '')}
                   </span>
                   <span className="text-xs line-through text-zinc-400">
@@ -168,7 +168,7 @@ export const PricingPage: React.FC = () => {
 
             <Link
               to="/"
-              className="w-full py-2.5 rounded-2xl bg-orange-50 dark:bg-orange-950/40 hover:bg-orange-100 text-orange-800 dark:text-orange-300 text-xs font-bold text-center border border-orange-300 dark:border-orange-800 transition cursor-pointer"
+              className="w-full py-2.5 rounded-2xl bg-emerald-50 dark:bg-emerald-950/40 hover:bg-emerald-100 text-emerald-800 dark:text-emerald-300 text-xs font-bold text-center border border-emerald-300 dark:border-emerald-800 transition cursor-pointer"
             >
               انتخاب پلن برنزی
             </Link>
@@ -177,7 +177,7 @@ export const PricingPage: React.FC = () => {
           {/* Pro Tier (Golden) */}
           <div className="p-6 rounded-3xl bg-gradient-to-b from-[#18261F] to-[#0D1812] border-2 border-emerald-500/80 shadow-xl flex flex-col justify-between space-y-6 relative overflow-hidden">
             <div className="absolute top-3 left-3">
-              <span className="text-[9px] px-2 py-0.5 rounded-full bg-amber-400 text-zinc-950 font-black flex items-center gap-1">
+              <span className="text-[9px] px-2 py-0.5 rounded-full bg-emerald-400 text-zinc-950 font-black flex items-center gap-1">
                 <ChandIcon name="crown" className="w-3 h-3" />
                 <span>محبوب‌ترین</span>
               </span>
@@ -235,9 +235,9 @@ export const PricingPage: React.FC = () => {
           </div>
 
           {/* VIP Tier */}
-          <div className="p-6 rounded-3xl bg-gradient-to-b from-[#1F1A07] to-[#120F05] border-2 border-amber-500/90 shadow-xl flex flex-col justify-between space-y-6 relative overflow-hidden">
+          <div className="p-6 rounded-3xl bg-gradient-to-b from-[#071F17] to-[#05120E] border-2 border-emerald-500/90 shadow-xl flex flex-col justify-between space-y-6 relative overflow-hidden">
             <div className="absolute top-3 left-3">
-              <span className="text-[9px] px-2 py-0.5 rounded-full bg-gradient-to-r from-amber-400 to-yellow-400 text-zinc-950 font-black flex items-center gap-1">
+              <span className="text-[9px] px-2 py-0.5 rounded-full bg-gradient-to-r from-emerald-400 to-emerald-400 text-zinc-950 font-black flex items-center gap-1">
                 <ChandIcon name="award" className="w-3 h-3" />
                 <span>حداکثر سهمیه</span>
               </span>
@@ -247,39 +247,39 @@ export const PricingPage: React.FC = () => {
               <div className="flex items-center gap-2 mb-2">
                 <h2 className="text-base font-bold text-white">اشتراک VIP ویژه</h2>
               </div>
-              <p className="text-xs text-amber-200/70 mb-4">
+              <p className="text-xs text-emerald-200/70 mb-4">
                 سقف ۵۰۰ پرسش هوش مصنوعی با اولویت تایید فوری
               </p>
 
               <div className="mb-4">
                 <div className="flex items-baseline gap-2">
-                  <span className="text-2xl font-black text-amber-400">
+                  <span className="text-2xl font-black text-emerald-400">
                     {formatToman(vipPrice).replace(' تومان', '')}
                   </span>
-                  <span className="text-xs line-through text-amber-200/50">
+                  <span className="text-xs line-through text-emerald-200/50">
                     {formatToman(vipOriginal)}
                   </span>
                 </div>
-                <span className="text-xs text-amber-200/70 block mt-0.5">
+                <span className="text-xs text-emerald-200/70 block mt-0.5">
                   تومان / {billingCycle === 'monthly' ? 'ماهانه' : 'سالانه'}
                 </span>
               </div>
 
               <ul className="space-y-2.5 text-xs text-zinc-200">
                 <li className="flex items-center gap-2">
-                  <ChandIcon name="check" className="w-3.5 h-3.5 text-amber-400 shrink-0" />
+                  <ChandIcon name="check" className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
                   <span>۵۰۰ پرسش ماهانه هوش مصنوعی اختصاصی</span>
                 </li>
                 <li className="flex items-center gap-2">
-                  <ChandIcon name="check" className="w-3.5 h-3.5 text-amber-400 shrink-0" />
+                  <ChandIcon name="check" className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
                   <span>پیش‌بینی جامع جریان نقدینگی</span>
                 </li>
                 <li className="flex items-center gap-2">
-                  <ChandIcon name="check" className="w-3.5 h-3.5 text-amber-400 shrink-0" />
+                  <ChandIcon name="check" className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
                   <span>بیشترین درصد تخفیف دوره‌ای</span>
                 </li>
                 <li className="flex items-center gap-2">
-                  <ChandIcon name="check" className="w-3.5 h-3.5 text-amber-400 shrink-0" />
+                  <ChandIcon name="check" className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
                   <span>تایید فوری فیش زیر ۵ دقیقه + پشتیبانی VIP</span>
                 </li>
               </ul>
@@ -287,7 +287,7 @@ export const PricingPage: React.FC = () => {
 
             <Link
               to="/"
-              className="w-full py-2.5 rounded-2xl bg-gradient-to-r from-amber-500 to-yellow-500 hover:from-amber-400 hover:to-yellow-400 text-zinc-950 text-xs font-black text-center transition cursor-pointer shadow-md flex items-center justify-center gap-1.5"
+              className="w-full py-2.5 rounded-2xl bg-gradient-to-r from-emerald-500 to-emerald-500 hover:from-emerald-400 hover:to-emerald-400 text-zinc-950 text-xs font-black text-center transition cursor-pointer shadow-md flex items-center justify-center gap-1.5"
             >
               <ChandIcon name="crown" className="w-3.5 h-3.5" />
               <span>خرید اشتراک VIP</span>

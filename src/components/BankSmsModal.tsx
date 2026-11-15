@@ -156,7 +156,7 @@ export const BankSmsModal: React.FC<BankSmsModalProps> = ({
                   onClose();
                   if (openSubscriptionModal) openSubscriptionModal();
                 }}
-                className="shrink-0 px-3 py-1 rounded-lg bg-amber-500 text-zinc-950 font-bold text-[11px] hover:bg-amber-400 transition cursor-pointer"
+                className="shrink-0 px-3 py-1 rounded-lg bg-emerald-500 text-zinc-950 font-bold text-[11px] hover:bg-emerald-400 transition cursor-pointer"
               >
                 مشاهده و خرید اشتراک
               </button>

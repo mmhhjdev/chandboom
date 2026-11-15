@@ -487,7 +487,7 @@ export const AIAssistant: React.FC<{ isOpen?: boolean; onClose?: () => void }> =
               <h2 className="text-sm sm:text-base font-bold text-zinc-900 dark:text-white">
                 دستیار هوشمند و راهنمای <span className="font-brand text-emerald-700 dark:text-emerald-400">چندبوم</span>
               </h2>
-              <span className="text-[10px] px-2 py-0.5 rounded-md bg-amber-400 text-zinc-950 font-black flex items-center gap-1">
+              <span className="text-[10px] px-2 py-0.5 rounded-md bg-emerald-400 text-zinc-950 font-black flex items-center gap-1">
                 <ChandIcon name="vip-crown" className="w-3 h-3" />
                 <span>
                   {user.tier === 'vip'
@@ -563,7 +563,7 @@ export const AIAssistant: React.FC<{ isOpen?: boolean; onClose?: () => void }> =
       {/* Access Gate: Subscription Requirement */}
       {!isSubscriptionActive ? (
         <div className="p-8 sm:p-12 flex flex-col items-center justify-center text-center bg-radial from-emerald-950/20 to-transparent">
-          <div className="w-16 h-16 text-amber-500 flex items-center justify-center mb-4">
+          <div className="w-16 h-16 text-emerald-500 flex items-center justify-center mb-4">
             <ChandIcon name="vip-crown" className="w-8 h-8" />
           </div>
           <h3 className="text-base sm:text-lg font-bold text-zinc-900 dark:text-white mb-2">
@@ -577,7 +577,7 @@ export const AIAssistant: React.FC<{ isOpen?: boolean; onClose?: () => void }> =
               if (openSubscriptionModal) openSubscriptionModal();
               else setActiveTab('subscription');
             }}
-            className="px-6 py-3 rounded-2xl bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-zinc-950 font-bold text-xs sm:text-sm flex items-center gap-2 shadow-lg transition cursor-pointer"
+            className="px-6 py-3 rounded-2xl bg-gradient-to-r from-emerald-500 to-emerald-600 hover:from-emerald-400 hover:to-emerald-500 text-zinc-950 font-bold text-xs sm:text-sm flex items-center gap-2 shadow-lg transition cursor-pointer"
           >
             <ChandIcon name="vip-crown" className="w-4 h-4" />
             <span>مشاهده پلن‌های ۱ و ۳ ماهه و ارتقای حساب</span>

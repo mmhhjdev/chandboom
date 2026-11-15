@@ -100,14 +100,14 @@ export const AnalyticsView: React.FC = () => {
       <div
         className={`p-5 rounded-2xl border flex items-start gap-3.5 ${
           budgetInsight.isWarning
-            ? 'bg-amber-50/90 dark:bg-amber-950/30 border-amber-200 dark:border-amber-900/60 text-amber-900 dark:text-amber-200'
+            ? 'bg-emerald-50/90 dark:bg-emerald-950/30 border-emerald-200 dark:border-emerald-900/60 text-emerald-900 dark:text-emerald-200'
             : 'bg-emerald-50/90 dark:bg-emerald-950/30 border-emerald-200 dark:border-emerald-900/60 text-emerald-900 dark:text-emerald-200'
         }`}
       >
         <div
           className={`p-2 rounded-xl shrink-0 ${
             budgetInsight.isWarning
-              ? 'bg-amber-200 text-amber-800 dark:bg-amber-900 dark:text-amber-300'
+              ? 'bg-emerald-200 text-emerald-800 dark:bg-emerald-900 dark:text-emerald-300'
               : 'bg-emerald-200 text-emerald-800 dark:bg-emerald-900 dark:text-emerald-300'
           }`}
         >
@@ -147,7 +147,7 @@ export const AnalyticsView: React.FC = () => {
                 budgetUsagePercent > 85
                   ? 'bg-rose-600'
                   : budgetUsagePercent > 65
-                  ? 'bg-amber-500'
+                  ? 'bg-emerald-500'
                   : 'bg-emerald-600'
               }`}
               style={{ width: `${budgetUsagePercent}%` }}
@@ -255,7 +255,7 @@ export const AnalyticsView: React.FC = () => {
                           ⚠️ عبور از سقف مجاز
                         </span>
                       ) : percent > 75 ? (
-                        <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-100 text-amber-800 dark:bg-amber-950/80 dark:text-amber-300 border border-amber-300 dark:border-amber-800">
+                        <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-100 text-emerald-800 dark:bg-emerald-950/80 dark:text-emerald-300 border border-emerald-300 dark:border-emerald-800">
                           نزدیک به سقف
                         </span>
                       ) : (
@@ -278,7 +278,7 @@ export const AnalyticsView: React.FC = () => {
                           isOverLimit
                             ? 'text-rose-600 dark:text-rose-400'
                             : percent > 75
-                            ? 'text-amber-600 dark:text-amber-400'
+                            ? 'text-emerald-600 dark:text-emerald-400'
                             : 'text-emerald-600 dark:text-emerald-400'
                         }`}
                       >
@@ -294,7 +294,7 @@ export const AnalyticsView: React.FC = () => {
                         isOverLimit
                           ? 'bg-rose-600'
                           : percent > 75
-                          ? 'bg-amber-500'
+                          ? 'bg-emerald-500'
                           : 'bg-emerald-600'
                       }`}
                       style={{ width: `${percent}%` }}
@@ -320,13 +320,13 @@ export const AnalyticsView: React.FC = () => {
       <div className="bg-white dark:bg-[#0F1512] rounded-3xl border border-[#E2E8E4] dark:border-[#1A2621] shadow-xs p-6 space-y-6 overflow-hidden relative">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-4 border-b border-[#E2E8E4] dark:border-[#1F2E27]">
           <div className="flex items-center gap-2.5">
-            <div className="w-9 h-9 rounded-2xl from-amber-400 to-yellow-500 text-zinc-950 flex items-center justify-center">
+            <div className="w-9 h-9 rounded-2xl from-emerald-400 to-emerald-500 text-zinc-950 flex items-center justify-center">
               <ChandIcon name="ai" className="w-5 h-5" />
             </div>
             <div>
               <h3 className="font-cairo text-base font-bold text-zinc-900 dark:text-zinc-100 flex items-center gap-2">
                 <span>تحلیل پیشرفته و پیش‌بینی چندماهه</span>
-                <span className="px-2 py-0.5 rounded-full text-[10px] bg-amber-100 dark:bg-amber-950/80 text-amber-800 dark:text-amber-300 font-bold border border-amber-300 dark:border-amber-800">
+                <span className="px-2 py-0.5 rounded-full text-[10px] bg-emerald-100 dark:bg-emerald-950/80 text-emerald-800 dark:text-emerald-300 font-bold border border-emerald-300 dark:border-emerald-800">
                   هوش مصنوعی چندبوم (Pro)
                 </span>
               </h3>
@@ -339,7 +339,7 @@ export const AnalyticsView: React.FC = () => {
           {!isProUser && (
             <button
               onClick={() => setActiveTab('subscription')}
-              className="px-3.5 py-1.5 rounded-xl bg-gradient-to-r from-amber-500 to-yellow-500 hover:from-amber-600 hover:to-yellow-600 text-zinc-950 font-cairo font-bold text-xs flex items-center gap-1.5 shadow-xs transition cursor-pointer shrink-0"
+              className="px-3.5 py-1.5 rounded-xl bg-gradient-to-r from-emerald-500 to-emerald-500 hover:from-emerald-600 hover:to-emerald-600 text-zinc-950 font-cairo font-bold text-xs flex items-center gap-1.5 shadow-xs transition cursor-pointer shrink-0"
             >
               <ChandIcon name="crown" className="w-3.5 h-3.5" />
               <span>خرید اشتراک طلایی پرو</span>
@@ -352,14 +352,14 @@ export const AnalyticsView: React.FC = () => {
           <div className="space-y-6">
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               {/* 3-Month Projection */}
-              <div className="p-5 rounded-2xl bg-gradient-to-br from-[#1C170A] via-[#241D09] to-[#120F05] text-white border border-amber-500/40 shadow-md space-y-2">
-                <span className="text-xs text-amber-300 font-cairo block">
+              <div className="p-5 rounded-2xl bg-gradient-to-br from-[#0A1C16] via-[#09241B] to-[#05120E] text-white border border-emerald-500/40 shadow-md space-y-2">
+                <span className="text-xs text-emerald-300 font-cairo block">
                   پیش‌بینی تراز دارایی تا ۳ ماه آینده
                 </span>
                 <div className="font-cairo text-2xl font-black text-white">
                   {formatToman(projected3m)}
                 </div>
-                <p className="text-[11px] text-amber-100/80 leading-relaxed">
+                <p className="text-[11px] text-emerald-100/80 leading-relaxed">
                   بر اساس میانگین خالص ماهانه ({monthlyNet >= 0 ? '+' : ''}{formatToman(monthlyNet)})
                 </p>
               </div>
@@ -381,7 +381,7 @@ export const AnalyticsView: React.FC = () => {
             {/* Smart Strategic Recommendations */}
             <div className="p-5 rounded-2xl bg-zinc-50 dark:bg-[#121B16] border border-[#E2E8E4] dark:border-[#1F2E27] space-y-3">
               <h4 className="font-cairo font-bold text-xs text-zinc-900 dark:text-white flex items-center gap-2">
-                <ChandIcon name="ai" className="w-4 h-4 text-amber-500" />
+                <ChandIcon name="ai" className="w-4 h-4 text-emerald-500" />
                 <span>توصیه‌های تحلیلی هوش مصنوعی چندبوم:</span>
               </h4>
               <ul className="space-y-2 text-xs text-zinc-600 dark:text-zinc-300">
@@ -402,16 +402,16 @@ export const AnalyticsView: React.FC = () => {
           </div>
         ) : (
           /* Non-Pro User: Attractive Golden Paywall Teaser */
-          <div className="relative rounded-2xl overflow-hidden p-6 sm:p-8 bg-gradient-to-br from-[#1C170A] via-[#261E0A] to-[#120F05] text-white border-2 border-amber-500/60 shadow-xl text-center space-y-4">
-            <div className="w-14 h-14 rounded-full text-amber-300 flex items-center justify-center mx-auto">
+          <div className="relative rounded-2xl overflow-hidden p-6 sm:p-8 bg-gradient-to-br from-[#0A1C16] via-[#0A261D] to-[#05120E] text-white border-2 border-emerald-500/60 shadow-xl text-center space-y-4">
+            <div className="w-14 h-14 rounded-full text-emerald-300 flex items-center justify-center mx-auto">
               <ChandIcon name="key" className="w-7 h-7" />
             </div>
 
             <div className="max-w-lg mx-auto space-y-2">
-              <h4 className="font-cairo text-lg font-bold text-amber-300">
+              <h4 className="font-cairo text-lg font-bold text-emerald-300">
                 تحلیل مالی هوشمند و پیش‌بینی چندماهه ویژه مشترکین پرو است
               </h4>
-              <p className="text-xs text-amber-100/90 leading-relaxed">
+              <p className="text-xs text-emerald-100/90 leading-relaxed">
                 تحلیل هزینه‌های جاری برای همه کاربران رایگان است؛ اما دسترسی به پیش‌بینی ۳ و ۶ ماه آینده، تشخیص ریسک کسری بودجه، و مشاوره‌های اختصاصی هوش مصنوعی چندبوم منحصراً برای مشترکین اشتراک طلایی فعال می‌شود.
               </p>
             </div>
@@ -419,7 +419,7 @@ export const AnalyticsView: React.FC = () => {
             <div className="pt-2">
               <button
                 onClick={() => setActiveTab('subscription')}
-                className="px-6 py-2.5 rounded-xl bg-gradient-to-r from-amber-500 via-amber-600 to-yellow-600 hover:from-amber-600 hover:to-yellow-700 text-zinc-950 font-cairo font-black text-xs sm:text-sm transition cursor-pointer shadow-lg inline-flex items-center gap-2"
+                className="px-6 py-2.5 rounded-xl bg-gradient-to-r from-emerald-500 via-emerald-600 to-emerald-600 hover:from-emerald-600 hover:to-emerald-700 text-zinc-950 font-cairo font-black text-xs sm:text-sm transition cursor-pointer shadow-lg inline-flex items-center gap-2"
               >
                 <ChandIcon name="crown" className="w-4 h-4 text-zinc-950" />
                 <span>مشاهده و خرید اشتراک طلایی پرو (پلن‌های ۱، ۳ و ۶ ماهه)</span>

@@ -138,7 +138,7 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
         {/* Modal Header */}
         <div className="flex items-center justify-between px-6 py-4 border-b border-[#E2E8E4] dark:border-[#1F2E27] bg-zinc-50/60 dark:bg-[#111A16]">
           <div className="flex items-center gap-2.5">
-            <div className="p-2 rounded-2xl text-amber-800 dark:text-amber-300">
+            <div className="p-2 rounded-2xl text-emerald-800 dark:text-emerald-300">
               <ChandIcon name="card" className="w-5 h-5" />
             </div>
             <div>
@@ -176,14 +176,14 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
 
               {/* Tracking Code Highlight */}
               {generatedTrackingCode && (
-                <div className="p-4 rounded-2xl bg-amber-500/10 dark:bg-amber-950/30 border border-amber-400/50 max-w-md mx-auto text-right space-y-2">
+                <div className="p-4 rounded-2xl bg-emerald-500/10 dark:bg-emerald-950/30 border border-emerald-400/50 max-w-md mx-auto text-right space-y-2">
                   <div className="flex items-center justify-between">
-                    <span className="text-xs text-amber-800 dark:text-amber-300 font-bold">
+                    <span className="text-xs text-emerald-800 dark:text-emerald-300 font-bold">
                       کد پیگیری سیستمی اختصاصی شما:
                     </span>
                     <button
                       onClick={() => handleCopy(generatedTrackingCode, 'tracking')}
-                      className="px-2.5 py-1 rounded-lg bg-amber-500 text-zinc-950 text-[11px] font-bold flex items-center gap-1 hover:bg-amber-400 cursor-pointer shadow-xs"
+                      className="px-2.5 py-1 rounded-lg bg-emerald-500 text-zinc-950 text-[11px] font-bold flex items-center gap-1 hover:bg-emerald-400 cursor-pointer shadow-xs"
                     >
                       {copiedField === 'tracking' ? (
                         <>
@@ -198,8 +198,8 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
                       )}
                     </button>
                   </div>
-                  <div className="p-2.5 rounded-xl bg-white dark:bg-[#111A16] border border-amber-300/40 text-center">
-                    <span className="font-mono font-black text-base sm:text-lg text-amber-600 dark:text-amber-400 tracking-wider dir-ltr select-all">
+                  <div className="p-2.5 rounded-xl bg-white dark:bg-[#111A16] border border-emerald-300/40 text-center">
+                    <span className="font-mono font-black text-base sm:text-lg text-emerald-600 dark:text-emerald-400 tracking-wider dir-ltr select-all">
                       {generatedTrackingCode}
                     </span>
                   </div>
@@ -223,7 +223,7 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
                 </div>
                 <div className="flex justify-between items-center">
                   <span className="text-zinc-500">وضعیت سفارش:</span>
-                  <span className="px-2.5 py-0.5 rounded-full font-bold text-[10px] bg-amber-100 text-amber-800 dark:bg-amber-950 dark:text-amber-300">
+                  <span className="px-2.5 py-0.5 rounded-full font-bold text-[10px] bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300">
                     در انتظار تایید مدیر
                   </span>
                 </div>
@@ -260,10 +260,10 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
                 {/* Top Row: Metallic Sim Chip (Left) & Saman Bank Logo (Right) */}
                 <div className="relative z-10 flex items-start justify-between mb-6">
                   {/* EMV / Smart Card Chip */}
-                  <div className="relative w-12 h-9 rounded-lg bg-gradient-to-br from-amber-200 via-amber-300 to-amber-500 border border-amber-600/40 shadow-sm overflow-hidden flex items-center justify-center">
-                    <div className="w-full h-[1px] bg-amber-700/40 absolute" />
-                    <div className="h-full w-[1px] bg-amber-700/40 absolute" />
-                    <div className="w-6 h-5 rounded-md border border-amber-700/30" />
+                  <div className="relative w-12 h-9 rounded-lg bg-gradient-to-br from-emerald-200 via-emerald-300 to-emerald-500 border border-emerald-600/40 shadow-sm overflow-hidden flex items-center justify-center">
+                    <div className="w-full h-[1px] bg-emerald-700/40 absolute" />
+                    <div className="h-full w-[1px] bg-emerald-700/40 absolute" />
+                    <div className="w-6 h-5 rounded-md border border-emerald-700/30" />
                   </div>
 
                   {/* Official Saman Bank Logo & Emblem */}
@@ -348,15 +348,15 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
               </div>
 
               {/* Price Banner */}
-              <div className="p-4 rounded-2xl bg-gradient-to-r from-amber-500/10 to-yellow-500/10 border border-amber-300/60 dark:border-amber-500/30 flex items-center justify-between">
+              <div className="p-4 rounded-2xl bg-gradient-to-r from-emerald-500/10 to-emerald-500/10 border border-emerald-300/60 dark:border-emerald-500/30 flex items-center justify-between">
                 <div>
                   <span className="text-xs text-zinc-500 block">مبلغ قابل واریز برای {selectedPlan.nameFa}:</span>
-                  <span className="font-cairo font-black text-xl text-amber-900 dark:text-amber-300">
+                  <span className="font-cairo font-black text-xl text-emerald-900 dark:text-emerald-300">
                     {formatToman(selectedPlan.price)}
                   </span>
                 </div>
                 <div className="text-left">
-                  <span className="px-2.5 py-1 rounded-full text-[11px] font-bold bg-amber-500/20 text-amber-800 dark:text-amber-300 border border-amber-400/40">
+                  <span className="px-2.5 py-1 rounded-full text-[11px] font-bold bg-emerald-500/20 text-emerald-800 dark:text-emerald-300 border border-emerald-400/40">
                     کارت به کارت بدون کارمزد
                   </span>
                 </div>
@@ -374,7 +374,7 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
                     onChange={(e) => setSenderName(e.target.value)}
                     placeholder="مثلاً علی رضایی"
                     required
-                    className="w-full px-3.5 py-2.5 bg-zinc-50 dark:bg-[#141E1A] border border-[#E2E8E4] dark:border-[#1F2E27] rounded-xl text-xs text-zinc-900 dark:text-white outline-none focus:ring-2 focus:ring-amber-500 font-cairo"
+                    className="w-full px-3.5 py-2.5 bg-zinc-50 dark:bg-[#141E1A] border border-[#E2E8E4] dark:border-[#1F2E27] rounded-xl text-xs text-zinc-900 dark:text-white outline-none focus:ring-2 focus:ring-emerald-500 font-cairo"
                   />
                 </div>
 
@@ -424,9 +424,9 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
                     <button
                       type="button"
                       onClick={() => fileInputRef.current?.click()}
-                      className="w-full border-2 border-dashed border-[#D2DCD5] dark:border-[#22352B] hover:border-amber-500/70 dark:hover:border-amber-400/70 p-6 rounded-2xl flex flex-col items-center justify-center gap-2 bg-zinc-50/50 dark:bg-[#121B17] hover:bg-amber-50/20 transition cursor-pointer"
+                      className="w-full border-2 border-dashed border-[#D2DCD5] dark:border-[#22352B] hover:border-emerald-500/70 dark:hover:border-emerald-400/70 p-6 rounded-2xl flex flex-col items-center justify-center gap-2 bg-zinc-50/50 dark:bg-[#121B17] hover:bg-emerald-50/20 transition cursor-pointer"
                     >
-                      <div className="p-3 rounded-2xl text-amber-800 dark:text-amber-300">
+                      <div className="p-3 rounded-2xl text-emerald-800 dark:text-emerald-300">
                         <ChandIcon name="upload" className="w-5 h-5" />
                       </div>
                       <div className="text-center">
@@ -450,7 +450,7 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
                     value={notes}
                     onChange={(e) => setNotes(e.target.value)}
                     placeholder="ساعت تقریبی واریز یا هر نکته ضروری دیگر..."
-                    className="w-full px-3.5 py-2 bg-zinc-50 dark:bg-[#141E1A] border border-[#E2E8E4] dark:border-[#1F2E27] rounded-xl text-xs text-zinc-900 dark:text-white outline-none focus:ring-2 focus:ring-amber-500 font-cairo resize-none"
+                    className="w-full px-3.5 py-2 bg-zinc-50 dark:bg-[#141E1A] border border-[#E2E8E4] dark:border-[#1F2E27] rounded-xl text-xs text-zinc-900 dark:text-white outline-none focus:ring-2 focus:ring-emerald-500 font-cairo resize-none"
                   />
                 </div>
 
@@ -463,7 +463,7 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
 
                 <div className="flex items-center justify-between pt-3 border-t border-[#E2E8E4] dark:border-[#1F2E27]">
                   <div className="flex items-center gap-1.5 text-zinc-500 text-xs">
-                    <ChandIcon name="clock" className="w-4 h-4 text-amber-600" />
+                    <ChandIcon name="clock" className="w-4 h-4 text-emerald-600" />
                     <span>ثبت امن فیش و صدور کد پیگیری اختصاصی</span>
                   </div>
                   <div className="flex items-center gap-2">
@@ -478,7 +478,7 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
                       id="submit-payment-proof-btn"
                       type="submit"
                       disabled={isSubmitting || !senderName.trim() || !receiptImage}
-                      className="px-6 py-2.5 rounded-xl bg-gradient-to-r from-amber-600 to-amber-700 hover:from-amber-700 hover:to-amber-800 text-white font-cairo font-bold text-xs shadow-md shadow-amber-900/20 transition flex items-center gap-2 cursor-pointer disabled:opacity-50"
+                      className="px-6 py-2.5 rounded-xl bg-gradient-to-r from-emerald-600 to-emerald-700 hover:from-emerald-700 hover:to-emerald-800 text-white font-cairo font-bold text-xs shadow-md shadow-emerald-900/20 transition flex items-center gap-2 cursor-pointer disabled:opacity-50"
                     >
                       {isSubmitting ? 'در حال ثبت رسید...' : 'تایید و صدور کد پیگیری'}
                       <ChandIcon name="arrow-right" className="w-4 h-4 rotate-180" />

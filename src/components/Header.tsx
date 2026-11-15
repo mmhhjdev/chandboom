@@ -127,8 +127,8 @@ export const Header: React.FC<HeaderProps> = ({
 
               {/* Golden Pro Subscription Button / Active Badge */}
               {isProUser ? (
-                <div className="flex items-center gap-1 sm:gap-1.5 px-2.5 sm:px-3 py-1.5 sm:py-2 rounded-xl bg-amber-500/15 text-amber-900 dark:text-amber-200 border border-amber-400/50 text-[11px] sm:text-xs font-cairo font-bold shadow-xs shrink-0">
-                  <ChandIcon name="crown" className="w-3.5 h-3.5 text-amber-500 shrink-0" />
+                <div className="flex items-center gap-1 sm:gap-1.5 px-2.5 sm:px-3 py-1.5 sm:py-2 rounded-xl bg-emerald-500/15 text-emerald-900 dark:text-emerald-200 border border-emerald-400/50 text-[11px] sm:text-xs font-cairo font-bold shadow-xs shrink-0">
+                  <ChandIcon name="crown" className="w-3.5 h-3.5 text-emerald-500 shrink-0" />
                   <span className="hidden sm:inline whitespace-nowrap">حساب طلایی فعال</span>
                   <span className="sm:hidden whitespace-nowrap">طلایی</span>
                 </div>
@@ -136,7 +136,7 @@ export const Header: React.FC<HeaderProps> = ({
                 <button
                   id="header-buy-pro-btn"
                   onClick={requestSubscription}
-                  className="flex items-center gap-1 sm:gap-1.5 px-2.5 sm:px-4 py-1.5 sm:py-2 rounded-xl bg-gradient-to-r from-amber-400 via-amber-500 to-yellow-500 hover:from-amber-300 hover:to-yellow-400 text-zinc-950 font-cairo font-black text-[11px] sm:text-xs transition cursor-pointer shadow-md hover:shadow-lg active:scale-95 shrink-0"
+                  className="flex items-center gap-1 sm:gap-1.5 px-2.5 sm:px-4 py-1.5 sm:py-2 rounded-xl bg-gradient-to-r from-emerald-400 via-emerald-500 to-emerald-500 hover:from-emerald-300 hover:to-emerald-400 text-zinc-950 font-cairo font-black text-[11px] sm:text-xs transition cursor-pointer shadow-md hover:shadow-lg active:scale-95 shrink-0"
                   title="خرید اشتراک طلایی"
                 >
                   <ChandIcon name="crown" className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-zinc-950 shrink-0" />
@@ -201,11 +201,11 @@ export const Header: React.FC<HeaderProps> = ({
                           </div>
                         </div>
                         {isProUser ? (
-                          <span className={`inline-flex items-center gap-1 text-[10px] font-bold ${user.tier === 'vip' ? 'text-purple-600 dark:text-purple-300' : user.tier === 'bronze' ? 'text-orange-700 dark:text-orange-300' : 'text-amber-600 dark:text-amber-400'}`}>
+                          <span className={`inline-flex items-center gap-1 text-[10px] font-bold ${user.tier === 'vip' ? 'text-purple-600 dark:text-purple-300' : user.tier === 'bronze' ? 'text-emerald-700 dark:text-emerald-300' : 'text-emerald-600 dark:text-emerald-400'}`}>
                             <ChandIcon name="crown" className="w-3 h-3" /> {user.tier === 'vip' ? 'حساب VIP فعال' : user.tier === 'bronze' ? 'حساب برنزی فعال' : 'حساب پرو فعال'}
                           </span>
                         ) : user.subscription_status === 'pending_approval' ? (
-                          <span className="inline-block text-[10px] text-amber-600 dark:text-amber-400">در انتظار تأیید اشتراک</span>
+                          <span className="inline-block text-[10px] text-emerald-600 dark:text-emerald-400">در انتظار تأیید اشتراک</span>
                         ) : (
                           <span className="inline-block text-[10px] text-zinc-500">حساب پایه فعال</span>
                         )}
@@ -277,7 +277,7 @@ export const Header: React.FC<HeaderProps> = ({
                           }}
                           className="w-full text-right px-2.5 py-2 rounded-xl text-zinc-700 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-[#16221D] transition flex items-center gap-2 cursor-pointer"
                         >
-                          <ChandIcon name="goals" className="w-4 h-4 text-amber-500 shrink-0" />
+                          <ChandIcon name="goals" className="w-4 h-4 text-emerald-500 shrink-0" />
                           <span>اهداف پس‌انداز</span>
                         </button>
                         {isAdmin && (
