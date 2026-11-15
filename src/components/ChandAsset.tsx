@@ -16,7 +16,25 @@ export interface ChandAssetProps {
   alt?: string;
 }
 
-export const ChandAsset: React.FC<ChandAssetProps> = ({ name, size = 48, className, alt = '' }) => {
+const ASSET_LABELS: Record<string, string> = {
+  'dashboard': 'نمای کلی داشبورد مالی: تمام وضعیت پول شما در یک نگاه',
+  'transactions': 'دو فلش سبز در حال جابه‌جایی؛ ورود و خروج پول با شفافیت کامل',
+  'goals': 'صندوقچه‌ی گنج باز با سکه‌های سبز؛ اهداف مالی‌تان، یک قدم تا رسیدن',
+  'dong': 'سکه‌ای که میان دو نفر تقسیم شده؛ تقسیم منصفانه‌ی هزینه‌های گروهی',
+  'quest': 'کارت چک‌لیست با ستاره؛ کارهای امروزِ مالی‌تان، یکی‌یکی انجام شوند',
+  'forecast': 'گوی بلورین با نمودار صعودی؛ پیش‌بینی هوشمند بودجه‌ی ماه‌های پیش رو',
+  'vip-crown': 'تاج سبز درخشان با جواهرهای روشن؛ اشتراک VIP چندبوم',
+  'analytics': 'نمودار دایره‌ای با تکه‌ی جداشده؛ تحلیل ساده‌ی هزینه‌ها و درآمدها',
+  'reminders': 'زنگ سبز با نشان تازه؛ یادآوری سررسیدها تا هیچ‌چیز جا نماند',
+  'budget': 'کیف پول سبز با سکه‌های در حال بیرون‌آمدن؛ بودجه‌ی ماهانه‌ی منظم',
+  'add': 'دکمه‌ی بزرگ سبز با علامت مثبت؛ ثبت سریع یک تراکنش جدید',
+  'ai': 'کره‌ی بلورین هوش مصنوعی با ستاره‌ی درخشان؛ دستیار هوشمند مالی چندبوم',
+  'avatar-male': 'آواتار کاربر چندبوم با لبخند و حس اطمینان',
+  'avatar-female': 'آواتار کاربر چندبوم با لبخند و حس اطمینان',
+};
+
+export const ChandAsset: React.FC<ChandAssetProps> = ({ name, size = 48, className, alt }) => {
+  const imageAlt = alt ?? ASSET_LABELS[name] ?? 'تصویر چندبوم';
   const base = `/icons3d/vip/${name}`;
   return (
     <picture>
@@ -31,7 +49,7 @@ export const ChandAsset: React.FC<ChandAssetProps> = ({ name, size = 48, classNa
         sizes={`${size}px`}
         width={size}
         height={size}
-        alt={alt}
+        alt={imageAlt}
         className={className}
         draggable={false}
         loading="lazy"

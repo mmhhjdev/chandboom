@@ -1315,12 +1315,17 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
     setManualPayments((prev) => [newSubmission, ...prev]);
 
-    // Instantly update user subscription_status to 'pending_approval' to display the golden review badge
-    await updateUserProfile({
-      subscription_status: 'pending_approval',
-    });
+    // Local UI badge only. subscription_status is protected in the database (only admins/RPCs may change it),
+    // so it must NOT be written from the browser.
+    setUser((prev) => ({ ...prev, subscription_status: 'pending_approval' }));
 
-    // Immutably record in transactions history
+    // The record must reach the database BEFORE the user is told it was received.
+    const supabase = getSupabaseClient();
+    if (!supabase) throw new Error('اتصال به پایگاه داده برقرار نیست. لطفاً دوباره تلاش کنید.');
+    const { id: _localId, ...paymentRow } = newSubmission;
+    const { error: payErr } = await supabase.from('manual_payments').insert([paymentRow]);
+    if (payErr) throw new Error(`ثبت رسید پرداخت ناموفق بود: ${payErr.message}`);
+    // Only after the request is stored: record the bank transfer in the user's transaction history.
     await addTransaction({
       amount: data.amount,
       type: 'expense',
@@ -1329,13 +1334,6 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       date: new Date().toISOString(),
       account: 'بانک سامان (کارت به کارت)',
     });
-
-    // The record must reach the database BEFORE the user is told it was received.
-    const supabase = getSupabaseClient();
-    if (!supabase) throw new Error('اتصال به پایگاه داده برقرار نیست. لطفاً دوباره تلاش کنید.');
-    const { id: _localId, ...paymentRow } = newSubmission;
-    const { error: payErr } = await supabase.from('manual_payments').insert([paymentRow]);
-    if (payErr) throw new Error(`ثبت رسید پرداخت ناموفق بود: ${payErr.message}`);
     if (data.user_id && data.user_id !== 'guest') {
       const { error: orderErr } = await supabase.from('subscription_orders').insert([{
         user_id: data.user_id,

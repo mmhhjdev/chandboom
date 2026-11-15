@@ -15,7 +15,7 @@ const RATIO = 882 / 1146;
 export const ChandMascot: React.FC<ChandMascotProps> = ({
   size = 48,
   className,
-  alt = 'دستیار هوشمند چندبوم',
+  alt = 'دستیار هوشمند چندبوم؛ همراه شما برای ثبت و تحلیل پول، با یک جمله',
 }) => (
   <picture>
     <source

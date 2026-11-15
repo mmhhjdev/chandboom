@@ -283,7 +283,7 @@ export async function uploadPaymentReceipt(
     const { data, error } = await supabase.storage
       .from('payment-receipts')
       .upload(filePath, file, {
-        upsert: true,
+        upsert: false,
         contentType: (file as File).type || 'image/jpeg',
       });
 

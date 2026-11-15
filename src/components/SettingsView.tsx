@@ -9,7 +9,7 @@ import {
 import { useApp } from '../context/AppContext';
 import { formatToman, formatShamsiDate, formatShamsiDateTime, toPersianDigits } from '../utils/formatters';
 import { calculateRemainingProDays } from '../utils/security';
-import { getSupabaseClient } from '../lib/supabase';
+import { getSupabaseClient, resolvePaymentReceiptUrl } from '../lib/supabase';
 import { FriendsPanel } from './FriendsPanel';
 
 interface SettingsViewProps {
@@ -414,7 +414,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({ onOpenAvatarModal })
 
                   {pay.receipt_url && (
                     <button
-                      onClick={() => setSelectedReceiptForPreview(pay.receipt_url || null)}
+                      onClick={async () => setSelectedReceiptForPreview(await resolvePaymentReceiptUrl(pay.receipt_url))}
                       className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-[#E2E8E4] dark:border-[#1F2E27] text-xs font-cairo font-bold hover:bg-white dark:hover:bg-[#16241D] text-zinc-700 dark:text-zinc-300 transition cursor-pointer shadow-xs"
                     >
                       <Eye className="w-3.5 h-3.5 text-emerald-600" />

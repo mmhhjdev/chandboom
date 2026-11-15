@@ -335,9 +335,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({
               </div>
 
               {/* Main Headline */}
-              <h1 className="text-4xl sm:text-5xl lg:text-5xl font-black text-emerald-950 leading-[1.3] tracking-tight">
-                مدیریت <span className="text-emerald-700">هوشمندانه</span> مالی
-              </h1>
+              <h1 className="text-4xl sm:text-5xl lg:text-5xl font-black text-emerald-950 leading-[1.3] tracking-tight"><span className="text-emerald-700">چندبوم،</span> مدیریت هوشمندانه مالی و بودجه‌بندی شخصی</h1>
 
               {/* Subtitle */}
               <p className="text-base sm:text-lg text-zinc-600 font-medium leading-relaxed">
@@ -366,10 +364,10 @@ export const LandingPage: React.FC<LandingPageProps> = ({
               {/* Social Proof Avatars */}
               <div className="pt-4 flex items-center gap-3">
                 <div className="flex -space-x-2.5 space-x-reverse">
-                  <img src="/icons3d/vip/avatar-male-256.png" alt="کاربر چندبوم" className="w-10 h-10 rounded-full border-2 border-white object-cover shadow-sm" />
-                  <img src="/icons3d/vip/avatar-female-256.png" alt="کاربر چندبوم" className="w-10 h-10 rounded-full border-2 border-white object-cover shadow-sm" />
-                  <img src="/icons3d/vip/avatar-male-256.png" alt="کاربر چندبوم" className="w-10 h-10 rounded-full border-2 border-white object-cover shadow-sm" />
-                  <img src="/icons3d/vip/avatar-female-256.png" alt="کاربر چندبوم" className="w-10 h-10 rounded-full border-2 border-white object-cover shadow-sm" />
+                  <img src="/icons3d/vip/avatar-male-256.png" alt="لبخند کاربر راضی چندبوم هنگام بررسی داشبورد مالی‌اش" className="w-10 h-10 rounded-full border-2 border-white object-cover shadow-sm" />
+                  <img src="/icons3d/vip/avatar-female-256.png" alt="کاربری که با دستیار هوشمند چندبوم، پولش را مرتب کرده است" className="w-10 h-10 rounded-full border-2 border-white object-cover shadow-sm" />
+                  <img src="/icons3d/vip/avatar-male-256.png" alt="کاربر چندبوم که هزینه‌های سفر گروهی‌اش را با دنگ تقسیم می‌کند" className="w-10 h-10 rounded-full border-2 border-white object-cover shadow-sm" />
+                  <img src="/icons3d/vip/avatar-female-256.png" alt="کاربر چندبوم با هدف پس‌انداز ماهانه و امید به آینده" className="w-10 h-10 rounded-full border-2 border-white object-cover shadow-sm" />
                 </div>
                 <div>
                   <span className="font-extrabold text-sm text-emerald-950 block">+۱۲ هزار</span>

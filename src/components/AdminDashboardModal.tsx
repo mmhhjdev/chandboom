@@ -18,7 +18,7 @@ import {
   isAdminEmail,
   getEnvAdminEmail,
 } from '../utils/admin';
-import { getSupabaseClient, sanitizeVerificationCode } from '../lib/supabase';
+import { getSupabaseClient, sanitizeVerificationCode, resolvePaymentReceiptUrl } from '../lib/supabase';
 import { formatToman, formatShamsiDateTime, formatShamsiDate, toPersianDigits } from '../utils/formatters';
 import { calculateRemainingProDays } from '../utils/security';
 import { UserRole, SubscriptionTier, SubscriptionStatus, UserProfile, ManualPaymentSubmission } from '../types';
@@ -1014,7 +1014,7 @@ export const AdminDashboardModal: React.FC<AdminDashboardModalProps> = ({ isOpen
                               {pay.receipt_url ? (
                                 <button
                                   type="button"
-                                  onClick={() => setSelectedReceiptForPreview(pay.receipt_url || null)}
+                                  onClick={async () => setSelectedReceiptForPreview(await resolvePaymentReceiptUrl(pay.receipt_url))}
                                   className="inline-flex items-center gap-1 text-emerald-700 dark:text-emerald-400 font-bold hover:underline cursor-pointer"
                                 >
                                   <Eye className="w-3.5 h-3.5" />
