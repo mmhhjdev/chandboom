@@ -104,7 +104,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({
       {/* Soft Emerald Atmospheric Ambient Light Orbs */}
       <div className="fixed inset-0 pointer-events-none z-0 overflow-hidden">
         <div className="absolute -top-32 -right-32 w-[520px] h-[520px] bg-emerald-200/25 rounded-full blur-[140px]" />
-        <div className="absolute top-1/3 -left-32 w-[480px] h-[480px] bg-teal-200/20 rounded-full blur-[160px]" />
+        <div className="absolute top-1/3 -left-32 w-[480px] h-[480px] bg-emerald-200/20 rounded-full blur-[160px]" />
         <div className="absolute bottom-10 right-1/4 w-[600px] h-[600px] bg-emerald-100/30 rounded-full blur-[180px]" />
       </div>
 
@@ -175,7 +175,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({
             {/* Visual Interactive Layered Phone & Widgets (Left in RTL, cols 7) */}
             <div className="order-2 lg:order-1 lg:col-span-7 relative flex items-center justify-center">
               {/* Soft Radial Backlight */}
-              <div className="absolute w-[440px] h-[440px] bg-gradient-to-tr from-emerald-200/40 via-teal-200/40 to-emerald-100/40 rounded-full blur-[80px] pointer-events-none" />
+              <div className="absolute w-[440px] h-[440px] bg-gradient-to-tr from-emerald-200/40 via-emerald-200/40 to-emerald-100/40 rounded-full blur-[80px] pointer-events-none" />
 
               {/* Central Phone Mockup Container */}
               <div className="relative z-10 w-[300px] sm:w-[320px] bg-white rounded-[40px] p-3 shadow-2xl border-4 border-emerald-50 ring-1 ring-emerald-200/60">
@@ -210,7 +210,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({
                       {/* Donut graphic */}
                       <div className="relative w-28 h-28 shrink-0 flex items-center justify-center">
                         <svg className="w-full h-full -rotate-90" viewBox="0 0 36 36">
-                          <circle cx="18" cy="18" r="14" fill="none" stroke="#E2E8F0" strokeWidth="4" />
+                          <circle cx="18" cy="18" r="14" fill="none" stroke="#E2F0EB" strokeWidth="4" />
                           <circle cx="18" cy="18" r="14" fill="none" stroke="#059669" strokeWidth="4" strokeDasharray="38, 100" />
                           <circle cx="18" cy="18" r="14" fill="none" stroke="#0D9488" strokeWidth="4" strokeDasharray="28, 100" strokeDashoffset="-38" />
                           <circle cx="18" cy="18" r="14" fill="none" stroke="#0BF5A7" strokeWidth="4" strokeDasharray="14, 100" strokeDashoffset="-66" />
@@ -225,7 +225,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({
                       {/* Legend */}
                       <div className="text-[10px] space-y-1 text-zinc-600">
                         <div className="flex items-center gap-1.5"><span className="w-2 h-2 rounded-full bg-emerald-600" /> غذا و خوراکی</div>
-                        <div className="flex items-center gap-1.5"><span className="w-2 h-2 rounded-full bg-teal-600" /> حمل و نقل</div>
+                        <div className="flex items-center gap-1.5"><span className="w-2 h-2 rounded-full bg-emerald-600" /> حمل و نقل</div>
                         <div className="flex items-center gap-1.5"><span className="w-2 h-2 rounded-full bg-emerald-500" /> مسکن و قبوض</div>
                         <div className="flex items-center gap-1.5"><span className="w-2 h-2 rounded-full bg-emerald-400" /> پس‌انداز و رشد</div>
                       </div>
@@ -258,15 +258,15 @@ export const LandingPage: React.FC<LandingPageProps> = ({
                   {/* Circular gauge */}
                   <div className="relative w-11 h-11 flex items-center justify-center">
                     <svg className="w-full h-full -rotate-90" viewBox="0 0 36 36">
-                      <circle cx="18" cy="18" r="14" fill="none" stroke="#FEE2E2" strokeWidth="4" />
-                      <circle cx="18" cy="18" r="14" fill="none" stroke="#EF4444" strokeWidth="4" strokeDasharray="100, 100" />
+                      <circle cx="18" cy="18" r="14" fill="none" stroke="#F0F0F0" strokeWidth="4" />
+                      <circle cx="18" cy="18" r="14" fill="none" stroke="#9A9A9A" strokeWidth="4" strokeDasharray="100, 100" />
                     </svg>
-                    <span className="absolute text-[10px] font-black text-rose-600">۱۲۰٪</span>
+                    <span className="absolute text-[10px] font-black text-zinc-600">۱۲۰٪</span>
                   </div>
                 </div>
                 <div className="space-y-1 text-[10px] text-zinc-600 border-t border-zinc-100 pt-1.5">
                   <div className="flex justify-between"><span>بودجه:</span><span className="font-mono font-bold">۱۰۰,۰۰۰</span></div>
-                  <div className="flex justify-between text-rose-600 font-bold"><span>هزینه:</span><span className="font-mono">۱۲۰,۰۰۰</span></div>
+                  <div className="flex justify-between text-zinc-600 font-bold"><span>هزینه:</span><span className="font-mono">۱۲۰,۰۰۰</span></div>
                 </div>
                 <div className="mt-2.5 flex items-center gap-1.5 text-[9px] font-bold">
                   <button onClick={handleLaunchApp} className="flex-1 py-1 rounded-lg bg-emerald-50 text-emerald-800 hover:bg-emerald-100 text-center transition">
@@ -285,7 +285,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({
                   <span className="px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800 text-[10px] font-bold">فعال</span>
                 </div>
                 <div className="grid grid-cols-3 gap-1 py-2 text-center text-[10px]">
-                  <div className="p-1.5 rounded-xl bg-rose-50 text-rose-700">
+                  <div className="p-1.5 rounded-xl bg-zinc-50 text-zinc-700">
                     <span className="block text-[8px] text-zinc-400">بدهی</span>
                     <span className="font-bold font-mono">۲,۲۰۸,۴۵۷</span>
                   </div>
@@ -293,7 +293,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({
                     <span className="block text-[8px] text-zinc-400">طلب</span>
                     <span className="font-bold font-mono">۱,۳۰۹,۲۳۲</span>
                   </div>
-                  <div className="p-1.5 rounded-xl bg-teal-50 text-teal-800">
+                  <div className="p-1.5 rounded-xl bg-emerald-50 text-emerald-800">
                     <span className="block text-[8px] text-zinc-400">تراز کل</span>
                     <span className="font-bold font-mono">۸۹۹,۲۲۵</span>
                   </div>
@@ -317,7 +317,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({
                   <p className="text-[9px] text-zinc-400 mb-1.5">مواد غذایی، رستوران</p>
                   <div className="relative w-14 h-14 mx-auto flex items-center justify-center">
                     <svg className="w-full h-full -rotate-90" viewBox="0 0 36 36">
-                      <circle cx="18" cy="18" r="14" fill="none" stroke="#E0F2FE" strokeWidth="4" />
+                      <circle cx="18" cy="18" r="14" fill="none" stroke="#E0FEF3" strokeWidth="4" />
                       <circle cx="18" cy="18" r="14" fill="none" stroke="#059669" strokeWidth="4" strokeDasharray="60.27, 100" />
                     </svg>
                     <span className="absolute text-[10px] font-black text-emerald-800">۶۰.۲۷٪</span>
@@ -401,7 +401,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({
             <div className="lg:col-span-4 space-y-6">
               {/* Card 1: امنیت داده‌ها */}
               <div className="p-6 bg-white/95 backdrop-blur-md rounded-3xl shadow-lg border border-emerald-100 hover:shadow-xl transition-all duration-300 text-right space-y-3 group">
-                <div className="w-14 h-14 rounded-2xl from-emerald-600 to-teal-700 text-white flex items-center justify-center group-hover:scale-105 transition-transform">
+                <div className="w-14 h-14 rounded-2xl from-emerald-600 to-emerald-700 text-white flex items-center justify-center group-hover:scale-105 transition-transform">
                   <ChandIcon name="shield" className="w-7 h-7" />
                 </div>
                 <h3 className="font-extrabold text-lg text-emerald-950">
@@ -414,7 +414,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({
 
               {/* Card 2: کاربردی برای همه */}
               <div className="p-6 bg-white/95 backdrop-blur-md rounded-3xl shadow-lg border border-emerald-100 hover:shadow-xl transition-all duration-300 text-right space-y-3 group">
-                <div className="w-14 h-14 rounded-2xl from-teal-500 to-emerald-600 text-white flex items-center justify-center group-hover:scale-105 transition-transform">
+                <div className="w-14 h-14 rounded-2xl from-emerald-500 to-emerald-600 text-white flex items-center justify-center group-hover:scale-105 transition-transform">
                   <ChandIcon name="users" className="w-7 h-7" />
                 </div>
                 <h3 className="font-extrabold text-lg text-emerald-950">
@@ -433,7 +433,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({
                 <div className="w-24 h-4 bg-zinc-800 rounded-full mx-auto mb-4" />
 
                 {/* Inner Screen */}
-                <div className="bg-gradient-to-b from-emerald-800 to-teal-900 rounded-[36px] p-5 text-white text-center space-y-4 font-cairo shadow-inner">
+                <div className="bg-gradient-to-b from-emerald-800 to-emerald-900 rounded-[36px] p-5 text-white text-center space-y-4 font-cairo shadow-inner">
                   <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-white/20 text-white text-[11px] font-bold">
                     <Zap className="w-3.5 h-3.5" />
                     <span>دستیار هوش مالی</span>
@@ -463,10 +463,10 @@ export const LandingPage: React.FC<LandingPageProps> = ({
                     </div>
                     <div className="flex items-center justify-between text-[10px]">
                       <span className="text-zinc-600">مسکن و اجاره:</span>
-                      <span className="font-bold text-rose-600 font-mono">۹۴.۷۴٪</span>
+                      <span className="font-bold text-zinc-600 font-mono">۹۴.۷۴٪</span>
                     </div>
                     <div className="w-full h-1.5 rounded-full bg-zinc-100 overflow-hidden">
-                      <div className="w-[94%] h-full bg-rose-500 rounded-full" />
+                      <div className="w-[94%] h-full bg-zinc-500 rounded-full" />
                     </div>
                   </div>
                 </div>
@@ -477,7 +477,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({
             <div className="lg:col-span-4 space-y-6">
               {/* Card 3: نسخه تحت وب و بدون نصب */}
               <div className="p-6 bg-white/95 backdrop-blur-md rounded-3xl shadow-lg border border-emerald-100 hover:shadow-xl transition-all duration-300 text-right space-y-3 group">
-                <div className="w-14 h-14 rounded-2xl bg-gradient-to-tr from-emerald-600 to-teal-600 text-white flex items-center justify-center shadow-md shadow-emerald-600/20 group-hover:scale-105 transition-transform">
+                <div className="w-14 h-14 rounded-2xl bg-gradient-to-tr from-emerald-600 to-emerald-600 text-white flex items-center justify-center shadow-md shadow-emerald-600/20 group-hover:scale-105 transition-transform">
                   <Laptop className="w-7 h-7" />
                 </div>
                 <h3 className="font-extrabold text-lg text-emerald-950">
@@ -490,7 +490,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({
 
               {/* Card 4: تحلیل مالی و هوش مصنوعی */}
               <div className="p-6 bg-white/95 backdrop-blur-md rounded-3xl shadow-lg border border-emerald-100 hover:shadow-xl transition-all duration-300 text-right space-y-3 group">
-                <div className="w-14 h-14 rounded-2xl from-teal-600 to-emerald-700 text-white flex items-center justify-center group-hover:scale-105 transition-transform">
+                <div className="w-14 h-14 rounded-2xl from-emerald-600 to-emerald-700 text-white flex items-center justify-center group-hover:scale-105 transition-transform">
                   <ChandIcon name="chart" className="w-7 h-7" />
                 </div>
                 <h3 className="font-extrabold text-lg text-emerald-950">
@@ -599,7 +599,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({
                     <span className="text-2xl font-black text-emerald-950 block font-mono">+۶۸۰</span>
                     <span className="text-xs text-zinc-500 font-bold">کاربران هم‌خرج</span>
                   </div>
-                  <div className="w-10 h-10 rounded-xl text-teal-800 flex items-center justify-center">
+                  <div className="w-10 h-10 rounded-xl text-emerald-800 flex items-center justify-center">
                     <ChandIcon name="award" className="w-5 h-5" />
                   </div>
                 </div>
@@ -619,7 +619,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({
                     <span className="text-2xl font-black text-emerald-950 block font-mono">۸۷٪</span>
                     <span className="text-xs text-zinc-500 font-bold">تسویه موفق</span>
                   </div>
-                  <div className="w-10 h-10 rounded-xl text-teal-800 flex items-center justify-center">
+                  <div className="w-10 h-10 rounded-xl text-emerald-800 flex items-center justify-center">
                     <ChandIcon name="check-circle" className="w-5 h-5" />
                   </div>
                 </div>
@@ -682,7 +682,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({
             <div className="grid grid-cols-1 md:grid-cols-2 gap-8 items-center relative">
               <div className="order-1 flex justify-center">
                 <div className="p-4 bg-white rounded-3xl shadow-xl border border-emerald-100 max-w-xs w-full text-center space-y-2">
-                  <div className="w-16 h-16 rounded-2xl text-teal-700 mx-auto flex items-center justify-center">
+                  <div className="w-16 h-16 rounded-2xl text-emerald-700 mx-auto flex items-center justify-center">
                     <ChandIcon name="card" className="w-8 h-8" />
                   </div>
                   <span className="text-xs font-bold text-zinc-800 block">ثبت هوشمند یا پیامکی</span>
@@ -690,7 +690,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({
               </div>
 
               <div className="text-right space-y-2 md:pr-12 order-2">
-                <div className="inline-flex items-center justify-center w-12 h-12 rounded-full bg-teal-100 text-teal-900 font-black text-lg mb-2">
+                <div className="inline-flex items-center justify-center w-12 h-12 rounded-full bg-emerald-100 text-emerald-900 font-black text-lg mb-2">
                   ۰۲
                 </div>
                 <h3 className="font-extrabold text-xl text-emerald-950">ایجاد حساب و ثبت هزینه‌ها</h3>
@@ -985,7 +985,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({
         className="fixed bottom-6 right-6 z-50 p-2.5 rounded-full bg-white hover:bg-emerald-50 shadow-2xl border-2 border-emerald-600/30 flex items-center gap-2.5 transition-all duration-200 hover:scale-105 active:scale-95 cursor-pointer group"
         title="ارسال تیکت و ارتباط مستقیم با پشتیبانی چندبوم"
       >
-        <div className="w-10 h-10 rounded-full bg-gradient-to-tr from-emerald-600 to-teal-700 flex items-center justify-center text-white shadow-md">
+        <div className="w-10 h-10 rounded-full bg-gradient-to-tr from-emerald-600 to-emerald-700 flex items-center justify-center text-white shadow-md">
           <Headphones className="w-5 h-5" />
         </div>
         <div className="hidden sm:block text-right pr-1 pl-3">

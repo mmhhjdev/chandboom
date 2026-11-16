@@ -144,12 +144,12 @@ const AppContent: React.FC = () => {
         )}
         {activeTab === 'goals' && <GoalsView />}
         {activeTab === 'analytics' && (
-          <Suspense fallback={<div className="p-6 text-center text-xs font-cairo text-slate-400">در حال بارگذاری…</div>}>
+          <Suspense fallback={<div className="p-6 text-center text-xs font-cairo text-zinc-400">در حال بارگذاری…</div>}>
             <AnalyticsView />
           </Suspense>
         )}
         {activeTab === 'dong' && (
-          <Suspense fallback={<div className="p-6 text-center text-xs font-cairo text-slate-400">در حال بارگذاری…</div>}>
+          <Suspense fallback={<div className="p-6 text-center text-xs font-cairo text-zinc-400">در حال بارگذاری…</div>}>
             <DongView />
           </Suspense>
         )}

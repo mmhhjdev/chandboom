@@ -139,7 +139,7 @@ export const SubscriptionView: React.FC = () => {
             }`}
           >
             <span>اشتراک ۳ ماهه</span>
-            <span className="text-[10px] px-2 py-0.5 rounded-full bg-rose-500 text-white font-black animate-pulse">
+            <span className="text-[10px] px-2 py-0.5 rounded-full bg-zinc-500 text-white font-black animate-pulse">
               تخفیف ویژه 🎉
             </span>
           </button>
@@ -168,7 +168,7 @@ export const SubscriptionView: React.FC = () => {
                   ? isVip
                     ? 'bg-gradient-to-b from-[#091E17] via-[#0B2A20] to-[#05140F] border-2 border-emerald-400 shadow-2xl shadow-emerald-950/40 -translate-y-1.5 ring-2 ring-emerald-400/40 text-white'
                     : isBronze
-                    ? 'bg-gradient-to-b from-[#1C1713] via-[#261E18] to-[#120F0D] border-2 border-emerald-700 shadow-2xl shadow-emerald-950/40 -translate-y-1.5 ring-2 ring-emerald-600/40 text-white'
+                    ? 'bg-gradient-to-b from-[#1C1713] via-[#182621] to-[#120F0D] border-2 border-emerald-700 shadow-2xl shadow-emerald-950/40 -translate-y-1.5 ring-2 ring-emerald-600/40 text-white'
                     : 'bg-gradient-to-b from-[#0A1C16] via-[#09241B] to-[#06120E] border-2 border-emerald-500 shadow-2xl shadow-emerald-950/40 -translate-y-1.5 ring-2 ring-emerald-400/40 text-white'
                   : 'bg-white dark:bg-[#0E1511] border border-[#E2E8E4] dark:border-[#1F2E27] shadow-sm hover:border-emerald-400/60 text-zinc-900 dark:text-zinc-100 hover:-translate-y-1'
               }`}
@@ -234,7 +234,7 @@ export const SubscriptionView: React.FC = () => {
                       <span className="line-through text-zinc-400 text-xs font-mono font-bold">
                         {formatToman(plan.originalPrice)}
                       </span>
-                      <span className="px-2 py-0.5 rounded-full text-[9px] font-black bg-rose-500 text-white">
+                      <span className="px-2 py-0.5 rounded-full text-[9px] font-black bg-zinc-500 text-white">
                         {plan.durationMonths === 3 ? 'تخفیف ویژه ۳ ماهه' : 'تخفیف ویژه'}
                       </span>
                     </div>
@@ -378,7 +378,7 @@ export const SubscriptionView: React.FC = () => {
                 <td className="p-3.5 font-bold text-zinc-800 dark:text-zinc-200">
                   سهمیه ماهانه پرسش و ثبت با هوش مصنوعی چندبوم
                 </td>
-                <td className="p-3.5 text-center text-rose-500 font-bold">فاقد دسترسی (۰)</td>
+                <td className="p-3.5 text-center text-zinc-500 font-bold">فاقد دسترسی (۰)</td>
                 <td className="p-3.5 text-center font-bold text-zinc-700 dark:text-zinc-300">
                   ۳۰ پرسش در ماه
                 </td>

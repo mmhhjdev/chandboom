@@ -24,7 +24,7 @@ const variantStyles: Record<ButtonVariant, string> = {
   ghost:
     'bg-transparent hover:bg-zinc-100 dark:hover:bg-[#15221C] text-zinc-700 dark:text-zinc-300 border border-transparent',
   danger:
-    'bg-rose-600 hover:bg-rose-700 active:bg-rose-800 text-white shadow-xs border border-rose-500/30',
+    'bg-zinc-600 hover:bg-zinc-700 active:bg-zinc-800 text-white shadow-xs border border-zinc-500/30',
   gold:
     'bg-gradient-to-r from-emerald-500 via-emerald-600 to-emerald-600 hover:from-emerald-600 hover:to-emerald-700 text-zinc-950 font-black shadow-md shadow-emerald-950/20 border border-emerald-400/40',
 };

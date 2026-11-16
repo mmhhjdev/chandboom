@@ -105,7 +105,7 @@ export const PricingPage: React.FC = () => {
                   <ChandIcon name="check" className="w-3.5 h-3.5 text-emerald-500 shrink-0" />
                   <span>ایجاد تا ۲ گروه دنگ و ۲ هدف مالی</span>
                 </li>
-                <li className="flex items-center gap-2 text-rose-500 font-medium">
+                <li className="flex items-center gap-2 text-zinc-500 font-medium">
                   <span>✕ فاقد دسترسی به هوش مصنوعی</span>
                 </li>
               </ul>

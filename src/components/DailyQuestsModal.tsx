@@ -77,7 +77,7 @@ export const DailyQuestsModal: React.FC<DailyQuestsModalProps> = ({
         </div>
 
         {/* Gamified Summary Stats Bar */}
-        <div className="px-6 py-4 bg-gradient-to-r from-emerald-500/10 via-teal-500/10 to-emerald-500/10 border-b border-[#E2E8E4] dark:border-[#1F2E26] grid grid-cols-1 sm:grid-cols-3 gap-3">
+        <div className="px-6 py-4 bg-gradient-to-r from-emerald-500/10 via-emerald-500/10 to-emerald-500/10 border-b border-[#E2E8E4] dark:border-[#1F2E26] grid grid-cols-1 sm:grid-cols-3 gap-3">
           <div className="flex items-center gap-3 p-3 rounded-2xl bg-white/80 dark:bg-[#141E1A] border border-[#E2E8E4] dark:border-[#1F2E26]">
             <div className="p-2 rounded-xl bg-emerald-100 text-emerald-600 dark:bg-emerald-950/60 dark:text-emerald-400">
               <Flame className="w-5 h-5" />

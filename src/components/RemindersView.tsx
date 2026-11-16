@@ -52,7 +52,7 @@ export const RemindersView: React.FC = () => {
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
         <div className="p-5 rounded-2xl bg-white dark:bg-[#0F1512] border border-[#E2E8E4] dark:border-[#1A2621] shadow-xs space-y-1">
           <span className="text-xs text-zinc-500">اقساط و چک‌های پیش‌رو (تسویه نشده)</span>
-          <div className="font-cairo text-xl font-black text-rose-600 dark:text-rose-400">
+          <div className="font-cairo text-xl font-black text-zinc-600 dark:text-zinc-400">
             {formatToman(totalUnpaidAmount)}
           </div>
         </div>
@@ -132,7 +132,7 @@ export const RemindersView: React.FC = () => {
                     </button>
                     <button
                       onClick={() => deleteReminder(rem.id)}
-                      className="p-1.5 rounded-lg text-zinc-400 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-[#281515] transition cursor-pointer"
+                      className="p-1.5 rounded-lg text-zinc-400 hover:text-zinc-600 hover:bg-zinc-50 dark:hover:bg-[#1E1E1E] transition cursor-pointer"
                     >
                       <ChandIcon name="trash" className="w-4 h-4" />
                     </button>
@@ -183,7 +183,7 @@ export const RemindersView: React.FC = () => {
                   </span>
                   <button
                     onClick={() => deleteReminder(rem.id)}
-                    className="p-1 text-zinc-400 hover:text-rose-600 transition cursor-pointer"
+                    className="p-1 text-zinc-400 hover:text-zinc-600 transition cursor-pointer"
                   >
                     <ChandIcon name="trash" className="w-3.5 h-3.5" />
                   </button>

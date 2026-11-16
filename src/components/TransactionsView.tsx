@@ -202,9 +202,9 @@ export const TransactionsView: React.FC<TransactionsViewProps> = ({
             <button
               onClick={onOpenBankSmsModal}
               title="پردازش و استخراج خودکار از متن پیامک یا فیش بانکی"
-              className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-blue-50 dark:bg-[#131F2A] text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-blue-900/60 hover:bg-blue-100 text-xs font-bold transition cursor-pointer shadow-xs"
+              className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-emerald-50 dark:bg-[#132A22] text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-900/60 hover:bg-emerald-100 text-xs font-bold transition cursor-pointer shadow-xs"
             >
-              <ChandIcon name="card" className="w-4 h-4 text-blue-600 dark:text-blue-400" />
+              <ChandIcon name="card" className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
               <span>پردازش پیامک بانکی</span>
             </button>
           )}
@@ -265,11 +265,11 @@ export const TransactionsView: React.FC<TransactionsViewProps> = ({
           </button>
         </form>
         {aiError && (
-          <div className="px-3.5 py-2 rounded-xl bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-900/50 text-rose-700 dark:text-rose-300 text-xs font-cairo flex items-center justify-between">
+          <div className="px-3.5 py-2 rounded-xl bg-zinc-50 dark:bg-zinc-950/40 border border-zinc-200 dark:border-zinc-900/50 text-zinc-700 dark:text-zinc-300 text-xs font-cairo flex items-center justify-between">
             <span>{aiError}</span>
             <button
               onClick={() => setAiError(null)}
-              className="text-rose-500 hover:text-rose-700 dark:hover:text-rose-200 text-xs px-1 cursor-pointer"
+              className="text-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-200 text-xs px-1 cursor-pointer"
             >
               ✕
             </button>
@@ -335,7 +335,7 @@ export const TransactionsView: React.FC<TransactionsViewProps> = ({
             </span>
             <span className="text-zinc-300 dark:text-zinc-700">|</span>
             <span className="text-zinc-500">
-              هزینه دوره: <b className="text-rose-600 dark:text-rose-400 font-bold font-mono">-{formatToman(periodTotalExpense)}</b>
+              هزینه دوره: <b className="text-zinc-600 dark:text-zinc-400 font-bold font-mono">-{formatToman(periodTotalExpense)}</b>
             </span>
           </div>
         </div>
@@ -370,7 +370,7 @@ export const TransactionsView: React.FC<TransactionsViewProps> = ({
               onClick={() => setTypeFilter('expense')}
               className={`px-3 py-1.5 rounded-lg transition cursor-pointer ${
                 typeFilter === 'expense'
-                  ? 'bg-white dark:bg-[#0F1512] text-rose-600 dark:text-rose-400 shadow-xs'
+                  ? 'bg-white dark:bg-[#0F1512] text-zinc-600 dark:text-zinc-400 shadow-xs'
                   : 'text-zinc-600 dark:text-zinc-400'
               }`}
             >
@@ -424,7 +424,7 @@ export const TransactionsView: React.FC<TransactionsViewProps> = ({
               {onOpenBankSmsModal && (
                 <button
                   onClick={onOpenBankSmsModal}
-                  className="px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-cairo font-bold text-xs cursor-pointer shadow-xs transition"
+                  className="px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-cairo font-bold text-xs cursor-pointer shadow-xs transition"
                 >
                   پردازش پیامک بانکی
                 </button>
@@ -457,7 +457,7 @@ export const TransactionsView: React.FC<TransactionsViewProps> = ({
                     </span>
                   )}
                   {group.totalExpense > 0 && (
-                    <span className="px-2.5 py-0.5 rounded-full bg-rose-100 text-rose-800 dark:bg-rose-950 dark:text-rose-300 font-bold text-[11px]">
+                    <span className="px-2.5 py-0.5 rounded-full bg-zinc-100 text-zinc-800 dark:bg-zinc-950 dark:text-zinc-300 font-bold text-[11px]">
                       هزینه: -{formatToman(group.totalExpense)}
                     </span>
                   )}
@@ -476,7 +476,7 @@ export const TransactionsView: React.FC<TransactionsViewProps> = ({
                         className={`w-10 h-10 rounded-2xl flex items-center justify-center shrink-0 ${
                           tx.type === 'income'
                             ? 'bg-emerald-50 text-emerald-700 dark:bg-[#13251D] dark:text-emerald-300'
-                            : 'bg-rose-50 text-rose-700 dark:bg-[#251515] dark:text-rose-300'
+                            : 'bg-zinc-50 text-zinc-700 dark:bg-[#1D1D1D] dark:text-zinc-300'
                         }`}
                       >
                         {tx.type === 'income' ? (
@@ -533,7 +533,7 @@ export const TransactionsView: React.FC<TransactionsViewProps> = ({
                             }
                           }}
                           title="حذف تراکنش"
-                          className="p-1.5 rounded-lg text-zinc-400 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-[#281515] transition cursor-pointer"
+                          className="p-1.5 rounded-lg text-zinc-400 hover:text-zinc-600 hover:bg-zinc-50 dark:hover:bg-[#1E1E1E] transition cursor-pointer"
                         >
                           <ChandIcon name="trash" className="w-4 h-4" />
                         </button>

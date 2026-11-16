@@ -75,9 +75,9 @@ export const AuthModal: React.FC = () => {
   const strengthLabels = ['خیلی کوتاه', 'ضعیف', 'متوسط', 'خوب و ایمن', 'فوق‌العاده قوی'];
   const strengthColors = [
     'bg-zinc-200 dark:bg-zinc-800',
-    'bg-rose-500',
+    'bg-zinc-500',
     'bg-emerald-500',
-    'bg-teal-500',
+    'bg-emerald-500',
     'bg-emerald-500',
   ];
 
@@ -429,7 +429,7 @@ export const AuthModal: React.FC = () => {
         className="w-full max-w-lg bg-white dark:bg-[#0B120E] rounded-3xl shadow-2xl border border-zinc-200 dark:border-emerald-950/80 overflow-hidden animate-in fade-in zoom-in-95 duration-200 my-auto"
       >
         {/* Header */}
-        <div className="relative bg-gradient-to-br from-emerald-500/10 via-teal-900/10 to-transparent p-5 sm:p-6 border-b border-zinc-100 dark:border-emerald-950/60">
+        <div className="relative bg-gradient-to-br from-emerald-500/10 via-emerald-900/10 to-transparent p-5 sm:p-6 border-b border-zinc-100 dark:border-emerald-950/60">
           <button
             onClick={() => {
               setIsAuthModalOpen(false);
@@ -442,7 +442,7 @@ export const AuthModal: React.FC = () => {
           </button>
 
           <div className="flex items-center gap-3">
-            <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-emerald-600 to-teal-800 p-0.5 shadow-md shadow-emerald-950/40 flex items-center justify-center shrink-0">
+            <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-emerald-600 to-emerald-800 p-0.5 shadow-md shadow-emerald-950/40 flex items-center justify-center shrink-0">
               <div className="w-full h-full bg-[#08100C] rounded-[14px] flex items-center justify-center overflow-hidden">
                 <img
                   src="./logo.png"
@@ -543,8 +543,8 @@ export const AuthModal: React.FC = () => {
 
           {/* Error Banner */}
           {error && (
-            <div className="p-3.5 rounded-2xl bg-rose-50 dark:bg-rose-950/40 text-rose-700 dark:text-rose-300 border border-rose-200 dark:border-rose-900/60 text-xs flex items-center gap-2.5 animate-in shake">
-              <ChandIcon name="alert" className="w-4 h-4 text-rose-500 shrink-0" />
+            <div className="p-3.5 rounded-2xl bg-zinc-50 dark:bg-zinc-950/40 text-zinc-700 dark:text-zinc-300 border border-zinc-200 dark:border-zinc-900/60 text-xs flex items-center gap-2.5 animate-in shake">
+              <ChandIcon name="alert" className="w-4 h-4 text-zinc-500 shrink-0" />
               <span className="leading-relaxed">{error}</span>
             </div>
           )}
@@ -660,7 +660,7 @@ export const AuthModal: React.FC = () => {
                 <button
                   type="submit"
                   disabled={isLoading || combinedOtp.length !== 8}
-                  className="w-full py-3 rounded-2xl bg-gradient-to-r from-emerald-600 to-teal-700 hover:from-emerald-700 hover:to-teal-800 text-white font-bold text-xs shadow-md transition cursor-pointer disabled:opacity-50 flex items-center justify-center gap-2"
+                  className="w-full py-3 rounded-2xl bg-gradient-to-r from-emerald-600 to-emerald-700 hover:from-emerald-700 hover:to-emerald-800 text-white font-bold text-xs shadow-md transition cursor-pointer disabled:opacity-50 flex items-center justify-center gap-2"
                 >
                   {isLoading ? (
                     <>
@@ -722,7 +722,7 @@ export const AuthModal: React.FC = () => {
                 <button
                   type="submit"
                   disabled={isLoading}
-                  className="w-full py-3 rounded-2xl bg-gradient-to-r from-emerald-600 to-teal-700 hover:from-emerald-700 hover:to-teal-800 text-white font-bold text-xs shadow-md transition cursor-pointer disabled:opacity-50 flex items-center justify-center gap-2"
+                  className="w-full py-3 rounded-2xl bg-gradient-to-r from-emerald-600 to-emerald-700 hover:from-emerald-700 hover:to-emerald-800 text-white font-bold text-xs shadow-md transition cursor-pointer disabled:opacity-50 flex items-center justify-center gap-2"
                 >
                   {isLoading ? (
                     <>
@@ -842,7 +842,7 @@ export const AuthModal: React.FC = () => {
                 id="auth-login-submit-btn"
                 type="submit"
                 disabled={isLoading}
-                className="w-full py-3.5 rounded-2xl bg-gradient-to-r from-emerald-600 to-teal-700 hover:from-emerald-700 hover:to-teal-800 text-white font-bold text-xs shadow-md transition cursor-pointer disabled:opacity-50 flex items-center justify-center gap-2"
+                className="w-full py-3.5 rounded-2xl bg-gradient-to-r from-emerald-600 to-emerald-700 hover:from-emerald-700 hover:to-emerald-800 text-white font-bold text-xs shadow-md transition cursor-pointer disabled:opacity-50 flex items-center justify-center gap-2"
               >
                 {isLoading ? (
                   <>
@@ -1080,7 +1080,7 @@ export const AuthModal: React.FC = () => {
                 id="auth-register-submit-btn"
                 type="submit"
                 disabled={isLoading}
-                className="w-full py-3.5 mt-2 rounded-2xl bg-gradient-to-r from-emerald-600 to-teal-700 hover:from-emerald-700 hover:to-teal-800 text-white font-bold text-xs shadow-md transition cursor-pointer disabled:opacity-50 flex items-center justify-center gap-2"
+                className="w-full py-3.5 mt-2 rounded-2xl bg-gradient-to-r from-emerald-600 to-emerald-700 hover:from-emerald-700 hover:to-emerald-800 text-white font-bold text-xs shadow-md transition cursor-pointer disabled:opacity-50 flex items-center justify-center gap-2"
               >
                 {isLoading ? (
                   <>

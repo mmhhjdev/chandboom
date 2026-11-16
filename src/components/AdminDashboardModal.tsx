@@ -713,7 +713,7 @@ export const AdminDashboardModal: React.FC<AdminDashboardModalProps> = ({ isOpen
               <button
                 onClick={handleAdminLogout}
                 title="خروج از نشست مدیریت"
-                className="p-2 rounded-xl text-zinc-400 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/40 transition cursor-pointer flex items-center gap-1 text-xs"
+                className="p-2 rounded-xl text-zinc-400 hover:text-zinc-600 hover:bg-zinc-50 dark:hover:bg-zinc-950/40 transition cursor-pointer flex items-center gap-1 text-xs"
               >
                 <ChandIcon name="logout" className="w-4 h-4" />
                 <span className="hidden sm:inline">خروج</span>
@@ -803,7 +803,7 @@ export const AdminDashboardModal: React.FC<AdminDashboardModalProps> = ({ isOpen
                 </div>
 
                 {adminAuthError && (
-                  <p className="text-xs text-rose-600 dark:text-rose-400 font-bold bg-rose-50 dark:bg-rose-950/40 p-2.5 rounded-xl border border-rose-200 dark:border-rose-900">
+                  <p className="text-xs text-zinc-600 dark:text-zinc-400 font-bold bg-zinc-50 dark:bg-zinc-950/40 p-2.5 rounded-xl border border-zinc-200 dark:border-zinc-900">
                     {adminAuthError}
                   </p>
                 )}
@@ -848,7 +848,7 @@ export const AdminDashboardModal: React.FC<AdminDashboardModalProps> = ({ isOpen
                   />
                 </div>
 
-                {twoFaError && <p className="text-xs text-rose-600 font-bold">{twoFaError}</p>}
+                {twoFaError && <p className="text-xs text-zinc-600 font-bold">{twoFaError}</p>}
 
                 <div className="flex gap-2">
                   <button
@@ -972,7 +972,7 @@ export const AdminDashboardModal: React.FC<AdminDashboardModalProps> = ({ isOpen
                                     ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300'
                                     : pay.status === 'approved'
                                     ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300'
-                                    : 'bg-rose-100 text-rose-800 dark:bg-rose-950 dark:text-rose-300'
+                                    : 'bg-zinc-100 text-zinc-800 dark:bg-zinc-950 dark:text-zinc-300'
                                 }`}
                               >
                                 {pay.status === 'pending'
@@ -1049,7 +1049,7 @@ export const AdminDashboardModal: React.FC<AdminDashboardModalProps> = ({ isOpen
                                   type="button"
                                   disabled={actionLoadingId === pay.id}
                                   onClick={() => handleRejectAction(pay)}
-                                  className="px-3.5 py-1.5 rounded-xl bg-rose-50 text-rose-700 hover:bg-rose-100 dark:bg-rose-950/40 dark:text-rose-400 font-cairo font-bold text-xs transition cursor-pointer disabled:opacity-50"
+                                  className="px-3.5 py-1.5 rounded-xl bg-zinc-50 text-zinc-700 hover:bg-zinc-100 dark:bg-zinc-950/40 dark:text-zinc-400 font-cairo font-bold text-xs transition cursor-pointer disabled:opacity-50"
                                 >
                                   {actionLoadingId === pay.id ? 'در حال ثبت...' : 'رد واریز'}
                                 </button>
@@ -1215,7 +1215,7 @@ export const AdminDashboardModal: React.FC<AdminDashboardModalProps> = ({ isOpen
                                   <span
                                     className={`px-2 py-0.5 rounded-full font-bold text-[10px] ${
                                       u.role === 'admin'
-                                        ? 'bg-purple-100 text-purple-800 dark:bg-purple-950 dark:text-purple-300'
+                                        ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300'
                                         : 'bg-zinc-100 text-zinc-700 dark:bg-zinc-800 dark:text-zinc-300'
                                     }`}
                                   >
@@ -1226,7 +1226,7 @@ export const AdminDashboardModal: React.FC<AdminDashboardModalProps> = ({ isOpen
                                   <span
                                     className={`px-2 py-0.5 rounded-full font-bold text-[10px] ${
                                       u.tier === 'vip'
-                                        ? 'bg-purple-100 text-purple-800 dark:bg-purple-950 dark:text-purple-300 border border-purple-300'
+                                        ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300 border border-emerald-300'
                                         : u.tier === 'pro'
                                         ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300 border border-emerald-300'
                                         : u.tier === 'bronze'
@@ -1244,7 +1244,7 @@ export const AdminDashboardModal: React.FC<AdminDashboardModalProps> = ({ isOpen
                                         className={`px-2 py-0.5 rounded-full font-bold text-[10px] inline-flex items-center gap-1 ${
                                           proStatus.isActive
                                             ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300'
-                                            : 'bg-rose-100 text-rose-800 dark:bg-rose-950 dark:text-rose-300'
+                                            : 'bg-zinc-100 text-zinc-800 dark:bg-zinc-950 dark:text-zinc-300'
                                         }`}
                                       >
                                         <ChandIcon name="clock" className="w-3 h-3" />
@@ -1278,7 +1278,7 @@ export const AdminDashboardModal: React.FC<AdminDashboardModalProps> = ({ isOpen
                                       type="button"
                                       onClick={() => handleOpenMessageDialog(u)}
                                       title="ارسال پیام مستقیم به صندوق اعلان و تیکت پشتیبانی کاربر"
-                                      className="px-2.5 py-1.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold text-[10px] flex items-center gap-1.5 shadow-xs transition cursor-pointer"
+                                      className="px-2.5 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-[10px] flex items-center gap-1.5 shadow-xs transition cursor-pointer"
                                     >
                                       <ChandIcon name="sms" className="w-3.5 h-3.5" />
                                       <span>ارسال پیام و اعلان</span>
@@ -1292,7 +1292,7 @@ export const AdminDashboardModal: React.FC<AdminDashboardModalProps> = ({ isOpen
                                         setPasswordChangeStatus(null);
                                       }}
                                       title="تغییر یا بازنشانی کلمه عبور کاربر"
-                                      className="px-2.5 py-1.5 rounded-xl bg-purple-600 hover:bg-purple-700 text-white font-bold text-[10px] flex items-center gap-1.5 shadow-xs transition cursor-pointer"
+                                      className="px-2.5 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-[10px] flex items-center gap-1.5 shadow-xs transition cursor-pointer"
                                     >
                                       <ChandIcon name="key" className="w-3.5 h-3.5" />
                                       <span>تغییر کلمه عبور</span>
@@ -1373,8 +1373,8 @@ export const AdminDashboardModal: React.FC<AdminDashboardModalProps> = ({ isOpen
                                         title="تنظیم یا تمدید اشتراک VIP ویژه (۳۰ روزه)"
                                         className={`px-2 py-0.5 rounded-lg text-[10px] font-bold transition cursor-pointer ${
                                           u.tier === 'vip'
-                                            ? 'bg-purple-600 text-white shadow-xs'
-                                            : 'text-purple-700 dark:text-purple-400 hover:bg-purple-100 dark:hover:bg-purple-950/60'
+                                            ? 'bg-emerald-600 text-white shadow-xs'
+                                            : 'text-emerald-700 dark:text-emerald-400 hover:bg-emerald-100 dark:hover:bg-emerald-950/60'
                                         }`}
                                       >
                                         VIP
@@ -1388,7 +1388,7 @@ export const AdminDashboardModal: React.FC<AdminDashboardModalProps> = ({ isOpen
                                               }
                                             }}
                                             title="اتمام فوری اشتراک و تنظیم وضعیت به expired"
-                                            className="px-2 py-0.5 rounded-lg text-[10px] font-bold text-rose-700 dark:text-rose-400 hover:bg-rose-100 dark:hover:bg-rose-950/60 transition cursor-pointer"
+                                            className="px-2 py-0.5 rounded-lg text-[10px] font-bold text-zinc-700 dark:text-zinc-400 hover:bg-zinc-100 dark:hover:bg-zinc-950/60 transition cursor-pointer"
                                           >
                                             اتمام
                                           </button>
@@ -1520,7 +1520,7 @@ export const AdminDashboardModal: React.FC<AdminDashboardModalProps> = ({ isOpen
           <div className="relative max-w-xl w-full bg-white dark:bg-[#0D1511] rounded-3xl overflow-hidden border border-[#E2E8E4] dark:border-[#1F2E26] shadow-2xl p-6 space-y-4">
             <div className="flex items-center justify-between pb-3 border-b border-[#E2E8E4] dark:border-[#1F2E26]">
               <div className="flex items-center gap-2.5">
-                <div className="p-2 rounded-xl text-blue-700 dark:text-blue-300">
+                <div className="p-2 rounded-xl text-emerald-700 dark:text-emerald-300">
                   <ChandIcon name="sms" className="w-5 h-5" />
                 </div>
                 <div>
@@ -1659,7 +1659,7 @@ export const AdminDashboardModal: React.FC<AdminDashboardModalProps> = ({ isOpen
                       className="rounded accent-emerald-600"
                     />
                     <div className="flex items-center gap-1.5">
-                      <ChandIcon name="sms" className="w-3.5 h-3.5 text-blue-600" />
+                      <ChandIcon name="sms" className="w-3.5 h-3.5 text-emerald-600" />
                       <span className="font-bold">ثبت در تیکت‌های پشتیبانی</span>
                     </div>
                   </label>
@@ -1678,7 +1678,7 @@ export const AdminDashboardModal: React.FC<AdminDashboardModalProps> = ({ isOpen
                   <button
                     type="submit"
                     disabled={isSendingMessage || !messageContent.trim()}
-                    className="px-5 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold shadow-xs transition cursor-pointer disabled:opacity-50 flex items-center gap-1.5"
+                    className="px-5 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold shadow-xs transition cursor-pointer disabled:opacity-50 flex items-center gap-1.5"
                   >
                     {isSendingMessage ? (
                       <>
@@ -1734,8 +1734,8 @@ export const AdminDashboardModal: React.FC<AdminDashboardModalProps> = ({ isOpen
             )}
 
             {createUserError && (
-              <div className="p-3.5 rounded-xl bg-rose-50 dark:bg-rose-950/60 border border-rose-300 dark:border-rose-800 text-xs text-rose-800 dark:text-rose-300 flex items-center gap-2">
-                <ChandIcon name="alert" className="w-4 h-4 shrink-0 text-rose-600" />
+              <div className="p-3.5 rounded-xl bg-zinc-50 dark:bg-zinc-950/60 border border-zinc-300 dark:border-zinc-800 text-xs text-zinc-800 dark:text-zinc-300 flex items-center gap-2">
+                <ChandIcon name="alert" className="w-4 h-4 shrink-0 text-zinc-600" />
                 <span>{createUserError}</span>
               </div>
             )}
@@ -1890,7 +1890,7 @@ export const AdminDashboardModal: React.FC<AdminDashboardModalProps> = ({ isOpen
           <div className="relative max-w-md w-full bg-white dark:bg-[#0D1511] rounded-3xl overflow-hidden border border-[#E2E8E4] dark:border-[#1F2E26] shadow-2xl p-6 space-y-4">
             <div className="flex items-center justify-between pb-3 border-b border-[#E2E8E4] dark:border-[#1F2E26]">
               <div className="flex items-center gap-2.5">
-                <div className="p-2 rounded-xl text-purple-700 dark:text-purple-300">
+                <div className="p-2 rounded-xl text-emerald-700 dark:text-emerald-300">
                   <ChandIcon name="key" className="w-5 h-5" />
                 </div>
                 <div>
@@ -1919,7 +1919,7 @@ export const AdminDashboardModal: React.FC<AdminDashboardModalProps> = ({ isOpen
                   (selectedUserForPassword.gender === 'زن' ? FEMALE_AVATAR_SVG : MALE_AVATAR_SVG)
                 }
                 alt={selectedUserForPassword.full_name}
-                className="w-9 h-9 rounded-full border border-purple-500/40 object-cover"
+                className="w-9 h-9 rounded-full border border-emerald-500/40 object-cover"
               />
               <div>
                 <div className="font-bold text-sm text-zinc-900 dark:text-white">
@@ -1939,8 +1939,8 @@ export const AdminDashboardModal: React.FC<AdminDashboardModalProps> = ({ isOpen
             )}
 
             {passwordChangeError && (
-              <div className="p-3.5 rounded-xl bg-rose-50 dark:bg-rose-950/60 border border-rose-300 dark:border-rose-800 text-xs text-rose-800 dark:text-rose-300 flex items-center gap-2">
-                <ChandIcon name="alert" className="w-4 h-4 shrink-0 text-rose-600" />
+              <div className="p-3.5 rounded-xl bg-zinc-50 dark:bg-zinc-950/60 border border-zinc-300 dark:border-zinc-800 text-xs text-zinc-800 dark:text-zinc-300 flex items-center gap-2">
+                <ChandIcon name="alert" className="w-4 h-4 shrink-0 text-zinc-600" />
                 <span>{passwordChangeError}</span>
               </div>
             )}
@@ -1958,7 +1958,7 @@ export const AdminDashboardModal: React.FC<AdminDashboardModalProps> = ({ isOpen
                   onChange={(e) => setNewPasswordInput(e.target.value)}
                   placeholder="حداقل ۶ نویسه..."
                   dir="ltr"
-                  className="w-full px-3.5 py-2 bg-zinc-50 dark:bg-[#141E1A] border border-[#E2E8E4] dark:border-[#1F2E27] rounded-xl outline-none focus:ring-1 focus:ring-purple-600 text-zinc-900 dark:text-white font-mono"
+                  className="w-full px-3.5 py-2 bg-zinc-50 dark:bg-[#141E1A] border border-[#E2E8E4] dark:border-[#1F2E27] rounded-xl outline-none focus:ring-1 focus:ring-emerald-600 text-zinc-900 dark:text-white font-mono"
                 />
               </div>
 
@@ -1978,7 +1978,7 @@ export const AdminDashboardModal: React.FC<AdminDashboardModalProps> = ({ isOpen
                 <button
                   type="submit"
                   disabled={isChangingPassword || !newPasswordInput.trim() || newPasswordInput.trim().length < 6}
-                  className="px-5 py-2 rounded-xl bg-purple-600 hover:bg-purple-700 text-white text-xs font-bold shadow-xs transition cursor-pointer disabled:opacity-50 flex items-center gap-1.5"
+                  className="px-5 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold shadow-xs transition cursor-pointer disabled:opacity-50 flex items-center gap-1.5"
                 >
                   {isChangingPassword ? (
                     <>
@@ -2054,8 +2054,8 @@ export const AdminDashboardModal: React.FC<AdminDashboardModalProps> = ({ isOpen
             )}
 
             {userEditError && (
-              <div className="p-3.5 rounded-xl bg-rose-50 dark:bg-rose-950/60 border border-rose-300 dark:border-rose-800 text-xs text-rose-800 dark:text-rose-300 flex items-center gap-2">
-                <ChandIcon name="alert" className="w-4 h-4 shrink-0 text-rose-600" />
+              <div className="p-3.5 rounded-xl bg-zinc-50 dark:bg-zinc-950/60 border border-zinc-300 dark:border-zinc-800 text-xs text-zinc-800 dark:text-zinc-300 flex items-center gap-2">
+                <ChandIcon name="alert" className="w-4 h-4 shrink-0 text-zinc-600" />
                 <span>{userEditError}</span>
               </div>
             )}

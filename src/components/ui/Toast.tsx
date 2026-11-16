@@ -24,20 +24,20 @@ const ToastContext = createContext<ToastContextType | undefined>(undefined);
 
 const toastIcons: Record<ToastType, ReactNode> = {
   success: <ChandIcon name="check-circle" className="w-4 h-4 text-emerald-500 shrink-0" />,
-  error: <ChandIcon name="alert" className="w-4 h-4 text-rose-500 shrink-0" />,
+  error: <ChandIcon name="alert" className="w-4 h-4 text-zinc-500 shrink-0" />,
   warning: <ChandIcon name="alert" className="w-4 h-4 text-emerald-500 shrink-0" />,
-  info: <ChandIcon name="info" className="w-4 h-4 text-sky-500 shrink-0" />,
+  info: <ChandIcon name="info" className="w-4 h-4 text-emerald-500 shrink-0" />,
 };
 
 const toastColors: Record<ToastType, string> = {
   success:
     'bg-white dark:bg-[#0E1713] border-emerald-500/40 text-zinc-900 dark:text-zinc-100 shadow-emerald-950/10',
   error:
-    'bg-white dark:bg-[#1A1112] border-rose-500/40 text-zinc-900 dark:text-zinc-100 shadow-rose-950/10',
+    'bg-white dark:bg-[#161616] border-zinc-500/40 text-zinc-900 dark:text-zinc-100 shadow-zinc-950/10',
   warning:
     'bg-white dark:bg-[#0E1915] border-emerald-500/40 text-zinc-900 dark:text-zinc-100 shadow-emerald-950/10',
   info:
-    'bg-white dark:bg-[#0E151A] border-sky-500/40 text-zinc-900 dark:text-zinc-100 shadow-sky-950/10',
+    'bg-white dark:bg-[#0E1A16] border-emerald-500/40 text-zinc-900 dark:text-zinc-100 shadow-emerald-950/10',
 };
 
 export const ToastProvider: React.FC<{ children: ReactNode }> = ({ children }) => {

@@ -76,7 +76,7 @@ export const Navigation: React.FC = () => {
       id: 'support',
       label: 'پشتیبانی و ثبت تیکت',
       desc: 'ارتباط مستقیم با کارشناسان چندبوم',
-      icon: <ChandIcon name="support" className="w-5 h-5 text-cyan-600 dark:text-cyan-400" />,
+      icon: <ChandIcon name="support" className="w-5 h-5 text-emerald-600 dark:text-emerald-400" />,
     },
     {
       id: 'settings',
@@ -119,7 +119,7 @@ export const Navigation: React.FC = () => {
                   {item.icon}
                   <span>{item.label}</span>
                   {item.badge && (
-                    <span className="w-4 h-4 rounded-full bg-rose-600 text-white text-[10px] flex items-center justify-center font-mono">
+                    <span className="w-4 h-4 rounded-full bg-zinc-600 text-white text-[10px] flex items-center justify-center font-mono">
                       {item.badge}
                     </span>
                   )}
@@ -154,7 +154,7 @@ export const Navigation: React.FC = () => {
                 <div className="relative">
                   {item.icon}
                   {item.badge && (
-                    <span className="absolute -top-1 -right-2 w-3.5 h-3.5 rounded-full bg-rose-600 text-white text-[9px] flex items-center justify-center font-mono">
+                    <span className="absolute -top-1 -right-2 w-3.5 h-3.5 rounded-full bg-zinc-600 text-white text-[9px] flex items-center justify-center font-mono">
                       {item.badge}
                     </span>
                   )}
@@ -176,7 +176,7 @@ export const Navigation: React.FC = () => {
             <div className="relative">
               <ChandIcon name="more" className="w-4 h-4" />
               {unpaidRemindersCount > 0 && (
-                <span className="absolute -top-1 -right-2 w-3.5 h-3.5 rounded-full bg-rose-600 text-white text-[9px] flex items-center justify-center font-mono">
+                <span className="absolute -top-1 -right-2 w-3.5 h-3.5 rounded-full bg-zinc-600 text-white text-[9px] flex items-center justify-center font-mono">
                   {unpaidRemindersCount}
                 </span>
               )}
@@ -240,7 +240,7 @@ export const Navigation: React.FC = () => {
                             {sec.label}
                           </span>
                           {sec.badge && (
-                            <span className="px-1.5 py-0.2 rounded-full bg-rose-600 text-white text-[10px] font-mono">
+                            <span className="px-1.5 py-0.2 rounded-full bg-zinc-600 text-white text-[10px] font-mono">
                               {sec.badge}
                             </span>
                           )}

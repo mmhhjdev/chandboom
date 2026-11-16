@@ -467,7 +467,7 @@ export const DongView: React.FC = () => {
                     </div>
                     <button
                       onClick={(e) => handleDeleteGroup(group.id, e)}
-                      className="p-1.5 text-zinc-400 hover:text-rose-600 transition"
+                      className="p-1.5 text-zinc-400 hover:text-zinc-600 transition"
                       title="حذف گروه"
                     >
                       <ChandIcon name="trash" className="w-4 h-4" />
@@ -576,7 +576,7 @@ export const DongView: React.FC = () => {
                             <button
                               type="button"
                               onClick={() => setFamilyInputs(familyInputs.filter((_, i) => i !== index))}
-                              className="p-2 text-rose-500 rounded-xl"
+                              className="p-2 text-zinc-500 rounded-xl"
                             >
                               <ChandIcon name="close" className="w-4 h-4" />
                             </button>
@@ -700,7 +700,7 @@ export const DongView: React.FC = () => {
 
       <DongGroupAI group={activeGroup} currentUserName={profileDisplayName || profileUsername} onRegisterExpense={handleRegisterAIDraft} />
 
-      <div className="bg-gradient-to-br from-emerald-50 to-teal-50 dark:from-[#122019] dark:to-[#0F1814] p-5 rounded-2xl border border-emerald-200/60 dark:border-emerald-900/50 shadow-xs space-y-4">
+      <div className="bg-gradient-to-br from-emerald-50 to-emerald-50 dark:from-[#122019] dark:to-[#0F1814] p-5 rounded-2xl border border-emerald-200/60 dark:border-emerald-900/50 shadow-xs space-y-4">
         <div className="flex items-center gap-2 text-emerald-900 dark:text-emerald-300">
           <ChandIcon name="calculator" className="w-5 h-5" />
           <h3 className="font-cairo font-bold text-base">تسویه حساب نهایی و کمترین تراکنش ممکن</h3>
@@ -728,7 +728,7 @@ export const DongView: React.FC = () => {
                 <div className="text-xs space-y-1">
                   <span className="text-zinc-500 block">باید پرداخت کند:</span>
                   <div dir="ltr" className="flex items-center justify-start gap-1 font-bold text-sm">
-                    <span className="text-rose-600 dark:text-rose-400">{t.from}</span>
+                    <span className="text-zinc-600 dark:text-zinc-400">{t.from}</span>
                     <span className="text-zinc-400">➔</span>
                     <span className="text-emerald-700 dark:text-emerald-400">{t.to}</span>
                   </div>
@@ -785,7 +785,7 @@ export const DongView: React.FC = () => {
                     <button
                       onClick={() => handleDeleteExpense(item.id)}
                       title="حذف هزینه"
-                      className="p-2 bg-rose-50 hover:bg-rose-100 text-rose-600 dark:bg-rose-950/40 dark:text-rose-400 rounded-lg transition cursor-pointer"
+                      className="p-2 bg-zinc-50 hover:bg-zinc-100 text-zinc-600 dark:bg-zinc-950/40 dark:text-zinc-400 rounded-lg transition cursor-pointer"
                     >
                       <ChandIcon name="trash" className="w-4 h-4" />
                     </button>
@@ -963,7 +963,7 @@ export const DongView: React.FC = () => {
                             <button
                               type="button"
                               onClick={() => setBillItems(billItems.filter((_, i) => i !== index))}
-                              className="p-2 text-rose-500 rounded-lg"
+                              className="p-2 text-zinc-500 rounded-lg"
                             >
                               <ChandIcon name="close" className="w-4 h-4" />
                             </button>

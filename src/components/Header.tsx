@@ -73,7 +73,7 @@ export const Header: React.FC<HeaderProps> = ({
               className={`font-cairo font-bold ${
                 metrics.balance >= 0
                   ? 'text-emerald-700 dark:text-emerald-400'
-                  : 'text-rose-600 dark:text-rose-400'
+                  : 'text-zinc-600 dark:text-zinc-400'
               }`}
             >
               {formatToman(metrics.balance)}
@@ -118,9 +118,9 @@ export const Header: React.FC<HeaderProps> = ({
                   id="open-admin-dashboard-btn"
                   onClick={onOpenAdminModal}
                   title="ورود به پنل مدیریت ارشد"
-                  className="hidden sm:flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-purple-50 dark:bg-[#20152B] text-purple-700 dark:text-purple-300 border border-purple-200 dark:border-purple-900/60 font-cairo font-bold text-xs hover:bg-purple-100 dark:hover:bg-[#2C1C3D] transition cursor-pointer shadow-xs shrink-0"
+                  className="hidden sm:flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-emerald-50 dark:bg-[#152B23] text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-900/60 font-cairo font-bold text-xs hover:bg-emerald-100 dark:hover:bg-[#1C3D31] transition cursor-pointer shadow-xs shrink-0"
                 >
-                  <ChandIcon name="shield" className="w-3.5 h-3.5 text-purple-600 dark:text-purple-400 shrink-0" />
+                  <ChandIcon name="shield" className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400 shrink-0" />
                   <span>پنل مدیریت</span>
                 </button>
               )}
@@ -153,7 +153,7 @@ export const Header: React.FC<HeaderProps> = ({
               >
                 <ChandIcon name="bell" className="w-4 h-4 sm:w-4.5 sm:h-4.5" />
                 {unpaidRemindersCount > 0 && (
-                  <span className="absolute top-1 right-1 w-2 h-2 rounded-full bg-rose-600 ring-2 ring-white dark:ring-[#0A100D]" />
+                  <span className="absolute top-1 right-1 w-2 h-2 rounded-full bg-zinc-600 ring-2 ring-white dark:ring-[#0A100D]" />
                 )}
               </button>
 
@@ -201,7 +201,7 @@ export const Header: React.FC<HeaderProps> = ({
                           </div>
                         </div>
                         {isProUser ? (
-                          <span className={`inline-flex items-center gap-1 text-[10px] font-bold ${user.tier === 'vip' ? 'text-purple-600 dark:text-purple-300' : user.tier === 'bronze' ? 'text-emerald-700 dark:text-emerald-300' : 'text-emerald-600 dark:text-emerald-400'}`}>
+                          <span className={`inline-flex items-center gap-1 text-[10px] font-bold ${user.tier === 'vip' ? 'text-emerald-600 dark:text-emerald-300' : user.tier === 'bronze' ? 'text-emerald-700 dark:text-emerald-300' : 'text-emerald-600 dark:text-emerald-400'}`}>
                             <ChandIcon name="crown" className="w-3 h-3" /> {user.tier === 'vip' ? 'حساب VIP فعال' : user.tier === 'bronze' ? 'حساب برنزی فعال' : 'حساب پرو فعال'}
                           </span>
                         ) : user.subscription_status === 'pending_approval' ? (
@@ -233,7 +233,7 @@ export const Header: React.FC<HeaderProps> = ({
                           }}
                           className="w-full text-right px-2.5 py-2 rounded-xl text-zinc-700 dark:text-zinc-300 hover:bg-emerald-50 dark:hover:bg-[#16261E] hover:text-emerald-700 dark:hover:text-emerald-400 transition flex items-center gap-2 cursor-pointer"
                         >
-                          <Camera className="w-4 h-4 text-teal-600 shrink-0" />
+                          <Camera className="w-4 h-4 text-emerald-600 shrink-0" />
                           <span>تغییر تصویر نمایه</span>
                         </button>
                       </div>
@@ -267,7 +267,7 @@ export const Header: React.FC<HeaderProps> = ({
                           }}
                           className="w-full text-right px-2.5 py-2 rounded-xl text-zinc-700 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-[#16221D] transition flex items-center gap-2 cursor-pointer"
                         >
-                          <ChandIcon name="receipt" className="w-4 h-4 text-indigo-500 shrink-0" />
+                          <ChandIcon name="receipt" className="w-4 h-4 text-emerald-500 shrink-0" />
                           <span>تراکنش‌ها و اسناد مالی</span>
                         </button>
                         <button
@@ -286,9 +286,9 @@ export const Header: React.FC<HeaderProps> = ({
                               setIsUserMenuOpen(false);
                               onOpenAdminModal();
                             }}
-                            className="w-full text-right px-2.5 py-2 rounded-xl text-purple-700 dark:text-purple-300 hover:bg-purple-50 dark:hover:bg-[#20152B] transition flex items-center gap-2 cursor-pointer"
+                            className="w-full text-right px-2.5 py-2 rounded-xl text-emerald-700 dark:text-emerald-300 hover:bg-emerald-50 dark:hover:bg-[#152B23] transition flex items-center gap-2 cursor-pointer"
                           >
-                            <ChandIcon name="shield" className="w-4 h-4 text-purple-600 shrink-0" />
+                            <ChandIcon name="shield" className="w-4 h-4 text-emerald-600 shrink-0" />
                             <span>پنل مدیریت ارشد</span>
                           </button>
                         )}
@@ -301,7 +301,7 @@ export const Header: React.FC<HeaderProps> = ({
                             setIsUserMenuOpen(false);
                             logout();
                           }}
-                          className="w-full text-right px-2.5 py-2 rounded-xl text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/40 transition flex items-center gap-2 cursor-pointer"
+                          className="w-full text-right px-2.5 py-2 rounded-xl text-zinc-600 dark:text-zinc-400 hover:bg-zinc-50 dark:hover:bg-zinc-950/40 transition flex items-center gap-2 cursor-pointer"
                         >
                           <ChandIcon name="logout" className="w-4 h-4 shrink-0" />
                           <span>خروج از حساب</span>

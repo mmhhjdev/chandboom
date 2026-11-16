@@ -96,7 +96,7 @@ export const createUserOtp = sendNativeOtp;
 
 /**
  * Sanitizes and normalizes OTP / verification codes:
- * - Strips leading or embedded '#' (e.g. '#123456' -> '123456')
+ * - Strips leading or embedded '#' (e.g. '#12563D' -> '123456')
  * - Converts Persian (۰-۹) and Arabic (٠-٩) numerals to ASCII digits (0-9)
  * - Removes non-digit characters, spaces, and hyphens
  */

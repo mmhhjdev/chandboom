@@ -94,7 +94,7 @@ export const TicketModal: React.FC<TicketModalProps> = ({ isOpen, onClose, onSub
         {/* Form Body */}
         <form onSubmit={handleSubmit} className="p-5 sm:p-6 space-y-4 overflow-y-auto flex-1">
           {errorMsg && (
-            <div className="p-3 rounded-2xl bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-900/60 text-xs text-rose-700 dark:text-rose-300 flex items-center gap-2 font-bold">
+            <div className="p-3 rounded-2xl bg-zinc-50 dark:bg-zinc-950/40 border border-zinc-200 dark:border-zinc-900/60 text-xs text-zinc-700 dark:text-zinc-300 flex items-center gap-2 font-bold">
               <ChandIcon name="alert" className="w-4 h-4 shrink-0" />
               <span>{errorMsg}</span>
             </div>

@@ -543,7 +543,7 @@ export const AIAssistant: React.FC<{ isOpen?: boolean; onClose?: () => void }> =
             <button
               onClick={handleClearHistory}
               title="پاکسازی تاریخچه گفت‌وگو"
-              className="p-2 rounded-xl text-zinc-400 hover:text-rose-500 hover:bg-rose-500/10 transition cursor-pointer"
+              className="p-2 rounded-xl text-zinc-400 hover:text-zinc-500 hover:bg-zinc-500/10 transition cursor-pointer"
             >
               <RotateCcw className="w-4 h-4" />
             </button>
@@ -647,7 +647,7 @@ export const AIAssistant: React.FC<{ isOpen?: boolean; onClose?: () => void }> =
             )}
 
             {errorMessage && (
-              <div className="p-3 rounded-xl bg-rose-500/10 border border-rose-500/30 text-rose-500 text-xs flex items-center gap-2">
+              <div className="p-3 rounded-xl bg-zinc-500/10 border border-zinc-500/30 text-zinc-500 text-xs flex items-center gap-2">
                 <ChandIcon name="alert" className="w-4 h-4 shrink-0" />
                 <span>{errorMessage}</span>
               </div>
@@ -692,7 +692,7 @@ export const AIAssistant: React.FC<{ isOpen?: boolean; onClose?: () => void }> =
                 title={isListening ? 'توقف ضبط صدا' : 'صحبت صوتی (Web Speech)'}
                 className={`p-3 rounded-2xl transition cursor-pointer shrink-0 relative ${
                   isListening
-                    ? 'bg-rose-500 hover:bg-rose-600 text-white ring-4 ring-rose-500/30 animate-pulse'
+                    ? 'bg-zinc-500 hover:bg-zinc-600 text-white ring-4 ring-zinc-500/30 animate-pulse'
                     : 'bg-zinc-200 dark:bg-[#182820] hover:bg-emerald-500/20 text-zinc-700 dark:text-zinc-300 hover:text-emerald-500'
                 }`}
               >

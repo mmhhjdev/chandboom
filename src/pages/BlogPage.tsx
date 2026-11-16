@@ -72,7 +72,7 @@ export const BlogPage: React.FC = () => {
         }}
       />
       <div className="space-y-12">
-        <header className="relative overflow-hidden rounded-[2rem] bg-gradient-to-br from-emerald-950 via-emerald-800 to-teal-700 px-6 py-10 text-white sm:px-10 sm:py-14">
+        <header className="relative overflow-hidden rounded-[2rem] bg-gradient-to-br from-emerald-950 via-emerald-800 to-emerald-700 px-6 py-10 text-white sm:px-10 sm:py-14">
           <div className="relative max-w-2xl space-y-4">
             <span className="inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/10 px-3 py-1.5 text-xs font-bold">
               <BookOpen className="h-4 w-4" aria-hidden="true" /> مجله چندبوم

@@ -40,7 +40,7 @@ export class ErrorBoundary extends Component<Props, State> {
       return (
         <div className="min-h-screen bg-[#0A0F0D] flex items-center justify-center p-4 font-cairo text-right" dir="rtl">
           <div className="max-w-md w-full bg-[#121A16] border border-emerald-900/60 rounded-3xl p-6 sm:p-8 text-center space-y-4 shadow-2xl">
-            <div className="w-14 h-14 rounded-2xl text-rose-400 flex items-center justify-center mx-auto">
+            <div className="w-14 h-14 rounded-2xl text-zinc-400 flex items-center justify-center mx-auto">
               <ChandIcon name="alert" className="w-7 h-7" />
             </div>
 

@@ -387,9 +387,9 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
             <button
               onClick={onOpenBankSmsModal}
               title="ثبت خودکار تراکنش با پیست کردن پیامک بانکی یا فیش"
-              className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-blue-50 dark:bg-[#131F2A] text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-blue-900/60 hover:bg-blue-100 font-cairo font-bold text-xs transition cursor-pointer shadow-xs"
+              className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-emerald-50 dark:bg-[#132A22] text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-900/60 hover:bg-emerald-100 font-cairo font-bold text-xs transition cursor-pointer shadow-xs"
             >
-              <ChandIcon name="card" className="w-4 h-4 text-blue-600 dark:text-blue-400" />
+              <ChandIcon name="card" className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
               <span>پردازش پیامک بانکی</span>
             </button>
           )}
@@ -428,7 +428,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
         id="todays-quest-widget"
         className={`p-4 sm:p-5 rounded-3xl border transition-all duration-300 relative overflow-hidden shadow-xs ${
           isTodayCompleted
-            ? 'bg-gradient-to-r from-emerald-50 via-teal-50/50 to-white dark:from-[#11221A] dark:via-[#0F1C16] dark:to-[#0C1511] border-emerald-300 dark:border-emerald-800/80'
+            ? 'bg-gradient-to-r from-emerald-50 via-emerald-50/50 to-white dark:from-[#11221A] dark:via-[#0F1C16] dark:to-[#0C1511] border-emerald-300 dark:border-emerald-800/80'
             : 'bg-gradient-to-r from-emerald-50/90 via-emerald-50/40 to-white dark:from-[#0B1C16] dark:via-[#081611] dark:to-[#0F1512] border-emerald-200 dark:border-emerald-900/60'
         }`}
       >
@@ -606,7 +606,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
             className={`font-cairo text-2xl sm:text-3xl font-black ${
               metrics.balance >= 0
                 ? 'text-emerald-700 dark:text-emerald-400'
-                : 'text-rose-600 dark:text-rose-400'
+                : 'text-zinc-600 dark:text-zinc-400'
             }`}
           >
             {formatToman(metrics.balance)}
@@ -634,11 +634,11 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
         <div className="p-6 rounded-3xl bg-white dark:bg-[#0F1512] border border-[#E2E8E4] dark:border-[#1A2621] shadow-xs space-y-3">
           <div className="flex items-center justify-between">
             <span className="text-xs text-zinc-500">هزینه‌ها و سقف بودجه</span>
-            <div className="p-2 rounded-xl bg-rose-50 text-rose-700 dark:bg-[#251515] dark:text-rose-300">
+            <div className="p-2 rounded-xl bg-zinc-50 text-zinc-700 dark:bg-[#1D1D1D] dark:text-zinc-300">
               <TrendingDown className="w-4 h-4" />
             </div>
           </div>
-          <div className="font-cairo text-2xl sm:text-3xl font-black text-rose-600 dark:text-rose-400">
+          <div className="font-cairo text-2xl sm:text-3xl font-black text-zinc-600 dark:text-zinc-400">
             {formatToman(metrics.totalExpense)}
           </div>
           <div className="space-y-1">
@@ -646,7 +646,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
               <div
                 className={`h-full rounded-full ${
                   budgetUsagePercent > 85
-                    ? 'bg-rose-600'
+                    ? 'bg-zinc-600'
                     : budgetUsagePercent > 65
                     ? 'bg-emerald-500'
                     : 'bg-emerald-600'
@@ -880,7 +880,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                   !isProUser
                     ? 'border-emerald-300 bg-emerald-50 text-emerald-700 dark:bg-emerald-950/30 dark:text-emerald-300 dark:border-emerald-800'
                     : isListening
-                    ? 'border-rose-300 bg-rose-50 text-rose-600 dark:bg-rose-950/30 dark:border-rose-800 animate-pulse'
+                    ? 'border-zinc-300 bg-zinc-50 text-zinc-600 dark:bg-zinc-950/30 dark:border-zinc-800 animate-pulse'
                     : 'border-emerald-200 bg-emerald-50 text-emerald-700 hover:bg-emerald-100 dark:bg-[#15231C] dark:border-[#294536] dark:text-emerald-300'
                 }`}
               >

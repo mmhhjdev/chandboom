@@ -194,7 +194,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({ onOpenAvatarModal })
         </div>
       )}
       {profileSaveError && (
-        <div role="alert" className="p-4 rounded-2xl bg-rose-50 text-rose-800 dark:bg-rose-950/40 dark:text-rose-300 border border-rose-200 dark:border-rose-800 text-xs flex items-center gap-2">
+        <div role="alert" className="p-4 rounded-2xl bg-zinc-50 text-zinc-800 dark:bg-zinc-950/40 dark:text-zinc-300 border border-zinc-200 dark:border-zinc-800 text-xs flex items-center gap-2">
           <ChandIcon name="alert" className="w-4 h-4 shrink-0" />
           <span>{profileSaveError}</span>
         </div>
@@ -365,7 +365,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({ onOpenAvatarModal })
                         pay.status === 'approved'
                           ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300 border border-emerald-300'
                           : pay.status === 'rejected'
-                          ? 'bg-rose-100 text-rose-800 dark:bg-rose-950 dark:text-rose-300 border border-rose-300'
+                          ? 'bg-zinc-100 text-zinc-800 dark:bg-zinc-950 dark:text-zinc-300 border border-zinc-300'
                           : 'bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300 border border-emerald-300'
                       }`}
                     >
@@ -602,7 +602,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({ onOpenAvatarModal })
           )}
 
           {passwordError && (
-            <div className="p-3.5 rounded-2xl bg-rose-50 text-rose-800 dark:bg-rose-950/60 dark:text-rose-300 border border-rose-200 dark:border-rose-800 text-xs flex items-center gap-2">
+            <div className="p-3.5 rounded-2xl bg-zinc-50 text-zinc-800 dark:bg-zinc-950/60 dark:text-zinc-300 border border-zinc-200 dark:border-zinc-800 text-xs flex items-center gap-2">
               <ChandIcon name="alert" className="w-4 h-4 shrink-0" />
               <span>{passwordError}</span>
             </div>
@@ -692,7 +692,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({ onOpenAvatarModal })
           </span>
         </div>
 
-        {themeSaveError && <p role="alert" className="text-xs text-rose-600">{themeSaveError}</p>}
+        {themeSaveError && <p role="alert" className="text-xs text-zinc-600">{themeSaveError}</p>}
         {themeSaving && <p className="text-xs text-zinc-500">در حال ذخیره تم در حساب کاربری…</p>}
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
           {/* Light Mode Option Button */}
@@ -775,7 +775,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({ onOpenAvatarModal })
                 resetToDefaults();
               }
             }}
-            className="flex items-center gap-1.5 text-xs text-rose-600 hover:text-rose-700 font-cairo font-bold cursor-pointer"
+            className="flex items-center gap-1.5 text-xs text-zinc-600 hover:text-zinc-700 font-cairo font-bold cursor-pointer"
           >
             <RotateCcw className="w-4 h-4" />
             <span>بازنشانی کلیه داده‌های محلی به حالت اولیه کارخانه</span>

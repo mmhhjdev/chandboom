@@ -7,7 +7,7 @@
 export function initSecurityProtection(onDevToolsDetected?: () => void): () => void {
   // 1. Console Warning against Self-XSS & Code Tampering
   if (typeof window !== 'undefined') {
-    const bannerStyle = 'color: #ef4444; font-size: 20px; font-weight: bold; font-family: sans-serif;';
+    const bannerStyle = 'color: #9A9A9A; font-size: 20px; font-weight: bold; font-family: sans-serif;';
     const subStyle = 'color: #10b981; font-size: 13px; font-family: sans-serif;';
     console.log('%c⚠️ اخطار امنیتی سامانه مدیریت مالی چندبوم (Chandboom)', bannerStyle);
     console.log(

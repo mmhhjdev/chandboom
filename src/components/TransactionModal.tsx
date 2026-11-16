@@ -24,22 +24,22 @@ interface CategoryOption {
 
 const EXPENSE_CATEGORY_OPTIONS: CategoryOption[] = [
   { name: 'خوراک و رستوران', dotColor: 'bg-emerald-500' },
-  { name: 'مسکن و اجاره', dotColor: 'bg-blue-500' },
-  { name: 'حمل‌ونقل و خودرو', dotColor: 'bg-cyan-500' },
-  { name: 'خرید و پوشاک', dotColor: 'bg-pink-500' },
-  { name: 'سرگرمی و تفریح', dotColor: 'bg-purple-500' },
-  { name: 'سلامت و درمان', dotColor: 'bg-red-500' },
+  { name: 'مسکن و اجاره', dotColor: 'bg-emerald-500' },
+  { name: 'حمل‌ونقل و خودرو', dotColor: 'bg-emerald-500' },
+  { name: 'خرید و پوشاک', dotColor: 'bg-zinc-500' },
+  { name: 'سرگرمی و تفریح', dotColor: 'bg-emerald-500' },
+  { name: 'سلامت و درمان', dotColor: 'bg-zinc-500' },
   { name: 'قبوض و شارژ', dotColor: 'bg-emerald-500' },
-  { name: 'آموزش و کتاب', dotColor: 'bg-teal-500' },
-  { name: 'سایر و متفرقه', dotColor: 'bg-slate-400' },
+  { name: 'آموزش و کتاب', dotColor: 'bg-emerald-500' },
+  { name: 'سایر و متفرقه', dotColor: 'bg-zinc-400' },
 ];
 
 const INCOME_CATEGORY_OPTIONS: CategoryOption[] = [
   { name: 'حقوق و دستمزد', dotColor: 'bg-emerald-500' },
-  { name: 'سرمایه‌گذاری و سود', dotColor: 'bg-blue-500' },
-  { name: 'هدیه و پاداش', dotColor: 'bg-purple-500' },
+  { name: 'سرمایه‌گذاری و سود', dotColor: 'bg-emerald-500' },
+  { name: 'هدیه و پاداش', dotColor: 'bg-emerald-500' },
   { name: 'فروش و کسب‌وکار', dotColor: 'bg-emerald-500' },
-  { name: 'سایر دریافتی‌ها', dotColor: 'bg-slate-400' },
+  { name: 'سایر دریافتی‌ها', dotColor: 'bg-zinc-400' },
 ];
 
 const ACCOUNT_OPTIONS = ['کارت اصلی', 'کارت دوم', 'حساب پس‌انداز', 'صندوق نقدی'];
@@ -415,7 +415,7 @@ export const TransactionModal: React.FC<TransactionModalProps> = ({
                 onClick={toggleVoiceRecognition}
                 className={`p-2 rounded-xl border transition cursor-pointer shrink-0 ${
                   isListening
-                    ? 'bg-rose-600 text-white border-rose-400 animate-pulse'
+                    ? 'bg-zinc-600 text-white border-zinc-400 animate-pulse'
                     : 'bg-[#15241D] hover:bg-[#1E342B] text-emerald-400 border-[#243D32]'
                 }`}
                 title={isListening ? 'توقف ضبط صدا' : 'ثبت صوتی تراکنش با هوش مصنوعی'}
@@ -566,7 +566,7 @@ export const TransactionModal: React.FC<TransactionModalProps> = ({
                     <button
                       type="button"
                       onClick={() => handleRemoveTag(t)}
-                      className="hover:text-rose-400 cursor-pointer"
+                      className="hover:text-zinc-400 cursor-pointer"
                     >
                       <ChandIcon name="close" className="w-3 h-3" />
                     </button>

@@ -38,8 +38,8 @@ export class FinancialChartsErrorBoundary extends Component<Props, State> {
   public render() {
     if (this.state.hasError) {
       return (
-        <div className="p-8 rounded-3xl bg-zinc-50 dark:bg-[#121A16] border border-dashed border-rose-300 dark:border-rose-900/60 text-center flex flex-col items-center justify-center font-cairo">
-          <div className="w-12 h-12 rounded-2xl text-rose-500 flex items-center justify-center mb-3">
+        <div className="p-8 rounded-3xl bg-zinc-50 dark:bg-[#121A16] border border-dashed border-zinc-300 dark:border-zinc-900/60 text-center flex flex-col items-center justify-center font-cairo">
+          <div className="w-12 h-12 rounded-2xl text-zinc-500 flex items-center justify-center mb-3">
             <ChandIcon name="alert" className="w-6 h-6" />
           </div>
           <h4 className="text-sm font-bold text-zinc-900 dark:text-zinc-100 mb-1">

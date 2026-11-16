@@ -104,7 +104,7 @@ export const AvatarModal: React.FC<AvatarModalProps> = ({ isOpen, onClose }) => 
         </div>
 
         {error && (
-          <div className="p-3 rounded-xl bg-rose-50 text-rose-700 dark:bg-rose-950/40 dark:text-rose-400 border border-rose-200 text-xs flex items-center gap-2">
+          <div className="p-3 rounded-xl bg-zinc-50 text-zinc-700 dark:bg-zinc-950/40 dark:text-zinc-400 border border-zinc-200 text-xs flex items-center gap-2">
             <ChandIcon name="alert" className="w-4 h-4 shrink-0" />
             <span>{error}</span>
           </div>

@@ -251,11 +251,11 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
           ) : (
             <>
               {/* Ultra-realistic Saman Bank / Blu Bank Card Component */}
-              <div className="relative overflow-hidden rounded-3xl p-6 sm:p-7 text-zinc-900 shadow-2xl border border-sky-200/90 bg-gradient-to-tr from-[#C9E8F9] via-[#E8F5FD] to-[#D5EEFA] select-none">
+              <div className="relative overflow-hidden rounded-3xl p-6 sm:p-7 text-zinc-900 shadow-2xl border border-emerald-200/90 bg-gradient-to-tr from-[#C9F9E7] via-[#E8FDF5] to-[#D5FAEC] select-none">
                 {/* Subtle Card Gloss Texture & diagonal watermark waves */}
                 <div className="absolute inset-0 bg-gradient-to-b from-white/35 via-transparent to-black/5 pointer-events-none" />
-                <div className="absolute -right-16 -top-16 w-56 h-56 rounded-full bg-cyan-300/20 blur-2xl pointer-events-none" />
-                <div className="absolute -left-16 -bottom-16 w-56 h-56 rounded-full bg-blue-300/20 blur-2xl pointer-events-none" />
+                <div className="absolute -right-16 -top-16 w-56 h-56 rounded-full bg-emerald-300/20 blur-2xl pointer-events-none" />
+                <div className="absolute -left-16 -bottom-16 w-56 h-56 rounded-full bg-emerald-300/20 blur-2xl pointer-events-none" />
 
                 {/* Top Row: Metallic Sim Chip (Left) & Saman Bank Logo (Right) */}
                 <div className="relative z-10 flex items-start justify-between mb-6">
@@ -269,25 +269,25 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
                   {/* Official Saman Bank Logo & Emblem */}
                   <div className="flex items-center gap-2 text-right">
                     <div className="flex flex-col items-end">
-                      <span className="font-bold text-sm sm:text-base text-[#113B6B] tracking-tight font-cairo">
+                      <span className="font-bold text-sm sm:text-base text-[#116B4A] tracking-tight font-cairo">
                         بانک سامان
                       </span>
-                      <span className="text-[10px] text-[#1D5E9E] font-sans font-medium tracking-wider -mt-1">
+                      <span className="text-[10px] text-[#1D9E6F] font-sans font-medium tracking-wider -mt-1">
                         Saman Bank
                       </span>
                     </div>
                     {/* Saman Bank Flower/Sun Emblem */}
                     <div className="w-8 h-8 flex items-center justify-center shrink-0">
                       <svg className="w-8 h-8" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
-                        <circle cx="50" cy="50" r="14" fill="#003366" />
-                        <path d="M50 8C54 8 57 14 57 22C57 30 50 32 50 32C50 32 43 30 43 22C43 14 46 8 50 8Z" fill="#0080C8" />
-                        <path d="M50 92C46 92 43 86 43 78C43 70 50 68 50 68C50 68 57 70 57 78C57 86 54 92 50 92Z" fill="#0080C8" />
-                        <path d="M8 50C8 46 14 43 22 43C30 43 32 50 32 50C32 50 30 57 22 57C14 57 8 54 8 50Z" fill="#0080C8" />
-                        <path d="M92 50C92 54 86 57 78 57C70 57 68 50 68 50C68 50 70 43 78 43C86 43 92 46 92 50Z" fill="#0080C8" />
-                        <path d="M20.3 20.3C23.1 17.5 29.8 19.3 35.5 24.9C41.1 30.6 40.2 36.8 40.2 36.8C40.2 36.8 34.1 35.9 28.4 30.2C22.8 24.6 20.3 20.3 20.3 20.3Z" fill="#00A3E0" />
-                        <path d="M79.7 79.7C76.9 82.5 70.2 80.7 64.5 75.1C58.9 69.4 59.8 63.2 59.8 63.2C59.8 63.2 65.9 64.1 71.6 69.8C77.2 75.4 79.7 79.7 79.7 79.7Z" fill="#00A3E0" />
-                        <path d="M79.7 20.3C82.5 23.1 80.7 29.8 75.1 35.5C69.4 41.1 63.2 40.2 63.2 40.2C63.2 40.2 64.1 34.1 69.8 28.4C75.4 22.8 79.7 20.3 79.7 20.3Z" fill="#00A3E0" />
-                        <path d="M20.3 79.7C17.5 76.9 19.3 70.2 24.9 64.5C30.6 58.9 36.8 59.8 36.8 59.8C36.8 59.8 35.9 65.9 30.2 71.6C24.6 77.2 20.3 79.7 20.3 79.7Z" fill="#00A3E0" />
+                        <circle cx="50" cy="50" r="14" fill="#006641" />
+                        <path d="M50 8C54 8 57 14 57 22C57 30 50 32 50 32C50 32 43 30 43 22C43 14 46 8 50 8Z" fill="#00C87F" />
+                        <path d="M50 92C46 92 43 86 43 78C43 70 50 68 50 68C50 68 57 70 57 78C57 86 54 92 50 92Z" fill="#00C87F" />
+                        <path d="M8 50C8 46 14 43 22 43C30 43 32 50 32 50C32 50 30 57 22 57C14 57 8 54 8 50Z" fill="#00C87F" />
+                        <path d="M92 50C92 54 86 57 78 57C70 57 68 50 68 50C68 50 70 43 78 43C86 43 92 46 92 50Z" fill="#00C87F" />
+                        <path d="M20.3 20.3C23.1 17.5 29.8 19.3 35.5 24.9C41.1 30.6 40.2 36.8 40.2 36.8C40.2 36.8 34.1 35.9 28.4 30.2C22.8 24.6 20.3 20.3 20.3 20.3Z" fill="#00E08E" />
+                        <path d="M79.7 79.7C76.9 82.5 70.2 80.7 64.5 75.1C58.9 69.4 59.8 63.2 59.8 63.2C59.8 63.2 65.9 64.1 71.6 69.8C77.2 75.4 79.7 79.7 79.7 79.7Z" fill="#00E08E" />
+                        <path d="M79.7 20.3C82.5 23.1 80.7 29.8 75.1 35.5C69.4 41.1 63.2 40.2 63.2 40.2C63.2 40.2 64.1 34.1 69.8 28.4C75.4 22.8 79.7 20.3 79.7 20.3Z" fill="#00E08E" />
+                        <path d="M20.3 79.7C17.5 76.9 19.3 70.2 24.9 64.5C30.6 58.9 36.8 59.8 36.8 59.8C36.8 59.8 35.9 65.9 30.2 71.6C24.6 77.2 20.3 79.7 20.3 79.7Z" fill="#00E08E" />
                       </svg>
                     </div>
                   </div>
@@ -312,9 +312,9 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
                 </div>
 
                 {/* Center Row 2: Prominent Card Number */}
-                <div className="relative z-10 mb-6 bg-white/70 backdrop-blur-xs px-4 py-2.5 rounded-2xl border border-sky-300/60 shadow-xs flex items-center justify-between">
+                <div className="relative z-10 mb-6 bg-white/70 backdrop-blur-xs px-4 py-2.5 rounded-2xl border border-emerald-300/60 shadow-xs flex items-center justify-between">
                   <span
-                    className="font-mono text-lg sm:text-2xl font-black tracking-widest text-[#0C2A4D]"
+                    className="font-mono text-lg sm:text-2xl font-black tracking-widest text-[#0C4D35]"
                     dir="ltr"
                   >
                     {formatCardNumber(BANK_CARD_CONFIG.cardNumber)}
@@ -322,7 +322,7 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
                   <button
                     type="button"
                     onClick={() => handleCopy(BANK_CARD_CONFIG.cardNumber, 'card')}
-                    className="px-2.5 py-1 rounded-xl bg-[#113B6B] hover:bg-[#0D2F57] text-white text-xs font-cairo font-bold flex items-center gap-1.5 transition cursor-pointer shadow-xs"
+                    className="px-2.5 py-1 rounded-xl bg-[#116B4A] hover:bg-[#0D573C] text-white text-xs font-cairo font-bold flex items-center gap-1.5 transition cursor-pointer shadow-xs"
                   >
                     {copiedField === 'card' ? <ChandIcon name="check" className="w-3.5 h-3.5 text-emerald-300" /> : <ChandIcon name="copy" className="w-3.5 h-3.5" />}
                     <span>{copiedField === 'card' ? 'کپی شد' : 'کپی کارت'}</span>
@@ -330,10 +330,10 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
                 </div>
 
                 {/* Bottom Row: Expiry (Left) & Cardholder (Right) */}
-                <div className="relative z-10 flex items-end justify-between text-xs pt-1 border-t border-sky-200/70">
+                <div className="relative z-10 flex items-end justify-between text-xs pt-1 border-t border-emerald-200/70">
                   <div className="text-right">
                     <span className="text-[10px] text-zinc-500 block">صاحب حساب</span>
-                    <span className="font-cairo font-bold text-sm text-[#0C2A4D]">
+                    <span className="font-cairo font-bold text-sm text-[#0C4D35]">
                       {BANK_CARD_CONFIG.accountHolder}
                     </span>
                   </div>
@@ -414,7 +414,7 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
                       <button
                         type="button"
                         onClick={handleRemoveReceipt}
-                        className="p-2 rounded-xl text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/40 transition cursor-pointer"
+                        className="p-2 rounded-xl text-zinc-600 hover:bg-zinc-50 dark:hover:bg-zinc-950/40 transition cursor-pointer"
                         title="حذف و انتخاب مجدد"
                       >
                         <ChandIcon name="trash" className="w-4 h-4" />
@@ -455,8 +455,8 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
                 </div>
 
                 {errorMessage && (
-                  <div className="p-3 rounded-xl bg-rose-50 dark:bg-rose-950/40 border border-rose-300 dark:border-rose-900/60 text-xs text-rose-700 dark:text-rose-300 font-bold flex items-center gap-2">
-                    <ChandIcon name="alert" className="w-4 h-4 shrink-0 text-rose-500" />
+                  <div className="p-3 rounded-xl bg-zinc-50 dark:bg-zinc-950/40 border border-zinc-300 dark:border-zinc-900/60 text-xs text-zinc-700 dark:text-zinc-300 font-bold flex items-center gap-2">
+                    <ChandIcon name="alert" className="w-4 h-4 shrink-0 text-zinc-500" />
                     <span>{errorMessage}</span>
                   </div>
                 )}

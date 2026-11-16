@@ -41,7 +41,7 @@ export const AuthGuardModal: React.FC<AuthGuardModalProps> = ({
         </button>
 
         {/* Header Icon */}
-        <div className="w-14 h-14 rounded-2xl from-emerald-500/20 to-teal-500/10 flex items-center justify-center mb-5">
+        <div className="w-14 h-14 rounded-2xl from-emerald-500/20 to-emerald-500/10 flex items-center justify-center mb-5">
           <ChandIcon name="shield" className="w-7 h-7 text-emerald-400" />
         </div>
 

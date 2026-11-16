@@ -73,7 +73,7 @@ export const ContactPage: React.FC = () => {
 
             <div className="p-6 rounded-3xl bg-white dark:bg-[#0F1713] border border-[#E2E8E4] dark:border-[#1E2E25] shadow-xs space-y-3">
               <h2 className="text-base font-bold text-zinc-900 dark:text-white flex items-center gap-2">
-                <ChandIcon name="clock" className="w-4 h-4 text-blue-500" />
+                <ChandIcon name="clock" className="w-4 h-4 text-emerald-500" />
                 <span>ساعات کاری و زمان پاسخگویی</span>
               </h2>
               <p className="text-xs text-zinc-500 dark:text-zinc-400 leading-relaxed">

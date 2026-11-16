@@ -806,7 +806,7 @@ export const FloatingAIAssistant: React.FC = () => {
               onClick={toggleVoiceRecognition}
               className={`p-2.5 rounded-xl border transition cursor-pointer shadow-xs ${
                 isListening
-                  ? 'bg-rose-600 text-white border-rose-400 animate-pulse'
+                  ? 'bg-zinc-600 text-white border-zinc-400 animate-pulse'
                   : 'bg-[#15241D] hover:bg-[#1E342B] text-emerald-400 border-[#243D32]'
               }`}
               title={isListening ? 'توقف ضبط صدا' : 'ارسال پیام صوتی به هوش مصنوعی'}

@@ -16,13 +16,13 @@ const variantStyles: Record<BadgeVariant, string> = {
   warning:
     'bg-emerald-50 text-emerald-800 dark:bg-emerald-950/60 dark:text-emerald-300 border-emerald-300 dark:border-emerald-800/80',
   danger:
-    'bg-rose-50 text-rose-800 dark:bg-rose-950/60 dark:text-rose-300 border-rose-200 dark:border-rose-900/60',
+    'bg-zinc-50 text-zinc-800 dark:bg-zinc-950/60 dark:text-zinc-300 border-zinc-200 dark:border-zinc-900/60',
   info:
-    'bg-sky-50 text-sky-800 dark:bg-sky-950/60 dark:text-sky-300 border-sky-200 dark:border-sky-900/60',
+    'bg-emerald-50 text-emerald-800 dark:bg-emerald-950/60 dark:text-emerald-300 border-emerald-200 dark:border-emerald-900/60',
   gold:
     'bg-gradient-to-r from-emerald-400/20 to-emerald-500/20 text-emerald-800 dark:text-emerald-300 border-emerald-400/50 shadow-xs',
   purple:
-    'bg-purple-50 text-purple-800 dark:bg-purple-950/60 dark:text-purple-300 border-purple-200 dark:border-purple-900/60',
+    'bg-emerald-50 text-emerald-800 dark:bg-emerald-950/60 dark:text-emerald-300 border-emerald-200 dark:border-emerald-900/60',
   neutral:
     'bg-zinc-100 text-zinc-700 dark:bg-[#141F1A] dark:text-zinc-300 border-zinc-200 dark:border-zinc-800',
 };
@@ -30,10 +30,10 @@ const variantStyles: Record<BadgeVariant, string> = {
 const dotColors: Record<BadgeVariant, string> = {
   success: 'bg-emerald-500',
   warning: 'bg-emerald-500',
-  danger: 'bg-rose-500',
-  info: 'bg-sky-500',
+  danger: 'bg-zinc-500',
+  info: 'bg-emerald-500',
   gold: 'bg-emerald-400',
-  purple: 'bg-purple-500',
+  purple: 'bg-emerald-500',
   neutral: 'bg-zinc-400',
 };
 

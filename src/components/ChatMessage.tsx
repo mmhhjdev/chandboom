@@ -82,7 +82,7 @@ export const ChatMessage: React.FC<ChatMessageProps> = ({
     let isInformativeOnly = false;
 
     if (type === 'create_dong_group' || type === 'create_group') {
-      icon = <ChandIcon name="users" className="w-4 h-4 text-cyan-400" />;
+      icon = <ChandIcon name="users" className="w-4 h-4 text-emerald-400" />;
       typeTitle = 'پیشنهاد ایجاد گروه دنگ';
       buttonLabel = 'تأیید و ایجاد گروه دنگ';
     } else if (type === 'add_deng_expense') {
@@ -94,7 +94,7 @@ export const ChatMessage: React.FC<ChatMessageProps> = ({
       typeTitle = 'پیشنهاد هدف مالی و پس‌انداز';
       buttonLabel = 'تأیید و ثبت هدف مالی';
     } else if (type === 'create_reminder') {
-      icon = <ChandIcon name="bell" className="w-4 h-4 text-purple-400" />;
+      icon = <ChandIcon name="bell" className="w-4 h-4 text-emerald-400" />;
       typeTitle = 'پیشنهاد یادآور پرداخت سررسید';
       buttonLabel = 'تأیید و ثبت یادآور';
     } else if (type === 'financial_analysis' || type === 'analysis_report') {
@@ -145,7 +145,7 @@ export const ChatMessage: React.FC<ChatMessageProps> = ({
                   <span className="text-zinc-400">نوع:</span>
                   <span
                     className={`inline-flex items-center gap-0.5 font-bold ${
-                      params.type === 'income' ? 'text-emerald-400' : 'text-rose-400'
+                      params.type === 'income' ? 'text-emerald-400' : 'text-zinc-400'
                     }`}
                   >
                     {params.type === 'income' ? (
@@ -191,7 +191,7 @@ export const ChatMessage: React.FC<ChatMessageProps> = ({
               <>
                 <div className="col-span-2 flex items-center gap-1.5 text-zinc-300">
                   <span className="text-zinc-400">نام گروه:</span>
-                  <span className="font-bold text-cyan-300">{params.name || 'گروه جدید'}</span>
+                  <span className="font-bold text-emerald-300">{params.name || 'گروه جدید'}</span>
                 </div>
                 <div className="col-span-2 space-y-1">
                   <span className="text-zinc-400 text-[10px]">اعضای گروه:</span>
@@ -218,7 +218,7 @@ export const ChatMessage: React.FC<ChatMessageProps> = ({
               <>
                 <div className="col-span-2 flex items-center justify-between text-zinc-300">
                   <span className="text-zinc-400">گروه:</span>
-                  <span className="font-bold text-cyan-300">{params.group_name || 'سفر'}</span>
+                  <span className="font-bold text-emerald-300">{params.group_name || 'سفر'}</span>
                 </div>
                 <div className="col-span-2 flex items-center justify-between text-zinc-300">
                   <span className="text-zinc-400">شرح هزینه:</span>
@@ -237,7 +237,7 @@ export const ChatMessage: React.FC<ChatMessageProps> = ({
                 {params.share_per_person && (
                   <div className="col-span-2 flex items-center justify-between text-zinc-300 pt-1 border-t border-white/5">
                     <span className="text-zinc-400">سهم هر نفر:</span>
-                    <span className="font-mono text-cyan-200">
+                    <span className="font-mono text-emerald-200">
                       {formatToman(Number(params.share_per_person))}
                     </span>
                   </div>
@@ -275,7 +275,7 @@ export const ChatMessage: React.FC<ChatMessageProps> = ({
               <>
                 <div className="col-span-2 flex items-center gap-1.5 text-zinc-300">
                   <span className="text-zinc-400">عنوان:</span>
-                  <span className="font-bold text-purple-300">{params.title}</span>
+                  <span className="font-bold text-emerald-300">{params.title}</span>
                 </div>
                 {params.amount ? (
                   <div className="flex items-center gap-1.5 text-zinc-300">
@@ -307,7 +307,7 @@ export const ChatMessage: React.FC<ChatMessageProps> = ({
                 {params.expense_total !== undefined && (
                   <div className="flex items-center justify-between text-zinc-300">
                     <span className="text-zinc-400">مخارج:</span>
-                    <span className="font-mono text-rose-400 font-bold">
+                    <span className="font-mono text-zinc-400 font-bold">
                       {formatToman(Number(params.expense_total))}
                     </span>
                   </div>
@@ -334,8 +334,8 @@ export const ChatMessage: React.FC<ChatMessageProps> = ({
 
           {/* Action Error State */}
           {localError && !actionExecuted && (
-            <div className="flex items-center gap-2 p-2.5 rounded-xl bg-rose-500/15 border border-rose-500/30 text-rose-300 text-xs font-medium">
-              <ChandIcon name="alert" className="w-4 h-4 shrink-0 text-rose-400" />
+            <div className="flex items-center gap-2 p-2.5 rounded-xl bg-zinc-500/15 border border-zinc-500/30 text-zinc-300 text-xs font-medium">
+              <ChandIcon name="alert" className="w-4 h-4 shrink-0 text-zinc-400" />
               <span>{localError}</span>
             </div>
           )}

@@ -145,7 +145,7 @@ export const AnalyticsView: React.FC = () => {
             <div
               className={`h-full rounded-full transition-all duration-500 ${
                 budgetUsagePercent > 85
-                  ? 'bg-rose-600'
+                  ? 'bg-zinc-600'
                   : budgetUsagePercent > 65
                   ? 'bg-emerald-500'
                   : 'bg-emerald-600'
@@ -189,7 +189,7 @@ export const AnalyticsView: React.FC = () => {
             className={`font-cairo text-2xl font-black ${
               metrics.balance >= 0
                 ? 'text-emerald-700 dark:text-emerald-400'
-                : 'text-rose-600 dark:text-rose-400'
+                : 'text-zinc-600 dark:text-zinc-400'
             }`}
           >
             {formatToman(metrics.balance)}
@@ -251,7 +251,7 @@ export const AnalyticsView: React.FC = () => {
                         {category}
                       </span>
                       {isOverLimit ? (
-                        <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-rose-100 text-rose-700 dark:bg-rose-950/80 dark:text-rose-300 border border-rose-300 dark:border-rose-800">
+                        <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-zinc-100 text-zinc-700 dark:bg-zinc-950/80 dark:text-zinc-300 border border-zinc-300 dark:border-zinc-800">
                           ⚠️ عبور از سقف مجاز
                         </span>
                       ) : percent > 75 ? (
@@ -276,7 +276,7 @@ export const AnalyticsView: React.FC = () => {
                       <span
                         className={`text-xs font-mono font-bold ${
                           isOverLimit
-                            ? 'text-rose-600 dark:text-rose-400'
+                            ? 'text-zinc-600 dark:text-zinc-400'
                             : percent > 75
                             ? 'text-emerald-600 dark:text-emerald-400'
                             : 'text-emerald-600 dark:text-emerald-400'
@@ -292,7 +292,7 @@ export const AnalyticsView: React.FC = () => {
                     <div
                       className={`h-full rounded-full transition-all duration-500 ${
                         isOverLimit
-                          ? 'bg-rose-600'
+                          ? 'bg-zinc-600'
                           : percent > 75
                           ? 'bg-emerald-500'
                           : 'bg-emerald-600'

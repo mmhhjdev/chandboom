@@ -373,7 +373,7 @@ export const GoalsView: React.FC = () => {
                           deleteGoal(goal.id);
                         }
                       }}
-                      className="p-2 rounded-xl text-zinc-400 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/30 transition cursor-pointer"
+                      className="p-2 rounded-xl text-zinc-400 hover:text-zinc-600 hover:bg-zinc-50 dark:hover:bg-zinc-950/30 transition cursor-pointer"
                       title="حذف هدف"
                     >
                       <ChandIcon name="trash" className="w-4 h-4" />
@@ -468,8 +468,8 @@ export const GoalsView: React.FC = () => {
 
             <form onSubmit={handleCreateGoal} className="space-y-3.5">
               {createError && (
-                <div className="p-3 rounded-xl bg-rose-50 dark:bg-rose-950/40 border border-rose-300 dark:border-rose-900/60 text-xs text-rose-700 dark:text-rose-300 font-bold flex items-center gap-2">
-                  <ChandIcon name="alert" className="w-4 h-4 shrink-0 text-rose-500" />
+                <div className="p-3 rounded-xl bg-zinc-50 dark:bg-zinc-950/40 border border-zinc-300 dark:border-zinc-900/60 text-xs text-zinc-700 dark:text-zinc-300 font-bold flex items-center gap-2">
+                  <ChandIcon name="alert" className="w-4 h-4 shrink-0 text-zinc-500" />
                   <span>{createError}</span>
                 </div>
               )}
@@ -612,8 +612,8 @@ export const GoalsView: React.FC = () => {
 
             <form onSubmit={handleExecuteContribute} className="space-y-4">
               {contributeError && (
-                <div className="p-3 rounded-xl bg-rose-50 dark:bg-rose-950/40 border border-rose-300 dark:border-rose-900/60 text-xs text-rose-700 dark:text-rose-300 font-bold flex items-center gap-2">
-                  <ChandIcon name="alert" className="w-4 h-4 shrink-0 text-rose-500" />
+                <div className="p-3 rounded-xl bg-zinc-50 dark:bg-zinc-950/40 border border-zinc-300 dark:border-zinc-900/60 text-xs text-zinc-700 dark:text-zinc-300 font-bold flex items-center gap-2">
+                  <ChandIcon name="alert" className="w-4 h-4 shrink-0 text-zinc-500" />
                   <span>{contributeError}</span>
                 </div>
               )}

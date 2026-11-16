@@ -144,7 +144,7 @@ export const BankSmsModal: React.FC<BankSmsModalProps> = ({
         </div>
 
         {parseError && (
-          <div className="p-3 rounded-xl bg-rose-50 text-rose-700 dark:bg-rose-950/40 dark:text-rose-400 border border-rose-200 text-xs flex flex-col sm:flex-row items-center justify-between gap-2">
+          <div className="p-3 rounded-xl bg-zinc-50 text-zinc-700 dark:bg-zinc-950/40 dark:text-zinc-400 border border-zinc-200 text-xs flex flex-col sm:flex-row items-center justify-between gap-2">
             <div className="flex items-center gap-2">
               <ChandIcon name="alert" className="w-4 h-4 shrink-0" />
               <span>{parseError}</span>
@@ -224,7 +224,7 @@ export const BankSmsModal: React.FC<BankSmsModalProps> = ({
                   {extractedType === 'income' ? (
                     <ArrowDownLeft className="w-4 h-4 text-emerald-600" />
                   ) : (
-                    <ArrowUpRight className="w-4 h-4 text-rose-500" />
+                    <ArrowUpRight className="w-4 h-4 text-zinc-500" />
                   )}
                   نوع و مبلغ استخراج‌شده:
                 </span>
@@ -233,7 +233,7 @@ export const BankSmsModal: React.FC<BankSmsModalProps> = ({
                     className={`font-cairo font-black text-base ${
                       extractedType === 'income'
                         ? 'text-emerald-700 dark:text-emerald-400'
-                        : 'text-rose-600 dark:text-rose-400'
+                        : 'text-zinc-600 dark:text-zinc-400'
                     }`}
                   >
                     {extractedType === 'income' ? '+' : '-'} {formatToman(extractedAmount)}
