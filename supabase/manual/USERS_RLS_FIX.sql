@@ -43,8 +43,8 @@ begin
     new.subscription_expires_at := null;
     new.is_premium := false;
     new.ai_queries_used := 0;
-    new.ai_queries_limit := 0;
-    new.ai_requests_left := 0;
+    new.ai_queries_limit := 10;
+    new.ai_requests_left := 10;
   end if;
   return new;
 end;

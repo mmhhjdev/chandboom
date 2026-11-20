@@ -51,7 +51,7 @@ import {
   sendPasswordResetOtp,
   resetUserPassword,
 } from '../lib/supabase';
-import { MALE_AVATAR_SVG } from '../utils/avatars';
+import { MALE_AVATAR_SVG, defaultAvatarFor } from '../utils/avatars';
 
 export interface AuthResult {
   success: boolean;
@@ -505,7 +505,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
   const aiQueriesRemaining = useMemo(() => {
     if (user.tier === 'free') return 0;
-    const limit = user.ai_queries_limit ?? (user.tier === 'bronze' ? 50 : user.tier === 'vip' ? 500 : user.tier === 'pro' ? 150 : 0);
+    const limit = user.ai_queries_limit ?? (user.tier === 'bronze' ? 50 : user.tier === 'vip' ? 500 : user.tier === 'pro' ? 250 : 0);
     const serverRemaining = user.ai_requests_left;
     if (typeof serverRemaining === 'number') return Math.max(0, serverRemaining);
     return Math.max(0, Number(limit) - (user.ai_queries_used || 0));
@@ -516,7 +516,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     if (!Number.isFinite(remaining) || remaining < 0) return;
     setUser((prev) => {
       const limit = Number(prev.ai_queries_limit ?? (
-        prev.tier === 'bronze' ? 50 : prev.tier === 'vip' ? 500 : prev.tier === 'pro' ? 150 : 0
+        prev.tier === 'bronze' ? 50 : prev.tier === 'vip' ? 500 : prev.tier === 'pro' ? 250 : 0
       ));
       return {
         ...prev,
@@ -836,11 +836,11 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         gender: nextUser.gender ?? null,
         ai_requests_left: nextUser.ai_requests_left !== undefined && nextUser.ai_requests_left !== null
           ? Number(nextUser.ai_requests_left)
-          : (isFree ? 5 : nextUser.tier === 'bronze' ? 50 : nextUser.tier === 'pro' ? 150 : 500),
+          : (isFree ? 5 : nextUser.tier === 'bronze' ? 50 : nextUser.tier === 'pro' ? 250 : 500),
         ai_queries_used: nextUser.ai_queries_used !== undefined ? Number(nextUser.ai_queries_used) : 0,
         ai_queries_limit: nextUser.ai_queries_limit !== undefined
           ? nextUser.ai_queries_limit
-          : (isFree ? 10 : nextUser.tier === 'bronze' ? 50 : nextUser.tier === 'pro' ? 150 : 500),
+          : (isFree ? 10 : nextUser.tier === 'bronze' ? 50 : nextUser.tier === 'pro' ? 250 : 500),
         ai_queries_reset_date: nextUser.ai_queries_reset_date ?? null,
       };
 
@@ -1003,7 +1003,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     let finalTier: SubscriptionTier = target.tier;
     let finalStatus: SubscriptionStatus = target.subscription_status;
     let isPremium = target.is_premium ?? false;
-    let aiRequestsLeft = target.ai_requests_left ?? 5;
+    let aiRequestsLeft = target.ai_requests_left ?? 10;
 
     if (daysToAdd <= 0) {
       finalExpiry = new Date(Date.now() - 1000).toISOString();
@@ -1105,7 +1105,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
           dbPayload.subscription_status = 'none';
           dbPayload.is_premium = false;
           dbPayload.subscription_expires_at = null;
-          dbPayload.ai_requests_left = 5;
+          dbPayload.ai_requests_left = 10;
         } else if (updates.subscription_status === undefined) {
           dbPayload.subscription_status = 'active';
           dbPayload.is_premium = true;
@@ -1901,7 +1901,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
             full_name: fullName.trim(),
             age: age || null,
             gender: gender || null,
-            avatar_url: avatarUrl || MALE_AVATAR_SVG,
+            avatar_url: avatarUrl || defaultAvatarFor(gender),
           },
         },
       });
@@ -1917,7 +1917,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
             id: data.user.id,
             email: cleanEmail,
             full_name: fullName.trim(),
-            avatar_url: avatarUrl || MALE_AVATAR_SVG,
+            avatar_url: avatarUrl || defaultAvatarFor(gender),
             role: isAdm ? 'admin' : 'user',
             tier: 'free',
             subscription_status: 'none',
@@ -1931,7 +1931,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
             age: age || null,
             gender: gender || null,
             ai_queries_used: 0,
-            ai_queries_limit: 50,
+            ai_queries_limit: 10,
             ai_queries_reset_date: null,
           });
         if (upErr) console.warn('users upsert failed:', upErr.message);
@@ -2090,7 +2090,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
           age: age || null,
           gender: gender || null,
           ai_queries_used: 0,
-          ai_queries_limit: 50,
+          ai_queries_limit: 10,
           ai_queries_reset_date: null,
         });
         if (upErr) console.warn('users upsert failed:', upErr.message);

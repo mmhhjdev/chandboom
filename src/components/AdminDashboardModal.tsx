@@ -306,8 +306,8 @@ export const AdminDashboardModal: React.FC<AdminDashboardModalProps> = ({ isOpen
     setEditStatus(u.subscription_status || 'none');
     setEditIsPremium(u.is_premium ?? (u.tier !== 'free' && u.subscription_status === 'active'));
     setEditExpiresAt(u.subscription_expires_at ? u.subscription_expires_at.split('T')[0] : '');
-    setEditAiRequests(String(u.ai_requests_left ?? (u.tier === 'free' ? 5 : u.tier === 'bronze' ? 50 : u.tier === 'pro' ? 150 : 500)));
-    setEditAiLimit(String(u.ai_queries_limit ?? (u.tier === 'free' ? 10 : u.tier === 'bronze' ? 50 : u.tier === 'pro' ? 150 : 500)));
+    setEditAiRequests(String(u.ai_requests_left ?? (u.tier === 'free' ? 10 : u.tier === 'bronze' ? 50 : u.tier === 'pro' ? 250 : 500)));
+    setEditAiLimit(String(u.ai_queries_limit ?? (u.tier === 'free' ? 10 : u.tier === 'bronze' ? 50 : u.tier === 'pro' ? 250 : 500)));
     setEditBudgetCap(String(u.monthly_budget_cap || 20000000));
     setEditAge(u.age ? String(u.age) : '');
     setEditGender(u.gender || '');
@@ -334,7 +334,7 @@ export const AdminDashboardModal: React.FC<AdminDashboardModalProps> = ({ isOpen
       subscription_status: statusVal,
       is_premium: editIsPremium !== undefined ? editIsPremium : isPremVal,
       subscription_expires_at: expiryVal,
-      ai_requests_left: parseInt(editAiRequests, 10) || (isFree ? 5 : 50),
+      ai_requests_left: parseInt(editAiRequests, 10) || (isFree ? 10 : 50),
       ai_queries_limit: parseInt(editAiLimit, 10) || (isFree ? 10 : 50),
       monthly_budget_cap: parseInt(editBudgetCap, 10) || 20000000,
       age: editAge.trim() ? parseInt(editAge.trim(), 10) : null,
@@ -471,8 +471,8 @@ export const AdminDashboardModal: React.FC<AdminDashboardModalProps> = ({ isOpen
         tier: newUserTier,
         subscription_status: newUserTier === 'free' ? 'none' : 'active',
         is_premium: newUserTier !== 'free',
-        ai_requests_left: newUserTier === 'free' ? 5 : newUserTier === 'bronze' ? 50 : newUserTier === 'pro' ? 150 : 500,
-        ai_queries_limit: newUserTier === 'free' ? 10 : newUserTier === 'bronze' ? 50 : newUserTier === 'pro' ? 150 : 500,
+        ai_requests_left: newUserTier === 'free' ? 10 : newUserTier === 'bronze' ? 50 : newUserTier === 'pro' ? 250 : 500,
+        ai_queries_limit: newUserTier === 'free' ? 10 : newUserTier === 'bronze' ? 50 : newUserTier === 'pro' ? 250 : 500,
         monthly_budget_cap: 10000000,
         created_at: new Date().toISOString(),
       });
@@ -2113,7 +2113,7 @@ export const AdminDashboardModal: React.FC<AdminDashboardModalProps> = ({ isOpen
                           const d = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000);
                           setEditExpiresAt(d.toISOString().split('T')[0]);
                         }
-                        const quota = newTier === 'bronze' ? '50' : newTier === 'vip' ? '500' : '150';
+                        const quota = newTier === 'bronze' ? '50' : newTier === 'vip' ? '500' : '250';
                         setEditAiRequests(quota);
                         setEditAiLimit(quota);
                       }

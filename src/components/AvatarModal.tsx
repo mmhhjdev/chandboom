@@ -4,7 +4,7 @@ import {
   Image as ImageIcon,
 } from 'lucide-react';
 import { useApp } from '../context/AppContext';
-import { DEFAULT_AVATAR_PRESETS, MALE_AVATAR_SVG, FEMALE_AVATAR_SVG } from '../utils/avatars';
+import { DEFAULT_AVATAR_PRESETS, MALE_AVATAR_SVG, FEMALE_AVATAR_SVG, defaultAvatarFor } from '../utils/avatars';
 import { uploadUserAvatar } from '../lib/supabase';
 import { ChandIcon } from './icons/ChandIcon';
 
@@ -15,7 +15,7 @@ interface AvatarModalProps {
 
 export const AvatarModal: React.FC<AvatarModalProps> = ({ isOpen, onClose }) => {
   const { user, updateUserProfile } = useApp();
-  const [selectedUrl, setSelectedUrl] = useState(user.avatar_url || MALE_AVATAR_SVG);
+  const [selectedUrl, setSelectedUrl] = useState(user.avatar_url || defaultAvatarFor(user.gender));
   const [customFile, setCustomFile] = useState<File | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [isUploading, setIsUploading] = useState(false);

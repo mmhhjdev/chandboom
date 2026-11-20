@@ -103,7 +103,7 @@ begin
   v_tier  := case when v_pay.plan_id like 'vip%' then 'vip'
                   when v_pay.plan_id like 'bronze%' then 'bronze'
                   else 'pro' end;
-  v_quota := case v_tier when 'vip' then 500 when 'bronze' then 50 else 150 end;
+  v_quota := case v_tier when 'vip' then 500 when 'bronze' then 50 else 250 end;
   v_days  := coalesce(
                (select duration_days from public.plans where id = v_pay.plan_id),
                case when v_pay.plan_id like '%-3m' then 90 else 30 end);

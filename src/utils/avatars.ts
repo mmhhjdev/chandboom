@@ -165,3 +165,7 @@ export const DEFAULT_AVATAR_PRESETS = [
 ] as const;
 
 export const AVATAR_PRESETS = DEFAULT_AVATAR_PRESETS;
+
+/** آواتار پیش‌فرض بر اساس جنسیت: «زن» → آواتار خانم، در غیر این صورت آقا. */
+export const defaultAvatarFor = (gender?: string | null): string =>
+  gender === 'زن' ? FEMALE_AVATAR_SVG : MALE_AVATAR_SVG;
