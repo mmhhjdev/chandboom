@@ -1,4 +1,6 @@
 import React, { useState, useEffect } from 'react';
+import { SeoImage } from './SeoImage';
+import MARKETING_IMAGES from '../data/marketingImages.json';
 import {
   Zap,
   TrendingUp,
@@ -507,6 +509,22 @@ export const LandingPage: React.FC<LandingPageProps> = ({
       </section>
 
       {/* SECTION 3: مدیریت خرج‌های جمعی و دونگی (Dong Management) */}
+      <section id="gallery" className="py-16 sm:py-24 bg-white dark:bg-[#090D0B]">
+        <div className="max-w-6xl mx-auto px-4 sm:px-6">
+          <div className="text-center mb-10">
+            <h2 className="font-cairo text-3xl sm:text-4xl font-black text-zinc-900 dark:text-zinc-100">گالری امکانات چندبوم</h2>
+            <p className="mt-3 text-sm text-zinc-500 font-cairo">امکانات مدیریت مالی شخصی را ببینید؛ روی هر تصویر بزنید تا بزرگ‌نمایی شود.</p>
+          </div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
+            {MARKETING_IMAGES.map((img) => (
+              <figure key={img.slug} className="rounded-2xl border border-[#E2E8E4] dark:border-[#1A2621] bg-zinc-50 dark:bg-[#0F1512] p-2 flex flex-col">
+                <SeoImage slug={img.slug} alt={img.alt} title={img.title} caption={img.caption} zoomable className="w-full h-auto rounded-xl" />
+                <figcaption className="mt-3 px-2 pb-2 text-xs leading-6 text-zinc-600 dark:text-zinc-400 font-cairo">{img.caption}</figcaption>
+              </figure>
+            ))}
+          </div>
+        </div>
+      </section>
       <section id="dong" className="relative z-10 py-20 overflow-hidden">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 items-center">

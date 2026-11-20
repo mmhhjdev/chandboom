@@ -283,11 +283,20 @@ for (const page of ALL_PAGES) {
 }
 
 // Sitemap: generated from the same list, so it only contains pages that exist.
+// Marketing images (landing gallery) are listed on the homepage entry for Google Images.
+const MARKETING = JSON.parse(fs.readFileSync(path.join(process.cwd(), 'src/data/marketingImages.json'), 'utf8'));
+const marketingImageEntries = () => MARKETING.map((m) => `
+    <image:image>
+      <image:loc>${SITE}/images/marketing/${m.slug}-1200.jpg</image:loc>
+      <image:title>${esc(m.title)}</image:title>
+      <image:caption>${esc(m.caption)}</image:caption>
+    </image:image>`).join('');
+
 const urls = ALL_PAGES.map((p) => `  <url>
     <loc>${SITE}${p.path}</loc>
     <lastmod>${p.lastmod}</lastmod>
     <changefreq>${p.changefreq}</changefreq>
-    <priority>${p.priority}</priority>${p.image ? `
+    <priority>${p.priority}</priority>${p.path === '/' ? marketingImageEntries() : ''}${p.image ? `
     <image:image>
       <image:loc>${p.image}</image:loc>
       <image:title>${esc(p.imageTitle)}</image:title>
